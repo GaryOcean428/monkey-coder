@@ -673,10 +673,8 @@ program
             chalk.cyan('🤖 AI:'),
             response.result?.result || 'No response received'
           );
-          console.log('Response Object:', response);
         } catch (error: any) {
           console.error(chalk.red('Error:'), error.message);
-          console.error(error);
         }
 
         console.log('');
