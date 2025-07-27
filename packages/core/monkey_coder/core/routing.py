@@ -442,7 +442,7 @@ class AdvancedRouter:
         # Select highest scoring model
         if not model_scores:
             # Fallback to default model
-            return ProviderType.OPENAI, "gpt-4o-mini"
+            return ProviderType.OPENAI, "gpt-4.1-mini"
             
         best_model = max(model_scores.items(), key=lambda x: x[1])
         return best_model[0]
@@ -483,49 +483,117 @@ class AdvancedRouter:
         capabilities = {}
         
         # OpenAI models
-        capabilities[(ProviderType.OPENAI, "gpt-4o")] = ModelCapabilities(
-            code_generation=0.95, reasoning=0.98, context_window=128000,
-            latency_ms=2000, cost_per_token=0.005, reliability=0.95,
-            specializations=["general", "coding", "reasoning"]
+        capabilities[(ProviderType.OPENAI, "gpt-4.1")] = ModelCapabilities(
+            code_generation=0.95, reasoning=0.98, context_window=1048576,
+            latency_ms=2000, cost_per_token=0.002, reliability=0.95,
+            specializations=["general", "coding", "reasoning", "vision"]
         )
         
-        capabilities[(ProviderType.OPENAI, "gpt-4o-mini")] = ModelCapabilities(
-            code_generation=0.85, reasoning=0.88, context_window=128000,
-            latency_ms=1000, cost_per_token=0.0001, reliability=0.90,
-            specializations=["general", "coding", "fast"]
-        )
-        
-        capabilities[(ProviderType.OPENAI, "o1-preview")] = ModelCapabilities(
-            code_generation=0.98, reasoning=0.99, context_window=32768,
-            latency_ms=15000, cost_per_token=0.015, reliability=0.98,
-            specializations=["reasoning", "complex_problems", "math"]
+        capabilities[(ProviderType.OPENAI, "gpt-4.1-mini")] = ModelCapabilities(
+            code_generation=0.85, reasoning=0.88, context_window=1048576,
+            latency_ms=1000, cost_per_token=0.00012, reliability=0.90,
+            specializations=["general", "coding", "fast", "vision"]
         )
         
         # Anthropic models
-        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-sonnet-20241022")] = ModelCapabilities(
-            code_generation=0.92, reasoning=0.94, context_window=200000,
-            latency_ms=2500, cost_per_token=0.003, reliability=0.93,
-            specializations=["coding", "analysis", "long_context"]
+        capabilities[(ProviderType.ANTHROPIC, "claude-4-opus")] = ModelCapabilities(
+            code_generation=0.96, reasoning=0.97, context_window=200000,
+            latency_ms=3000, cost_per_token=0.015, reliability=0.95,
+            specializations=["coding", "analysis", "long_context", "reasoning"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-haiku-20241022")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-4-sonnet")] = ModelCapabilities(
+            code_generation=0.92, reasoning=0.94, context_window=200000,
+            latency_ms=2500, cost_per_token=0.003, reliability=0.93,
+            specializations=["coding", "analysis", "long_context", "balanced"]
+        )
+        
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.7-sonnet")] = ModelCapabilities(
+            code_generation=0.90, reasoning=0.92, context_window=200000,
+            latency_ms=2200, cost_per_token=0.0025, reliability=0.92,
+            specializations=["coding", "analysis", "improved"]
+        )
+        
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-sonnet")] = ModelCapabilities(
+            code_generation=0.88, reasoning=0.90, context_window=200000,
+            latency_ms=2000, cost_per_token=0.002, reliability=0.90,
+            specializations=["coding", "stable", "reliable"]
+        )
+        
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-haiku")] = ModelCapabilities(
             code_generation=0.80, reasoning=0.82, context_window=200000,
             latency_ms=800, cost_per_token=0.0008, reliability=0.88,
             specializations=["fast", "efficient", "basic_coding"]
         )
         
         # Google models
-        capabilities[(ProviderType.GOOGLE, "gemini-2.0-flash-exp")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "gemini-2.5-pro")] = ModelCapabilities(
+            code_generation=0.93, reasoning=0.95, context_window=2000000,
+            latency_ms=2500, cost_per_token=0.0025, reliability=0.92,
+            specializations=["multimodal", "long_context", "reasoning"]
+        )
+        
+        capabilities[(ProviderType.GOOGLE, "gemini-2.5-flash")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=1000000,
             latency_ms=1200, cost_per_token=0.001, reliability=0.87,
             specializations=["multimodal", "long_context", "fast"]
         )
         
+        capabilities[(ProviderType.GOOGLE, "gemini-2.0-pro")] = ModelCapabilities(
+            code_generation=0.90, reasoning=0.92, context_window=1000000,
+            latency_ms=2200, cost_per_token=0.002, reliability=0.90,
+            specializations=["multimodal", "long_context", "stable"]
+        )
+        
+        capabilities[(ProviderType.GOOGLE, "gemini-2.0-flash")] = ModelCapabilities(
+            code_generation=0.85, reasoning=0.87, context_window=1000000,
+            latency_ms=1000, cost_per_token=0.0008, reliability=0.85,
+            specializations=["multimodal", "fast", "efficient"]
+        )
+        
         # Qwen models
-        capabilities[(ProviderType.QWEN, "qwen2.5-coder-32b-instruct")] = ModelCapabilities(
+        capabilities[(ProviderType.QWEN, "qwen-coder-3-32b")] = ModelCapabilities(
             code_generation=0.94, reasoning=0.85, context_window=32768,
             latency_ms=3000, cost_per_token=0.002, reliability=0.90,
             specializations=["coding", "open_source", "multilingual"]
+        )
+        
+        capabilities[(ProviderType.QWEN, "qwen-coder-3-14b")] = ModelCapabilities(
+            code_generation=0.91, reasoning=0.83, context_window=32768,
+            latency_ms=2200, cost_per_token=0.0012, reliability=0.88,
+            specializations=["coding", "open_source", "balanced"]
+        )
+        
+        capabilities[(ProviderType.QWEN, "qwen-coder-3-7b")] = ModelCapabilities(
+            code_generation=0.88, reasoning=0.80, context_window=32768,
+            latency_ms=1500, cost_per_token=0.0008, reliability=0.85,
+            specializations=["coding", "open_source", "efficient"]
+        )
+        
+        capabilities[(ProviderType.QWEN, "qwen-coder-3-1.5b")] = ModelCapabilities(
+            code_generation=0.80, reasoning=0.75, context_window=32768,
+            latency_ms=800, cost_per_token=0.0004, reliability=0.80,
+            specializations=["coding", "open_source", "fast"]
+        )
+        
+        # Grok models
+        capabilities[(ProviderType.GROK, "grok-4")] = ModelCapabilities(
+            code_generation=0.93, reasoning=0.95, context_window=131072,
+            latency_ms=2500, cost_per_token=0.003, reliability=0.92,
+            specializations=["reasoning", "coding", "analysis"]
+        )
+        
+        capabilities[(ProviderType.GROK, "grok-3")] = ModelCapabilities(
+            code_generation=0.88, reasoning=0.90, context_window=65536,
+            latency_ms=2000, cost_per_token=0.002, reliability=0.88,
+            specializations=["reasoning", "coding", "fast"]
+        )
+        
+        # Moonshot models
+        capabilities[(ProviderType.MOONSHOT, "kimi-k2")] = ModelCapabilities(
+            code_generation=0.90, reasoning=0.92, context_window=200000,
+            latency_ms=2200, cost_per_token=0.0015, reliability=0.90,
+            specializations=["long_context", "reasoning", "multilingual"]
         )
         
         return capabilities

@@ -9,7 +9,11 @@ import os
 import logging
 from typing import Dict, Any, Optional
 import sentry_sdk
-from sentry_sdk.integrations.sqlalchemy import SqlAlchemyIntegration
+# Skip problematic imports for development
+try:
+    from sentry_sdk.integrations.sqlalchemy import SqlAlchemyIntegration
+except (ImportError, Exception):
+    SqlAlchemyIntegration = None
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -53,10 +57,9 @@ def configure_sentry(
     ]
     
     if component == "core":
-        integrations.extend([
-            FastApiIntegration(auto_enabling=True),
-            SqlAlchemyIntegration(),
-        ])
+        integrations.append(FastApiIntegration(auto_enabling=True))
+        if SqlAlchemyIntegration:
+            integrations.append(SqlAlchemyIntegration())
     
     # Initialize Sentry
     sentry_sdk.init(

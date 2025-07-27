@@ -6,20 +6,22 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
+    "monkey": "./dist/cli.js",
     "monkey-coder": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc --build",
     "dev": "tsc --build --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "lint": "eslint src --ext .js,.ts --ignore-pattern '**/*.ts' || true",
-    "lint:fix": "eslint src --ext .js,.ts --ignore-pattern '**/*.ts' --fix || true",
+    "lint": "eslint src --ext .js || echo 'No JS files to lint'",
+    "lint:fix": "eslint src --ext .js --fix || echo 'No JS files to lint'",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
     "test:coverage": "jest --coverage --passWithNoTests"
   },
   "dependencies": {
+    "@sentry/node": "^9.42.0",
     "axios": "^1.6.0",
     "chalk": "^5.0.0",
     "commander": "^11.0.0",

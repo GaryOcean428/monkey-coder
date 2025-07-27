@@ -7,8 +7,8 @@ including validation, serialization, and documentation.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, validator
 
@@ -40,6 +40,8 @@ class ProviderType(str, Enum):
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     QWEN = "qwen"
+    GROK = "grok"
+    MOONSHOT = "moonshot"
 
 
 class PersonaType(str, Enum):
@@ -283,7 +285,7 @@ class ProviderError(Exception):
 class ValidationError(Exception):
     """Custom exception for validation errors."""
     
-    def __init__(self, message: str, field: str = None, error_code: str = "VALIDATION_ERROR"):
+    def __init__(self, message: str, field: Optional[str] = None, error_code: str = "VALIDATION_ERROR"):
         self.message = message
         self.field = field
         self.error_code = error_code
@@ -293,33 +295,34 @@ class ValidationError(Exception):
 # Model registry for dynamic model discovery
 MODEL_REGISTRY = {
     ProviderType.OPENAI: [
-        "gpt-4o",
-        "gpt-4o-mini", 
-        "gpt-4-turbo",
-        "gpt-4",
-        "gpt-3.5-turbo",
-        "o1-preview",
-        "o1-mini",
+        "gpt-4.1",
+        "gpt-4.1-mini",
     ],
     ProviderType.ANTHROPIC: [
-        "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-20241022",
-        "claude-3-opus-20240229",
-        "claude-3-sonnet-20240229",
-        "claude-3-haiku-20240307",
+        "claude-4-opus",
+        "claude-4-sonnet",
+        "claude-3.7-sonnet",
+        "claude-3.5-sonnet",
+        "claude-3.5-haiku",
     ],
     ProviderType.GOOGLE: [
-        "gemini-2.0-flash-exp",
-        "gemini-1.5-pro",
-        "gemini-1.5-flash",
-        "gemini-1.0-pro",
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.0-pro",
+        "gemini-2.0-flash",
     ],
     ProviderType.QWEN: [
-        "qwen2.5-coder-32b-instruct",
-        "qwen2.5-coder-14b-instruct", 
-        "qwen2.5-coder-7b-instruct",
-        "qwen2.5-coder-1.5b-instruct",
-        "qwen2.5-coder-0.5b-instruct",
+        "qwen-coder-3-32b",
+        "qwen-coder-3-14b", 
+        "qwen-coder-3-7b",
+        "qwen-coder-3-1.5b",
+    ],
+    ProviderType.GROK: [
+        "grok-4",
+        "grok-3",
+    ],
+    ProviderType.MOONSHOT: [
+        "kimi-k2",
     ],
 }
 

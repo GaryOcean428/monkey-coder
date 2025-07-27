@@ -7,18 +7,19 @@ import * as dotenv from 'dotenv';
 import fs from 'fs-extra';
 import * as path from 'path';
 import * as Sentry from '@sentry/node';
+import * as readline from 'readline';
 
 import { MonkeyCoderAPIClient } from './api-client.js';
 import { ConfigManager } from './config.js';
-import { 
-  readFileContent, 
-  writeFileContent, 
-  detectLanguage, 
-  formatResponse, 
-  formatError, 
-  formatProgress, 
+import {
+  readFileContent,
+  writeFileContent,
+  detectLanguage,
+  formatResponse,
+  formatError,
+  formatProgress,
   validateFilePath,
-  generateUUID 
+  generateUUID,
 } from './utils.js';
 import { ExecuteRequest, CommandOptions, StreamEvent } from './types.js';
 
@@ -28,7 +29,7 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 1.0,
   });
-  Sentry.setTag("context", "CLI");
+  Sentry.setTag('context', 'CLI');
 }
 
 // Load environment variables
@@ -45,7 +46,7 @@ program
   .option('--base-url <url>', 'Base URL for the API', 'http://localhost:8000')
   .option('--config <path>', 'Path to configuration file')
   .option('--verbose', 'Enable verbose output')
-  .hook('preAction', async (thisCommand) => {
+  .hook('preAction', async thisCommand => {
     // Load custom config if specified
     const options = thisCommand.opts();
     if (options.config) {
@@ -53,7 +54,9 @@ program
         const customConfig = await fs.readJson(options.config);
         await config.update(customConfig);
       } catch (error) {
-        console.error(chalk.red(`Warning: Could not load config file: ${error}`));
+        console.error(
+          chalk.red(`Warning: Could not load config file: ${error}`)
+        );
       }
     }
   });
@@ -64,11 +67,13 @@ program
 function createAPIClient(options: CommandOptions): MonkeyCoderAPIClient {
   const apiKey = options.apiKey || config.getApiKey() || '';
   const baseUrl = options.baseUrl || config.getBaseUrl();
-  
+
   if (!apiKey) {
-    console.warn(chalk.yellow('Warning: No API key provided. Some features may not work.'));
+    console.warn(
+      chalk.yellow('Warning: No API key provided. Some features may not work.')
+    );
   }
-  
+
   return new MonkeyCoderAPIClient(baseUrl, apiKey);
 }
 
@@ -82,7 +87,7 @@ async function buildExecuteRequest(
   options: CommandOptions
 ): Promise<ExecuteRequest> {
   const fileData = [];
-  
+
   // Read file contents if provided
   for (const filePath of files) {
     try {
@@ -98,7 +103,7 @@ async function buildExecuteRequest(
       throw new Error(`Failed to read file ${filePath}: ${error}`);
     }
   }
-  
+
   return {
     task_id: generateUUID(),
     task_type: taskType as any,
@@ -118,8 +123,12 @@ async function buildExecuteRequest(
       context_window: 32768,
       use_markdown_spec: true,
     },
-    preferred_providers: options.provider ? [options.provider] : [config.getDefaultProvider()],
-    model_preferences: options.model ? { [options.provider || config.getDefaultProvider()]: options.model } : {},
+    preferred_providers: options.provider
+      ? [options.provider]
+      : [config.getDefaultProvider()],
+    model_preferences: options.model
+      ? { [options.provider || config.getDefaultProvider()]: options.model }
+      : {},
   };
 }
 
@@ -140,33 +149,47 @@ program
   .action(async (prompt: string, files: string[], options: CommandOptions) => {
     try {
       const client = createAPIClient(options);
-      const request = await buildExecuteRequest('code_generation', prompt, files, options);
-      
+      const request = await buildExecuteRequest(
+        'code_generation',
+        prompt,
+        files,
+        options
+      );
+
       if (options.stream) {
         const spinner = ora('Starting implementation...').start();
-        
-        const response = await client.executeStream(request, (event: StreamEvent) => {
-          switch (event.type) {
-            case 'start':
-              spinner.text = 'Implementation started';
-              break;
-            case 'progress':
-              if (event.progress) {
-                spinner.text = formatProgress(event.progress.step, event.progress.percentage, event.progress.metadata);
-              }
-              break;
-            case 'result':
-              spinner.succeed('Implementation completed');
-              break;
-            case 'error':
-              spinner.fail('Implementation failed');
-              console.error(formatError(event.error?.message || 'Unknown error'));
-              break;
+
+        const response = await client.executeStream(
+          request,
+          (event: StreamEvent) => {
+            switch (event.type) {
+              case 'start':
+                spinner.text = 'Implementation started';
+                break;
+              case 'progress':
+                if (event.progress) {
+                  spinner.text = formatProgress(
+                    event.progress.step,
+                    event.progress.percentage,
+                    event.progress.metadata
+                  );
+                }
+                break;
+              case 'result':
+                spinner.succeed('Implementation completed');
+                break;
+              case 'error':
+                spinner.fail('Implementation failed');
+                console.error(
+                  formatError(event.error?.message || 'Unknown error')
+                );
+                break;
+            }
           }
-        });
-        
+        );
+
         console.log(formatResponse(response));
-        
+
         // Save output if specified
         if (options.output && response.result?.result) {
           await writeFileContent(options.output, response.result.result);
@@ -176,9 +199,9 @@ program
         const spinner = ora('Generating implementation...').start();
         const response = await client.execute(request);
         spinner.stop();
-        
+
         console.log(formatResponse(response));
-        
+
         // Save output if specified
         if (options.output && response.result?.result) {
           await writeFileContent(options.output, response.result.result);
@@ -196,7 +219,11 @@ program
   .command('analyze')
   .description('Analyze code for quality, security, and performance issues')
   .argument('<files...>', 'Files to analyze')
-  .option('-t, --type <type>', 'Analysis type (quality, security, performance)', 'quality')
+  .option(
+    '-t, --type <type>',
+    'Analysis type (quality, security, performance)',
+    'quality'
+  )
   .option('-p, --persona <persona>', 'AI persona to use', 'reviewer')
   .option('-o, --output <file>', 'Output file path for analysis report')
   .option('--model <model>', 'AI model to use')
@@ -206,52 +233,70 @@ program
     try {
       const client = createAPIClient(options);
       const prompt = `Perform a ${options.type} analysis of the provided code files. Provide detailed feedback, suggestions for improvement, and highlight any issues found.`;
-      const request = await buildExecuteRequest('code_analysis', prompt, files, options);
-      
+      const request = await buildExecuteRequest(
+        'code_analysis',
+        prompt,
+        files,
+        options
+      );
+
       // Override persona for analysis
-      request.superclause_config.persona = options.persona as any || 'reviewer';
-      
+      request.superclause_config.persona =
+        (options.persona as any) || 'reviewer';
+
       if (options.stream) {
         const spinner = ora('Starting code analysis...').start();
-        
-        const response = await client.executeStream(request, (event: StreamEvent) => {
-          switch (event.type) {
-            case 'start':
-              spinner.text = 'Analysis started';
-              break;
-            case 'progress':
-              if (event.progress) {
-                spinner.text = formatProgress(event.progress.step, event.progress.percentage);
-              }
-              break;
-            case 'result':
-              spinner.succeed('Analysis completed');
-              break;
-            case 'error':
-              spinner.fail('Analysis failed');
-              console.error(formatError(event.error?.message || 'Unknown error'));
-              break;
+
+        const response = await client.executeStream(
+          request,
+          (event: StreamEvent) => {
+            switch (event.type) {
+              case 'start':
+                spinner.text = 'Analysis started';
+                break;
+              case 'progress':
+                if (event.progress) {
+                  spinner.text = formatProgress(
+                    event.progress.step,
+                    event.progress.percentage
+                  );
+                }
+                break;
+              case 'result':
+                spinner.succeed('Analysis completed');
+                break;
+              case 'error':
+                spinner.fail('Analysis failed');
+                console.error(
+                  formatError(event.error?.message || 'Unknown error')
+                );
+                break;
+            }
           }
-        });
-        
+        );
+
         console.log(formatResponse(response));
-        
+
         // Save output if specified
         if (options.output && response.result?.result) {
           await writeFileContent(options.output, response.result.result);
-          console.log(chalk.green(`✓ Analysis report saved to ${options.output}`));
+          console.log(
+            chalk.green(`✓ Analysis report saved to ${options.output}`)
+          );
         }
       } else {
         const spinner = ora('Analyzing code...').start();
         const response = await client.execute(request);
         spinner.stop();
-        
+
         console.log(formatResponse(response));
-        
+
         // Save output if specified
         if (options.output && response.result?.result) {
           await writeFileContent(options.output, response.result.result);
-          console.log(chalk.green(`✓ Analysis report saved to ${options.output}`));
+          console.log(
+            chalk.green(`✓ Analysis report saved to ${options.output}`)
+          );
         }
       }
     } catch (error: any) {
@@ -274,37 +319,51 @@ program
   .action(async (prompt: string, files: string[], options: CommandOptions) => {
     try {
       const client = createAPIClient(options);
-      const request = await buildExecuteRequest('custom', prompt, files, options);
-      
+      const request = await buildExecuteRequest(
+        'custom',
+        prompt,
+        files,
+        options
+      );
+
       // Override persona for building
       request.superclause_config.persona = 'architect';
-      request.superclause_config.custom_instructions = 'Focus on building robust, scalable, and maintainable code architecture.';
-      
+      request.superclause_config.custom_instructions =
+        'Focus on building robust, scalable, and maintainable code architecture.';
+
       if (options.stream) {
         const spinner = ora('Starting build...').start();
-        
-        const response = await client.executeStream(request, (event: StreamEvent) => {
-          switch (event.type) {
-            case 'start':
-              spinner.text = 'Build started';
-              break;
-            case 'progress':
-              if (event.progress) {
-                spinner.text = formatProgress(event.progress.step, event.progress.percentage);
-              }
-              break;
-            case 'result':
-              spinner.succeed('Build completed');
-              break;
-            case 'error':
-              spinner.fail('Build failed');
-              console.error(formatError(event.error?.message || 'Unknown error'));
-              break;
+
+        const response = await client.executeStream(
+          request,
+          (event: StreamEvent) => {
+            switch (event.type) {
+              case 'start':
+                spinner.text = 'Build started';
+                break;
+              case 'progress':
+                if (event.progress) {
+                  spinner.text = formatProgress(
+                    event.progress.step,
+                    event.progress.percentage
+                  );
+                }
+                break;
+              case 'result':
+                spinner.succeed('Build completed');
+                break;
+              case 'error':
+                spinner.fail('Build failed');
+                console.error(
+                  formatError(event.error?.message || 'Unknown error')
+                );
+                break;
+            }
           }
-        });
-        
+        );
+
         console.log(formatResponse(response));
-        
+
         // Handle multiple output files if artifacts are generated
         if (options.output && response.result?.artifacts) {
           await fs.ensureDir(options.output);
@@ -320,9 +379,9 @@ program
         const spinner = ora('Building...').start();
         const response = await client.execute(request);
         spinner.stop();
-        
+
         console.log(formatResponse(response));
-        
+
         // Handle multiple output files if artifacts are generated
         if (options.output && response.result?.artifacts) {
           await fs.ensureDir(options.output);
@@ -355,38 +414,53 @@ program
   .action(async (files: string[], options: CommandOptions) => {
     try {
       const client = createAPIClient(options);
-      const frameworkInstruction = options.framework ? ` using ${options.framework}` : '';
+      const frameworkInstruction = options.framework
+        ? ` using ${options.framework}`
+        : '';
       const prompt = `Generate comprehensive unit tests for the provided code files${frameworkInstruction}. Include edge cases, error handling, and mock dependencies where appropriate.`;
-      const request = await buildExecuteRequest('testing', prompt, files, options);
-      
+      const request = await buildExecuteRequest(
+        'testing',
+        prompt,
+        files,
+        options
+      );
+
       // Override persona for testing
       request.superclause_config.persona = 'tester';
-      
+
       if (options.stream) {
         const spinner = ora('Generating tests...').start();
-        
-        const response = await client.executeStream(request, (event: StreamEvent) => {
-          switch (event.type) {
-            case 'start':
-              spinner.text = 'Test generation started';
-              break;
-            case 'progress':
-              if (event.progress) {
-                spinner.text = formatProgress(event.progress.step, event.progress.percentage);
-              }
-              break;
-            case 'result':
-              spinner.succeed('Test generation completed');
-              break;
-            case 'error':
-              spinner.fail('Test generation failed');
-              console.error(formatError(event.error?.message || 'Unknown error'));
-              break;
+
+        const response = await client.executeStream(
+          request,
+          (event: StreamEvent) => {
+            switch (event.type) {
+              case 'start':
+                spinner.text = 'Test generation started';
+                break;
+              case 'progress':
+                if (event.progress) {
+                  spinner.text = formatProgress(
+                    event.progress.step,
+                    event.progress.percentage
+                  );
+                }
+                break;
+              case 'result':
+                spinner.succeed('Test generation completed');
+                break;
+              case 'error':
+                spinner.fail('Test generation failed');
+                console.error(
+                  formatError(event.error?.message || 'Unknown error')
+                );
+                break;
+            }
           }
-        });
-        
+        );
+
         console.log(formatResponse(response));
-        
+
         // Save test files if specified
         if (options.output && response.result?.artifacts) {
           await fs.ensureDir(options.output);
@@ -402,9 +476,9 @@ program
         const spinner = ora('Generating tests...').start();
         const response = await client.execute(request);
         spinner.stop();
-        
+
         console.log(formatResponse(response));
-        
+
         // Save test files if specified
         if (options.output && response.result?.artifacts) {
           await fs.ensureDir(options.output);
@@ -495,10 +569,10 @@ program
     try {
       const client = createAPIClient(options);
       const spinner = ora('Checking server health...').start();
-      
+
       const health = await client.healthCheck();
       spinner.stop();
-      
+
       console.log(chalk.green('✓ Server is healthy'));
       console.log(`Status: ${health.status}`);
       console.log(`Version: ${health.version}`);
@@ -514,15 +588,116 @@ program
   });
 
 // Error handling
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error(formatError(`Uncaught exception: ${error.message}`));
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   console.error(formatError(`Unhandled rejection: ${reason}`));
   process.exit(1);
 });
+
+// Command: chat
+program
+  .command('chat')
+  .description('Start an interactive chat with the AI')
+  .option('-p, --persona <persona>', 'AI persona to use', 'assistant')
+  .option('--model <model>', 'AI model to use')
+  .option('--provider <provider>', 'AI provider to use')
+  .option('-t, --temperature <temp>', 'Model temperature (0.0-2.0)', parseFloat)
+  .option('--stream', 'Enable streaming responses')
+  .action(async (options: CommandOptions) => {
+    try {
+      const client = createAPIClient(options);
+      const sessionId = generateUUID();
+
+      console.log(chalk.green('🐒 Monkey Coder Chat'));
+      console.log(
+        chalk.gray(
+          'Type your message and press Enter. Type "exit" or "quit" to leave.'
+        )
+      );
+      console.log(chalk.gray('Use Ctrl+C to exit at any time.'));
+      console.log(chalk.gray(`Persona: ${options.persona || 'assistant'}`));
+      console.log('');
+
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: chalk.blue('You: '),
+      });
+
+      rl.prompt();
+
+      rl.on('line', async line => {
+        const input = line.trim();
+
+        if (!input) {
+          rl.prompt();
+          return;
+        }
+
+        if (input.toLowerCase() === 'exit' || input.toLowerCase() === 'quit') {
+          rl.close();
+          return;
+        }
+
+        try {
+          const spinner = ora('AI is thinking...').start();
+
+          const request = await buildExecuteRequest('chat', input, [], {
+            ...options,
+            persona: options.persona || 'assistant',
+          });
+
+          // Use the same session ID for conversation continuity
+          request.context.session_id = sessionId;
+
+          let response;
+          if (options.stream) {
+            response = await client.executeStream(
+              request,
+              (event: StreamEvent) => {
+                if (event.type === 'progress' && event.data) {
+                  spinner.text = `AI is responding: ${event.data.slice(0, 50)}...`;
+                }
+              }
+            );
+          } else {
+            response = await client.execute(request);
+          }
+
+          spinner.stop();
+          console.log(
+            chalk.cyan('🤖 AI:'),
+            response.result?.result || 'No response received'
+          );
+          console.log('Response Object:', response);
+        } catch (error: any) {
+          console.error(chalk.red('Error:'), error.message);
+          console.error(error);
+        }
+
+        console.log('');
+        rl.prompt();
+      }).on('close', () => {
+        console.log('');
+        console.log(chalk.green('Thanks for chatting! Goodbye! 👋'));
+        process.exit(0);
+      });
+
+      // Handle Ctrl+C gracefully
+      rl.on('SIGINT', () => {
+        console.log('');
+        console.log(chalk.yellow('Chat interrupted. Goodbye! 👋'));
+        process.exit(0);
+      });
+    } catch (error: any) {
+      console.error(formatError(error));
+      process.exit(1);
+    }
+  });
 
 // Parse command line arguments
 program.parse();

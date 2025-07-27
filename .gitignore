@@ -188,8 +188,23 @@ Pipfile.lock
 .env.development.local
 .env.test.local
 .env.production.local
+.env.staging
+.env.production
 .secrets
 secrets.json
+
+# NPM and PyPI tokens
+.npmrc
+*.pypirc
+
+# Railway tokens and config
+.railway/
+railway.json
+
+# API Keys and service credentials
+**/api_keys.txt
+**/service-account.json
+**/credentials.json
 
 # Security scan reports
 *-audit-report.json

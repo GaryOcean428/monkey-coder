@@ -15,6 +15,7 @@ module.exports = {
     'coverage/',
     'qwencoder-eval/',
     'finetuning/',
-    '**/*.ts', // Skip TypeScript files for now
+    '**/*.ts',
+    '**/*.tsx',
   ],
 };

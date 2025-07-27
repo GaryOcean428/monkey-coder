@@ -6,14 +6,15 @@ All model names are validated against official OpenAI documentation to ensure
 accuracy and compliance.
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import httpx
-from openai import AsyncOpenAI
-from openai.types import Model as OpenAIModel
+try:
+    from openai import AsyncOpenAI  # type: ignore
+except ImportError:
+    AsyncOpenAI = None
+    logging.warning("OpenAI package not installed. Install it with: pip install openai")
 
 from . import BaseProvider
 from ..models import ProviderType, ProviderError, ModelInfo
@@ -25,79 +26,34 @@ class OpenAIProvider(BaseProvider):
     """
     OpenAI provider adapter implementing the BaseProvider interface.
     
-    Provides access to OpenAI's GPT models including GPT-4, GPT-3.5-turbo,
-    and o1 models. Validates all model names against the official OpenAI API.
+    Provides access to OpenAI's latest GPT models including GPT-4.1 and GPT-4.1-mini.
+    Validates all model names against the official OpenAI API.
     """
     
     # Official OpenAI model names validated against API documentation
-    VALIDATED_MODELS = {
-        # GPT-4 Models (current)
-        "gpt-4o": {
-            "name": "gpt-4o",
+    VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        # GPT-4.1 Models (latest generation)
+        "gpt-4.1": {
+            "name": "gpt-4.1",
             "type": "chat",
-            "context_length": 128000,
-            "input_cost": 2.50,  # per 1M tokens
-            "output_cost": 10.00,  # per 1M tokens
-            "description": "GPT-4 Omni - Latest multimodal flagship model",
-            "capabilities": ["text", "vision", "function_calling"],
+            "context_length": 1048576,  # 1M tokens
+            "input_cost": 2.00,  # per 1M tokens
+            "output_cost": 8.00,  # per 1M tokens
+            "description": "GPT-4.1 - Latest flagship model with extended context",
+            "capabilities": ["text", "vision", "function_calling", "reasoning"],
+            "version": "4.1",
+            "release_date": datetime(2025, 1, 1),
         },
-        "gpt-4o-mini": {
-            "name": "gpt-4o-mini",
+        "gpt-4.1-mini": {
+            "name": "gpt-4.1-mini",
             "type": "chat", 
-            "context_length": 128000,
-            "input_cost": 0.15,
-            "output_cost": 0.60,
-            "description": "Affordable and intelligent small model for fast, lightweight tasks",
+            "context_length": 1048576,  # 1M tokens
+            "input_cost": 0.12,
+            "output_cost": 0.48,
+            "description": "GPT-4.1 Mini - Efficient model for fast, lightweight tasks",
             "capabilities": ["text", "vision", "function_calling"],
-        },
-        "gpt-4-turbo": {
-            "name": "gpt-4-turbo",
-            "type": "chat",
-            "context_length": 128000,
-            "input_cost": 10.00,
-            "output_cost": 30.00,
-            "description": "GPT-4 Turbo with Vision",
-            "capabilities": ["text", "vision", "function_calling"],
-        },
-        "gpt-4": {
-            "name": "gpt-4",
-            "type": "chat",
-            "context_length": 8192,
-            "input_cost": 30.00,
-            "output_cost": 60.00,
-            "description": "Original GPT-4 model",
-            "capabilities": ["text", "function_calling"],
-        },
-        
-        # GPT-3.5 Models
-        "gpt-3.5-turbo": {
-            "name": "gpt-3.5-turbo",
-            "type": "chat",
-            "context_length": 16385,
-            "input_cost": 0.50,
-            "output_cost": 1.50,
-            "description": "Most capable GPT-3.5 model, optimized for chat",
-            "capabilities": ["text", "function_calling"],
-        },
-        
-        # o1 Models (reasoning)
-        "o1-preview": {
-            "name": "o1-preview",
-            "type": "chat",
-            "context_length": 128000,
-            "input_cost": 15.00,
-            "output_cost": 60.00,
-            "description": "Reasoning model designed to solve hard problems",
-            "capabilities": ["text", "reasoning"],
-        },
-        "o1-mini": {
-            "name": "o1-mini",
-            "type": "chat",
-            "context_length": 128000,
-            "input_cost": 3.00,
-            "output_cost": 12.00,
-            "description": "Faster and cheaper reasoning model",
-            "capabilities": ["text", "reasoning"],
+            "version": "4.1-mini",
+            "release_date": datetime(2025, 1, 1),
         },
     }
     
@@ -117,6 +73,13 @@ class OpenAIProvider(BaseProvider):
     
     async def initialize(self) -> None:
         """Initialize the OpenAI client."""
+        if AsyncOpenAI is None:
+            raise ProviderError(
+                "OpenAI package not installed. Install it with: pip install openai",
+                provider="OpenAI",
+                error_code="PACKAGE_NOT_INSTALLED"
+            )
+        
         try:
             self.client = AsyncOpenAI(
                 api_key=self.api_key,
@@ -146,9 +109,16 @@ class OpenAIProvider(BaseProvider):
     
     async def _test_connection(self) -> None:
         """Test the OpenAI API connection."""
+        if not self.client:
+            raise ProviderError(
+                "OpenAI client not available for testing",
+                provider="OpenAI",
+                error_code="CLIENT_NOT_INITIALIZED"
+            )
+        
         try:
             # Simple API call to test connection
-            models = await self.client.models.list()
+            models = await self.client.models.list()  # type: ignore
             if not models.data:
                 raise ProviderError(
                     "No models returned from OpenAI API",
@@ -172,6 +142,10 @@ class OpenAIProvider(BaseProvider):
         # Check against our validated models list
         if model_name in self.VALIDATED_MODELS:
             return True
+        
+        # If client not initialized, we can only check validated models
+        if not self.client:
+            return False
         
         # For dynamic validation, query the API
         try:
@@ -204,6 +178,8 @@ class OpenAIProvider(BaseProvider):
                 output_cost=info["output_cost"] / 1_000_000,
                 capabilities=info["capabilities"],
                 description=info["description"],
+                version=info.get("version"),
+                release_date=info.get("release_date"),
             )
             models.append(model_info)
         
@@ -222,9 +198,18 @@ class OpenAIProvider(BaseProvider):
                 output_cost=info["output_cost"] / 1_000_000,
                 capabilities=info["capabilities"],
                 description=info["description"],
+                version=info.get("version"),
+                release_date=info.get("release_date"),
             )
         
         # Try to get from API
+        if not self.client:
+            raise ProviderError(
+                "OpenAI client not initialized",
+                provider="OpenAI",
+                error_code="CLIENT_NOT_INITIALIZED"
+            )
+        
         try:
             model = await self.client.models.retrieve(model_name)
             return ModelInfo(
@@ -236,6 +221,8 @@ class OpenAIProvider(BaseProvider):
                 output_cost=0.0,   # Not provided by API
                 capabilities=[],
                 description=f"OpenAI model {model.id}",
+                version=None,
+                release_date=None,
             )
         except Exception as e:
             raise ProviderError(
@@ -251,6 +238,13 @@ class OpenAIProvider(BaseProvider):
         **kwargs
     ) -> Dict[str, Any]:
         """Generate completion using OpenAI's API."""
+        if not self.client:
+            raise ProviderError(
+                "OpenAI client not initialized",
+                provider="OpenAI",
+                error_code="CLIENT_NOT_INITIALIZED"
+            )
+        
         try:
             # Validate model first
             if not await self.validate_model(model):
@@ -312,13 +306,20 @@ class OpenAIProvider(BaseProvider):
     
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check on OpenAI provider."""
+        if not self.client:
+            return {
+                "status": "unhealthy",
+                "error": "OpenAI client not initialized",
+                "last_updated": datetime.utcnow().isoformat(),
+            }
+        
         try:
             # Test API connectivity
             models = await self.client.models.list()
             
             # Test a simple completion
             test_response = await self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4.1-mini",
                 messages=[{"role": "user", "content": "Hello"}],
                 max_tokens=5
             )

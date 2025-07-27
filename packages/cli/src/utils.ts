@@ -26,7 +26,10 @@ export async function readFileContent(filePath: string): Promise<string> {
 /**
  * Write content to file with directory creation
  */
-export async function writeFileContent(filePath: string, content: string): Promise<void> {
+export async function writeFileContent(
+  filePath: string,
+  content: string
+): Promise<void> {
   try {
     const absolutePath = path.resolve(filePath);
     await fs.ensureDir(path.dirname(absolutePath));
@@ -81,36 +84,42 @@ export function detectLanguage(filePath: string): string {
  */
 export function formatResponse(response: ExecuteResponse): string {
   const lines: string[] = [];
-  
+
   lines.push(chalk.green('✓ Task completed successfully'));
-  lines.push(chalk.gray(`Execution ID: ${response.execution_id}`));
+  lines.push(chalk.gray(`Task ID: ${response.task_id}`));
   lines.push(chalk.gray(`Status: ${response.status}`));
-  
+
   if (response.usage) {
     lines.push('');
     lines.push(chalk.cyan('Usage Statistics:'));
     lines.push(`  Tokens used: ${response.usage.tokens_used}`);
     lines.push(`  Input tokens: ${response.usage.tokens_input}`);
     lines.push(`  Output tokens: ${response.usage.tokens_output}`);
-    lines.push(`  Execution time: ${response.usage.execution_time.toFixed(2)}s`);
+    lines.push(
+      `  Execution time: ${response.usage.execution_time.toFixed(2)}s`
+    );
     lines.push(`  Estimated cost: $${response.usage.cost_estimate.toFixed(4)}`);
   }
-  
+
   if (response.result) {
     lines.push('');
     lines.push(chalk.cyan('Result:'));
-    
+
     if (typeof response.result.result === 'string') {
       lines.push(response.result.result);
     } else {
       lines.push(JSON.stringify(response.result.result, null, 2));
     }
-    
+
     if (response.result.confidence_score) {
       lines.push('');
-      lines.push(chalk.gray(`Confidence: ${(response.result.confidence_score * 100).toFixed(1)}%`));
+      lines.push(
+        chalk.gray(
+          `Confidence: ${(response.result.confidence_score * 100).toFixed(1)}%`
+        )
+      );
     }
-    
+
     if (response.result.artifacts && response.result.artifacts.length > 0) {
       lines.push('');
       lines.push(chalk.cyan('Generated Artifacts:'));
@@ -122,7 +131,7 @@ export function formatResponse(response: ExecuteResponse): string {
       });
     }
   }
-  
+
   return lines.join('\n');
 }
 
@@ -137,16 +146,20 @@ export function formatError(error: Error | string): string {
 /**
  * Format progress information
  */
-export function formatProgress(step: string, percentage?: number, metadata?: Record<string, any>): string {
+export function formatProgress(
+  step: string,
+  percentage?: number,
+  metadata?: Record<string, any>
+): string {
   const parts: string[] = [];
-  
+
   if (percentage !== undefined) {
     const progressBar = createProgressBar(percentage);
     parts.push(chalk.cyan(`${progressBar} ${percentage.toFixed(1)}%`));
   }
-  
+
   parts.push(chalk.yellow(step));
-  
+
   if (metadata) {
     const metaInfo = Object.entries(metadata)
       .map(([key, value]) => `${key}: ${value}`)
@@ -155,14 +168,17 @@ export function formatProgress(step: string, percentage?: number, metadata?: Rec
       parts.push(chalk.gray(`(${metaInfo})`));
     }
   }
-  
+
   return parts.join(' ');
 }
 
 /**
  * Create a simple progress bar
  */
-export function createProgressBar(percentage: number, width: number = 20): string {
+export function createProgressBar(
+  percentage: number,
+  width: number = 20
+): string {
   const filled = Math.floor((percentage / 100) * width);
   const empty = width - filled;
   return '[' + '█'.repeat(filled) + '░'.repeat(empty) + ']';
@@ -172,9 +188,9 @@ export function createProgressBar(percentage: number, width: number = 20): strin
  * Generate UUID v4
  */
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -184,7 +200,7 @@ export function generateUUID(): string {
  */
 export async function validateFilePath(filePath: string): Promise<void> {
   const absolutePath = path.resolve(filePath);
-  
+
   try {
     const stats = await fs.stat(absolutePath);
     if (!stats.isFile()) {
@@ -215,12 +231,12 @@ export function formatFileSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   let size = bytes;
   let unit = 0;
-  
+
   while (size >= 1024 && unit < units.length - 1) {
     size /= 1024;
     unit++;
   }
-  
+
   return `${size.toFixed(1)} ${units[unit]}`;
 }
 

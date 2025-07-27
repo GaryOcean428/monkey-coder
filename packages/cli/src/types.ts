@@ -5,7 +5,16 @@
 
 export interface ExecuteRequest {
   task_id?: string;
-  task_type: 'code_generation' | 'code_analysis' | 'code_review' | 'documentation' | 'testing' | 'debugging' | 'refactoring' | 'custom';
+  task_type:
+    | 'code_generation'
+    | 'code_analysis'
+    | 'code_review'
+    | 'documentation'
+    | 'testing'
+    | 'debugging'
+    | 'refactoring'
+    | 'chat'
+    | 'custom';
   prompt: string;
   files?: Array<{
     path: string;
@@ -22,7 +31,15 @@ export interface ExecuteRequest {
     temperature?: number;
   };
   superclause_config: {
-    persona: 'developer' | 'architect' | 'reviewer' | 'security_analyst' | 'performance_expert' | 'tester' | 'technical_writer' | 'custom';
+    persona:
+      | 'developer'
+      | 'architect'
+      | 'reviewer'
+      | 'security_analyst'
+      | 'performance_expert'
+      | 'tester'
+      | 'technical_writer'
+      | 'custom';
     slash_commands?: string[];
     context_window?: number;
     use_markdown_spec?: boolean;

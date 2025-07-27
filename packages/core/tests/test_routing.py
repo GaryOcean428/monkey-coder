@@ -209,10 +209,10 @@ class TestAdvancedRouter:
         for score in scores.values():
             assert 0 <= score <= 1
         
-        # GPT-4o should score highly for these requirements
-        gpt4o_score = scores.get((ProviderType.OPENAI, "gpt-4o"))
-        if gpt4o_score:
-            assert gpt4o_score > 0.7
+        # GPT-4.1 should score highly for these requirements
+        gpt41_score = scores.get((ProviderType.OPENAI, "gpt-4.1"))
+        if gpt41_score:
+            assert gpt41_score > 0.7
     
     def test_full_routing_simple_task(self):
         """Test full routing for a simple coding task."""
@@ -314,8 +314,8 @@ class TestAdvancedRouter:
         
         # Should prefer cheaper models for simple tasks
         assert decision.complexity_score < 0.4
-        # Check if a cost-effective model was selected (like gpt-4o-mini or claude-haiku)
-        cost_effective_models = ["gpt-4o-mini", "claude-3-5-haiku-20241022"]
+        # Check if a cost-effective model was selected (like gpt-4.1-mini or claude-haiku)
+        cost_effective_models = ["gpt-4.1-mini", "claude-3.5-haiku"]
         assert decision.model in cost_effective_models or decision.capability_score > 0.8
     
     def test_high_complexity_prefers_capable_models(self):
@@ -331,8 +331,8 @@ class TestAdvancedRouter:
         # Should have high complexity score
         assert decision.complexity_score > 0.7
         
-        # Should prefer capable models (GPT-4o, Claude-3.5-Sonnet, or o1-preview)
-        capable_models = ["gpt-4o", "claude-3-5-sonnet-20241022", "o1-preview"]
+        # Should prefer capable models (GPT-4.1, Claude-4-Opus, Claude-4-Sonnet)
+        capable_models = ["gpt-4.1", "claude-4-opus", "claude-4-sonnet"]
         assert decision.model in capable_models or decision.capability_score > 0.9
 
 

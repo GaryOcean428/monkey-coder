@@ -50,10 +50,10 @@ def slash_commands():
 def expected_models():
     """Fixture providing expected model selections for different scenarios."""
     return {
-        "cost_effective": ["gpt-4o-mini", "claude-3-5-haiku-20241022"],
-        "high_capability": ["gpt-4o", "claude-3-5-sonnet-20241022", "o1-preview"],
-        "reasoning_focused": ["o1-preview", "gpt-4o", "claude-3-5-sonnet-20241022"],
-        "fast_response": ["gpt-4o-mini", "claude-3-5-haiku-20241022", "gemini-2.0-flash-exp"],
+        "cost_effective": ["gpt-4.1-mini", "claude-3.5-haiku"],
+        "high_capability": ["gpt-4.1", "claude-4-opus", "claude-4-sonnet"],
+        "reasoning_focused": ["gpt-4.1", "claude-4-opus", "claude-4-sonnet"],
+        "fast_response": ["gpt-4.1-mini", "claude-3.5-haiku", "gemini-2.0-flash"],
     }
 
 

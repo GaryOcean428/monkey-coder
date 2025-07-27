@@ -29,7 +29,10 @@ dependencies = [
     "openai>=1.3.0",
     "anthropic>=0.8.0",
     "google-genai>=0.3.0",
+    "groq>=0.4.0",
+    "aiohttp>=3.9.0",
     "qwen-agent>=0.0.10",
+    "alibabacloud-dashscope>=1.14.0",
     "python-multipart>=0.0.6",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
@@ -76,10 +79,10 @@ Documentation = "https://github.com/GaryOcean428/monkey-coder/docs"
 "Bug Tracker" = "https://github.com/GaryOcean428/monkey-coder/issues"
 
 [tool.setuptools.packages.find]
-where = ["."]  # list of folders that contain the packages (["src"] by default)
-include = ["monkey_coder*"]  # package names should match these glob patterns (["*"] by default)
-exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by default)
-namespace-packages = false  # to disable scanning PEP 420 namespaces (true by default)
+where = ["."] 
+include = ["monkey_coder*"]
+exclude = ["tests*"]
+namespaces = false
 
 [tool.black]
 line-length = 88
@@ -131,7 +134,7 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
-    "slow: marks tests as slow (deselect with '-m "not slow"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
 ]
@@ -155,6 +158,6 @@ exclude_lines = [
     "raise NotImplementedError",
     "if 0:",
     "if __name__ == .__main__.:",
-    "class .*\bProtocol\):",
-    "@(abc\.)?abstractmethod",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
 ]

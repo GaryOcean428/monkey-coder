@@ -24,6 +24,7 @@
     "@mdx-js/react": "^3.0.0",
     "@webcontainer/api": "^1.6.1",
     "clsx": "^2.0.0",
+    "iframe-resizer-react": "^5.1.5",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -33,6 +34,8 @@
     "@docusaurus/module-type-aliases": "3.8.1",
     "@docusaurus/tsconfig": "3.8.1",
     "@docusaurus/types": "3.8.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "typescript": "~5.6.2"
   },
   "browserslist": {

@@ -454,3 +454,17 @@ def _validate_api_key(api_key: str) -> bool:
         True if valid, False otherwise
     """
     return api_key and api_key.startswith('mk-') and len(api_key) > 10
+
+
+async def verify_permissions(api_key: str) -> bool:
+    """
+    Verify permissions for API key.
+    
+    Args:
+        api_key: The API key to verify permissions for
+        
+    Returns:
+        True if permissions are valid
+    """
+    # For development, always return True for valid API keys
+    return _validate_api_key(api_key)
