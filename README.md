@@ -1,25 +1,9 @@
-<a name="readme-top"></a>
-
-<p align="center">
-    <img src="https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/qwen3_coder.png" width="400"/>
-<p>
-
-<p align="center">
-    <img src="https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/qwen3-coder-main.jpg" width="800"/>
-<p>
-
-<p align="center">
-        🚀 <a href="#getting-started"><b>Getting Started</b></a>&nbsp&nbsp | &nbsp&nbsp📦 <a href="#monorepo-structure">Monorepo</a>&nbsp&nbsp | &nbsp&nbsp🛠️ <a href="#cli-tools">CLI Tools</a>&nbsp&nbsp | &nbsp&nbsp📖 <a href="docs/">Documentation</a>
-<br> 
-        🌟 <a href="https://github.com/QwenLM/Qwen3-Coder">Original Qwen3-Coder</a>&nbsp&nbsp | &nbsp&nbsp💜 <a href="https://chat.qwenlm.ai/">Qwen Chat</a>&nbsp&nbsp | &nbsp&nbsp🤗 <a href="https://huggingface.co/collections/Qwen/qwen3-coder-687fc861e53c939e52d52d10">Hugging Face</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://qwenlm.github.io/blog/qwen3-coder">Blog</a>
-</p>
-
 # Monkey Coder
 
 **AI-Powered Code Generation and Analysis Platform**
 
 > **Note**: This is a monorepo transformation of the original
-> [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) project, restructured for better developer
+project, restructured for better developer
 > experience and modular architecture.
 
 ## Overview
