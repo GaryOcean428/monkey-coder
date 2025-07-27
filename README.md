@@ -18,14 +18,17 @@
 
 **AI-Powered Code Generation and Analysis Platform**
 
-> **Note**: This is a monorepo transformation of the original [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) project, restructured for better developer experience and modular architecture.
+> **Note**: This is a monorepo transformation of the original
+> [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) project, restructured for better developer
+> experience and modular architecture.
 
 ## Overview
 
-Monkey Coder transforms the powerful Qwen3-Coder models into a comprehensive development toolkit with:
+Monkey Coder transforms the powerful Qwen3-Coder models into a comprehensive development toolkit
+with:
 
 - 🚀 **TypeScript CLI** for seamless integration into your workflow
-- 🐍 **Python Core** for AI model orchestration and processing  
+- 🐍 **Python Core** for AI model orchestration and processing
 - 📦 **SDK Libraries** for easy integration into your applications
 - 🛠️ **Monorepo Architecture** with Yarn 4.9.2 workspaces
 - 📚 **Comprehensive Documentation** with MkDocs
@@ -36,7 +39,7 @@ Monkey Coder transforms the powerful Qwen3-Coder models into a comprehensive dev
 monkey-coder/
 ├─ packages/
 │  ├─ cli/              # TypeScript CLI tools
-│  ├─ core/             # Python orchestration engine  
+│  ├─ core/             # Python orchestration engine
 │  └─ sdk/              # TypeScript/Python client SDKs
 ├─ services/            # Optional microservices
 ├─ docs/                # MkDocs documentation
@@ -47,36 +50,48 @@ monkey-coder/
 
 ## Introduction
 
-Today, we're announcing Qwen3-Coder, our most agentic code model to date. **Qwen3-Coder** is available in multiple sizes, but we're excited to introduce its most powerful variant first: **Qwen3-Coder-480B-A35B-Instruct** — a 480B-parameter Mixture-of-Experts model with 35B active parameters, offering exceptional performance in both coding and agentic tasks. **Qwen3-Coder-480B-A35B-Instruct** sets new state-of-the-art results among open models on Agentic Coding, Agentic Browser-Use, and Agentic Tool-Use, comparable to Claude Sonnet. 
+Today, we're announcing Qwen3-Coder, our most agentic code model to date. **Qwen3-Coder** is
+available in multiple sizes, but we're excited to introduce its most powerful variant first:
+**Qwen3-Coder-480B-A35B-Instruct** — a 480B-parameter Mixture-of-Experts model with 35B active
+parameters, offering exceptional performance in both coding and agentic tasks.
+**Qwen3-Coder-480B-A35B-Instruct** sets new state-of-the-art results among open models on Agentic
+Coding, Agentic Browser-Use, and Agentic Tool-Use, comparable to Claude Sonnet.
 
-💻 **Significant Performance**: among open models on **Agentic Coding**, **Agentic Browser-Use**, and other foundational coding tasks, achieving results comparable to Claude Sonnet;
+💻 **Significant Performance**: among open models on **Agentic Coding**, **Agentic Browser-Use**,
+and other foundational coding tasks, achieving results comparable to Claude Sonnet;
 
-📚 **Long-context Capabilities**: with native support for **256K** tokens, extendable up to **1M** tokens using Yarn, optimized for repository-scale understanding;
+📚 **Long-context Capabilities**: with native support for **256K** tokens, extendable up to **1M**
+tokens using Yarn, optimized for repository-scale understanding;
 
-🛠 **Agentic Coding**: supporting for most platform such as **Qwen Code**, **CLINE**, featuring a specially designed function call format;
+🛠 **Agentic Coding**: supporting for most platform such as **Qwen Code**, **CLINE**, featuring a
+specially designed function call format;
 
 ## Basic information
 
 1. ✨ Supporting long context understanding and generation with the context length of 256K tokens;
 2. ✨ Supporting 358 coding languages;
+
 ```
 ['ABAP', 'ActionScript', 'Ada', 'Agda', 'Alloy', 'ApacheConf', 'AppleScript', 'Arc', 'Arduino', 'AsciiDoc', 'AspectJ', 'Assembly', 'Augeas', 'AutoHotkey', 'AutoIt', 'Awk', 'Batchfile', 'Befunge', 'Bison', 'BitBake', 'BlitzBasic', 'BlitzMax', 'Bluespec', 'Boo', 'Brainfuck', 'Brightscript', 'Bro', 'C', 'C#', 'C++', 'C2hs Haskell', 'CLIPS', 'CMake', 'COBOL', 'CSS', 'CSV', "Cap'n Proto", 'CartoCSS', 'Ceylon', 'Chapel', 'ChucK', 'Cirru', 'Clarion', 'Clean', 'Click', 'Clojure', 'CoffeeScript', 'ColdFusion', 'ColdFusion CFC', 'Common Lisp', 'Component Pascal', 'Coq', 'Creole', 'Crystal', 'Csound', 'Cucumber', 'Cuda', 'Cycript', 'Cython', 'D', 'DIGITAL Command Language', 'DM', 'DNS Zone', 'Darcs Patch', 'Dart', 'Diff', 'Dockerfile', 'Dogescript', 'Dylan', 'E', 'ECL', 'Eagle', 'Ecere Projects', 'Eiffel', 'Elixir', 'Elm', 'Emacs Lisp', 'EmberScript', 'Erlang', 'F#', 'FLUX', 'FORTRAN', 'Factor', 'Fancy', 'Fantom', 'Forth', 'FreeMarker', 'G-code', 'GAMS', 'GAP', 'GAS', 'GDScript', 'GLSL', 'Genshi', 'Gentoo Ebuild', 'Gentoo Eclass', 'Gettext Catalog', 'Glyph', 'Gnuplot', 'Go', 'Golo', 'Gosu', 'Grace', 'Gradle', 'Grammatical Framework', 'GraphQL', 'Graphviz (DOT)', 'Groff', 'Groovy', 'Groovy Server Pages', 'HCL', 'HLSL', 'HTML', 'HTML+Django', 'HTML+EEX', 'HTML+ERB', 'HTML+PHP', 'HTTP', 'Haml', 'Handlebars', 'Harbour', 'Haskell', 'Haxe', 'Hy', 'IDL', 'IGOR Pro', 'INI', 'IRC log', 'Idris', 'Inform 7', 'Inno Setup', 'Io', 'Ioke', 'Isabelle', 'J', 'JFlex', 'JSON', 'JSON5', 'JSONLD', 'JSONiq', 'JSX', 'Jade', 'Jasmin', 'Java', 'Java Server Pages', 'JavaScript', 'Julia', 'Jupyter Notebook', 'KRL', 'KiCad', 'Kit', 'Kotlin', 'LFE', 'LLVM', 'LOLCODE', 'LSL', 'LabVIEW', 'Lasso', 'Latte', 'Lean', 'Less', 'Lex', 'LilyPond', 'Linker Script', 'Liquid', 'Literate Agda', 'Literate CoffeeScript', 'Literate Haskell', 'LiveScript', 'Logos', 'Logtalk', 'LookML', 'Lua', 'M', 'M4', 'MAXScript', 'MTML', 'MUF', 'Makefile', 'Mako', 'Maple', 'Markdown', 'Mask', 'Mathematica', 'Matlab', 'Max', 'MediaWiki', 'Metal', 'MiniD', 'Mirah', 'Modelica', 'Module Management System', 'Monkey', 'MoonScript', 'Myghty', 'NSIS', 'NetLinx', 'NetLogo', 'Nginx', 'Nimrod', 'Ninja', 'Nit', 'Nix', 'Nu', 'NumPy', 'OCaml', 'ObjDump', 'Objective-C++', 'Objective-J', 'Octave', 'Omgrofl', 'Opa', 'Opal', 'OpenCL', 'OpenEdge ABL', 'OpenSCAD', 'Org', 'Ox', 'Oxygene', 'Oz', 'PAWN', 'PHP', 'POV-Ray SDL', 'Pan', 'Papyrus', 'Parrot', 'Parrot Assembly', 'Parrot Internal Representation', 'Pascal', 'Perl', 'Perl6', 'Pickle', 'PigLatin', 'Pike', 'Pod', 'PogoScript', 'Pony', 'PostScript', 'PowerShell', 'Processing', 'Prolog', 'Propeller Spin', 'Protocol Buffer', 'Public Key', 'Pure Data', 'PureBasic', 'PureScript', 'Python', 'Python traceback', 'QML', 'QMake', 'R', 'RAML', 'RDoc', 'REALbasic', 'RHTML', 'RMarkdown', 'Racket', 'Ragel in Ruby Host', 'Raw token data', 'Rebol', 'Red', 'Redcode', "Ren'Py", 'RenderScript', 'RobotFramework', 'Rouge', 'Ruby', 'Rust', 'SAS', 'SCSS', 'SMT', 'SPARQL', 'SQF', 'SQL', 'STON', 'SVG', 'Sage', 'SaltStack', 'Sass', 'Scala', 'Scaml', 'Scheme', 'Scilab', 'Self', 'Shell', 'ShellSession', 'Shen', 'Slash', 'Slim', 'Smali', 'Smalltalk', 'Smarty', 'Solidity', 'SourcePawn', 'Squirrel', 'Stan', 'Standard ML', 'Stata', 'Stylus', 'SuperCollider', 'Swift', 'SystemVerilog', 'TOML', 'TXL', 'Tcl', 'Tcsh', 'TeX', 'Tea', 'Text', 'Textile', 'Thrift', 'Turing', 'Turtle', 'Twig', 'TypeScript', 'Unified Parallel C', 'Unity3D Asset', 'Uno', 'UnrealScript', 'UrWeb', 'VCL', 'VHDL', 'Vala', 'Verilog', 'VimL', 'Visual Basic', 'Volt', 'Vue', 'Web Ontology Language', 'WebAssembly', 'WebIDL', 'X10', 'XC', 'XML', 'XPages', 'XProc', 'XQuery', 'XS', 'XSLT', 'Xojo', 'Xtend', 'YAML', 'YANG', 'Yacc', 'Zephir', 'Zig', 'Zimpl', 'desktop', 'eC', 'edn', 'fish', 'mupad', 'nesC', 'ooc', 'reStructuredText', 'wisp', 'xBase']
 ```
+
 3. ✨ Retain strengths in math and general capabilities from base model.
 
 > [!Important]
-> 
-> Qwen3-coder function calling relies on our new tool parser `qwen3coder_tool_parser.py` <a href="https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct/blob/main/qwen3coder_tool_parser.py">here</a>.
 >
-> We updated both the special tokens and their corresponding token ids, in order to maintain consistency with Qwen3. Please make sure to use the new tokenizer.
+> Qwen3-coder function calling relies on our new tool parser `qwen3coder_tool_parser.py`
+> <a href="https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct/blob/main/qwen3coder_tool_parser.py">here</a>.
+>
+> We updated both the special tokens and their corresponding token ids, in order to maintain
+> consistency with Qwen3. Please make sure to use the new tokenizer.
 
+| model name                         | type     | length | Download                                                                                                                                                                  |
+| ---------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Qwen3-Coder-480B-A35B-Instruct     | instruct | 256k   | 🤗 [Hugging Face](https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct) • 🤖 [ModelScope](https://modelscope.cn/models/Qwen/Qwen3-Coder-480B-A35B-Instruct)         |
+| Qwen3-Coder-480B-A35B-Instruct-FP8 | instruct | 256k   | 🤗 [Hugging Face](https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8) • 🤖 [ModelScope](https://modelscope.cn/models/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8) |
 
-| model name                  | type     | length | Download                                                                                                                                                                        |
-|-----------------------------|----------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Qwen3-Coder-480B-A35B-Instruct         | instruct     | 256k    | 🤗 [Hugging Face](https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct  ) • 🤖 [ModelScope](https://modelscope.cn/models/Qwen/Qwen3-Coder-480B-A35B-Instruct)                                       |
-| Qwen3-Coder-480B-A35B-Instruct-FP8         | instruct     | 256k    | 🤗 [Hugging Face](https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8) • 🤖 [ModelScope](https://modelscope.cn/models/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8)                                       |
-
-Detailed performance and introduction are shown in this <a href="https://qwenlm.github.io/blog/qwen3-coder"> 📑 blog</a>.
+Detailed performance and introduction are shown in this
+<a href="https://qwenlm.github.io/blog/qwen3-coder"> 📑 blog</a>.
 
 ## Getting Started
 
@@ -89,12 +104,14 @@ Detailed performance and introduction are shown in this <a href="https://qwenlm.
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/GaryOcean428/monkey-coder.git
    cd monkey-coder
    ```
 
 2. **Install dependencies**:
+
    ```bash
    yarn install
    ```
@@ -109,6 +126,7 @@ Detailed performance and introduction are shown in this <a href="https://qwenlm.
 The Monkey Coder CLI provides powerful commands for code generation and analysis:
 
 #### Generate Code
+
 ```bash
 # Generate TypeScript code
 yarn cli generate "Create a REST API endpoint for user management" --language typescript
@@ -118,6 +136,7 @@ yarn cli generate "Implement a binary search algorithm" --language python --outp
 ```
 
 #### Analyze Code
+
 ```bash
 # Analyze code quality
 yarn cli analyze ./src/app.ts --type quality
@@ -130,6 +149,7 @@ yarn cli analyze ./src/app.ts --type performance
 ```
 
 #### Available Commands
+
 - `generate <prompt>` - Generate code from natural language
 - `analyze <file>` - Analyze existing code
 - `--help` - Show help information
@@ -137,6 +157,7 @@ yarn cli analyze ./src/app.ts --type performance
 ### Using the SDK
 
 #### TypeScript/JavaScript
+
 ```typescript
 import { MonkeyCoderClient } from '@monkey-coder/sdk';
 
@@ -145,13 +166,14 @@ const client = new MonkeyCoderClient('http://localhost:8000');
 // Generate code
 const result = await client.generateCode({
   prompt: 'Create a React component',
-  language: 'typescript'
+  language: 'typescript',
 });
 
 console.log(result.code);
 ```
 
 #### Python
+
 ```python
 from monkey_coder_core import CodeGenerator
 
@@ -162,13 +184,18 @@ print(code)
 
 ## Quick Start
 
-> [!Important]
-> **Qwen3-Coder-480B-A35B-Instruct** are instruction models for chatting;
+> [!Important] **Qwen3-Coder-480B-A35B-Instruct** are instruction models for chatting;
 >
-> This model supports only non-thinking mode and does not generate ``<think></think>`` blocks in its output. Meanwhile, specifying `enable_thinking=False` is no longer required.**
->
+> This model supports only non-thinking mode and does not generate `<think></think>` blocks in its
+> output. Meanwhile, specifying `enable_thinking=False` is no longer required.\*\*
+
 ### 👉🏻 Chat with Qwen3-Coder-480B-A35B-Instruct
-You can just write several lines of code with `transformers` to chat with Qwen3-Coder-480B-A35B-Instruct. Essentially, we build the tokenizer and the model with `from_pretrained` method, and we use generate method to perform chatting with the help of chat template provided by the tokenizer. Below is an example of how to chat with **Qwen3-Coder-480B-A35B-Instruct**:
+
+You can just write several lines of code with `transformers` to chat with
+Qwen3-Coder-480B-A35B-Instruct. Essentially, we build the tokenizer and the model with
+`from_pretrained` method, and we use generate method to perform chatting with the help of chat
+template provided by the tokenizer. Below is an example of how to chat with
+**Qwen3-Coder-480B-A35B-Instruct**:
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -203,20 +230,29 @@ generated_ids = [
 
 response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 ```
-The `apply_chat_template()` function is used to convert the messages into a format that the model can understand.
-The `add_generation_prompt` argument is used to add a generation prompt, which refers to `<|im_start|>assistant\n` to the input. Notably, we apply ChatML template for chat models following our previous practice.
-The `max_new_tokens` argument is used to set the maximum length of the response. The `tokenizer.batch_decode()` function is used to decode the response. In terms of the input, the above messages is an example to show how to format your dialog history and system prompt.
-You can use the other size of instruct model in the same way.
 
+The `apply_chat_template()` function is used to convert the messages into a format that the model
+can understand. The `add_generation_prompt` argument is used to add a generation prompt, which
+refers to `<|im_start|>assistant\n` to the input. Notably, we apply ChatML template for chat models
+following our previous practice. The `max_new_tokens` argument is used to set the maximum length of
+the response. The `tokenizer.batch_decode()` function is used to decode the response. In terms of
+the input, the above messages is an example to show how to format your dialog history and system
+prompt. You can use the other size of instruct model in the same way.
 
 #### Fill in the middle with Qwen3-Coder-480B-A35B-Instruct
 
-The code insertion task, also referred to as the "fill-in-the-middle" challenge, requires the insertion of code segments in a manner that bridges the gaps within a given code context. For an approach aligned with best practices, we recommend adhering to the formatting guidelines outlined in the paper "Efficient Training of Language Models to Fill in the Middle"[[arxiv](https://arxiv.org/abs/2207.14255)]. 
+The code insertion task, also referred to as the "fill-in-the-middle" challenge, requires the
+insertion of code segments in a manner that bridges the gaps within a given code context. For an
+approach aligned with best practices, we recommend adhering to the formatting guidelines outlined in
+the paper "Efficient Training of Language Models to Fill in the
+Middle"[[arxiv](https://arxiv.org/abs/2207.14255)].
 
 The prompt should be structured as follows:
+
 ```python
 prompt = '<|fim_prefix|>' + prefix_code + '<|fim_suffix|>' + suffix_code + '<|fim_middle|>'
 ```
+
 Following the approach mentioned, an example would be structured in this manner:
 
 ```python
@@ -236,7 +272,7 @@ input_text = """<|fim_prefix|>def quicksort(arr):
     middle = [x for x in arr if x == pivot]
     right = [x for x in arr if x > pivot]
     return quicksort(left) + middle + quicksort(right)<|fim_middle|>"""
-            
+
 messages = [
     {"role": "system", "content": "You are a code completion assistant."},
     {"role": "user", "content": input_text}
@@ -259,6 +295,7 @@ print(f"Prompt: {input_text}\n\nGenerated text: {output_text}")
 ```
 
 ## Use Cases
+
 ### Example: Physics-Based Chimney Demolition Simulation with Controlled Explosion
 
 <details>
@@ -325,6 +362,7 @@ Create an amazing animation multicolor and interactive using p5js
 use this cdn:
 https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js
 ```
+
 </details>
 
 <p align="center">
@@ -350,8 +388,7 @@ To create a 3D Google Earth, you need to load the terrain map correctly. You can
     </a>
 <p >
 
-### Example: Testing Your WPM with a Famous Quote 
-
+### Example: Testing Your WPM with a Famous Quote
 
 <details>
 <summary> Prompt with Qwen-Code CLI </summary>
@@ -360,6 +397,7 @@ To create a 3D Google Earth, you need to load the terrain map correctly. You can
 Create an interesting typing game with a keyboard in the lower middle of the screen and some famous articles in the upper middle. When the user types a word correctly, a cool reaction should be given to encourage him. Design a modern soft color scheme inspired by macarons. Come up with a very creative solution first, and then start writing code.
 The game should be able to support typing, and you need to neglect upcase and lowercase.
 ```
+
 </details>
 
 <p align="center">
@@ -370,13 +408,13 @@ The game should be able to support typing, and you need to neglect upcase and lo
 
 ### Example: Bouncing Ball in Rotation Hypercube
 
-
 <details>
 <summary> Prompt with Qwen Chat Web Dev </summary>
 
 ```
 Make a page in HTML that shows an animation of a ball bouncing in a rotating hypercube
 ```
+
 </details>
 
 <p align="center">
@@ -387,15 +425,14 @@ Make a page in HTML that shows an animation of a ball bouncing in a rotating hyp
 
 ### Example: Solar System Simulation
 
-
 <details>
 <summary> Prompt with Cline [act mode] </summary>
 
 ```
 write a web page to show the solar system simulation
 ```
-</details>
 
+</details>
 
 <p align="center">
     <a href="https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo6.mp4">
@@ -404,7 +441,6 @@ write a web page to show the solar system simulation
 <p >
 
 ### Example: DUET Game
-
 
 <details>
 <summary> Prompt with Cline [act mode] </summary>
@@ -425,8 +461,8 @@ Make the visual effects amazing.
 Use a dark background with neon glowing effects for the balls and obstacles.
 Animations should be very smooth.
 ```
-</details>
 
+</details>
 
 <p align="center">
     <a href="https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo7.mp4">
@@ -434,18 +470,17 @@ Animations should be very smooth.
     </a>
 <p >
 
-
 ## Star History
+
 [![Star History Chart](https://api.star-history.com/svg?repos=QwenLM/Qwen3-Coder&type=Date)](https://star-history.com/#QwenLM/Qwen3-Coder&Date)
 
-
-
 ## Citation
+
 If you find our work helpful, feel free to give us a cite.
 
 ```bibtex
 @misc{qwen3technicalreport,
-      title={Qwen3 Technical Report}, 
+      title={Qwen3 Technical Report},
       author={Qwen Team},
       year={2025},
       eprint={2505.09388},
@@ -462,7 +497,10 @@ If you find our work helpful, feel free to give us a cite.
 ```
 
 ## Contact Us
-If you are interested to leave a message to either our research team or product team, join our [Discord](https://discord.gg/z3GAxXZ9Ce) or [WeChat groups](https://github.com/QwenLM/Qwen/blob/main/assets/wechat.png)!
+
+If you are interested to leave a message to either our research team or product team, join our
+[Discord](https://discord.gg/z3GAxXZ9Ce) or
+[WeChat groups](https://github.com/QwenLM/Qwen/blob/main/assets/wechat.png)!
 
 <p align="right" style="font-size: 14px; color: #555; margin-top: 20px;">
     <a href="#readme-top" style="text-decoration: none; color: #007bff; font-weight: bold;">

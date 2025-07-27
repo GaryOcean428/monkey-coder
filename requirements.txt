@@ -3,3 +3,12 @@ transformers==4.39.1
 accelerate
 safetensors
 vllm
+
+# Database dependencies
+asyncpg==0.29.0
+
+# Billing dependencies  
+stripe==7.7.0
+
+# HTTP client for pricing updates
+httpx==0.25.2

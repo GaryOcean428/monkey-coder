@@ -1,0 +1,17 @@
+{
+  "name": "monkey-coder-sdk-node-example",
+  "version": "1.0.0",
+  "description": "Node.js example for Monkey Coder SDK",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@monkey-coder/sdk": "^1.0.0"
+  },
+  "keywords": ["monkey-coder", "sdk", "nodejs", "example"],
+  "author": "Monkey Coder",
+  "license": "MIT"
+}

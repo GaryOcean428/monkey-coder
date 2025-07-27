@@ -1,11 +1,17 @@
 # Use Qwen2.5-Coder-32B By transformers
-One of the simple but fundamental ways to try Qwen2.5-Coder-32B is to use the `transformers` library. In this document, we show how to use Qwen2.5-Coder-32B in three common scenarios of code generation, respectively.
 
+One of the simple but fundamental ways to try Qwen2.5-Coder-32B is to use the `transformers`
+library. In this document, we show how to use Qwen2.5-Coder-32B in three common scenarios of code
+generation, respectively.
 
 ## Basic Usage
-The model completes the code snipplets according to the given prompts, without any additional formatting, which is usually termed as `code completion` in the code generation tasks.
- 
-Essentially, we build the tokenizer and the model with `from_pretrained` method, and we use generate method to perform code completion. Below is an example on how to chat with Qwen2.5-Coder-32B:
+
+The model completes the code snipplets according to the given prompts, without any additional
+formatting, which is usually termed as `code completion` in the code generation tasks.
+
+Essentially, we build the tokenizer and the model with `from_pretrained` method, and we use generate
+method to perform code completion. Below is an example on how to chat with Qwen2.5-Coder-32B:
+
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -27,16 +33,24 @@ output_text = tokenizer.decode(generated_ids[len(model_inputs.input_ids[0]):], s
 
 print(f"Prompt: {input_text}\n\nGenerated text: {output_text}")
 ```
-The `max_new_tokens` argument is used to set the maximum length of the response.
-The `input_text` could be any text that you would like model to continue with.
+
+The `max_new_tokens` argument is used to set the maximum length of the response. The `input_text`
+could be any text that you would like model to continue with.
 
 ## Code Insertion (Fill in the middle)
-The code insertion task, also referred to as the "fill-in-the-middle" challenge, requires the insertion of code segments in a manner that bridges the gaps within a given code context. 
-For an approach aligned with best practices, we recommend adhering to the formatting guidelines outlined in the paper "Efficient Training of Language Models to Fill in the Middle"[[arxiv](https://arxiv.org/abs/2207.14255)]. This involves the use of three specialized tokens`<|fim_prefix|>`, `<|fim_suffix|>`, and `<|fim_middle|>` to denote the respective segments of the code structure. 
-The prompt should be structured as follows:
+
+The code insertion task, also referred to as the "fill-in-the-middle" challenge, requires the
+insertion of code segments in a manner that bridges the gaps within a given code context. For an
+approach aligned with best practices, we recommend adhering to the formatting guidelines outlined in
+the paper "Efficient Training of Language Models to Fill in the
+Middle"[[arxiv](https://arxiv.org/abs/2207.14255)]. This involves the use of three specialized
+tokens`<|fim_prefix|>`, `<|fim_suffix|>`, and `<|fim_middle|>` to denote the respective segments of
+the code structure. The prompt should be structured as follows:
+
 ```python
 prompt = '<|fim_prefix|>' + prefix_code + '<|fim_suffix|>' + suffix_code + '<|fim_middle|>'
 ```
+
 Following the approach mentioned, an example would be structured in this manner:
 
 ```python
@@ -68,16 +82,23 @@ print(f"Prompt: {input_text}\n\nGenerated text: {output_text}")
 ```
 
 ## Repository Level Code Completion
-The repository level code completion task involves feeding the model the content of multiple files from the same repository. This enables the model to understand the interrelationships between different calls within these files, thereby facilitating the completion of code content.
-We recommend using the two special tokens `<|repo_name|>` and `<|file_sep|>` to indicate the repository structure.
-For example, assuming the repository name is stored in `repo_name`, and it contains files with their respective paths and contents listed as [(`file_path1`, `file_content1`), (`file_path2`, `file_content2`)], the format of the final input prompt would be as follows:
+
+The repository level code completion task involves feeding the model the content of multiple files
+from the same repository. This enables the model to understand the interrelationships between
+different calls within these files, thereby facilitating the completion of code content. We
+recommend using the two special tokens `<|repo_name|>` and `<|file_sep|>` to indicate the repository
+structure. For example, assuming the repository name is stored in `repo_name`, and it contains files
+with their respective paths and contents listed as [(`file_path1`, `file_content1`), (`file_path2`,
+`file_content2`)], the format of the final input prompt would be as follows:
+
 ```python
 input_text = f'''<|repo_name|>{repo_name}
-<|file_sep|>{file_path1} 
+<|file_sep|>{file_path1}
 {file_content1}
-<|file_sep|>{file_path2} 
+<|file_sep|>{file_path2}
 {file_content2}'''
 ```
+
 Below is a complete example of a repository level code completion task:
 
 ```python
@@ -148,10 +169,10 @@ def main():
     library = Library()
     library.add_book("The Great Gatsby", "F. Scott Fitzgerald", "1234567890", 3)
     library.add_book("To Kill a Mockingbird", "Harper Lee", "1234567891", 2)
-    
+
     # Set up a student
     student = Student("Alice", "S1")
-    
+
     # Student borrows a book
 """
 model_inputs = tokenizer([input_text], return_tensors="pt").to(device)
@@ -165,7 +186,9 @@ output_text = tokenizer.decode(generated_ids[len(model_inputs.input_ids[0]):], s
 print(f"Prompt: \n{input_text}\n\nGenerated text: \n{output_text.split('<|file_sep|>')[0]}")
 
 ```
+
 The expected output as following:
+
 ```
 Generated text:
     book = library.find_book("1234567890")
@@ -173,13 +196,13 @@ Generated text:
     print(f"{student.name} borrowed {book.title}")
     else:
     print(f"{student.name} could not borrow {book.title}")
-    
+
         # Student returns a book
         if student.return_book(book, library):
             print(f"{student.name} returned {book.title}")
         else:
             print(f"{student.name} could not return {book.title}")
-        
+
         # List all books in the library
         print("All books in the library:")
         for book in library.list_books():
@@ -190,16 +213,20 @@ if __name__ == "__main__":
 ```
 
 ## Repository Level Code Infilling
-Repo level code infilling is essentially about concatenating the repo level format with the FIM format, as shown below,
+
+Repo level code infilling is essentially about concatenating the repo level format with the FIM
+format, as shown below,
+
 ```python
 input_text = f'''<|repo_name|>{repo_name}
-<|file_sep|>{file_path1} 
+<|file_sep|>{file_path1}
 {file_content1}
-<|file_sep|>{file_path2} 
+<|file_sep|>{file_path2}
 {file_content2}
-<|file_sep|>{file_path2} 
+<|file_sep|>{file_path2}
 <|fim_prefix|>{prefix_code}<|fim_suffix|>{suffix_code}<|fim_middle|>'''
 ```
+
 Below is an example of a repository level code infilling task:
 
 ```python
@@ -271,22 +298,22 @@ def main():
     library = Library()
     library.add_book("The Great Gatsby", "F. Scott Fitzgerald", "1234567890", 3)
     library.add_book("To Kill a Mockingbird", "Harper Lee", "1234567891", 2)
-    
+
     # Set up a student
     student = Student("Alice", "S1")
-    
+
     # Student borrows a book<|fim_suffix|>
     if student.borrow_book(book, library):
         print(f"{student.name} borrowed {book.title}")
     else:
         print(f"{student.name} could not borrow {book.title}")
-        
+
     # Student returns a book
     if student.return_book(book, library):
         print(f"{student.name} returned {book.title}")
     else:
         print(f"{student.name} could not return {book.title}")
-    
+
     # List all books in the library
     print("All books in the library:")
     for book in library.list_books():
@@ -313,8 +340,10 @@ Generated text:
 ```
 
 # Use Qwen2.5-Coder-32B By vllm
-As a family member of Qwen2.5, Qwen2.5-Coder-32B are supported by vLLM. The detail tutorial  could be found in [Qwen tutorial](https://qwen.readthedocs.io/en/latest/deployment/vllm.html). 
-Here, we only give you an simple example of offline batched inference in vLLM.
+
+As a family member of Qwen2.5, Qwen2.5-Coder-32B are supported by vLLM. The detail tutorial could be
+found in [Qwen tutorial](https://qwen.readthedocs.io/en/latest/deployment/vllm.html). Here, we only
+give you an simple example of offline batched inference in vLLM.
 
 ## Offline Batched Inference
 
@@ -346,16 +375,20 @@ for output in outputs:
 ```
 
 ## Multi-GPU Distributred Serving
-To scale up your serving throughputs, distributed serving helps you by leveraging more GPU devices. 
-When using ultra-long sequences for inference, it might cause insufficient GPU memory. Here, we demonstrate how to run Qwen2.5-Coder-32B with tensor parallelism just by passing in the argument `tensor_parallel_size`
+
+To scale up your serving throughputs, distributed serving helps you by leveraging more GPU devices.
+When using ultra-long sequences for inference, it might cause insufficient GPU memory. Here, we
+demonstrate how to run Qwen2.5-Coder-32B with tensor parallelism just by passing in the argument
+`tensor_parallel_size`
+
 ```python
 llm = LLM(model="Qwen/Qwen2.5-Coder-32B", tensor_parallel_size=8)
 ```
 
 ## Streaming Mode
 
-With the help of `TextStreamer`, you can modify generation with Qwen2.5-Coder to streaming mode. Below we show you an example of how to use it:
-
+With the help of `TextStreamer`, you can modify generation with Qwen2.5-Coder to streaming mode.
+Below we show you an example of how to use it:
 
 ```python
 # Repeat the code above before model.generate()
@@ -371,7 +404,8 @@ generated_ids = model.generate(
 )
 ```
 
-Besides using `TextStreamer`, we can also use `TextIteratorStreamer` which stores print-ready text in a queue, to be used by a downstream application as an iterator:
+Besides using `TextStreamer`, we can also use `TextIteratorStreamer` which stores print-ready text
+in a queue, to be used by a downstream application as an iterator:
 
 ```python
 # Repeat the code above before model.generate()

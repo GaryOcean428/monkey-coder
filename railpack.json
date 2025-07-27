@@ -1,0 +1,315 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "version": "1.0",
+  "build": {
+    "builder": "DOCKER",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 10
+  },
+  "services": {
+    "core": {
+      "source": {
+        "type": "repo",
+        "repo": "monkey-coder",
+        "rootDirectory": "."
+      },
+      "build": {
+        "builder": "DOCKER",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 3,
+        "healthcheckPath": "/health",
+        "healthcheckTimeout": 10
+      },
+      "variables": {
+        "PORT": {
+          "description": "Port for the core application",
+          "type": "number",
+          "default": 8000
+        },
+        "HOST": {
+          "description": "Host address to bind to",
+          "type": "string", 
+          "default": "0.0.0.0"
+        },
+        "OPENAI_API_KEY": {
+          "description": "OpenAI API key for model access",
+          "type": "string",
+          "required": true
+        },
+        "ANTHROPIC_API_KEY": {
+          "description": "Anthropic API key for Claude models",
+          "type": "string",
+          "required": false
+        },
+        "GOOGLE_API_KEY": {
+          "description": "Google API key for Gemini models", 
+          "type": "string",
+          "required": false
+        },
+        "E2B_API_KEY": {
+          "description": "E2B API key for code sandbox access",
+          "type": "string", 
+          "required": false
+        },
+        "BROWSERBASE_API_KEY": {
+          "description": "BrowserBase API key for browser automation",
+          "type": "string",
+          "required": false
+        },
+        "BROWSERBASE_PROJECT_ID": {
+          "description": "BrowserBase project ID",
+          "type": "string",
+          "required": false
+        },
+        "SANDBOX_TOKEN_SECRET": {
+          "description": "Secret for sandbox authentication tokens",
+          "type": "string",
+          "required": true
+        },
+        "DATABASE_URL": {
+          "description": "Database connection URL",
+          "type": "string",
+          "required": false
+        },
+        "REDIS_URL": {
+          "description": "Redis connection URL for caching",
+          "type": "string", 
+          "required": false
+        },
+        "STRIPE_API_KEY": {
+          "description": "Stripe API key for billing and payment processing",
+          "type": "string",
+          "required": false
+        },
+        "ENABLE_PRICING_MIDDLEWARE": {
+          "description": "Enable automatic usage tracking middleware",
+          "type": "string",
+          "default": "true"
+        },
+        "JWT_SECRET_KEY": {
+          "description": "Secret key for JWT token signing and verification",
+          "type": "string",
+          "required": true
+        },
+        "JWT_ALGORITHM": {
+          "description": "Algorithm for JWT token signing",
+          "type": "string",
+          "default": "HS256"
+        },
+        "JWT_ACCESS_TOKEN_EXPIRE_MINUTES": {
+          "description": "Access token expiration time in minutes",
+          "type": "number",
+          "default": 30
+        },
+        "JWT_REFRESH_TOKEN_EXPIRE_DAYS": {
+          "description": "Refresh token expiration time in days",
+          "type": "number", 
+          "default": 7
+        },
+        "MFA_ENABLED": {
+          "description": "Enable multi-factor authentication",
+          "type": "string",
+          "default": "true"
+        },
+        "MFA_ISSUER": {
+          "description": "MFA issuer name for authenticator apps",
+          "type": "string",
+          "default": "Monkey Coder"
+        },
+        "MFA_SECRET_LENGTH": {
+          "description": "Length of MFA secret keys",
+          "type": "number",
+          "default": 32
+        }
+      },
+      "resources": {
+        "memory": "1Gi",
+        "cpu": "1000m",
+        "replicas": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      "networking": {
+        "serviceDomain": true,
+        "customDomain": null
+      }
+    },
+    "sandbox": {
+      "source": {
+        "type": "repo",
+        "repo": "monkey-coder", 
+        "rootDirectory": "services/sandbox"
+      },
+      "build": {
+        "builder": "DOCKER",
+        "dockerfilePath": "services/sandbox/Dockerfile"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 3,
+        "healthcheckPath": "/sandbox/health",
+        "healthcheckTimeout": 10
+      },
+      "variables": {
+        "PORT": {
+          "description": "Port for the sandbox service",
+          "type": "number",
+          "default": 8001
+        },
+        "HOST": {
+          "description": "Host address to bind to",
+          "type": "string",
+          "default": "0.0.0.0"
+        },
+        "E2B_API_KEY": {
+          "description": "E2B API key for code execution sandboxes",
+          "type": "string",
+          "required": false
+        },
+        "BROWSERBASE_API_KEY": {
+          "description": "BrowserBase API key for browser automation",
+          "type": "string", 
+          "required": false
+        },
+        "BROWSERBASE_PROJECT_ID": {
+          "description": "BrowserBase project ID",
+          "type": "string",
+          "required": false
+        },
+        "SANDBOX_TOKEN_SECRET": {
+          "description": "Secret for sandbox authentication tokens",
+          "type": "string",
+          "required": true
+        },
+        "SANDBOX_MAX_MEMORY_MB": {
+          "description": "Maximum memory limit for sandbox operations (MB)",
+          "type": "number",
+          "default": 512
+        },
+        "SANDBOX_MAX_CPU_PERCENT": {
+          "description": "Maximum CPU usage limit for sandbox operations (%)",
+          "type": "number", 
+          "default": 50.0
+        },
+        "SANDBOX_MAX_DISK_MB": {
+          "description": "Maximum disk usage limit for sandbox operations (MB)",
+          "type": "number",
+          "default": 1024
+        },
+        "DISPLAY": {
+          "description": "X11 display for browser automation",
+          "type": "string",
+          "default": ":99"
+        }
+      },
+      "resources": {
+        "memory": "1Gi",
+        "cpu": "500m",
+        "replicas": {
+          "min": 1,
+          "max": 2
+        }
+      },
+      "networking": {
+        "serviceDomain": true,
+        "customDomain": null
+      },
+      "volumes": [
+        {
+          "name": "sandbox-workspace",
+          "mountPath": "/sandbox/volumes/workspace",
+          "size": "1Gi"
+        },
+        {
+          "name": "sandbox-temp",
+          "mountPath": "/sandbox/volumes/temp",
+          "size": "512Mi"
+        },
+        {
+          "name": "sandbox-logs",
+          "mountPath": "/sandbox/volumes/logs", 
+          "size": "256Mi"
+        }
+      ]
+    }
+  },
+  "databases": {
+    "postgres": {
+      "engine": "postgresql",
+      "version": "15",
+      "resources": {
+        "memory": "512Mi",
+        "cpu": "250m",
+        "storage": "5Gi"
+      }
+    },
+    "redis": {
+      "engine": "redis",
+      "version": "7",
+      "resources": {
+        "memory": "256Mi",
+        "cpu": "125m",
+        "storage": "1Gi"
+      }
+    }
+  },
+  "networking": {
+    "allowlist": {
+      "external": [
+        "api.openai.com",
+        "api.anthropic.com", 
+        "generativelanguage.googleapis.com",
+        "connect.browserbase.com",
+        "www.browserbase.com",
+        "api.e2b.dev"
+      ]
+    }
+  },
+  "security": {
+    "headers": {
+      "strictTransportSecurity": {
+        "maxAge": 31536000,
+        "includeSubdomains": true
+      },
+      "contentSecurityPolicy": {
+        "defaultSrc": ["'self'"],
+        "scriptSrc": ["'self'", "'unsafe-inline'"],
+        "styleSrc": ["'self'", "'unsafe-inline'"], 
+        "imgSrc": ["'self'", "data:", "https:"],
+        "connectSrc": ["'self'", "wss:", "https:"]
+      },
+      "xFrameOptions": "DENY",
+      "xContentTypeOptions": "nosniff",
+      "referrerPolicy": "strict-origin-when-cross-origin"
+    }
+  },
+  "monitoring": {
+    "healthchecks": {
+      "core": {
+        "path": "/health",
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+      },
+      "sandbox": {
+        "path": "/sandbox/health", 
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+      }
+    },
+    "metrics": {
+      "enabled": true,
+      "path": "/metrics"
+    }
+  }
+}

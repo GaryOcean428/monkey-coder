@@ -1,0 +1,134 @@
+groups:
+  - name: monkey_coder_alerts
+    rules:
+    # High Error Rate Alert
+    - alert: HighErrorRate
+      expr: rate(http_requests_total{status=~"4..|5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+      for: 2m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "High error rate detected"
+        description: "Error rate is {{ $value }}% for the last 5 minutes"
+
+    # Critical Error Rate Alert
+    - alert: CriticalErrorRate
+      expr: rate(http_requests_total{status=~"4..|5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 15
+      for: 1m
+      labels:
+        severity: critical
+        service: monkey-coder
+      annotations:
+        summary: "Critical error rate detected"
+        description: "Error rate is {{ $value }}% for the last 5 minutes"
+
+    # High Response Latency Alert
+    - alert: HighResponseLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+      for: 5m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "High response latency detected"
+        description: "95th percentile latency is {{ $value }}s for the last 5 minutes"
+
+    # Critical Response Latency Alert
+    - alert: CriticalResponseLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+      for: 2m
+      labels:
+        severity: critical
+        service: monkey-coder
+      annotations:
+        summary: "Critical response latency detected"
+        description: "95th percentile latency is {{ $value }}s for the last 5 minutes"
+
+    # High Token Usage Alert
+    - alert: HighTokenUsage
+      expr: rate(monkey_coder_tokens_total[5m]) > 1000
+      for: 5m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "High token usage detected"
+        description: "Token usage rate is {{ $value }} tokens/second for the last 5 minutes"
+
+    # Service Down Alert
+    - alert: ServiceDown
+      expr: up{job="monkey-coder-core"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: monkey-coder
+      annotations:
+        summary: "Monkey Coder Core service is down"
+        description: "The Monkey Coder Core API service has been down for more than 1 minute"
+
+    # Sandbox Service Down Alert
+    - alert: SandboxServiceDown
+      expr: up{job="monkey-coder-sandbox"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: monkey-coder-sandbox
+      annotations:
+        summary: "Monkey Coder Sandbox service is down"
+        description: "The Monkey Coder Sandbox service has been down for more than 1 minute"
+
+    # High Memory Usage Alert
+    - alert: HighMemoryUsage
+      expr: (process_resident_memory_bytes / 1024 / 1024 / 1024) > 1.5
+      for: 5m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "High memory usage detected"
+        description: "Memory usage is {{ $value }}GB for the last 5 minutes"
+
+    # High CPU Usage Alert
+    - alert: HighCPUUsage
+      expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "High CPU usage detected"
+        description: "CPU usage is {{ $value }}% for the last 5 minutes"
+
+    # Database Connection Issues
+    - alert: DatabaseConnectionIssues
+      expr: up{job="postgres-exporter"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: postgres
+      annotations:
+        summary: "Database connection issues detected"
+        description: "Cannot connect to PostgreSQL database"
+
+    # Redis Connection Issues
+    - alert: RedisConnectionIssues
+      expr: up{job="redis-exporter"} == 0
+      for: 1m
+      labels:
+        severity: warning
+        service: redis
+      annotations:
+        summary: "Redis connection issues detected"
+        description: "Cannot connect to Redis cache"
+
+    # Too Many Active Executions
+    - alert: TooManyActiveExecutions
+      expr: monkey_coder_active_executions > 25
+      for: 2m
+      labels:
+        severity: warning
+        service: monkey-coder
+      annotations:
+        summary: "Too many active executions"
+        description: "{{ $value }} active executions detected, potential bottleneck"
