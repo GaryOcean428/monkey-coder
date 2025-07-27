@@ -9,14 +9,41 @@
 <p>
 
 <p align="center">
-        💜 <a href="https://chat.qwenlm.ai/"><b>Qwen Chat</b></a>&nbsp&nbsp | &nbsp&nbsp🤗 <a href="https://huggingface.co/collections/Qwen/qwen3-coder-687fc861e53c939e52d52d10">Hugging Face</a>&nbsp&nbsp | &nbsp&nbsp🤖 <a href="https://modelscope.cn/organization/qwen">ModelScope</a>&nbsp&nbsp | &nbsp&nbsp 📑 <a href="https://qwenlm.github.io/blog/qwen3-coder">Blog</a> &nbsp&nbsp ｜ &nbsp&nbsp📖 <a href="https://qwen.readthedocs.io/">Documentation</a>
+        🚀 <a href="#getting-started"><b>Getting Started</b></a>&nbsp&nbsp | &nbsp&nbsp📦 <a href="#monorepo-structure">Monorepo</a>&nbsp&nbsp | &nbsp&nbsp🛠️ <a href="#cli-tools">CLI Tools</a>&nbsp&nbsp | &nbsp&nbsp📖 <a href="docs/">Documentation</a>
 <br> 
-</a>&nbsp&nbsp | &nbsp&nbsp 🌍 <a href="https://huggingface.co/spaces/Qwen/Qwen3-Coder-WebDev">WebDev</a>&nbsp&nbsp | &nbsp&nbsp💬 <a href="https://github.com/QwenLM/Qwen/blob/main/assets/wechat.png">WeChat (微信)</a>&nbsp&nbsp | &nbsp&nbsp🫨 <a href="https://discord.gg/CV4E9rpNSD"> Discord</a>&nbsp&nbsp | &nbsp&nbsp 📄 <a href="https://arxiv.org/abs/2505.09388">Arxiv</a>&nbsp&nbsp | &nbsp&nbsp 👽 <a href="https://github.com/QwenLM/qwen-code">Qwen Code</a>
+        🌟 <a href="https://github.com/QwenLM/Qwen3-Coder">Original Qwen3-Coder</a>&nbsp&nbsp | &nbsp&nbsp💜 <a href="https://chat.qwenlm.ai/">Qwen Chat</a>&nbsp&nbsp | &nbsp&nbsp🤗 <a href="https://huggingface.co/collections/Qwen/qwen3-coder-687fc861e53c939e52d52d10">Hugging Face</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://qwenlm.github.io/blog/qwen3-coder">Blog</a>
 </p>
 
-Visit our Hugging Face or ModelScope organization (click links above), search checkpoints with names starting with `Qwen3-Coder-`, and you will find all you need! Enjoy!
+# Monkey Coder
 
-# Qwen3-Coder: Agentic Coding in the World.
+**AI-Powered Code Generation and Analysis Platform**
+
+> **Note**: This is a monorepo transformation of the original [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) project, restructured for better developer experience and modular architecture.
+
+## Overview
+
+Monkey Coder transforms the powerful Qwen3-Coder models into a comprehensive development toolkit with:
+
+- 🚀 **TypeScript CLI** for seamless integration into your workflow
+- 🐍 **Python Core** for AI model orchestration and processing  
+- 📦 **SDK Libraries** for easy integration into your applications
+- 🛠️ **Monorepo Architecture** with Yarn 4.9.2 workspaces
+- 📚 **Comprehensive Documentation** with MkDocs
+
+## Monorepo Structure
+
+```
+monkey-coder/
+├─ packages/
+│  ├─ cli/              # TypeScript CLI tools
+│  ├─ core/             # Python orchestration engine  
+│  └─ sdk/              # TypeScript/Python client SDKs
+├─ services/            # Optional microservices
+├─ docs/                # MkDocs documentation
+├─ examples/            # Usage examples (from original repo)
+├─ qwencoder-eval/      # Evaluation benchmarks (from original repo)
+└─ demo/                # Demo applications (from original repo)
+```
 
 ## Introduction
 
@@ -50,6 +77,88 @@ Today, we're announcing Qwen3-Coder, our most agentic code model to date. **Qwen
 | Qwen3-Coder-480B-A35B-Instruct-FP8         | instruct     | 256k    | 🤗 [Hugging Face](https://huggingface.co/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8) • 🤖 [ModelScope](https://modelscope.cn/models/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8)                                       |
 
 Detailed performance and introduction are shown in this <a href="https://qwenlm.github.io/blog/qwen3-coder"> 📑 blog</a>.
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** 18+ and **Yarn** 4.9.2
+- **Python** 3.8+ with pip
+- **Git** for cloning and version control
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/GaryOcean428/monkey-coder.git
+   cd monkey-coder
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   yarn install
+   ```
+
+3. **Build all packages**:
+   ```bash
+   yarn build
+   ```
+
+### CLI Tools
+
+The Monkey Coder CLI provides powerful commands for code generation and analysis:
+
+#### Generate Code
+```bash
+# Generate TypeScript code
+yarn cli generate "Create a REST API endpoint for user management" --language typescript
+
+# Generate Python code with output file
+yarn cli generate "Implement a binary search algorithm" --language python --output search.py
+```
+
+#### Analyze Code
+```bash
+# Analyze code quality
+yarn cli analyze ./src/app.ts --type quality
+
+# Security analysis
+yarn cli analyze ./src/app.ts --type security
+
+# Performance analysis
+yarn cli analyze ./src/app.ts --type performance
+```
+
+#### Available Commands
+- `generate <prompt>` - Generate code from natural language
+- `analyze <file>` - Analyze existing code
+- `--help` - Show help information
+
+### Using the SDK
+
+#### TypeScript/JavaScript
+```typescript
+import { MonkeyCoderClient } from '@monkey-coder/sdk';
+
+const client = new MonkeyCoderClient('http://localhost:8000');
+
+// Generate code
+const result = await client.generateCode({
+  prompt: 'Create a React component',
+  language: 'typescript'
+});
+
+console.log(result.code);
+```
+
+#### Python
+```python
+from monkey_coder_core import CodeGenerator
+
+generator = CodeGenerator()
+code = generator.generate('Create a Flask API endpoint')
+print(code)
+```
 
 ## Quick Start
 
