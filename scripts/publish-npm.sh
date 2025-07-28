@@ -51,11 +51,11 @@ yarn install
 
 # Run tests for the CLI workspace
 print_status "info" "Running tests..."
-yarn workspace @monkey-coder/cli test || print_status "warning" "No tests found or tests failed"
+yarn workspace monkey-coder-cli test || print_status "warning" "No tests found or tests failed"
 
 # Build the package
 print_status "info" "Building package..."
-yarn workspace @monkey-coder/cli build
+yarn workspace monkey-coder-cli build
 
 # Check if dist directory exists
 if [ ! -d "packages/cli/dist" ]; then
@@ -77,7 +77,7 @@ fi
 print_status "success" "Authenticated as: $NPM_USER"
 
 # Ask for confirmation
-echo -e "\n${YELLOW}Ready to publish @monkey-coder/cli version $CURRENT_VERSION${NC}"
+echo -e "\n${YELLOW}Ready to publish monkey-coder-cli version $CURRENT_VERSION${NC}"
 echo "Package will be published with public access"
 read -p "Do you want to continue? (y/N) " -n 1 -r
 echo
@@ -89,12 +89,12 @@ fi
 
 # Publish the package
 print_status "info" "Publishing to NPM..."
-yarn workspace @monkey-coder/cli npm publish --access public
+yarn workspace monkey-coder-cli npm publish --access public
 
 if [ $? -eq 0 ]; then
     print_status "success" "Package published successfully! 🎉"
-    echo -e "\nPackage URL: https://www.npmjs.com/package/@monkey-coder/cli"
-    echo -e "Install with: npm install -g @monkey-coder/cli"
+    echo -e "\nPackage URL: https://www.npmjs.com/package/monkey-coder-cli"
+    echo -e "Install with: npm install -g monkey-coder-cli"
 else
     print_status "error" "Publishing failed"
     exit 1
@@ -104,7 +104,7 @@ fi
 if command -v git >/dev/null 2>&1; then
     TAG_NAME="cli-v$CURRENT_VERSION"
     print_status "info" "Creating git tag: $TAG_NAME"
-    git tag -a "$TAG_NAME" -m "Release @monkey-coder/cli v$CURRENT_VERSION"
+    git tag -a "$TAG_NAME" -m "Release monkey-coder-cli v$CURRENT_VERSION"
     print_status "info" "Don't forget to push the tag: git push origin $TAG_NAME"
 fi
 
