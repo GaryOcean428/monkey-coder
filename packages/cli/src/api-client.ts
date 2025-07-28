@@ -21,6 +21,9 @@ export class MonkeyCoderAPIClient {
       timeout: 300000, // 5 minutes default timeout
       headers: {
         'Content-Type': 'application/json',
+        // TODO: The User-Agent is hardcoded. This should be dynamically managed,
+        // possibly from package.json, to avoid version mismatches with the API.
+        // Reference: Analysis document section on request-building.
         'User-Agent': 'monkey-coder-cli/1.0.0',
       },
     });

@@ -135,10 +135,16 @@ async function buildExecuteRequest(
     preferred_providers: options.provider
       ? [options.provider]
       : [config.getDefaultProvider()],
-    model_preferences: options.model
-      ? { [options.provider || config.getDefaultProvider()]: options.model }
-      : {},
-    model_config: {},
+      // TODO: If model is provided without a provider, the default provider is used.
+      // This might not be the user's intent. Consider adding a validation or warning.
+      // Reference: Analysis document section on request-building.
+      model_preferences: options.model
+        ? { [options.provider || config.getDefaultProvider()]: options.model }
+        : {},
+      // TODO: model_config is always empty. This could be a problem if the API
+      // expects model-specific configurations. The user currently has no way to provide these.
+      // Reference: Analysis document section on request-building.
+      model_config: {},
   };
 }
 
@@ -517,7 +523,13 @@ program
       .argument('<value>', 'Configuration value')
       .action(async (key: string, value: string) => {
         try {
-          config.set(key as any, value);
+          // Handle boolean conversion for showSplash
+          if (key === 'showSplash') {
+            const booleanValue = value.toLowerCase() === 'true';
+            config.set(key, booleanValue);
+          } else {
+            config.set(key as any, value);
+          }
           await config.saveConfig();
           console.log(chalk.green(`✓ Set ${key} = ${value}`));
         } catch (error: any) {

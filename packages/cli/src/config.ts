@@ -133,6 +133,13 @@ export class ConfigManager {
   }
 
   /**
+   * Get show splash screen setting
+   */
+  getShowSplash(): boolean {
+    return this.config.showSplash === false ? false : true;
+  }
+
+  /**
    * Get all configuration
    */
   getAll(): ConfigFile {

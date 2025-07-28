@@ -193,6 +193,17 @@ yarn cli analyze ./src/app.ts --type performance
 - `analyze <file>` - Analyze existing code
 - `--help` - Show help information
 
+### Splash Screen
+
+The CLI now features a splash screen to enhance the user experience.
+
+![Monkey Coder Splash](assets/splash.png)
+
+This splash screen is enabled by default. To opt out, you can use one of the following methods:
+
+- **Environment Variable**: Set `MONKEY_CODER_NO_SPLASH=1`
+- **Command-Line Flag**: Use the `--no-splash` flag with any command.
+
 ### Using the SDK
 
 #### TypeScript/JavaScript

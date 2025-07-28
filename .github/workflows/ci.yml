@@ -64,6 +64,8 @@ jobs:
 
       - name: Run tests
         run: yarn test:coverage
+        env:
+          MONKEY_CLI_NO_SPLASH: 1
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == '20'

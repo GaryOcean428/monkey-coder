@@ -122,6 +122,7 @@ export interface ConfigFile {
   userName?: string;
   userCredits?: string;
   subscriptionTier?: string;
+  showSplash?: boolean;
   preferences?: {
     [key: string]: any;
   };

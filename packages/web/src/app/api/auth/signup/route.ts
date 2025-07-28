@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-06-30.basil',
+  apiVersion: '2024-06-20',
 })
 
 export async function POST(request: NextRequest) {
@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
 
     // If Pro plan, create Stripe checkout session
     if (plan === 'pro') {
+      /**
+       * @see https://stripe.com/docs/api/checkout/sessions/create
+       */
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [

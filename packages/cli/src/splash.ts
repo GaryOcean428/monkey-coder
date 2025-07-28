@@ -12,11 +12,15 @@ const __dirname = path.dirname(__filename);
  *
  * @param {boolean} [suppress=false] - Optional flag to suppress the splash screen.
  */
+import { ConfigManager } from './config.js';
+
 export function printSplash(suppress = false): void {
+  const config = new ConfigManager();
   if (
     suppress ||
     !process.stdout.isTTY ||
-    process.env.MONKEY_CLI_NO_SPLASH
+    process.env.MONKEY_CLI_NO_SPLASH ||
+    !config.getShowSplash()
   ) {
     return;
   }

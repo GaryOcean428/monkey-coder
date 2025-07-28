@@ -3949,7 +3949,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/globals@npm:30.0.5":
+"@jest/globals@npm:30.0.5, @jest/globals@npm:^30.0.5":
   version: 30.0.5
   resolution: "@jest/globals@npm:30.0.5"
   dependencies:
@@ -16126,12 +16126,14 @@ __metadata:
     "@algolia/client-search": "npm:^5.34.1"
     "@changesets/changelog-github": "npm:^0.5.1"
     "@changesets/cli": "npm:^2.29.5"
+    "@jest/globals": "npm:^30.0.5"
     "@sentry/browser": "npm:^9.42.0"
     "@sentry/node": "npm:^9.42.0"
     "@sentry/profiling-node": "npm:^9.42.0"
     "@sentry/react": "npm:^9.42.0"
     "@sentry/vite-plugin": "npm:^4.0.1"
     "@sentry/webpack-plugin": "npm:^4.0.1"
+    "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^24.1.0"
     "@types/react": "npm:^19.1.8"
     "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
@@ -16142,10 +16144,12 @@ __metadata:
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-import: "npm:^2.32.0"
     eslint-plugin-prettier: "npm:^5.5.3"
+    jest: "npm:^30.0.5"
     linkinator: "npm:^6.1.4"
     markdownlint-cli: "npm:^0.45.0"
     prettier: "npm:^3.6.2"
     search-insights: "npm:^2.17.3"
+    ts-jest: "npm:^29.4.0"
     typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft

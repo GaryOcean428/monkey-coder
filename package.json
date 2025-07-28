@@ -1,6 +1,6 @@
 {
   "name": "monkey-coder",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "packageManager": "yarn@4.9.2",
   "workspaces": [
@@ -34,8 +34,10 @@
     "@algolia/client-search": "^5.34.1",
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.5",
+    "@jest/globals": "^30.0.5",
     "@sentry/vite-plugin": "^4.0.1",
     "@sentry/webpack-plugin": "^4.0.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
     "@types/react": "^19.1.8",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
@@ -46,10 +48,12 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.3",
+    "jest": "^30.0.5",
     "linkinator": "^6.1.4",
     "markdownlint-cli": "^0.45.0",
     "prettier": "^3.6.2",
     "search-insights": "^2.17.3",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
