@@ -1,0 +1,8 @@
+accelerate
+datasets
+# deepspeed==0.14.4  # May not support Python 3.13 yet
+torch>=2.5.0  # Use Python 3.13 compatible version
+tqdm
+transformers>=4.47.1
+trl>=0.16.0
+openai>=1.58.1
