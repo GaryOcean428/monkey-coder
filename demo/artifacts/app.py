@@ -5,10 +5,10 @@ from typing import Dict, List, Optional, Tuple
 import base64
 
 
-import dashscope
 import gradio as gr
-from dashscope import Generation
-from dashscope.api_entities.dashscope_response import Role
+# Note: This demo requires qwen-agent or compatible API client
+# from qwen_agent import Generation
+# from qwen_agent.api_entities.response import Role
 
 import modelscope_studio.components.base as ms
 import modelscope_studio.components.legacy as legacy
@@ -16,7 +16,8 @@ import modelscope_studio.components.antd as antd
 from config import DEMO_LIST, SystemPrompt
 
 YOUR_API_TOKEN = os.getenv('YOUR_API_TOKEN')
-dashscope.api_key = YOUR_API_TOKEN
+# Note: Configure your API client here
+# client.api_key = YOUR_API_TOKEN
 
 History = List[Tuple[str, str]]
 Messages = List[Dict[str, str]]

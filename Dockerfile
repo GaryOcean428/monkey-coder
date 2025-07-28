@@ -18,12 +18,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY packages/core/pyproject.toml ./
-RUN pip install -e .
-
-# Copy application code
+# Copy and install Python dependencies from core package
 COPY packages/core/ ./
+RUN pip install -e .
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user

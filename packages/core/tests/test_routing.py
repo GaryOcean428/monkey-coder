@@ -295,8 +295,8 @@ class TestAdvancedRouter:
     
     def test_routing_history_tracking(self):
         """Test that routing decisions are tracked in history."""
-        request1 = self.create_request("Task 1")
-        request2 = self.create_request("Task 2")
+        request1 = self.create_request("Create a simple function for testing")
+        request2 = self.create_request("Write another function for validation")
         
         initial_count = len(self.router.routing_history)
         

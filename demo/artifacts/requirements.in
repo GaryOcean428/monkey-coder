@@ -1,2 +1,2 @@
-dashscope
+# dashscope - removed, use qwen-agent instead
 modelscope_studio~=1.0.0b

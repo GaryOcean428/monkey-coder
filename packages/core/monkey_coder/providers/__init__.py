@@ -234,7 +234,7 @@ class ProviderRegistry:
         
         # Qwen (assuming OpenAI-compatible endpoint)
         if qwen_key := os.getenv("QWEN_API_KEY"):
-            qwen_base_url = os.getenv("QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+            qwen_base_url = os.getenv("QWEN_BASE_URL", "https://api.qwen.com/v1")
             providers_to_init.append(QwenProvider(qwen_key, base_url=qwen_base_url))
         
         # Initialize providers concurrently
