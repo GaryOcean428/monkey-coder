@@ -12,10 +12,26 @@
   "start": {
     "cmd": "python -m monkey_coder.app.main"
   },
+  "healthcheck": {
+    "path": "/health",
+    "timeout": 100
+  },
   "environments": {
     "production": {
       "python": {
         "optimize": true
+      },
+      "env": {
+        "LOG_LEVEL": "INFO",
+        "JSON_LOGS": "true",
+        "PERFORMANCE_LOGS": "true"
+      }
+    },
+    "development": {
+      "env": {
+        "LOG_LEVEL": "DEBUG",
+        "JSON_LOGS": "false",
+        "PERFORMANCE_LOGS": "true"
       }
     }
   }

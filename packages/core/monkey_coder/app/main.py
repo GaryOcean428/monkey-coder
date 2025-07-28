@@ -42,9 +42,13 @@ from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from ..feedback_collector import FeedbackCollector
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Import Railway-optimized logging first
+from ..logging_utils import setup_logging, get_performance_logger, monitor_api_calls
+
+# Configure Railway-optimized logging
+setup_logging()
 logger = logging.getLogger(__name__)
+performance_logger = get_performance_logger("app_performance")
 
 
 @asynccontextmanager
@@ -123,7 +127,7 @@ app.add_middleware(SentryAsgiMiddleware)
 # Add metrics collection middleware
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    """Middleware to collect HTTP request metrics for Prometheus."""
+    """Middleware to collect HTTP request metrics for Prometheus and Railway."""
     start_time = time.time()
     
     response = await call_next(request)
@@ -139,6 +143,22 @@ async def metrics_middleware(request: Request, call_next):
             status=response.status_code,
             duration=duration
         )
+    
+    # Log performance data for Railway
+    performance_logger.logger.info(
+        "Request processed",
+        extra={'extra_fields': {
+            'metric_type': 'http_request',
+            'method': request.method,
+            'path': request.url.path,
+            'status_code': response.status_code,
+            'duration_ms': round(duration * 1000, 2),
+            'user_agent': request.headers.get('user-agent', 'unknown')
+        }}
+    )
+    
+    # Add performance headers
+    response.headers["X-Process-Time"] = f"{duration:.4f}"
     
     return response
 
@@ -191,22 +211,48 @@ async def root():
 
 
 @app.get("/health", response_model=HealthResponse)
+@app.get("/healthz", response_model=HealthResponse) 
 async def health_check():
     """
-    Health check endpoint.
+    Health check endpoint optimized for Railway deployment.
     """
     from datetime import datetime
+    import psutil
+    
+    # Get system metrics
+    try:
+        process = psutil.Process()
+        memory_mb = round(process.memory_info().rss / 1024 / 1024, 2)
+        cpu_percent = process.cpu_percent()
+    except Exception:
+        memory_mb = 0
+        cpu_percent = 0
+    
+    # Check component health
+    components = {
+        "orchestrator": "active" if hasattr(app.state, 'orchestrator') else "inactive",
+        "quantum_executor": "active" if hasattr(app.state, 'quantum_executor') else "inactive",
+        "persona_router": "active" if hasattr(app.state, 'persona_router') else "inactive",
+        "provider_registry": "active" if hasattr(app.state, 'provider_registry') else "inactive",
+    }
+    
+    # Log health check for monitoring
+    performance_logger.logger.info(
+        "Health check performed",
+        extra={'extra_fields': {
+            'metric_type': 'health_check',
+            'memory_mb': memory_mb,
+            'cpu_percent': cpu_percent,
+            'components': components,
+            'qwen_agent_available': 'qwen_agent' in globals()
+        }}
+    )
     
     return HealthResponse(
         status="healthy",
         version="1.0.0",
         timestamp=datetime.utcnow().isoformat(),
-        components={
-            "orchestrator": "active",
-            "quantum_executor": "active",
-            "persona_router": "active",
-            "provider_registry": "active",
-        }
+        components=components
     )
 
 
