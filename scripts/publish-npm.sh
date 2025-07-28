@@ -35,43 +35,41 @@ if [ -z "$NPM_ACCESS_TOKEN" ]; then
     exit 1
 fi
 
-# Navigate to CLI package
-cd packages/cli
-
 # Check if package.json exists
-if [ ! -f "package.json" ]; then
-    print_status "error" "package.json not found"
+if [ ! -f "packages/cli/package.json" ]; then
+    print_status "error" "packages/cli/package.json not found"
     exit 1
 fi
 
 # Get current version
-CURRENT_VERSION=$(node -p "require('./package.json').version")
+CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
 print_status "info" "Current version: $CURRENT_VERSION"
 
-# Install dependencies
+# Install dependencies using Yarn
 print_status "info" "Installing dependencies..."
 yarn install
 
-# Run tests
+# Run tests for the CLI workspace
 print_status "info" "Running tests..."
-yarn test || print_status "warning" "No tests found or tests failed"
+yarn workspace @monkey-coder/cli test || print_status "warning" "No tests found or tests failed"
 
 # Build the package
 print_status "info" "Building package..."
-yarn build
+yarn workspace @monkey-coder/cli build
 
 # Check if dist directory exists
-if [ ! -d "dist" ]; then
+if [ ! -d "packages/cli/dist" ]; then
     print_status "error" "Build failed - dist directory not found"
     exit 1
 fi
 
-# Configure NPM
+# Configure NPM for Yarn
 print_status "info" "Configuring NPM..."
-npm config set //registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN
+yarn config set npmRegistryServer "https://registry.npmjs.org"
+yarn config set npmAuthToken "$NPM_ACCESS_TOKEN"
 
-# Check if we're logged in from within the package directory
-NPM_USER=$(cd packages/cli && npm whoami 2>/dev/null || echo "")
+# Check if we're logged in
+NPM_USER=$(yarn npm whoami 2>/dev/null || echo "")
 if [ -z "$NPM_USER" ]; then
     print_status "error" "NPM authentication failed"
     exit 1
@@ -80,8 +78,7 @@ print_status "success" "Authenticated as: $NPM_USER"
 
 # Dry run first
 print_status "info" "Running publish dry run..."
-cd packages/cli && npm publish --dry-run --access public
-cd ../..
+yarn workspace @monkey-coder/cli npm publish --dry-run --access public
 
 # Ask for confirmation
 echo -e "\n${YELLOW}Ready to publish @monkey-coder/cli version $CURRENT_VERSION${NC}"
@@ -95,8 +92,7 @@ fi
 
 # Publish the package
 print_status "info" "Publishing to NPM..."
-cd packages/cli && npm publish --access public
-cd ../..
+yarn workspace @monkey-coder/cli npm publish --access public
 
 if [ $? -eq 0 ]; then
     print_status "success" "Package published successfully! 🎉"
@@ -115,5 +111,4 @@ if command -v git >/dev/null 2>&1; then
     print_status "info" "Don't forget to push the tag: git push origin $TAG_NAME"
 fi
 
-cd ../..
 print_status "success" "NPM publishing complete!"
