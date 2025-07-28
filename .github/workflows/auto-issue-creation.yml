@@ -1,0 +1,364 @@
+name: Automated Issue Creation
+
+on:
+  workflow_run:
+    workflows: ["CI", "AI-Powered PR Review & Compliance"]
+    types: [completed]
+  schedule:
+    - cron: "0 9 * * 1" # Weekly security scan on Mondays
+  repository_dispatch:
+    types: [create-issue]
+
+jobs:
+  analyze-ci-failures:
+    name: Analyze CI Failures
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+
+            for (const artifact of artifacts.data.artifacts) {
+              console.log(`Found artifact: ${artifact.name}`);
+            }
+
+      - name: Analyze failure type
+        id: analyze
+        run: |
+          # This would analyze logs to determine failure type
+          echo "failure_type=test" >> $GITHUB_OUTPUT
+          echo "severity=high" >> $GITHUB_OUTPUT
+
+      - name: Create issue for CI failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failureType = '${{ steps.analyze.outputs.failure_type }}';
+            const severity = '${{ steps.analyze.outputs.severity }}';
+            const runUrl = '${{ github.event.workflow_run.html_url }}';
+
+            const issueTemplates = {
+              test: {
+                title: '🔴 Test Failure in CI',
+                labels: ['bug', 'test-failure', 'ci', severity],
+                assignees: ['test-team'],
+                body: `## Test Failure Detected
+                
+                **CI Run:** ${runUrl}
+                **Branch:** ${{ github.event.workflow_run.head_branch }}
+                **Commit:** ${{ github.event.workflow_run.head_sha }}
+                
+                ### Failed Tests:
+                _Analysis pending..._
+                
+                ### Next Steps:
+                1. Review the CI logs
+                2. Identify the failing tests
+                3. Fix the issues
+                4. Re-run the CI
+                
+                ---
+                *This issue was automatically created by the CI failure detection system*`
+              },
+              lint: {
+                title: '🟡 Linting Errors in CI',
+                labels: ['code-quality', 'lint', 'ci'],
+                assignees: [],
+                body: `Linting errors detected in CI run: ${runUrl}`
+              },
+              build: {
+                title: '🔴 Build Failure in CI',
+                labels: ['bug', 'build-failure', 'ci', 'critical'],
+                assignees: ['dev-team'],
+                body: `Critical build failure detected in CI run: ${runUrl}`
+              }
+            };
+
+            const template = issueTemplates[failureType] || issueTemplates.test;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ...template
+            });
+
+  security-scan:
+    name: Weekly Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run security scan
+        id: security
+        run: |
+          # Run comprehensive security scans
+          npm audit --json > npm-audit.json || true
+
+          # Count vulnerabilities
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' npm-audit.json)
+
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+
+      - name: Create security issues
+        if: steps.security.outputs.critical > 0 || steps.security.outputs.high > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.security.outputs.critical }};
+            const high = ${{ steps.security.outputs.high }};
+
+            if (critical > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 ${critical} Critical Security Vulnerabilities Found`,
+                body: `## Weekly Security Scan Results
+                
+                **Critical vulnerabilities:** ${critical}
+                **High vulnerabilities:** ${high}
+                
+                ### Immediate Action Required:
+                1. Run \`npm audit\` to see details
+                2. Update vulnerable dependencies
+                3. Test thoroughly after updates
+                4. Deploy fixes to production
+                
+                ### Vulnerability Details:
+                \`\`\`json
+                ${JSON.stringify(require('./npm-audit.json'), null, 2)}
+                \`\`\`
+                
+                ---
+                *This is an automated security alert*`,
+                labels: ['security', 'critical', 'dependencies'],
+                assignees: ['security-team']
+              });
+            }
+
+  performance-regression:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run performance tests
+        id: perf
+        run: |
+          # This would run performance benchmarks
+          echo "regression_detected=false" >> $GITHUB_OUTPUT
+          echo "metric=api_response_time" >> $GITHUB_OUTPUT
+          echo "baseline=100" >> $GITHUB_OUTPUT
+          echo "current=150" >> $GITHUB_OUTPUT
+
+      - name: Create performance issue
+        if: steps.perf.outputs.regression_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚡ Performance Regression: ${{ steps.perf.outputs.metric }}',
+              body: `## Performance Regression Detected
+              
+              **Metric:** ${{ steps.perf.outputs.metric }}
+              **Baseline:** ${{ steps.perf.outputs.baseline }}ms
+              **Current:** ${{ steps.perf.outputs.current }}ms
+              **Regression:** ${((${{ steps.perf.outputs.current }} - ${{ steps.perf.outputs.baseline }}) / ${{ steps.perf.outputs.baseline }} * 100).toFixed(1)}%
+              
+              ### Commit that introduced regression:
+              ${{ github.sha }}
+              
+              ### Suggested Actions:
+              1. Profile the code to identify bottlenecks
+              2. Review recent changes for performance impacts
+              3. Optimize identified slow paths
+              4. Re-run benchmarks after fixes
+              
+              ---
+              *Automated performance monitoring*`,
+              labels: ['performance', 'regression'],
+              assignees: ['performance-team']
+            });
+
+  deployment-failure:
+    name: Deployment Failure Handler
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'deployment-failed'
+    steps:
+      - name: Create deployment issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const payload = context.payload.client_payload;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Deployment Failed: ${payload.environment}`,
+              body: `## Deployment Failure
+              
+              **Environment:** ${payload.environment}
+              **Service:** ${payload.service}
+              **Error:** ${payload.error}
+              **Time:** ${new Date().toISOString()}
+              
+              ### Railway Logs:
+              \`\`\`
+              ${payload.logs || 'No logs available'}
+              \`\`\`
+              
+              ### Common Railway Issues to Check:
+              - [ ] PORT environment variable is set correctly
+              - [ ] Service is binding to 0.0.0.0:$PORT
+              - [ ] All environment variables are configured
+              - [ ] Database connections are using Railway's private networking
+              - [ ] Build command completed successfully
+              
+              ### Recovery Steps:
+              1. Check Railway dashboard for detailed logs
+              2. Verify all environment variables
+              3. Test locally with Railway's environment
+              4. Rollback if necessary
+              
+              ---
+              *Automated deployment failure alert*`,
+              labels: ['deployment', 'critical', 'railway'],
+              assignees: ['devops-team']
+            });
+
+  auto-assign-issues:
+    name: Auto-assign Issues Based on Labels
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'labeled'
+    steps:
+      - name: Auto-assign based on label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.issue;
+            const label = context.payload.label.name;
+
+            const labelAssignments = {
+              'security': ['security-team'],
+              'performance': ['performance-team'],
+              'railway-compliance': ['devops-team'],
+              'core': ['backend-team'],
+              'cli': ['cli-team'],
+              'sdk': ['sdk-team'],
+              'documentation': ['docs-team'],
+              'ui': ['frontend-team'],
+              'database': ['database-team']
+            };
+
+            const teamMembers = {
+              'security-team': ['security-lead'],
+              'performance-team': ['perf-engineer'],
+              'devops-team': ['devops-lead'],
+              'backend-team': ['backend-lead'],
+              'cli-team': ['cli-maintainer'],
+              'sdk-team': ['sdk-lead'],
+              'docs-team': ['tech-writer'],
+              'frontend-team': ['frontend-lead'],
+              'database-team': ['db-admin']
+            };
+
+            const assignTeam = labelAssignments[label];
+            if (assignTeam) {
+              const assignees = assignTeam.flatMap(team => teamMembers[team] || team);
+              
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                assignees: assignees.filter(a => a) // Filter out any undefined
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `🤖 Auto-assigned to ${assignees.join(', ')} based on the \`${label}\` label.`
+              });
+            }
+
+  weekly-summary:
+    name: Weekly Issue Summary
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Generate weekly summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+            // Get issues created in the last week
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              since: oneWeekAgo.toISOString()
+            });
+
+            const autoCreated = issues.data.filter(i => 
+              i.labels.some(l => l.name === 'auto-generated')
+            );
+
+            const byCategory = {
+              security: autoCreated.filter(i => i.labels.some(l => l.name === 'security')),
+              performance: autoCreated.filter(i => i.labels.some(l => l.name === 'performance')),
+              railway: autoCreated.filter(i => i.labels.some(l => l.name === 'railway-compliance')),
+              ci: autoCreated.filter(i => i.labels.some(l => l.name === 'ci'))
+            };
+
+            const summaryBody = `## 📊 Weekly Automated Issue Summary
+
+            **Period:** ${oneWeekAgo.toDateString()} - ${new Date().toDateString()}
+
+            ### Issues Created by Automation:
+            - **Total:** ${autoCreated.length}
+            - **Security:** ${byCategory.security.length}
+            - **Performance:** ${byCategory.performance.length}
+            - **Railway Compliance:** ${byCategory.railway.length}
+            - **CI/Build:** ${byCategory.ci.length}
+
+            ### Critical Issues:
+            ${autoCreated.filter(i => i.labels.some(l => l.name === 'critical'))
+              .map(i => `- [${i.title}](${i.html_url})`)
+              .join('\n') || 'None'}
+
+            ### Resolved This Week:
+            ${autoCreated.filter(i => i.state === 'closed')
+              .map(i => `- ✅ [${i.title}](${i.html_url})`)
+              .join('\n') || 'None'}
+
+            ### Still Open:
+            ${autoCreated.filter(i => i.state === 'open')
+              .map(i => `- ⏳ [${i.title}](${i.html_url})`)
+              .join('\n') || 'None'}
+
+            ---
+            *This summary was automatically generated*`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📊 Weekly Automation Summary - ${new Date().toDateString()}`,
+              body: summaryBody,
+              labels: ['summary', 'automated']
+            });

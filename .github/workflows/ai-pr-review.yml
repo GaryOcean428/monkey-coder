@@ -1,0 +1,386 @@
+name: AI-Powered PR Review & Compliance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  railway-compliance:
+    name: Railway Configuration Compliance
+    runs-on: ubuntu-latest
+    outputs:
+      compliance_passed: ${{ steps.compliance.outputs.passed }}
+      compliance_report: ${{ steps.compliance.outputs.report }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Railway Compliance Checks
+        id: compliance
+        run: |
+          node .github/scripts/railway-compliance-checker.js > compliance-report.json
+          echo "report=$(cat compliance-report.json | jq -c .)" >> $GITHUB_OUTPUT
+          echo "passed=$(cat compliance-report.json | jq -r .passed)" >> $GITHUB_OUTPUT
+
+      - name: Upload Compliance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: railway-compliance-report
+          path: compliance-report.json
+
+      - name: Comment PR with Compliance Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const report = ${{ steps.compliance.outputs.report }};
+            const passed = report.passed;
+            const emoji = passed ? '✅' : '❌';
+
+            let body = `## ${emoji} Railway Compliance Check\n\n`;
+
+            if (!passed) {
+              body += '### ⚠️ Issues Found:\n\n';
+              report.issues.forEach(issue => {
+                body += `- **${issue.severity}**: ${issue.message}\n`;
+                body += `  - File: \`${issue.file}\`\n`;
+                body += `  - Line: ${issue.line}\n`;
+                if (issue.suggestion) {
+                  body += `  - Suggestion: ${issue.suggestion}\n`;
+                }
+                body += '\n';
+              });
+            } else {
+              body += '✨ All Railway configuration checks passed!\n\n';
+            }
+
+            body += '<details>\n<summary>Compliance Checklist</summary>\n\n';
+            body += '| Check | Status |\n|-------|--------|\n';
+
+            Object.entries(report.checks).forEach(([check, status]) => {
+              const checkEmoji = status ? '✅' : '❌';
+              body += `| ${check} | ${checkEmoji} |\n`;
+            });
+
+            body += '\n</details>';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  ai-code-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    needs: railway-compliance
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup GitHub CLI with Models
+        run: |
+          gh extension install github/gh-models || gh extension upgrade github/gh-models
+
+      - name: Get Changed Files
+        id: changed-files
+        run: |
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Run AI Security Review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a comprehensive diff for AI review
+          git diff origin/${{ github.base_ref }}...${{ github.sha }} > pr-diff.txt
+
+          # Run security-focused AI review
+          gh models run gpt-4.1 "
+          You are a security expert reviewing a pull request. Analyze the following diff for:
+          1. Security vulnerabilities (XSS, SQL injection, etc.)
+          2. Authentication/authorization issues
+          3. Sensitive data exposure
+          4. Input validation problems
+          5. Railway deployment security concerns
+
+          Provide specific line-by-line feedback with severity levels.
+
+          Diff:
+          $(cat pr-diff.txt)
+          " > security-review.json
+
+      - name: Run AI Performance Review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh models run gpt-4.1 "
+          You are a performance optimization expert. Review this code for:
+          1. Performance bottlenecks
+          2. Memory leaks
+          3. Inefficient algorithms
+          4. Database query optimization
+          5. Railway deployment performance considerations
+
+          Diff:
+          $(cat pr-diff.txt)
+          " > performance-review.json
+
+      - name: Run AI Best Practices Review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh models run gpt-4.1 "
+          Review this code for best practices:
+          1. Code style and conventions
+          2. Error handling
+          3. Documentation
+          4. Test coverage
+          5. Railway deployment best practices
+          6. TypeScript strict mode compliance
+
+          Also check for Railway-specific issues:
+          - Hard-coded ports instead of process.env.PORT
+          - Localhost URLs instead of Railway reference variables
+          - Missing CORS configuration
+          - WebSocket protocol mismatches
+
+          Diff:
+          $(cat pr-diff.txt)
+          " > best-practices-review.json
+
+      - name: Consolidate AI Reviews
+        id: ai-review
+        run: |
+          node .github/scripts/consolidate-ai-reviews.js \
+            --security security-review.json \
+            --performance performance-review.json \
+            --practices best-practices-review.json \
+            --output consolidated-review.json
+
+          echo "review=$(cat consolidated-review.json | jq -c .)" >> $GITHUB_OUTPUT
+
+      - name: Post AI Review Comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const review = ${{ steps.ai-review.outputs.review }};
+            const prNumber = context.issue.number;
+
+            // Post main review summary
+            const summaryBody = `## 🤖 AI Code Review Summary
+
+            ${review.summary}
+
+            ### Review Scores:
+            - Security: ${review.scores.security}/10
+            - Performance: ${review.scores.performance}/10
+            - Best Practices: ${review.scores.practices}/10
+            - Railway Compliance: ${review.scores.railway}/10
+
+            **Overall Score: ${review.scores.overall}/10**
+
+            ${review.recommendation}
+            `;
+
+            await github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summaryBody
+            });
+
+            // Post line-specific comments
+            if (review.lineComments && review.lineComments.length > 0) {
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+              
+              for (const comment of review.lineComments) {
+                try {
+                  await github.rest.pulls.createReviewComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber,
+                    body: comment.body,
+                    commit_id: pr.data.head.sha,
+                    path: comment.path,
+                    line: comment.line
+                  });
+                } catch (e) {
+                  console.log(`Failed to post line comment: ${e.message}`);
+                }
+              }
+            }
+
+  auto-fix-issues:
+    name: Auto-fix Simple Issues
+    runs-on: ubuntu-latest
+    needs: [railway-compliance, ai-code-review]
+    if: needs.railway-compliance.outputs.compliance_passed == 'false'
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Setup tooling
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run Auto-fixes
+        id: autofix
+        run: |
+          # Run linting fixes
+          yarn lint:fix || true
+
+          # Run prettier
+          yarn format || true
+
+          # Run Railway-specific fixes
+          node .github/scripts/railway-auto-fixer.js
+
+          # Check if there are changes
+          if [[ -n $(git status -s) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push Fixes
+        if: steps.autofix.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git commit -m "🤖 Auto-fix: Linting, formatting, and Railway compliance issues"
+          git push
+
+  create-issues:
+    name: Create Issues for Problems
+    runs-on: ubuntu-latest
+    needs: [railway-compliance, ai-code-review]
+    if: always() && (needs.railway-compliance.outputs.compliance_passed == 'false' || contains(needs.ai-code-review.result, 'failure'))
+    steps:
+      - name: Create Issues for Critical Problems
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const complianceReport = ${{ needs.railway-compliance.outputs.compliance_report || '{}' }};
+
+            // Create issues for critical Railway compliance failures
+            if (complianceReport.issues) {
+              const criticalIssues = complianceReport.issues.filter(i => i.severity === 'critical');
+              
+              for (const issue of criticalIssues) {
+                const issueBody = `## 🚨 Critical Railway Compliance Issue
+                
+                **File:** \`${issue.file}\`
+                **Line:** ${issue.line}
+                **Problem:** ${issue.message}
+                
+                ### Suggested Fix:
+                ${issue.suggestion || 'Manual review required'}
+                
+                ### Context:
+                This issue was automatically detected in PR #${context.issue.number}
+                
+                ### Railway Compliance Checklist Reference:
+                See \`.clinerules\` lines 85-196 for full Railway deployment requirements.
+                
+                ---
+                *This issue was automatically created by the AI review system*
+                `;
+                
+                const labels = ['bug', 'railway-compliance', 'auto-generated', 'critical'];
+                
+                // Determine assignee based on file
+                let assignee = null;
+                if (issue.file.includes('packages/core')) {
+                  labels.push('core');
+                } else if (issue.file.includes('packages/cli')) {
+                  labels.push('cli');
+                } else if (issue.file.includes('packages/sdk')) {
+                  labels.push('sdk');
+                }
+                
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `🚨 Railway Compliance: ${issue.message.substring(0, 50)}...`,
+                  body: issueBody,
+                  labels: labels,
+                  assignees: assignee ? [assignee] : []
+                });
+              }
+            }
+
+  auto-approve:
+    name: Auto-approve if all checks pass
+    runs-on: ubuntu-latest
+    needs: [railway-compliance, ai-code-review, auto-fix-issues]
+    if: |
+      always() && 
+      needs.railway-compliance.outputs.compliance_passed == 'true' &&
+      needs.ai-code-review.result == 'success'
+    steps:
+      - name: Check AI Review Scores
+        id: check-scores
+        run: |
+          # This would normally fetch the AI review scores
+          # For now, we'll set a threshold
+          echo "approve=false" >> $GITHUB_OUTPUT
+
+      - name: Auto-approve PR
+        if: steps.check-scores.outputs.approve == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE',
+              body: '✅ This PR has been automatically approved!\n\nAll checks passed:\n- ✅ Railway compliance\n- ✅ Security review\n- ✅ Performance review\n- ✅ Best practices\n- ✅ All tests passing'
+            });
+
+  respond-to-fixes:
+    name: Re-review after fixes
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' && 
+      contains(github.event.comment.body, '/ai-review')
+    steps:
+      - name: Trigger new review
+        run: |
+          echo "Re-running AI review as requested..."
+          # This would trigger a new review cycle

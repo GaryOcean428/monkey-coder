@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test Sentry integration after deployment"""
-import requests
+import requests  # type: ignore[import]
 import os
 
 # Test endpoint that should trigger Sentry
@@ -27,7 +27,7 @@ def test_error_tracking():
     try:
         response = requests.get(f"{base_url}/test-error")
         print(f"✅ Error test: {response.status_code}")
-    except:
+    except Exception:
         print("ℹ️  Error endpoint not available (expected)")
     
     print("\n📊 Next Steps:")
