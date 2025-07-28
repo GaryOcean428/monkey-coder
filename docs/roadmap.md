@@ -92,36 +92,48 @@ ModelValidator.BLOCKED_MODELS = {
 
 ## Current Development 🚧
 
-### Phase 5: MCP Integration (In Progress)
+### Phase 5: MCP Integration (Completed)
 
 **MCP Server Management System:**
 ```python
 packages/core/monkey_coder/mcp/
 ├── __init__.py              ✅ Created
-├── server_manager.py        🚧 In Progress
+├── server_manager.py        ✅ Created
 ├── client.py               ✅ Created
-├── registry.py             📅 Planned
-├── config.py               📅 Planned
-└── servers/                📅 Planned
-    ├── filesystem.py
-    ├── browser.py
-    ├── github.py
-    └── database.py
+├── registry.py             ✅ Created
+├── config.py               ✅ Created
+└── servers/                ✅ Created
+    ├── filesystem.py       ✅ Created
+    ├── browser.py         ✅ Created
+    ├── github.py          ✅ Created
+    └── database.py        ✅ Created
 ```
 
 **CLI Commands:**
 ```bash
-# MCP Server Management (Planned)
+# MCP Server Management (Implemented)
 monkey mcp list                    # List available MCP servers
 monkey mcp add <server-url>        # Add a new MCP server
 monkey mcp remove <server-name>    # Remove an MCP server
 monkey mcp install <package>       # Install MCP server from npm/github
 monkey mcp config                  # Interactive MCP configuration
 
-# MCP Usage in Commands (Planned)
+# MCP Usage in Commands (Available)
 monkey generate --mcp github,filesystem "Create a new feature"
 monkey analyze --mcp database "Review database schema"
 ```
+
+### Phase 6: Package Publishing (Completed)
+
+**Published Packages:**
+- ✅ **monkey-coder-core v1.0.3** - Published to PyPI
+  - Install: `pip install monkey-coder-core`
+  - URL: https://pypi.org/project/monkey-coder-core/1.0.3/
+- ✅ **monkey-coder-sdk v1.0.1** - Published to PyPI
+  - Install: `pip install monkey-coder-sdk`
+  - URL: https://pypi.org/project/monkey-coder-sdk/1.0.1/
+- ✅ **monkey-coder-cli v1.0.0** - Ready for NPM
+  - Install: `npm install -g monkey-coder-cli` (after publishing)
 
 ## Future Roadmap 📅
 

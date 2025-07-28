@@ -85,7 +85,28 @@ Detailed performance and introduction are shown in this
 - **Python** 3.8+ with pip
 - **Git** for cloning and version control
 
-### Installation
+### Package Installation
+
+Our packages are now published and available for installation:
+
+#### Python Packages (Published on PyPI)
+
+```bash
+# Install the core package with multi-agent and MCP support
+pip install monkey-coder-core
+
+# Install the Python SDK for API integration
+pip install monkey-coder-sdk
+```
+
+#### NPM Package (Ready to Publish)
+
+```bash
+# Will be available after publishing
+npm install -g monkey-coder-cli
+```
+
+### Development Setup
 
 1. **Clone the repository**:
 
@@ -104,6 +125,40 @@ Detailed performance and introduction are shown in this
    ```bash
    yarn build
    ```
+
+## Published Packages
+
+### 🐍 Python Packages
+
+#### monkey-coder-core (v1.0.3)
+- **PyPI**: https://pypi.org/project/monkey-coder-core/1.0.3/
+- **Features**:
+  - Multi-agent orchestration system
+  - MCP (Model Context Protocol) integration
+  - Quantum task execution framework
+  - Built-in MCP servers (filesystem, github, browser, database)
+  - Model validation and compliance
+  - Sentry error tracking
+
+#### monkey-coder-sdk (v1.0.1)
+- **PyPI**: https://pypi.org/project/monkey-coder-sdk/1.0.1/
+- **Features**:
+  - Python SDK for Monkey Coder API
+  - Client authentication
+  - API helpers and types
+  - Request/response handling
+
+### 📦 NPM Package
+
+#### monkey-coder-cli (v1.0.0)
+- **Status**: Ready to publish
+- **Features**:
+  - Complete CLI interface
+  - Authentication system (login/logout/status)
+  - Usage tracking and billing
+  - MCP server management commands
+  - Streaming support
+  - Interactive chat mode
 
 ### CLI Tools
 
