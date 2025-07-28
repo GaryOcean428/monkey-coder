@@ -53,11 +53,11 @@ def configure_sentry(
             level=logging.INFO,        # Capture info and above as breadcrumbs
             event_level=logging.ERROR  # Send errors as events
         ),
-        AsyncioIntegration(auto_enabling=True),
+        AsyncioIntegration(),
     ]
     
     if component == "core":
-        integrations.append(FastApiIntegration(auto_enabling=True))
+        integrations.append(FastApiIntegration())
         if SqlAlchemyIntegration:
             integrations.append(SqlAlchemyIntegration())
     
