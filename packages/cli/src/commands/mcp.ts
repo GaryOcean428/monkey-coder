@@ -263,7 +263,8 @@ export function createMCPCommand(config: ConfigManager): Command {
           );
 
           const inquirer = (await import('inquirer')).default;
-          newConfig = await inquirer.prompt(questions);
+          const answers = await inquirer.prompt(questions as any);
+          newConfig = answers;
         } else if (options.set) {
           newConfig = options.set;
         } else {

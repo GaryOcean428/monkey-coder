@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
-import { createParser, ParseEvent, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
+import { createParser } from 'eventsource-parser';
 import { ExecuteRequest, ExecuteResponse, StreamEvent } from './types.js';
 
 export class MonkeyCoderAPIClient {
@@ -81,8 +81,8 @@ export class MonkeyCoderAPIClient {
       let buffer = '';
 
       // Create SSE parser
-      const parser = createParser((event: ParseEvent) => {
-        if (event.type === 'event') {
+      const parser = createParser({
+        onEvent: (event) => {
           try {
             const data = JSON.parse(event.data || '{}');
             
