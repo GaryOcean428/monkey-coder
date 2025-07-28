@@ -102,7 +102,7 @@ python -c "import monkey_coder_sdk; print('SDK installed successfully')"
 
 ### 3. TypeScript CLI Package (monkey-coder-cli)
 
-#### Current Version: 1.0.0 (Ready to Publish)
+#### Current Version: 1.0.0 ✅ Published
 
 **Features Included:**
 - Complete CLI interface
@@ -142,7 +142,7 @@ monkey --version
 ### 1. Verify Package Availability
 - [x] Check PyPI Core: https://pypi.org/project/monkey-coder-core/
 - [x] Check PyPI SDK: https://pypi.org/project/monkey-coder-sdk/
-- [ ] Check NPM: https://www.npmjs.com/package/monkey-coder-cli
+- [x] Check NPM: https://www.npmjs.com/package/monkey-coder-cli
 
 ### 2. Test Installation
 ```bash
