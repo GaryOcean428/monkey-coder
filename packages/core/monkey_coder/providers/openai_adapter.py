@@ -18,6 +18,7 @@ except ImportError:
 
 from . import BaseProvider
 from ..models import ProviderType, ProviderError, ModelInfo
+from ..logging_utils import monitor_api_calls
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,7 @@ class OpenAIProvider(BaseProvider):
             self.client = None
         logger.info("OpenAI provider cleaned up")
     
+    @monitor_api_calls("openai_connection_test")
     async def _test_connection(self) -> None:
         """Test the OpenAI API connection."""
         if not self.client:
