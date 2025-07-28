@@ -13,7 +13,7 @@ import time
 
 from .models import ExecuteRequest, ExecuteResponse, UsageMetrics
 
-# Initialize logger before using it
+# Initialize logger at module level
 logger = logging.getLogger(__name__)
 
 try:
@@ -21,6 +21,7 @@ try:
     HAS_PROMETHEUS = True
 except ImportError:
     HAS_PROMETHEUS = False
+    # Only log warning after logger is initialized
     logger.warning("Prometheus client not available. Metrics export disabled.")
 
 
