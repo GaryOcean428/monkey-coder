@@ -723,3 +723,9 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
 
 // Parse command line arguments
 program.parse();
+
+// If no command was provided, start chat mode
+if (process.argv.length === 2) {
+  // Start chat with default options
+  program.parse([...process.argv, 'chat']);
+}

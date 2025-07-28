@@ -11,10 +11,10 @@ from datetime import datetime
 from uuid import uuid4
 import time
 
-from .models import ExecuteRequest, ExecuteResponse, UsageMetrics
-
-# Initialize logger at module level
+# Initialize logger at module level BEFORE using it
 logger = logging.getLogger(__name__)
+
+from .models import ExecuteRequest, ExecuteResponse, UsageMetrics
 
 try:
     from prometheus_client import Counter, Histogram, Gauge, Info, CollectorRegistry, generate_latest
