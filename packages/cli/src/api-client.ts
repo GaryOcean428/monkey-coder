@@ -203,4 +203,79 @@ export class MonkeyCoderAPIClient {
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.client.defaults.baseURL = this.baseUrl;
   }
+
+  /**
+   * Authenticate user with email and password
+   */
+  async authenticate(credentials: { email: string; password: string }): Promise<any> {
+    const response = await this.client.post('/v1/auth/login', credentials);
+    return response.data;
+  }
+
+  /**
+   * Logout current user
+   */
+  async logout(): Promise<void> {
+    await this.client.post('/v1/auth/logout');
+  }
+
+  /**
+   * Get current user status
+   */
+  async getUserStatus(): Promise<any> {
+    const response = await this.client.get('/v1/auth/status');
+    return response.data;
+  }
+
+  /**
+   * Refresh authentication token
+   */
+  async refreshToken(refreshToken: string): Promise<any> {
+    const response = await this.client.post('/v1/auth/refresh', { refresh_token: refreshToken });
+    return response.data;
+  }
+
+  /**
+   * Create billing portal session
+   */
+  async createBillingPortalSession(data: { return_url: string }): Promise<any> {
+    const response = await this.client.post('/v1/billing/portal', data);
+    return response.data;
+  }
+
+  /**
+   * Create payment session for credits
+   */
+  async createPaymentSession(data: {
+    amount: number;
+    description: string;
+    success_url: string;
+    cancel_url: string;
+  }): Promise<any> {
+    const response = await this.client.post('/v1/billing/payment', data);
+    return response.data;
+  }
+
+  /**
+   * Generic HTTP methods for MCP endpoints
+   */
+  async get(url: string, config?: any): Promise<any> {
+    return this.client.get(url, config);
+  }
+
+  async post(url: string, data?: any, config?: any): Promise<any> {
+    return this.client.post(url, data, config);
+  }
+
+  async put(url: string, data?: any, config?: any): Promise<any> {
+    return this.client.put(url, data, config);
+  }
+
+  async delete(url: string, config?: any): Promise<any> {
+    return this.client.delete(url, config);
+  }
+
+  async patch(url: string, data?: any, config?: any): Promise<any> {
+    return this.client.patch(url, data, config);
+  }
 }

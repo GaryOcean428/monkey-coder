@@ -116,6 +116,12 @@ export interface ConfigFile {
   defaultProvider?: string;
   defaultTemperature?: number;
   defaultTimeout?: number;
+  // Authentication fields
+  refreshToken?: string;
+  userEmail?: string;
+  userName?: string;
+  userCredits?: string;
+  subscriptionTier?: string;
   preferences?: {
     [key: string]: any;
   };

@@ -22,6 +22,9 @@ import {
   generateUUID,
 } from './utils.js';
 import { ExecuteRequest, CommandOptions, StreamEvent } from './types.js';
+import { createAuthCommand, requireAuth } from './commands/auth.js';
+import { createUsageCommand, createBillingCommand } from './commands/usage.js';
+import { createMCPCommand } from './commands/mcp.js';
 
 // Initialize Sentry for error tracking
 if (process.env.SENTRY_DSN) {
@@ -696,6 +699,27 @@ program
       process.exit(1);
     }
   });
+
+// Add authentication commands
+program.addCommand(createAuthCommand(config));
+
+// Add usage command
+program.addCommand(createUsageCommand(config));
+
+// Add billing command  
+program.addCommand(createBillingCommand(config));
+
+// Add MCP command
+program.addCommand(createMCPCommand(config));
+
+// Require authentication for main commands
+const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];
+
+program.hook('preSubcommand', async (thisCommand, actionCommand) => {
+  if (authRequiredCommands.includes(actionCommand.name()) && !actionCommand.opts().apiKey) {
+    await requireAuth(config);
+  }
+});
 
 // Parse command line arguments
 program.parse();
