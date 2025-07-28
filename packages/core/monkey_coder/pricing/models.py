@@ -14,6 +14,8 @@ from typing import Dict, Optional, Tuple
 import httpx
 from pydantic import BaseModel, Field
 
+from ..config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -238,13 +240,13 @@ async def update_pricing_data(force_update: bool = False) -> bool:
         bool: True if update was successful
     """
     try:
-        # Check if we need to update
-        pricing_file = "pricing_data.json"
+        # Use configured pricing file path
+        pricing_file = config.STORAGE.pricing_data_file
         should_update = force_update
         
         if not should_update:
             try:
-                stat = os.stat(pricing_file)
+                stat = pricing_file.stat()
                 last_update = datetime.fromtimestamp(stat.st_mtime)
                 should_update = datetime.now() - last_update > timedelta(hours=12)
             except (OSError, FileNotFoundError):
@@ -293,6 +295,8 @@ async def update_pricing_data(force_update: bool = False) -> bool:
                 for model_id, pricing in updated_pricing.items():
                     pricing_dict[model_id] = pricing.dict()
                 json.dump(pricing_dict, f, indent=2, default=str)
+            
+            logger.info(f"Saved pricing data to {pricing_file}")
             
             # Update in-memory data
             MODEL_PRICING_DATA.update(updated_pricing)
@@ -347,7 +351,12 @@ def load_pricing_from_file() -> None:
     that was fetched by the nightly cron job.
     """
     try:
-        with open("pricing_data.json", 'r') as f:
+        pricing_file = config.STORAGE.pricing_data_file
+        if not pricing_file.exists():
+            logger.debug(f"No pricing data file found at {pricing_file}")
+            return
+            
+        with open(pricing_file, 'r') as f:
             pricing_dict = json.load(f)
             
         for model_id, pricing_data in pricing_dict.items():
