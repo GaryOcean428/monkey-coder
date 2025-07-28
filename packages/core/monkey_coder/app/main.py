@@ -21,9 +21,11 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import time
+from pathlib import Path
 
 from ..core.orchestrator import MultiAgentOrchestrator
 from ..core.quantum_executor import QuantumExecutor
@@ -151,6 +153,45 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="Application version")
     timestamp: str = Field(..., description="Current timestamp")
     components: Dict[str, str] = Field(..., description="Component status")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """
+    Root endpoint that returns an HTML landing page.
+    """
+    # Get the directory of this file
+    current_dir = Path(__file__).parent
+    index_path = current_dir / "index.html"
+    
+    # Read and return the HTML file
+    if index_path.exists():
+        with open(index_path, "r") as f:
+            return HTMLResponse(content=f.read())
+    else:
+        # Fallback HTML if file not found
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Monkey Coder API</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
+                h1 { color: #333; }
+                a { color: #007bff; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+            </style>
+        </head>
+        <body>
+            <h1>Monkey Coder Core API</h1>
+            <p>Welcome to the Monkey Coder API. This is a backend service.</p>
+            <p>
+                <a href="/docs">API Documentation</a> | 
+                <a href="/health">Health Check</a>
+            </p>
+        </body>
+        </html>
+        """)
 
 
 @app.get("/health", response_model=HealthResponse)
