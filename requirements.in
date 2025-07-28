@@ -1,0 +1,15 @@
+# Core ML dependencies - use latest versions for Python 3.13 compatibility
+torch>=2.0.0
+transformers>=4.39.1
+accelerate>=0.20.0
+safetensors>=0.3.0
+# vllm  # Commented out - may not support Python 3.13 yet
+
+# Database dependencies
+asyncpg>=0.29.0
+
+# Billing dependencies  
+stripe>=7.7.0
+
+# HTTP client for pricing updates
+httpx>=0.25.2
