@@ -2,29 +2,18 @@
 
 ## Setting Up Persistent Storage
 
-Railway mounts volumes at dynamic paths. To ensure your application finds the volume, you need to set an environment variable.
+When creating a volume in Railway, you specify the mount path. The application is configured to use `/data`.
 
 ### Steps:
 
 1. **In Railway Dashboard:**
    - Go to your service settings
-   - Navigate to the "Variables" tab
-   - Add a new variable:
-     ```
-     RAILWAY_VOLUME_MOUNT_PATH=/var/lib/containers/railwayapp/bind-mounts/[YOUR_VOLUME_ID]
-     ```
-   - Replace `[YOUR_VOLUME_ID]` with your actual volume path from the logs
+   - Navigate to the "Volumes" section
+   - Create or edit your volume
+   - Set the mount path to: `/data`
 
-2. **From Your Logs:**
-   Your volume is mounted at:
-   ```
-   /var/lib/containers/railwayapp/bind-mounts/6ff6b026-376a-4589-a15e-01b17a6b148d/vol_l1xdc0l5fe959627
-   ```
-
-3. **Set the Environment Variable:**
-   ```
-   RAILWAY_VOLUME_MOUNT_PATH=/var/lib/containers/railwayapp/bind-mounts/6ff6b026-376a-4589-a15e-01b17a6b148d/vol_l1xdc0l5fe959627
-   ```
+2. **That's it!** 
+   The application will automatically detect and use the volume at `/data` for persistent storage.
 
 ## Anthropic API Key Troubleshooting
 
@@ -48,9 +37,9 @@ The Anthropic API key is showing a 401 error. To fix this:
 
 ## Verifying Everything Works
 
-After setting these variables and redeploying:
+After setting the volume mount path to `/data` and fixing the Anthropic key:
 
-1. Check logs for: "Using Railway volume at /var/lib/... for persistent storage"
+1. Check logs for: "Using volume at /data for persistent storage"
 2. Anthropic provider should initialize without errors
 3. All providers (OpenAI, Anthropic, Google) should be registered
 
@@ -60,8 +49,7 @@ After setting these variables and redeploying:
 - OpenAI provider
 - Google provider (fixed!)
 - Qwen provider (mock mode)
-- Volume is mounted (needs env var)
+- Volume mounting (just set mount path to `/data`)
 
 ⚠️ **Needs Attention:**
-- Anthropic API key (401 error)
-- Volume path environment variable
+- Anthropic API key (401 error - needs valid key)

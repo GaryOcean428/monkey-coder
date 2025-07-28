@@ -23,16 +23,8 @@ class StorageConfig:
     
     def __init__(self):
         """Initialize storage configuration based on environment."""
-        # Check for Railway volume mount environment variable
-        railway_volume_path = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
-        
-        if railway_volume_path and os.path.exists(railway_volume_path) and os.access(railway_volume_path, os.W_OK):
-            # Railway production with volume
-            self.data_dir = Path(railway_volume_path)
-            self.is_production = True
-            logger.info(f"Using Railway volume at {railway_volume_path} for persistent storage")
-        elif os.path.exists("/data") and os.access("/data", os.W_OK):
-            # Generic production with /data volume
+        # Check if we're running in Railway or production with /data volume
+        if os.path.exists("/data") and os.access("/data", os.W_OK):
             self.data_dir = Path("/data")
             self.is_production = True
             logger.info("Using volume at /data for persistent storage")
