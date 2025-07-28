@@ -13,7 +13,7 @@
     "cmd": "python -m monkey_coder.app.main"
   },
   "healthcheck": {
-    "path": "/healthz",
+    "path": "/health",
     "timeout": 100
   },
   "environments": {
