@@ -26,7 +26,7 @@ class StripeClient:
         stripe.api_key = self.api_key
         self.stripe = stripe
     
-    def create_customer(self, email: str, name: str, api_key_hash: str) - str:
+    def create_customer(self, email: str, name: str, api_key_hash: str) -> str:
         """
         Create a new customer on Stripe.
         
@@ -52,7 +52,7 @@ class StripeClient:
             logger.error(f"Failed to create Stripe customer: {e}")
             raise
 
-    def create_billing_portal_session(self, customer_id: str, return_url: str) - str:
+    def create_billing_portal_session(self, customer_id: str, return_url: str) -> str:
         """
         Create a billing portal session for a customer.
         
@@ -76,7 +76,7 @@ class StripeClient:
             logger.error(f"Failed to create billing portal session: {e}")
             raise
     
-    def report_usage(self, subscription_item_id: str, quantity: int) - Dict:
+    def report_usage(self, subscription_item_id: str, quantity: int) -> Dict:
         """
         Report usage for a metered billing subscription item.
         
@@ -106,7 +106,7 @@ class StripeClient:
 # Functions
 
 
-def create_stripe_customer(email: str, name: str, api_key_hash: str) - str:
+def create_stripe_customer(email: str, name: str, api_key_hash: str) -> str:
     """
     Create a Stripe customer using the StripeClient.
     
@@ -122,7 +122,7 @@ def create_stripe_customer(email: str, name: str, api_key_hash: str) - str:
     return client.create_customer(email, name, api_key_hash)
 
 
-def report_usage_to_stripe(subscription_item_id: str, quantity: int) - Dict:
+def report_usage_to_stripe(subscription_item_id: str, quantity: int) -> Dict:
     """
     Report usage to Stripe using the StripeClient.
     
