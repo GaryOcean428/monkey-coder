@@ -10,13 +10,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 try:
-    from qwen_agent import QwenAgent
+    from qwen_agent import Agent as QwenAgent
 except ImportError:
     QwenAgent = None
-    logging.warning("Qwen Agent package not installed. Install it with: pip install qwen-agent")
+    logging.warning("Qwen Agent package not installed. Install it with: pip install qwen-agent python-dotenv")
 
 from . import BaseProvider
 from ..models import ProviderType, ProviderError, ModelInfo
+from ..logging_utils import monitor_api_calls
 
 logger = logging.getLogger(__name__)
 

@@ -17,6 +17,7 @@ except ImportError:
 
 from . import BaseProvider
 from ..models import ProviderType, ProviderError, ModelInfo
+from ..logging_utils import monitor_api_calls
 
 logger = logging.getLogger(__name__)
 
