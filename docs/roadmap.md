@@ -32,8 +32,8 @@ monkey-coder/
 │   │       ├── commands/     # CLI commands
 │   │       └── mcp/         # MCP management
 │   └── sdk/                  # Multi-language SDKs
-│       ├── src/typescript/
-│       └── src/python/
+│       ├── src/TypeScript/
+│       └── src/Python/
 ```
 
 ### Model Compliance System
@@ -47,6 +47,7 @@ monkey-coder/
 - ✅ Validation at every layer
 
 **Model Validator Features:**
+
 ```python
 # Automatic enforcement
 @enforce_model_compliance
@@ -95,6 +96,7 @@ ModelValidator.BLOCKED_MODELS = {
 ### Phase 5: MCP Integration (Completed)
 
 **MCP Server Management System:**
+
 ```python
 packages/core/monkey_coder/mcp/
 ├── __init__.py              ✅ Created
@@ -105,21 +107,22 @@ packages/core/monkey_coder/mcp/
 └── servers/                ✅ Created
     ├── filesystem.py       ✅ Created
     ├── browser.py         ✅ Created
-    ├── github.py          ✅ Created
+    ├── GitHub.py          ✅ Created
     └── database.py        ✅ Created
 ```
 
 **CLI Commands:**
+
 ```bash
 # MCP Server Management (Implemented)
 monkey mcp list                    # List available MCP servers
 monkey mcp add <server-url>        # Add a new MCP server
 monkey mcp remove <server-name>    # Remove an MCP server
-monkey mcp install <package>       # Install MCP server from npm/github
+monkey mcp install <package>       # Install MCP server from npm/GitHub
 monkey mcp config                  # Interactive MCP configuration
 
 # MCP Usage in Commands (Available)
-monkey generate --mcp github,filesystem "Create a new feature"
+monkey generate --mcp GitHub,filesystem "Create a new feature"
 monkey analyze --mcp database "Review database schema"
 ```
 
@@ -128,12 +131,14 @@ monkey analyze --mcp database "Review database schema"
 **Published Packages:**
 - ✅ **monkey-coder-core v1.0.3** - Published to PyPI
   - Install: `pip install monkey-coder-core`
-  - URL: https://pypi.org/project/monkey-coder-core/1.0.3/
+  - URL: <https://pypi.org/project/monkey-coder-core/1.0.3/>
 - ✅ **monkey-coder-sdk v1.0.1** - Published to PyPI
   - Install: `pip install monkey-coder-sdk`
-  - URL: https://pypi.org/project/monkey-coder-sdk/1.0.1/
-- ✅ **monkey-coder-cli v1.0.0** - Ready for NPM
-  - Install: `npm install -g monkey-coder-cli` (after publishing)
+  - URL: <https://pypi.org/project/monkey-coder-sdk/1.0.1/>
+- ✅ **monkey-coder-cli v1.0.1** - Published to npm
+  - Install: `npm install -g monkey-coder-cli`
+  - URL: <https://www.npmjs.com/package/monkey-coder-cli>
+  - **v1.0.1 Update**: Running just `monkey` now starts interactive chat mode
 
 ### Phase 7: Web Frontend & Deployment (In Progress)
 
@@ -149,8 +154,9 @@ monkey analyze --mcp database "Review database schema"
 **Railway Deployment:**
 - ✅ Backend API deployed to Railway
 - ✅ Volume support for persistent storage
-- ✅ Fixed monitoring.py NameError issue
+- ✅ Fixed monitoring.py NameError issue (2025-01-28)
 - ✅ Environment configuration
+- ✅ Removed exposed npm token from .yarnrc.yml
 - 🚧 Frontend deployment
 - 🚧 Domain configuration
 
@@ -173,6 +179,7 @@ monkey analyze --mcp database "Review database schema"
 ### Q2 2025: Advanced Features
 
 **Agent + MCP Integration:**
+
 ```python
 class MCPEnabledOrchestrator:
     async def execute_with_mcp(self, task, agents, mcp_servers):
@@ -199,23 +206,24 @@ class MCPEnabledOrchestrator:
 ```
 
 **User Experience Enhancement:**
+
 ```bash
 $ monkey generate "Create a REST API with user auth"
 
 🔌 Available MCP Servers:
 ✓ filesystem (access to project files)
-✓ github (repository operations)
+✓ GitHub (repository operations)
 ✓ postgres (database operations)
 □ browser (web access) - not configured
 
 Select MCP servers to use:
 > ✓ filesystem
-  ✓ github
+  ✓ GitHub
   ✓ postgres
 
 🤖 Agent Analysis with MCP tools:
 - Architect Agent + filesystem: Analyze project structure ($0.05)
-- Code Generator + github: Find similar implementations ($0.15)
+- Code Generator + GitHub: Find similar implementations ($0.15)
 - Database Agent + postgres: Design schema ($0.10)
 
 Estimated Total: $0.30
@@ -271,6 +279,7 @@ Proceed? (y/n):
 ### Agent System
 
 **BaseAgent Interface:**
+
 ```python
 class BaseAgent(ABC):
     """Abstract base class for all agents"""
@@ -296,6 +305,7 @@ class BaseAgent(ABC):
 ### Quantum Execution
 
 **Parallel Variation System:**
+
 ```python
 @quantum_task(
     variations=[
@@ -313,8 +323,9 @@ async def generate_code(task, **params):
 ### MCP Integration
 
 **Configuration Schema:**
+
 ```yaml
-# ~/.monkey-coder/mcp-config.yaml
+# ~/.monkey-coder/mcp-config.YAML
 servers:
   - name: filesystem
     type: built-in
@@ -324,16 +335,16 @@ servers:
         - ~/projects
         - ~/documents
   
-  - name: github
+  - name: GitHub
     type: npm
-    package: "@modelcontextprotocol/server-github"
+    package: "@modelcontextprotocol/server-GitHub"
     enabled: true
     config:
       token: ${GITHUB_TOKEN}
 
 default_servers:
   - filesystem
-  - github
+  - GitHub
 ```
 
 ## Performance Metrics
@@ -366,12 +377,12 @@ default_servers:
 
 ## References
 
-- Model Documentation: https://ai1docs.abacusai.app/
-- MCP Protocol: https://modelcontextprotocol.io/
-- Agent Architecture: Similar to https://buildermethods.com/agent-os
-- Source Repository: https://github.com/GaryOcean428/monkey-coder
+- Model Documentation: <https://ai1docs.abacusai.app/>
+- MCP Protocol: <https://modelcontextprotocol.io/>
+- Agent Architecture: Similar to <https://buildermethods.com/agent-os>
+- Source Repository: <https://github.com/GaryOcean428/monkey-coder>
 
 ---
 
-Last Updated: 2025-01-28
-Version: 1.0.0
+Last Updated: 2025-01-28 (19:46 GMT+8)
+Version: 1.0.1

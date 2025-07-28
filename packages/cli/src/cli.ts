@@ -44,7 +44,7 @@ const config = new ConfigManager();
 program
   .name('monkey-coder')
   .description('Monkey Coder CLI - AI-powered code generation and analysis')
-  .version('1.0.0')
+  .version('1.0.1')
   .option('--api-key <key>', 'API key for authentication')
   .option('--base-url <url>', 'Base URL for the API', 'http://localhost:8000')
   .option('--config <path>', 'Path to configuration file')
@@ -132,6 +132,7 @@ async function buildExecuteRequest(
     model_preferences: options.model
       ? { [options.provider || config.getDefaultProvider()]: options.model }
       : {},
+    model_config: {},
   };
 }
 
@@ -605,7 +606,7 @@ process.on('unhandledRejection', reason => {
 program
   .command('chat')
   .description('Start an interactive chat with the AI')
-  .option('-p, --persona <persona>', 'AI persona to use', 'assistant')
+  .option('-p, --persona <persona>', 'AI persona to use', 'developer')
   .option('--model <model>', 'AI model to use')
   .option('--provider <provider>', 'AI provider to use')
   .option('-t, --temperature <temp>', 'Model temperature (0.0-2.0)', parseFloat)
@@ -622,7 +623,7 @@ program
         )
       );
       console.log(chalk.gray('Use Ctrl+C to exit at any time.'));
-      console.log(chalk.gray(`Persona: ${options.persona || 'assistant'}`));
+      console.log(chalk.gray(`Persona: ${options.persona || 'developer'}`));
       console.log('');
 
       const rl = readline.createInterface({
@@ -649,9 +650,10 @@ program
         try {
           const spinner = ora('AI is thinking...').start();
 
-          const request = await buildExecuteRequest('chat', input, [], {
+          const request = await buildExecuteRequest('custom', input, [], {
             ...options,
-            persona: options.persona || 'assistant',
+            persona: options.persona || 'developer',
+            // Let the advanced router analyze and route the request
           });
 
           // Use the same session ID for conversation continuity
@@ -721,11 +723,11 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
   }
 });
 
-// Parse command line arguments
-program.parse();
-
 // If no command was provided, start chat mode
 if (process.argv.length === 2) {
   // Start chat with default options
-  program.parse([...process.argv, 'chat']);
+  process.argv.push('chat');
 }
+
+// Parse command line arguments
+program.parse();

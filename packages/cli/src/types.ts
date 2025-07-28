@@ -13,7 +13,6 @@ export interface ExecuteRequest {
     | 'testing'
     | 'debugging'
     | 'refactoring'
-    | 'chat'
     | 'custom';
   prompt: string;
   files?: Array<{
@@ -61,6 +60,7 @@ export interface ExecuteRequest {
   };
   preferred_providers?: string[];
   model_preferences?: Record<string, string>;
+  model_config?: Record<string, any>;
 }
 
 export interface ExecuteResponse {
