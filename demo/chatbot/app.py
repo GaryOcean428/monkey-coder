@@ -3,20 +3,19 @@
 import os
 from http.client import HTTPMessage
 
-os.system('pip install dashscope')
-
 import gradio as gr
 from http import HTTPStatus
-import dashscope
-from dashscope import Generation
-from dashscope.api_entities.dashscope_response import Role
+# Note: This demo requires qwen-agent or compatible API client
+# from qwen_agent import Generation
+# from qwen_agent.api_entities.response import Role
 from typing import List, Optional, Tuple, Dict
 from urllib.error import HTTPError
 
 default_system = 'You are Qwen, created by Alibaba Cloud. You are a helpful assistant.'
 
 YOUR_API_TOKEN = os.getenv('YOUR_API_TOKEN')
-dashscope.api_key = YOUR_API_TOKEN
+# Note: Configure your API client here
+# client.api_key = YOUR_API_TOKEN
 
 History = List[Tuple[str, str]]
 Messages = List[Dict[str, str]]

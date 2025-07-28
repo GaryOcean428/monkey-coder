@@ -1,6 +1,6 @@
-const baseConfig = require('../../jest.config.js');
+import baseConfig from '../../jest.config.mjs';
 
-module.exports = {
+export default {
   ...baseConfig,
   displayName: '@monkey-coder/sdk',
   setupFilesAfterEnv: ['<rootDir>/../../jest.setup.js'],
