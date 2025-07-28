@@ -1,13 +1,22 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "DOCKER",
-    "dockerfilePath": "Dockerfile"
+  "$schema": "https://schema.railpack.com",
+  "providers": ["python"],
+  "python": {
+    "version": "3.11"
   },
-  "deploy": {
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 10
+  "install": {
+    "cmds": [
+      "pip install -e packages/core"
+    ]
+  },
+  "start": {
+    "cmd": "python -m monkey_coder.app.main"
+  },
+  "environments": {
+    "production": {
+      "python": {
+        "optimize": true
+      }
+    }
   }
 }
