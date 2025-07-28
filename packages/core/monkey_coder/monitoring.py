@@ -13,14 +13,15 @@ import time
 
 from .models import ExecuteRequest, ExecuteResponse, UsageMetrics
 
+# Initialize logger before using it
+logger = logging.getLogger(__name__)
+
 try:
     from prometheus_client import Counter, Histogram, Gauge, Info, CollectorRegistry, generate_latest
     HAS_PROMETHEUS = True
 except ImportError:
     HAS_PROMETHEUS = False
     logger.warning("Prometheus client not available. Metrics export disabled.")
-
-logger = logging.getLogger(__name__)
 
 
 class MetricsCollector:

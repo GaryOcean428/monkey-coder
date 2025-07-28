@@ -3937,39 +3937,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monkey-coder/cli@workspace:packages/cli":
-  version: 0.0.0-use.local
-  resolution: "@monkey-coder/cli@workspace:packages/cli"
-  dependencies:
-    "@sentry/node": "npm:^9.42.0"
-    "@types/fs-extra": "npm:^11.0.4"
-    "@types/inquirer": "npm:^9.0.8"
-    "@types/jest": "npm:^30.0.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
-    "@typescript-eslint/parser": "npm:^8.38.0"
-    axios: "npm:^1.11.0"
-    chalk: "npm:^5.4.1"
-    cli-table3: "npm:^0.6.5"
-    commander: "npm:^14.0.0"
-    dotenv: "npm:^17.2.1"
-    eslint: "npm:^9.32.0"
-    eslint-config-prettier: "npm:^10.1.8"
-    eslint-plugin-import: "npm:^2.32.0"
-    eslint-plugin-prettier: "npm:^5.5.3"
-    eventsource-parser: "npm:^3.0.3"
-    fs-extra: "npm:^11.3.0"
-    inquirer: "npm:^12.8.2"
-    jest: "npm:^30.0.5"
-    ora: "npm:^8.2.0"
-    prettier: "npm:^3.6.2"
-    ts-jest: "npm:^29.4.0"
-    typescript: "npm:^5.8.3"
-  bin:
-    monkey: ./dist/cli.js
-    monkey-coder: ./dist/cli.js
-  languageName: unknown
-  linkType: soft
-
 "@monkey-coder/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@monkey-coder/sdk@workspace:packages/sdk"
@@ -13504,6 +13471,39 @@ __metadata:
   checksum: 10c0/10863413e96dab07dee917eae07afe46f7bf853065cc75a7d2a718adf67574857fb64f8a2c0c9af12ac733a9a8cf652db7ed39b95f7a355d08106cb9cc50c83b
   languageName: node
   linkType: hard
+
+"monkey-coder-cli@workspace:packages/cli":
+  version: 0.0.0-use.local
+  resolution: "monkey-coder-cli@workspace:packages/cli"
+  dependencies:
+    "@sentry/node": "npm:^9.42.0"
+    "@types/fs-extra": "npm:^11.0.4"
+    "@types/inquirer": "npm:^9.0.8"
+    "@types/jest": "npm:^30.0.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.38.0"
+    "@typescript-eslint/parser": "npm:^8.38.0"
+    axios: "npm:^1.11.0"
+    chalk: "npm:^5.4.1"
+    cli-table3: "npm:^0.6.5"
+    commander: "npm:^14.0.0"
+    dotenv: "npm:^17.2.1"
+    eslint: "npm:^9.32.0"
+    eslint-config-prettier: "npm:^10.1.8"
+    eslint-plugin-import: "npm:^2.32.0"
+    eslint-plugin-prettier: "npm:^5.5.3"
+    eventsource-parser: "npm:^3.0.3"
+    fs-extra: "npm:^11.3.0"
+    inquirer: "npm:^12.8.2"
+    jest: "npm:^30.0.5"
+    ora: "npm:^8.2.0"
+    prettier: "npm:^3.6.2"
+    ts-jest: "npm:^29.4.0"
+    typescript: "npm:^5.8.3"
+  bin:
+    monkey: ./dist/cli.js
+    monkey-coder: ./dist/cli.js
+  languageName: unknown
+  linkType: soft
 
 "monkey-coder@workspace:.":
   version: 0.0.0-use.local
