@@ -6,13 +6,13 @@ Handles agent selection, task distribution, and result aggregation
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
 
 from .base_agent import BaseAgent, AgentCapability, AgentContext
 from ..quantum.manager import QuantumManager, CollapseStrategy, TaskVariation
-from ..pricing.models import get_model_pricing, ModelPricing
+from ..pricing.models import get_model_pricing
 
 logger = logging.getLogger(__name__)
 

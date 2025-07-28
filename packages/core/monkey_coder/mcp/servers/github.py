@@ -6,9 +6,7 @@ Provides GitHub operations through MCP protocol
 import os
 import json
 import logging
-import asyncio
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime
+from typing import Dict, Any
 import httpx
 
 logger = logging.getLogger(__name__)

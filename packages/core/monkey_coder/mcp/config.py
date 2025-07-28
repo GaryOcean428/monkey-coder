@@ -3,10 +3,8 @@ MCP Configuration Management
 Handles loading, saving, and validating MCP server configurations
 """
 
-import os
-import json
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, field
 import yaml
@@ -372,15 +370,15 @@ class MCPConfigManager:
         required = schema.get("required", [])
         properties = schema.get("properties", {})
         
-        for field in required:
-            if field not in config:
-                logger.error(f"Missing required field: {field}")
+        for req_field in required:
+            if req_field not in config:
+                logger.error(f"Missing required field: {req_field}")
                 return False
                 
         # Check types
-        for field, value in config.items():
-            if field in properties:
-                prop_schema = properties[field]
+        for field_name, value in config.items():
+            if field_name in properties:
+                prop_schema = properties[field_name]
                 expected_type = prop_schema.get("type")
                 
                 if expected_type:
@@ -398,7 +396,7 @@ class MCPConfigManager:
                         # Handle special cases
                         if expected_type == "number" and actual_type == "int":
                             continue  # int is acceptable for number
-                        logger.error(f"Invalid type for {field}: expected {expected_type}, got {actual_type}")
+                        logger.error(f"Invalid type for {field_name}: expected {expected_type}, got {actual_type}")
                         return False
                         
         return True

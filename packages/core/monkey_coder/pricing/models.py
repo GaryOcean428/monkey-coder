@@ -7,11 +7,9 @@ including fetching updated pricing data and calculating costs.
 
 import json
 import logging
-import os
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
-import httpx
 from pydantic import BaseModel, Field
 
 from ..config import config

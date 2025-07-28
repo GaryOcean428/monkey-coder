@@ -8,7 +8,6 @@ import logging
 import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

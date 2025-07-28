@@ -1,11 +1,12 @@
 # Monkey Coder Publishing Guide
 
-This guide covers the publishing process for both the Python (PyPI) and TypeScript (NPM) packages.
+This guide covers the publishing process for both the Python (PyPI) and TypeScript (npm) packages.
 
 ## Prerequisites
 
 ### Environment Setup
 Ensure you have the following environment variables set:
+
 ```bash
 export PYPI_TOKEN="your-pypi-token"
 export NPM_ACCESS_TOKEN="your-npm-token"
@@ -14,7 +15,7 @@ export NPM_ACCESS_TOKEN="your-npm-token"
 ### Tools Required
 - Python 3.8+
 - Node.js 18+
-- Yarn
+- yarn
 - Git
 
 ## Package Validation
@@ -41,34 +42,37 @@ This script will check:
 **Features Included:**
 - Complete multi-agent framework
 - MCP (Model Context Protocol) integration
-- Built-in MCP servers (filesystem, github, browser, database)
+- Built-in MCP servers (filesystem, GitHub, browser, database)
 - Advanced routing system
 - Model validation and compatibility
 - Sentry error tracking
 - Quantum execution framework
 
-**Package URL:** https://pypi.org/project/monkey-coder-core/1.0.3/
+**Package URL:** <https://pypi.org/project/monkey-coder-core/1.0.3/>
 
 **Publish Command:**
+
 ```bash
 ./scripts/publish-pypi.sh  # Publishes both Python packages
 ```
 
 **Manual Publishing (if script fails):**
+
 ```bash
 cd packages/core
-python -m pip install --upgrade build twine
-python -m build
-python -m twine upload dist/* --username __token__ --password $PYPI_TOKEN
+Python -m pip install --upgrade build twine
+Python -m build
+Python -m twine upload dist/* --username __token__ --password $PYPI_TOKEN
 ```
 
 **After Publishing:**
+
 ```bash
 # Test installation
 pip install monkey-coder-core
 
 # Verify
-python -c "import monkey_coder; print(monkey_coder.__version__)"
+Python -c "import monkey_coder; print(monkey_coder.__version__)"
 ```
 
 ### 2. Python SDK Package (monkey-coder-sdk)
@@ -81,23 +85,25 @@ python -c "import monkey_coder; print(monkey_coder.__version__)"
 - API helpers and types
 - Request/response handling
 
-**Package URL:** https://pypi.org/project/monkey-coder-sdk/1.0.1/
+**Package URL:** <https://pypi.org/project/monkey-coder-sdk/1.0.1/>
 
 **Manual Publishing (if script fails):**
+
 ```bash
-cd packages/sdk/src/python
-python -m pip install --upgrade build twine
-python -m build
-python -m twine upload dist/* --username __token__ --password $PYPI_TOKEN
+cd packages/sdk/src/Python
+Python -m pip install --upgrade build twine
+Python -m build
+Python -m twine upload dist/* --username __token__ --password $PYPI_TOKEN
 ```
 
 **After Publishing:**
+
 ```bash
 # Test installation
 pip install monkey-coder-sdk
 
 # Verify SDK
-python -c "import monkey_coder_sdk; print('SDK installed successfully')"
+Python -c "import monkey_coder_sdk; print('SDK installed successfully')"
 ```
 
 ### 3. TypeScript CLI Package (monkey-coder-cli)
@@ -112,14 +118,16 @@ python -c "import monkey_coder_sdk; print('SDK installed successfully')"
 - Streaming support
 - Interactive chat mode
 
-**Package Name:** `monkey-coder-cli` (unscoped for personal NPM account)
+**Package Name:** `monkey-coder-cli` (unscoped for personal npm account)
 
 **Publish Command:**
+
 ```bash
 ./scripts/publish-npm.sh
 ```
 
 **Manual Publishing (if script fails):**
+
 ```bash
 cd packages/cli
 yarn install
@@ -129,6 +137,7 @@ yarn npm publish --access public
 ```
 
 **After Publishing:**
+
 ```bash
 # Test installation
 npm install -g monkey-coder-cli
@@ -140,14 +149,15 @@ monkey --version
 ## Post-Publishing Checklist
 
 ### 1. Verify Package Availability
-- [x] Check PyPI Core: https://pypi.org/project/monkey-coder-core/
-- [x] Check PyPI SDK: https://pypi.org/project/monkey-coder-sdk/
-- [x] Check NPM: https://www.npmjs.com/package/monkey-coder-cli
+- [x] Check PyPI Core: <https://pypi.org/project/monkey-coder-core/>
+- [x] Check PyPI SDK: <https://pypi.org/project/monkey-coder-sdk/>
+- [x] Check npm: <https://www.npmjs.com/package/monkey-coder-cli>
 
 ### 2. Test Installation
+
 ```bash
 # Create a test environment
-python -m venv test_env
+Python -m venv test_env
 source test_env/bin/activate
 
 # Install all packages
@@ -168,6 +178,7 @@ monkey mcp list
 - [ ] Create release notes
 
 ### 4. Git Tagging
+
 ```bash
 # Tag the releases
 git tag -a core-v1.0.3 -m "Release monkey-coder-core v1.0.3"
@@ -190,20 +201,23 @@ Create releases on GitHub with:
 ### Updating Versions
 
 **Python Core Package:**
+
 ```bash
 # Edit packages/core/pyproject.toml
 # Update version = "X.Y.Z"
 ```
 
 **Python SDK Package:**
+
 ```bash
-# Edit packages/sdk/src/python/setup.py
+# Edit packages/sdk/src/Python/setup.py
 # Update version="X.Y.Z"
 ```
 
 **TypeScript CLI Package:**
+
 ```bash
-# Edit packages/cli/package.json
+# Edit packages/cli/package.JSON
 # Update "version": "X.Y.Z"
 ```
 
@@ -223,9 +237,9 @@ Create releases on GitHub with:
    - Package name might be taken
    - Consider using a different name
 
-### NPM Issues
+### npm Issues
 1. **Authentication Failed**
-   - Verify NPM token is valid
+   - Verify npm token is valid
    - Run `yarn npm whoami` to check auth
 
 2. **Scope Access**
@@ -234,6 +248,7 @@ Create releases on GitHub with:
 
 ### Build Issues
 1. **TypeScript Build Fails**
+
    ```bash
    cd packages/cli
    yarn clean
@@ -242,17 +257,19 @@ Create releases on GitHub with:
    ```
 
 2. **Python Core Build Fails**
+
    ```bash
    cd packages/core
    rm -rf dist/ build/ *.egg-info
-   python -m build
+   Python -m build
    ```
 
 3. **Python SDK Build Fails**
+
    ```bash
-   cd packages/sdk/src/python
+   cd packages/sdk/src/Python
    rm -rf dist/ build/ *.egg-info
-   python -m build
+   Python -m build
    ```
 
 ## Security Notes
@@ -266,11 +283,12 @@ Create releases on GitHub with:
 ### Package Security
 - Review dependencies before publishing
 - Run security audits:
+
   ```bash
   # Python
   pip audit
   
-  # NPM
+  # npm
   npm audit
   ```
 
@@ -296,11 +314,11 @@ Create releases on GitHub with:
 ## Analytics and Monitoring
 
 ### PyPI Statistics
-- Core: https://pypistats.org/packages/monkey-coder-core
-- SDK: https://pypistats.org/packages/monkey-coder-sdk
+- Core: <https://pypistats.org/packages/monkey-coder-core>
+- SDK: <https://pypistats.org/packages/monkey-coder-sdk>
 
-### NPM Statistics  
-- CLI: https://npm-stat.com/charts.html?package=monkey-coder-cli
+### npm Statistics  
+- CLI: <https://npm-stat.com/charts.html?package=monkey-coder-cli>
 
 ### Error Tracking
 - Sentry dashboard for runtime errors

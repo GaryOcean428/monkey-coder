@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Callable
 from datetime import datetime
 
-from ..quantum.manager import QuantumManager, quantum_task, CollapseStrategy
+from ..quantum.manager import QuantumManager, CollapseStrategy
 from ..mcp.client import MCPClient
 
 logger = logging.getLogger(__name__)

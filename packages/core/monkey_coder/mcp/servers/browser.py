@@ -5,9 +5,7 @@ Provides web browsing and scraping capabilities through MCP protocol
 
 import json
 import logging
-import asyncio
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime
+from typing import Dict, Optional, Any
 import httpx
 from bs4 import BeautifulSoup
 import html2text

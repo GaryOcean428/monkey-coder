@@ -155,6 +155,8 @@ monkey analyze --mcp database "Review database schema"
 - ✅ Backend API deployed to Railway
 - ✅ Volume support for persistent storage
 - ✅ Fixed monitoring.py NameError issue (2025-01-28)
+- ✅ Fixed requirements.txt missing dependencies (2025-01-28)
+- ✅ Fixed CLI chat 422 error - invalid persona type (2025-01-28)
 - ✅ Environment configuration
 - ✅ Removed exposed npm token from .yarnrc.yml
 - 🚧 Frontend deployment
@@ -271,6 +273,7 @@ Proceed? (y/n):
 |------|----------------|---------|
 | Model compliance system | 2025-01-28 | Prevents legacy model usage |
 | Publishing infrastructure | 2025-01-28 | Enables package distribution |
+| Railway deployment fixes | 2025-01-28 | Fixed dependencies & CLI errors |
 | Agent architecture | 2025-01-27 | Multi-agent orchestration |
 | Quantum execution | 2025-01-26 | Parallel task variations |
 
@@ -384,5 +387,5 @@ default_servers:
 
 ---
 
-Last Updated: 2025-01-28 (19:46 GMT+8)
+Last Updated: 2025-01-28 (20:54 GMT+8)
 Version: 1.0.1

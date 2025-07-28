@@ -4,11 +4,10 @@ Uses quantum execution for exploring multiple implementation approaches
 """
 
 import logging
-from typing import Dict, Any, List, Set, Optional
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from ..base_agent import BaseAgent, AgentCapability, AgentContext
-from ...quantum.manager import CollapseStrategy, quantum_task
 
 logger = logging.getLogger(__name__)
 
@@ -229,20 +228,6 @@ class CodeGeneratorAgent(BaseAgent):
     async def _generate_clean_code(self, task: str, analysis: Dict[str, Any], 
                                   context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate clean, readable code"""
-        prompt = f"""Generate clean, readable code for the following task:
-{task}
-
-Requirements:
-- Follow {analysis['language']} best practices
-- Use clear variable and function names
-- Include appropriate comments
-- Keep functions small and focused
-- Apply SOLID principles where appropriate
-
-Context:
-{self._format_context(context, mcp_context)}
-"""
-        
         # For now, simulate the response - in production this would call the actual model
         # This is a placeholder until the routing system is fully integrated
         response = {
@@ -254,20 +239,6 @@ Context:
     async def _generate_optimized_code(self, task: str, analysis: Dict[str, Any],
                                      context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate performance-optimized code"""
-        prompt = f"""Generate performance-optimized code for the following task:
-{task}
-
-Optimization requirements:
-- Minimize time complexity
-- Optimize memory usage
-- Use efficient data structures
-- Apply performance best practices for {analysis['language']}
-- Consider caching and memoization where appropriate
-
-Context:
-{self._format_context(context, mcp_context)}
-"""
-        
         # For now, simulate the response - in production this would call the actual model
         response = {
             "result": f"# Optimized code for: {task}\n# Model: {self.preferred_model}\n# Style: optimized\n# Language: {analysis['language']}\n\n# Optimized implementation placeholder"
@@ -278,23 +249,6 @@ Context:
     async def _generate_comprehensive_code(self, task: str, analysis: Dict[str, Any],
                                          context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive code with all supporting files"""
-        prompt = f"""Generate a comprehensive implementation for the following task:
-{task}
-
-Requirements:
-- Complete implementation with all necessary files
-- Include proper error handling
-- Add logging where appropriate
-- Create modular, reusable components
-- Include configuration files if needed
-- Follow {analysis['language']} project structure conventions
-
-Please provide multiple files if needed, clearly separated.
-
-Context:
-{self._format_context(context, mcp_context)}
-"""
-        
         # For now, simulate the response - in production this would call the actual model
         response = {
             "result": f"# Comprehensive implementation for: {task}\n# Model: {self.preferred_model}\n# Style: comprehensive\n# Language: {analysis['language']}\n\n# Full implementation placeholder"
@@ -315,19 +269,6 @@ Context:
         
     async def _generate_documentation(self, code: str, analysis: Dict[str, Any]) -> str:
         """Generate documentation for the code"""
-        prompt = f"""Generate comprehensive documentation for the following {analysis['language']} code:
-
-{code}
-
-Include:
-- Overview and purpose
-- Usage examples
-- API documentation
-- Parameter descriptions
-- Return value descriptions
-- Example outputs
-"""
-        
         # For now, simulate the response - in production this would call the actual model
         response = {
             "result": f"# Documentation for the generated code\n# Model: {self.preferred_model}\n\n## Overview\nDocumentation placeholder for {analysis['language']} code."
@@ -338,18 +279,6 @@ Include:
     async def _generate_tests(self, code: str, analysis: Dict[str, Any]) -> str:
         """Generate tests for the code"""
         framework = analysis.get("framework", "pytest" if analysis["language"] == "python" else "jest")
-        
-        prompt = f"""Generate comprehensive unit tests for the following {analysis['language']} code using {framework}:
-
-{code}
-
-Include:
-- Happy path tests
-- Edge cases
-- Error cases
-- Mock external dependencies
-- Performance tests if applicable
-"""
         
         # For now, simulate the response - in production this would call the actual model
         response = {

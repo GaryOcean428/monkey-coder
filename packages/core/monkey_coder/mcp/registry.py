@@ -5,7 +5,7 @@ Manages server discovery, capabilities, and metadata
 
 import json
 import logging
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from pathlib import Path
 from enum import Enum

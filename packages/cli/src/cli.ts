@@ -22,9 +22,12 @@ import {
   generateUUID,
 } from './utils.js';
 import { ExecuteRequest, CommandOptions, StreamEvent } from './types.js';
+import { validateTaskType, validatePersona } from './type-guards.js';
 import { createAuthCommand, requireAuth } from './commands/auth.js';
 import { createUsageCommand, createBillingCommand } from './commands/usage.js';
 import { createMCPCommand } from './commands/mcp.js';
+import { printSplash } from './splash.js';
+
 
 // Initialize Sentry for error tracking
 if (process.env.SENTRY_DSN) {
@@ -37,6 +40,9 @@ if (process.env.SENTRY_DSN) {
 
 // Load environment variables
 dotenv.config();
+
+// Show splash screen
+printSplash();
 
 const program = new Command();
 const config = new ConfigManager();
@@ -109,7 +115,7 @@ async function buildExecuteRequest(
 
   return {
     task_id: generateUUID(),
-    task_type: taskType as any,
+    task_type: validateTaskType(taskType),
     prompt,
     files: fileData.length > 0 ? fileData : undefined,
     context: {
@@ -121,7 +127,7 @@ async function buildExecuteRequest(
       temperature: options.temperature || config.getDefaultTemperature(),
     },
     superclause_config: {
-      persona: (options.persona || config.getDefaultPersona()) as any,
+      persona: validatePersona(options.persona || config.getDefaultPersona()),
       slash_commands: [],
       context_window: 32768,
       use_markdown_spec: true,
@@ -245,8 +251,7 @@ program
       );
 
       // Override persona for analysis
-      request.superclause_config.persona =
-        (options.persona as any) || 'reviewer';
+      request.superclause_config.persona = validatePersona(options.persona) || 'reviewer';
 
       if (options.stream) {
         const spinner = ora('Starting code analysis...').start();
@@ -726,6 +731,7 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
 // If no command was provided, start chat mode
 if (process.argv.length === 2) {
   // Start chat with default options
+  printSplash();
   process.argv.push('chat');
 }
 

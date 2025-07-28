@@ -92,6 +92,7 @@ class ExecuteRequest(BaseModel):
     superclause_config: SuperClaudeConfig
     preferred_providers: list[str] = ["openai"]
     model_preferences: Dict[str, str] = {}
+    model_config: Optional[Dict[str, Any]] = {}
 
 class ExecuteResponse(BaseModel):
     task_id: str

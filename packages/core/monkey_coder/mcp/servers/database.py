@@ -5,9 +5,7 @@ Provides database operations through MCP protocol
 
 import json
 import logging
-import asyncio
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime
+from typing import Dict, Any
 import asyncpg
 import aiomysql
 import aiosqlite
@@ -697,16 +695,17 @@ class DatabaseMCPServer:
     async def _backup(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Create backup (simplified)"""
         format_type = args.get("format", "sql")
-        tables = args.get("tables")
+        tables_to_backup = args.get("tables")
         
         # This is a simplified backup - real implementation would be more complex
         return {
             "content": [{
                 "type": "text",
-                "text": f"Backup functionality would export data in {format_type} format"
+                "text": f"Backup functionality would export data in {format_type} format for {len(tables_to_backup) if tables_to_backup else 'all'} tables"
             }],
             "metadata": {
-                "note": "Full backup implementation requires additional setup"
+                "note": "Full backup implementation requires additional setup",
+                "tables": tables_to_backup or []
             }
         }
         
@@ -714,7 +713,7 @@ class DatabaseMCPServer:
         """Run migration"""
         migration_sql = args["migration_sql"]
         version = args["version"]
-        rollback_sql = args.get("rollback_sql")
+        rollback_sql = args.get("rollback_sql")  # Reserved for future rollback functionality
         
         try:
             # Create migrations table if not exists

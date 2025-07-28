@@ -7,22 +7,18 @@ This module provides the core FastAPI application with:
 - Integration with SuperClaude, monkey1, and Gary8D systems
 """
 
-import asyncio
 import logging
 import os
-import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-from ..sentry_config import configure_core_sentry
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import time
 from pathlib import Path
@@ -41,7 +37,7 @@ from ..models import (
 )
 from ..security import get_api_key, verify_permissions
 from ..monitoring import MetricsCollector, BillingTracker
-from ..database import run_migrations, get_database_connection
+from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from ..feedback_collector import FeedbackCollector

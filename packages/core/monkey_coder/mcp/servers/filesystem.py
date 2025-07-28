@@ -3,15 +3,13 @@ Filesystem MCP Server
 Provides file and directory operations through MCP protocol
 """
 
-import os
 import json
 import logging
 import asyncio
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Any, Union
 from datetime import datetime
 import mimetypes
-import fnmatch
 
 logger = logging.getLogger(__name__)
 
@@ -572,7 +570,7 @@ class FilesystemMCPServer:
                                             break
                                     results.append(match_info)
                                     count += 1
-                        except:
+                        except Exception:
                             pass  # Skip files that can't be read
                     else:
                         results.append(match_info)
