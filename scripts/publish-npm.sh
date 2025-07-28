@@ -76,12 +76,9 @@ if [ -z "$NPM_USER" ]; then
 fi
 print_status "success" "Authenticated as: $NPM_USER"
 
-# Dry run first
-print_status "info" "Running publish dry run..."
-yarn workspace @monkey-coder/cli npm publish --dry-run --access public
-
 # Ask for confirmation
 echo -e "\n${YELLOW}Ready to publish @monkey-coder/cli version $CURRENT_VERSION${NC}"
+echo "Package will be published with public access"
 read -p "Do you want to continue? (y/N) " -n 1 -r
 echo
 
