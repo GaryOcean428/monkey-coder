@@ -210,7 +210,7 @@ def verify_token(token: str) -> Dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired"
         )
-    except jwt.JWTError as e:
+    except (jwt.InvalidTokenError, jwt.DecodeError, Exception) as e:
         logger.warning(f"JWT validation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
