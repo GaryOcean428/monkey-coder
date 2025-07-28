@@ -100,11 +100,22 @@ class GoogleProvider(BaseProvider):
             )
         
         try:
-            self.client = GoogleGenAI(
-                api_key=self.api_key,
-                project=self.project_id,
-                location=self.location,
-            )
+            # Use either API key OR project/location, not both
+            if self.api_key:
+                # Use API key for consumer access
+                self.client = GoogleGenAI(api_key=self.api_key)
+            elif self.project_id:
+                # Use project/location for Google Cloud access
+                self.client = GoogleGenAI(
+                    project=self.project_id,
+                    location=self.location,
+                )
+            else:
+                raise ProviderError(
+                    "Either API key or project ID must be provided",
+                    provider="Google",
+                    error_code="MISSING_CREDENTIALS"
+                )
             
             # Test the connection
             await self._test_connection()
