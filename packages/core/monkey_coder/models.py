@@ -514,3 +514,15 @@ def get_available_models(
         return {provider.value: MODEL_REGISTRY.get(provider, [])}
 
     return {p.value: models for p, models in MODEL_REGISTRY.items()}
+
+
+class HealthResponse(BaseModel):
+    """Health check response model for Railway deployment."""
+    
+    status: str = Field(..., description="Overall service health status")
+    version: str = Field(..., description="Application version")
+    timestamp: str = Field(..., description="Health check timestamp (ISO format)")
+    components: Dict[str, str] = Field(
+        default_factory=dict, 
+        description="Status of individual components"
+    )
