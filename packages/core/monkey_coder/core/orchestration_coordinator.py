@@ -315,7 +315,7 @@ class OrchestrationCoordinator:
         
         # Configuration complexity
         config_sections = [
-            request.superclause_config,
+            request.superclaude_config,
             request.monkey1_config,
             request.gary8d_config
         ]

@@ -39,13 +39,13 @@ def create_execute_request(
     Returns:
         ExecuteRequest object
     """
-    superclause_config = SuperClaudeConfig(persona=persona)
+    superclaude_config = SuperClaudeConfig(persona=persona)
     
     return ExecuteRequest(
         task_type=task_type,
         prompt=prompt,
         context=context,
-        superclause_config=superclause_config,
+        superclaude_config=superclaude_config,
         **kwargs
     )
 
