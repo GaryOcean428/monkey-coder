@@ -32,27 +32,60 @@ class AnthropicProvider(BaseProvider):
     
     # Official Anthropic model names validated against API documentation
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        "claude-opus-4-20250514": {
+            "name": "claude-opus-4-20250514",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 15.00,  # per 1M tokens
+            "output_cost": 75.00,  # per 1M tokens
+            "description": "Claude Opus 4 - Most capable and intelligent model",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking", "priority_tier"],
+            "version": "4-opus",
+            "release_date": datetime(2025, 5, 14),
+        },
+        "claude-sonnet-4-20250514": {
+            "name": "claude-sonnet-4-20250514",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 3.00,
+            "output_cost": 15.00,
+            "description": "Claude Sonnet 4 - High-performance model with exceptional reasoning",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking"],
+            "version": "4-sonnet",
+            "release_date": datetime(2025, 5, 14),
+        },
+        "claude-3-7-sonnet-20250219": {
+            "name": "claude-3-7-sonnet-20250219",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 3.00,
+            "output_cost": 15.00,
+            "description": "Claude 3.7 Sonnet - High-performance model with toggleable extended thinking",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking", "priority_tier"],
+            "version": "3.7-sonnet",
+            "release_date": datetime(2025, 2, 19),
+        },
         "claude-3-5-sonnet-20241022": {
             "name": "claude-3-5-sonnet-20241022",
             "type": "chat",
             "context_length": 200000,
-            "input_cost": 3.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "Claude 3.5 Sonnet - Most capable Claude model",
-            "capabilities": ["text", "vision", "function_calling"],
+            "input_cost": 3.00,
+            "output_cost": 15.00,
+            "description": "Claude 3.5 Sonnet - Previous intelligent model",
+            "capabilities": ["text", "vision", "function_calling", "priority_tier"],
             "version": "3.5-sonnet",
             "release_date": datetime(2024, 10, 22),
         },
-        "claude-3-opus-20240229": {
-            "name": "claude-3-opus-20240229",
+        "claude-3-5-haiku-20241022": {
+            "name": "claude-3-5-haiku-20241022",
             "type": "chat",
             "context_length": 200000,
-            "input_cost": 15.00,
-            "output_cost": 75.00,
-            "description": "Claude 3 Opus - Powerful model for complex tasks",
-            "capabilities": ["text", "vision", "function_calling"],
-            "version": "3-opus",
-            "release_date": datetime(2024, 2, 29),
+            "input_cost": 0.80,
+            "output_cost": 4.00,
+            "description": "Claude 3.5 Haiku - Fastest model for intelligence at blazing speeds",
+            "capabilities": ["text", "vision", "priority_tier"],
+            "version": "3.5-haiku",
+            "release_date": datetime(2024, 10, 22),
         },
         "claude-3-sonnet-20240229": {
             "name": "claude-3-sonnet-20240229",

@@ -31,16 +31,49 @@ class GoogleProvider(BaseProvider):
     
     # Official Google model names validated against API documentation
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
-        "gemini-2.0-flash-exp": {
-            "name": "gemini-2.0-flash-exp",
+        "gemini-2.5-pro": {
+            "name": "gemini-2.5-pro",
             "type": "chat",
             "context_length": 1048576,  # 1M tokens
-            "input_cost": 0.0375,  # per 1M tokens
-            "output_cost": 0.15,   # per 1M tokens
-            "description": "Gemini 2.0 Flash Experimental - Latest experimental model",
-            "capabilities": ["text", "vision", "code", "function_calling"],
-            "version": "2.0-flash-exp",
-            "release_date": datetime(2025, 1, 1),
+            "input_cost": 1.25,  # per 1M tokens
+            "output_cost": 5.00,   # per 1M tokens
+            "description": "Gemini 2.5 Pro - State-of-the-art model for complex reasoning in code, math, and STEM",
+            "capabilities": ["text", "vision", "audio", "video", "pdf", "function_calling", "structured_outputs", "caching", "code_execution", "search_grounding", "image_generation", "audio_generation", "live_api", "thinking"],
+            "version": "2.5-pro",
+            "release_date": datetime(2025, 6, 1),
+        },
+        "gemini-2.5-flash": {
+            "name": "gemini-2.5-flash",
+            "type": "chat",
+            "context_length": 1048576,  # 1M tokens
+            "input_cost": 0.075,
+            "output_cost": 0.30,
+            "description": "Gemini 2.5 Flash - Best price-performance model for large-scale, low-latency tasks",
+            "capabilities": ["text", "vision", "audio", "video", "function_calling", "structured_outputs", "caching", "code_execution", "search_grounding", "image_generation", "audio_generation", "thinking", "batch_mode"],
+            "version": "2.5-flash",
+            "release_date": datetime(2025, 6, 1),
+        },
+        "gemini-2.5-flash-lite": {
+            "name": "gemini-2.5-flash-lite",
+            "type": "chat",
+            "context_length": 1048576,  # 1M tokens
+            "input_cost": 0.0375,
+            "output_cost": 0.15,
+            "description": "Gemini 2.5 Flash-Lite - Cost-efficient and high-throughput version of Gemini 2.5 Flash",
+            "capabilities": ["text", "vision", "audio", "video", "pdf", "function_calling", "structured_outputs", "caching", "code_execution", "url_context", "search_grounding", "image_generation", "audio_generation", "live_api"],
+            "version": "2.5-flash-lite",
+            "release_date": datetime(2025, 7, 1),
+        },
+        "gemini-2.0-flash": {
+            "name": "gemini-2.0-flash",
+            "type": "chat",
+            "context_length": 1048576,  # 1M tokens
+            "input_cost": 0.075,
+            "output_cost": 0.30,
+            "description": "Gemini 2.0 Flash - Next-gen features with superior speed, native tool use",
+            "capabilities": ["text", "vision", "audio", "video", "function_calling", "structured_outputs", "caching", "tuning", "code_execution", "search", "image_generation", "audio_generation", "live_api"],
+            "version": "2.0-flash",
+            "release_date": datetime(2025, 2, 1),
         },
         "gemini-1.5-pro": {
             "name": "gemini-1.5-pro",
@@ -48,10 +81,10 @@ class GoogleProvider(BaseProvider):
             "context_length": 2097152,  # 2M tokens
             "input_cost": 1.25,
             "output_cost": 5.00,
-            "description": "Gemini 1.5 Pro - Advanced reasoning and analysis",
-            "capabilities": ["text", "vision", "code", "function_calling"],
+            "description": "Gemini 1.5 Pro - Most advanced Gemini model with large context window",
+            "capabilities": ["text", "vision", "audio", "video", "system_instructions", "json_mode", "json_schema", "adjustable_safety_settings", "caching", "tuning"],
             "version": "1.5-pro",
-            "release_date": datetime(2024, 12, 1),
+            "release_date": datetime(2024, 9, 1),
         },
         "gemini-1.5-flash": {
             "name": "gemini-1.5-flash",
@@ -59,21 +92,10 @@ class GoogleProvider(BaseProvider):
             "context_length": 1048576,  # 1M tokens
             "input_cost": 0.075,
             "output_cost": 0.30,
-            "description": "Gemini 1.5 Flash - Fast and efficient",
-            "capabilities": ["text", "vision", "code"],
+            "description": "Gemini 1.5 Flash - Fast and versatile multimodal model",
+            "capabilities": ["text", "vision", "audio", "video", "system_instructions", "json_mode", "json_schema", "adjustable_safety_settings", "caching", "tuning"],
             "version": "1.5-flash",
-            "release_date": datetime(2024, 12, 1),
-        },
-        "gemini-1.0-pro": {
-            "name": "gemini-1.0-pro",
-            "type": "chat",
-            "context_length": 32768,
-            "input_cost": 0.50,
-            "output_cost": 1.50,
-            "description": "Gemini 1.0 Pro - Stable production model",
-            "capabilities": ["text", "code"],
-            "version": "1.0-pro",
-            "release_date": datetime(2023, 12, 1),
+            "release_date": datetime(2024, 9, 1),
         },
     }
     

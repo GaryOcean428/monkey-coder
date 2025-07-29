@@ -33,17 +33,62 @@ class OpenAIProvider(BaseProvider):
     
     # Official OpenAI model names validated against API documentation
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
-        # GPT-4.1 Models (latest generation)
+        # O3 Models (reasoning models)
+        "o3-pro": {
+            "name": "o3-pro",
+            "type": "chat",
+            "context_length": 200000,  # 200K tokens
+            "input_cost": 20.00,  # per 1M tokens
+            "output_cost": 80.00,  # per 1M tokens
+            "description": "o3-pro - Version of o3 with more compute for better responses",
+            "capabilities": ["text", "vision", "function_calling", "streaming", "structured_outputs"],
+            "version": "o3-pro",
+            "release_date": datetime(2025, 1, 15),
+        },
+        "o3": {
+            "name": "o3",
+            "type": "chat",
+            "context_length": 200000,  # 200K tokens
+            "input_cost": 2.00,
+            "output_cost": 8.00,
+            "description": "o3 - Most powerful reasoning model",
+            "capabilities": ["text", "vision", "function_calling", "streaming", "structured_outputs"],
+            "version": "o3",
+            "release_date": datetime(2025, 1, 15),
+        },
+        "o4-mini": {
+            "name": "o4-mini",
+            "type": "chat",
+            "context_length": 200000,  # 200K tokens
+            "input_cost": 1.10,
+            "output_cost": 4.40,
+            "description": "o4-mini - Faster, more affordable reasoning model",
+            "capabilities": ["text", "vision", "function_calling", "streaming", "structured_outputs"],
+            "version": "o4-mini",
+            "release_date": datetime(2025, 1, 15),
+        },
+        # GPT-4 Models
         "gpt-4.1": {
             "name": "gpt-4.1",
             "type": "chat",
             "context_length": 1048576,  # 1M tokens
-            "input_cost": 2.00,  # per 1M tokens
-            "output_cost": 8.00,  # per 1M tokens
-            "description": "GPT-4.1 - Latest flagship model with extended context",
-            "capabilities": ["text", "vision", "function_calling", "reasoning"],
+            "input_cost": 2.00,
+            "output_cost": 8.00,
+            "description": "GPT-4.1 - Flagship GPT model for complex tasks",
+            "capabilities": ["text", "vision", "function_calling", "streaming", "structured_outputs"],
             "version": "4.1",
-            "release_date": datetime(2025, 1, 1),
+            "release_date": datetime(2025, 1, 15),
+        },
+        "gpt-4o": {
+            "name": "gpt-4o",
+            "type": "chat",
+            "context_length": 128000,  # 128K tokens
+            "input_cost": 2.50,
+            "output_cost": 10.00,
+            "description": "GPT-4o - Fast, intelligent, flexible GPT model",
+            "capabilities": ["text", "vision", "versatile", "high_intelligence"],
+            "version": "4o",
+            "release_date": datetime(2024, 1, 1),
         },
         "gpt-4.1-mini": {
             "name": "gpt-4.1-mini",

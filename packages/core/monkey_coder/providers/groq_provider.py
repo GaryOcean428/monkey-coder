@@ -25,15 +25,35 @@ class GroqProvider(BaseAIProvider):
         
         # Groq-available models
         self.models = {
-            "llama-3.3-70b-versatile": AIModel(
-                id="llama-3.3-70b-versatile",
-                name="Llama 3.3 70B",
+            # Llama models
+            "llama-3.1-405b-reasoning": AIModel(
+                id="llama-3.1-405b-reasoning",
+                name="Llama 3.1 405B - Large reasoning model",
                 provider="groq",
                 context_window=131072,
-                max_tokens=8192,
+                max_tokens=32768,
                 supports_streaming=True,
-                cost_per_1k_tokens=0.00059
+                cost_per_1k_tokens=0.0028  # Input cost
             ),
+            "llama-3.1-70b-versatile": AIModel(
+                id="llama-3.1-70b-versatile",
+                name="Llama 3.1 70B - Versatile language model",
+                provider="groq",
+                context_window=131072,
+                max_tokens=32768,
+                supports_streaming=True,
+                cost_per_1k_tokens=0.00059  # Input cost
+            ),
+            "llama-3.1-8b-instant": AIModel(
+                id="llama-3.1-8b-instant",
+                name="Llama 3.1 8B - Fast, lightweight model",
+                provider="groq",
+                context_window=131072,
+                max_tokens=32768,
+                supports_streaming=True,
+                cost_per_1k_tokens=0.00005  # Input cost
+            ),
+            # Keep existing models that aren't in the table but work with Groq
             "qwen2.5-72b-instruct": AIModel(
                 id="qwen2.5-72b-instruct",
                 name="Qwen 2.5 72B Instruct",
@@ -42,24 +62,6 @@ class GroqProvider(BaseAIProvider):
                 max_tokens=8192,
                 supports_streaming=True,
                 cost_per_1k_tokens=0.0009
-            ),
-            "qwen/qwen3-32b": AIModel(
-                id="qwen/qwen3-32b",
-                name="Qwen 3 32B",
-                provider="groq",
-                context_window=32768,
-                max_tokens=8192,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0006
-            ),
-            "moonshotai/kimi-k2-instruct": AIModel(
-                id="moonshotai/kimi-k2-instruct",
-                name="Kimi K2 Instruct",
-                provider="groq",
-                context_window=200000,
-                max_tokens=8192,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0008
             ),
             "mixtral-8x7b-32768": AIModel(
                 id="mixtral-8x7b-32768",
