@@ -460,7 +460,7 @@ def verify_mfa_token(secret: str, token: str, window: int = 1) -> bool:
 # Legacy API key support for backward compatibility
 async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """
-    Legacy API key validation for backward compatibility.
+    Enhanced API key validation with proper key management.
     
     Args:
         credentials: HTTP authorization credentials
@@ -479,23 +479,30 @@ async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(securi
     
     api_key = credentials.credentials
     
-    # Try JWT token first, fall back to legacy API key
+    # Try JWT token first, fall back to API key validation
     try:
         verify_token(api_key)
         return api_key
     except HTTPException:
-        # Fall back to legacy API key validation
-        if not _validate_api_key(api_key):
+        # Import here to avoid circular dependency
+        from .auth import get_api_key_manager
+        
+        # Use API key manager for validation
+        api_key_manager = get_api_key_manager()
+        key_info = api_key_manager.validate_api_key(api_key)
+        
+        if not key_info:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key or token"
             )
+        
         return api_key
 
 
 def _validate_api_key(api_key: str) -> bool:
     """
-    Validate legacy API key format.
+    Legacy API key format validation (deprecated - use APIKeyManager).
     
     Args:
         api_key: The API key to validate
@@ -508,7 +515,7 @@ def _validate_api_key(api_key: str) -> bool:
 
 async def verify_permissions(api_key: str, permission: str = None) -> bool:
     """
-    Verify permissions for API key.
+    Verify permissions for API key using the API key manager.
     
     Args:
         api_key: The API key to verify permissions for
@@ -517,10 +524,19 @@ async def verify_permissions(api_key: str, permission: str = None) -> bool:
     Returns:
         True if permissions are valid
     """
-    # Validate API key first
-    if not _validate_api_key(api_key):
+    # Import here to avoid circular dependency
+    from .auth import get_api_key_manager
+    
+    # Use API key manager for validation and permission checking
+    api_key_manager = get_api_key_manager()
+    key_info = api_key_manager.validate_api_key(api_key)
+    
+    if not key_info:
         return False
     
-    # For now, return True for all valid API keys
-    # In production, you would check specific permissions here
-    return True
+    # If no specific permission requested, just validate the key
+    if not permission:
+        return True
+    
+    # Check specific permission
+    return api_key_manager.check_permission(key_info, permission)

@@ -177,8 +177,12 @@ class ExecuteRequest(BaseModel):
 
     @validator("prompt")
     def validate_prompt(cls, v):
-        if not v or len(v.strip()) < 10:
-            raise ValueError("Prompt must be at least 10 characters long")
+        if not v or len(v.strip()) == 0:
+            raise ValueError("Prompt cannot be empty")
+        # Allow short prompts - they will be enhanced by PersonaValidator
+        # Minimum length reduced from 10 to 1 to handle single-word inputs
+        if len(v.strip()) < 1:
+            raise ValueError("Prompt must contain at least one character")
         return v.strip()
 
 
