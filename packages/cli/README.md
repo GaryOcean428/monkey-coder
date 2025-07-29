@@ -11,7 +11,7 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 - 📊 **Streaming Output**: Real-time progress updates with Server-Sent Events
 - ⚙️  **Configuration Management**: Persistent settings and preferences
 - 🎭 **Multiple Personas**: Choose from different AI personas (developer, architect, reviewer, tester, etc.)
-- 🔌 **Provider Support**: Support for multiple AI providers (Anthropic, Google, Grok, Groq)
+- 🔌 **Provider Support**: Support for multiple AI providers (OpenAI, Anthropic, Google, Qwen)
 
 ## Installation
 
@@ -28,9 +28,7 @@ yarn global add monkey-coder-cli
 1. **Set up your API configuration:**
 ```bash
 monkey-coder config set apiKey "your-api-key-here"
-# Base URL is automatically set to https://monkey-coder.up.railway.app
-# Override only if using a custom deployment:
-# monkey-coder config set baseUrl "https://your-custom-api.com"
+monkey-coder config set baseUrl "https://your-monkey-coder-api.com"
 ```
 
 2. **Check server health:**

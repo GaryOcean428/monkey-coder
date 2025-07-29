@@ -108,14 +108,14 @@ export class ConfigManager {
    * Get default model
    */
   getDefaultModel(): string {
-    return this.config.defaultModel || 'claude-sonnet-4-20250514';
+    return this.config.defaultModel || 'gpt-4.1';
   }
 
   /**
    * Get default provider
    */
   getDefaultProvider(): string {
-    return this.config.defaultProvider || 'anthropic';
+    return this.config.defaultProvider || 'openai';
   }
 
   /**
