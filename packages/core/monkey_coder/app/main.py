@@ -12,7 +12,7 @@ import os
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request

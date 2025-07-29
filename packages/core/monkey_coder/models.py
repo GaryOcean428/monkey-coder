@@ -394,6 +394,16 @@ class ValidationError(Exception):
 # Model registry for dynamic model discovery
 # Models from https://github.com/GaryOcean428/ai-models-api-docs.git
 # Full documentation at https://ai1docs.abacusai.app/
+# Add to top of MODEL_REGISTRY section
+DEFAULT_MODELS = {
+    ProviderType.ANTHROPIC: "claude-sonnet-4-20250514",  # Default as per user spec
+    # Defaults for other providers
+    ProviderType.OPENAI: "gpt-4.1",
+    ProviderType.GOOGLE: "gemini-2.5-pro",
+    ProviderType.GROK: "grok-4-latest",
+    ProviderType.GROQ: "llama-3.3-70b-versatile",
+}
+
 MODEL_REGISTRY = {
     ProviderType.OPENAI: [
         # GPT-4.1 Family (Flagship models - always use these instead of gpt-4o)
@@ -475,7 +485,21 @@ MODEL_ALIASES = {
     "gpt-4o-mini": "gpt-4.1-mini",
     "gpt-4": "gpt-4.1",
     "gpt-4-turbo": "gpt-4.1",
+    "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",  # Non-default alias
+    "claude-sonnet-4-0": "claude-opus-4-20250514",  # Alias for latest Claude 4 (Opus)
+    "opus": "claude-opus-4-20250514",  # Alias for Opus/latest
+    "claude-4-latest": "claude-opus-4-20250514",  # General latest
 }
+
+# New resolve_model function
+def resolve_model(model_name: str, provider: ProviderType) -> str:
+    """Resolve model name with aliases and latest handling."""
+    if model_name in MODEL_ALIASES:
+        return MODEL_ALIASES[model_name]
+    # Latest handling example
+    if model_name == "claude-4-latest":
+        return "claude-opus-4-20250514"  # Or dynamic based on registry
+    return model_name  # Fallback
 
 
 def get_available_models(
