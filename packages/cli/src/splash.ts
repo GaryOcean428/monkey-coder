@@ -8,110 +8,78 @@ import { ConfigManager } from './config.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MONKEY_ASCII = `
-                    ╭─────────────────────────────────────────────────────────╮
-                    │                                                         │
-                    │                       .-"-.                             │
-                    │                      /     \\                            │
-                    │                     | () () |                           │
-                    │                      \\  ^  /                            │
-                    │                       |||||                             │
-                    │                       |||||                             │
-                    │                                                         │
-                    │        ████████╗    ███╗   ███╗ ██████╗ ███╗   ██╗    │
-                    │        ╚══██╔══╝    ████╗ ████║██╔═══██╗████╗  ██║    │
-                    │           ██║       ██╔████╔██║██║   ██║██╔██╗ ██║    │  
-                    │           ██║       ██║╚██╔╝██║██║   ██║██║╚██╗██║    │
-                    │           ██║       ██║ ╚═╝ ██║╚██████╔╝██║ ╚████║    │
-                    │           ╚═╝       ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝    │
-                    │                                                         │
-                    │           ██╗  ██╗███████╗██╗   ██╗                    │
-                    │           ██║ ██╔╝██╔════╝╚██╗ ██╔╝                    │
-                    │           █████╔╝ █████╗   ╚████╔╝                     │
-                    │           ██╔═██╗ ██╔══╝    ╚██╔╝                      │
-                    │           ██║  ██╗███████╗   ██║                       │ 
-                    │           ╚═╝  ╚═╝╚══════╝   ╚═╝                       │
-                    │                                                         │
-                    │     ██████╗ ██████╗ ██████╗ ███████╗██████╗            │
-                    │    ██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗           │
-                    │    ██║     ██║   ██║██║  ██║█████╗  ██████╔╝           │
-                    │    ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██╗           │
-                    │    ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║           │
-                    │     ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝           │
-                    │                                                         │
-                    │        🐒  AI-Powered Development Toolkit  🚀           │
-                    │                                                         │
-                    ╰─────────────────────────────────────────────────────────╯
+const MONKEY_ASCII = `                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   
+[38;5;183m                                _a                                                                 
+                            _-*  /__@                                                              
+                       __="      "  }         [38;5;173m;gg   ag;  _ggg_  gg   gg gg   gg ;ggggg gg   gg     
+                     [38;5;183m_F            /          [38;5;173m[@@   @@| @@@@@@g @@B  @g @@  &@  [@@@@@ [@, [@'     
+                   [38;5;183m_"               ",        [38;5;173m[@@; ;@@| @@  [@@ @@@  @g @@ ,@N  [@      @B @@      
+                  [38;5;183m/                   ,       [38;5;173m[@@@ @@@| @@  [@@ @@@1 @g @@ @@   [@      [@_@'      
+                 [38;5;183m,      ___           '       [38;5;173m[@h@u@M@| @@  [@@ @@B@_@g @@@@'   [@ggg    @@@       
+              [38;5;183m___[    a@@@@@g_  _g@@g, 1_     [38;5;173m[@ @@@ @| @@  [@@ @@ @@@g @@B@g   [@@@@    9@F       
+             [38;5;183m8   "   @@BBB@@@@g@@@@BBB ""f    [38;5;173m[@ [@' @| @@  [@@ @@ [@@g @@ @@,  [@       [@|       
+            [38;5;183m[ ,_                          |   [38;5;173m[@  @  @| @@  [@@ @@  @@g @@  @@  [@       [@|       
+            [38;5;183m[ g t   'g                 !, '   [38;5;173m[@  W  @| @@@@@@N @@  @@g @@  [@l [@@@@@   [@|       
+            [38;5;183m' @;     g        ,g       ['[    [38;5;173m'=  '  ='  <==="  ==  '=* ==   == "=====   "='       
+             [38;5;183mo[  t   ',      _@@L      &_                                                          
+              [@  ,    *__gg" "@""@B"  W                                                           
+                4m@,     ,@@gg,[ ggg  ,        [38;5;154m_gg  ,gg_   ggg,  ;gg;  ;gg,                        
+                   [38;5;183m}     @@@@@@@/@@@, N        [38;5;154m@    [| @   @ [g  [[_   [1_}                        
+                   [38;5;183mg    [@@@@@@@@@@@@ [        [38;5;154m@__  [1_@   @_[g  [[_   [T"@   g   g   g            
+                   [38;5;183m'    @@P"   __     [        [38;5;154m"""   "*"   """   """"  "' "   "   "   "            
+                    [38;5;183m\\,  "  _@@@@@@@N  '                                                            
+              [38;5;208mf@L     [38;5;183mL   @@@@@@@@W  "                                                             
+               [38;5;208m'@@,    [38;5;183mt,  f@@@@@F  ?                                                              
+                 [38;5;208m[@L     [38;5;183mo_   '   _"                                                               
+                 [38;5;208m_@F       [38;5;183m"=___m"                                                                 
+                [38;5;208m@@                                                                                 
+              _@P                                                                                  
+                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   
+                                                                                                   [0m
 `;
 
 function printColorizedSplash(): void {
   console.clear();
   console.log('');
   
-  const lines = MONKEY_ASCII.split('\n');
+  // Print the ASCII art directly - it already contains ANSI color codes
+  console.log(MONKEY_ASCII);
   
-  for (const line of lines) {
-    if (!line) {
-      console.log('');
-      continue;
-    }
-    
-    // Color the monkey face
-    if (line.includes('.-"-.') || line.includes('/     \\') || line.includes('| () () |') || 
-        line.includes('\\  ^  /') || line.includes('|||||')) {
-      console.log(chalk.yellow.bold(line));
-    }
-    // Color the "MONKEY" text - T, M, O, N, K, E, Y
-    else if (line.includes('████████╗') || line.includes('╚══██╔══╝') || line.includes('██║')) {
-      if (line.includes('███╗   ███╗') || line.includes('████╗ ████║') || line.includes('██╔████╔██║') || 
-          line.includes('██║╚██╔╝██║') || line.includes('██║ ╚═╝ ██║')) {
-        console.log(chalk.cyan.bold(line));
-      } else if (line.includes('██████╗') || line.includes('██╔═══██╗') || line.includes('██║   ██║') || 
-                 line.includes('╚██████╔╝')) {
-        console.log(chalk.blue.bold(line));
-      } else if (line.includes('███╗   ██╗') || line.includes('████╗  ██║') || line.includes('██╔██╗ ██║') || 
-                 line.includes('██║╚██╗██║') || line.includes('██║ ╚████║')) {
-        console.log(chalk.green.bold(line));
-      } else {
-        console.log(chalk.cyan.bold(line));
-      }
-    }
-    // Color the "KEY" text
-    else if (line.includes('██╗  ██╗') || line.includes('███████╗') || line.includes('██╗   ██╗') ||
-             line.includes('██║ ██╔╝') || line.includes('██╔════╝') || line.includes('╚██╗ ██╔╝') ||
-             line.includes('█████╔╝') || line.includes('█████╗') || line.includes('╚████╔╝') ||
-             line.includes('██╔═██╗') || line.includes('██╔══╝') || line.includes('╚██╔╝') ||
-             line.includes('██║  ██╗') || line.includes('███████╗') || line.includes('██║')) {
-      console.log(chalk.yellow.bold(line));
-    }
-    // Color the "CODER" text
-    else if (line.includes('██████╗ ██████╗ ██████╗ ███████╗██████╗') ||
-             line.includes('██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔══██╗') ||
-             line.includes('██║     ██║   ██║██║  ██║█████╗  ██████╔╝') ||
-             line.includes('╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║') ||
-             line.includes('╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝')) {
-      console.log(chalk.magenta.bold(line));
-    }
-    // Color the tagline
-    else if (line.includes('🐒  AI-Powered Development Toolkit  🚀')) {
-      console.log(chalk.rgb(255, 165, 0).bold(line)); // Orange color
-    }
-    // Default border and spacing
-    else {
-      console.log(chalk.gray(line));
-    }
-  }
-  
-  // Add status information
-  console.log(chalk.dim('                           Phase 1 Complete • Phase 2 Ready'));
-  console.log(chalk.dim('                           Quantum routing engine ready to load...'));
+  // Add the MONKEY CODER branding similar to Gemini CLI style
+  console.log(chalk.cyan.bold('     ███    ███  ██████  ███    ██ ██   ██ ███████ ██    ██'));
+  console.log(chalk.cyan.bold('     ████  ████ ██    ██ ████   ██ ██  ██  ██       ██  ██'));
+  console.log(chalk.cyan.bold('     ██ ████ ██ ██    ██ ██ ██  ██ █████   █████     ████'));
+  console.log(chalk.cyan.bold('     ██  ██  ██ ██    ██ ██  ██ ██ ██  ██  ██         ██'));
+  console.log(chalk.cyan.bold('     ██      ██  ██████  ██   ████ ██   ██ ███████    ██'));
   console.log('');
-  console.log(chalk.green('                           ✓ Ready to code with AI!'));
+  console.log(chalk.green.bold('     ██████  ██████  ██████  ███████ ██████'));
+  console.log(chalk.green.bold('     ██      ██    ██ ██   ██ ██      ██   ██'));
+  console.log(chalk.green.bold('     ██      ██    ██ ██   ██ █████   ██████'));
+  console.log(chalk.green.bold('     ██      ██    ██ ██   ██ ██      ██   ██'));
+  console.log(chalk.green.bold('     ██████  ██████  ██████  ███████ ██   ██'));
+  console.log('');
+  
+  // Add tips similar to Gemini CLI
+  console.log(chalk.dim('Tips for getting started:'));
+  console.log(chalk.dim('1. Ask questions, implement features, or run analysis.'));
+  console.log(chalk.dim('2. Be specific for the best results.'));
+  console.log(chalk.dim('3. Use /help for more information.'));
   console.log('');
 }
 
 /**
- * Displays an enhanced splash screen with colorized ASCII art.
+ * Displays an enhanced splash screen with colorized monkey ASCII art.
+ * Features a beautiful hand-crafted monkey artwork with ANSI colors and
+ * Gemini CLI-inspired branding.
  *
  * @param {boolean} [suppress=false] - Optional flag to suppress the splash screen.
  */

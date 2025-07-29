@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Code2, ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -64,7 +65,13 @@ export default function LoginPage() {
       <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="flex items-center gap-2 mb-8">
-            <Code2 className="h-8 w-8 text-primary" />
+            <Image 
+              src="/splash.png" 
+              alt="Monkey Coder Logo" 
+              width={32} 
+              height={32} 
+              className="h-8 w-8" 
+            />
             <span className="font-bold text-xl">Monkey Coder</span>
           </Link>
 
@@ -93,12 +100,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"

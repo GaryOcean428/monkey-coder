@@ -1,16 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Code2, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Features', href: '#features' },
   { name: 'Pricing', href: '#pricing' },
-  { name: 'Docs', href: '/docs' },
-  { name: 'Blog', href: '/blog' },
 ]
 
 export function Header() {
@@ -21,7 +20,13 @@ export function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
-            <Code2 className="h-8 w-8 text-primary" />
+            <Image 
+              src="/splash.png" 
+              alt="Monkey Coder Logo" 
+              width={32} 
+              height={32} 
+              className="h-8 w-8" 
+            />
             <span className="font-bold text-xl">Monkey Coder</span>
           </Link>
         </div>
@@ -62,7 +67,13 @@ export function Header() {
         <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-background px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
-              <Code2 className="h-8 w-8 text-primary" />
+              <Image 
+                src="/splash.png" 
+                alt="Monkey Coder Logo" 
+                width={32} 
+                height={32} 
+                className="h-8 w-8" 
+              />
               <span className="font-bold text-xl">Monkey Coder</span>
             </Link>
             <button
