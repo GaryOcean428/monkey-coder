@@ -42,10 +42,8 @@ class ProviderType(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
-    QWEN = "qwen"
     GROK = "grok"
     GROQ = "groq"  # Hardware-accelerated inference provider
-    MOONSHOT = "moonshot"
 
 
 class PersonaType(str, Enum):
@@ -406,8 +404,6 @@ MODEL_REGISTRY = {
         "o4-mini",
         "o3-deep-research",
         "o4-mini-deep-research",
-        # ChatGPT
-        "chatgpt-4o-latest",
         # Search models
         "gpt-4o-search-preview",
         "gpt-4o-mini-search-preview",
@@ -416,6 +412,7 @@ MODEL_REGISTRY = {
         # Legacy (deprecated - DO NOT USE)
         # "gpt-4o",  # Use gpt-4.1 instead
         # "gpt-4o-mini",  # Use gpt-4.1-mini instead
+        # "chatgpt-4o-latest",  # Use gpt-4.1 instead
     ],
     ProviderType.ANTHROPIC: [
         # Claude 4 Family
@@ -439,15 +436,6 @@ MODEL_REGISTRY = {
         "models/gemini-live-2.5-flash-preview",
         "models/gemini-2.0-flash-live-001",
     ],
-    ProviderType.QWEN: [
-        # Qwen models (from Alibaba Cloud)
-        "qwen2.5",
-        "qwen2.5-coder",
-        "qwen-vl",
-        "codeqwen",
-        # Large models
-        "qwen-32b",
-    ],
     ProviderType.GROK: [
         # xAI Grok models
         "grok-4-latest",
@@ -456,36 +444,23 @@ MODEL_REGISTRY = {
         "grok-3-mini-fast",
         "grok-3-fast",
     ],
-    ProviderType.MOONSHOT: [
-        # Kimi models
-        "kimi-chat",
-        "kimi-k2",
-    ],
     ProviderType.GROQ: [
-        # Models available through Groq's hardware acceleration
-        # Note: These are hosted versions of other providers' models
-        "llama-3.1-405b",
-        "llama-3.1-70b",
-        "llama-3.1-8b",
-        "mixtral-8x7b-32768",
-        "gemma-7b-it",
-        # Cross-provider models
-        "qwen-32b",  # Also available on QWEN
-        "kimi-k2",   # Also available on MOONSHOT
+        # Production models available through Groq's hardware acceleration
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+        # Preview models
+        "meta-llama/llama-4-maverick-17b-128e-instruct",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "moonshotai/kimi-k2-instruct",
+        "qwen/qwen3-32b",
     ],
 }
 
 # Cross-provider model mapping
 # Some models are available through multiple providers
 CROSS_PROVIDER_MODELS = {
-    "qwen-32b": {
-        "original": ProviderType.QWEN,
-        "available_on": [ProviderType.QWEN, ProviderType.GROQ],
-    },
-    "kimi-k2": {
-        "original": ProviderType.MOONSHOT,
-        "available_on": [ProviderType.MOONSHOT, ProviderType.GROQ],
-    },
+    # Currently all models are accessed through their primary providers
+    # Groq hosts models from other vendors but we track them under Groq
 }
 
 # Model aliases for backward compatibility

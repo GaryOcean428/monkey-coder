@@ -1,7 +1,7 @@
 """
 Provider registry for AI provider management.
 
-This module manages different AI providers (OpenAI, Anthropic, Google, Qwen)
+This module manages different AI providers (OpenAI, Anthropic, Google, Groq)
 and their model availability.
 """
 
@@ -83,7 +83,8 @@ This module provides adapters for different AI providers:
 - OpenAI (GPT models)
 - Anthropic (Claude models) 
 - Google (Gemini models)
-- Qwen (Qwen Coder models)
+- Groq (Hardware-accelerated inference for Llama, Qwen, and Kimi models)
+- Grok (xAI's Grok models)
 
 All adapters validate model names against official documentation
 to ensure accuracy and compliance.
@@ -213,7 +214,8 @@ class ProviderRegistry:
         from .openai_adapter import OpenAIProvider
         from .anthropic_adapter import AnthropicProvider  
         from .google_adapter import GoogleProvider
-        from .qwen_adapter import QwenProvider
+        from .groq_provider import GroqProvider
+        from .grok_adapter import GrokProvider
         
         # Get API keys from environment
         import os
@@ -232,10 +234,14 @@ class ProviderRegistry:
         if google_key := os.getenv("GOOGLE_API_KEY"):
             providers_to_init.append(GoogleProvider(google_key))
         
-        # Qwen (assuming OpenAI-compatible endpoint)
-        if qwen_key := os.getenv("QWEN_API_KEY"):
-            qwen_base_url = os.getenv("QWEN_BASE_URL", "https://api.qwen.com/v1")
-            providers_to_init.append(QwenProvider(qwen_key, base_url=qwen_base_url))
+        # Groq - Hardware-accelerated inference for Llama, Qwen, and Kimi models
+        if groq_key := os.getenv("GROQ_API_KEY"):
+            providers_to_init.append(GroqProvider(groq_key))
+        
+        # Grok (xAI) - Grok models
+        if grok_key := os.getenv("GROK_API_KEY"):
+            grok_base_url = os.getenv("GROK_BASE_URL", "https://api.x.ai/v1")
+            providers_to_init.append(GrokProvider(grok_key, base_url=grok_base_url))
         
         # Initialize providers concurrently
         results = await asyncio.gather(

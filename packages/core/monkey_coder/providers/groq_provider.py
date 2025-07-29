@@ -1,180 +1,311 @@
 """
 Groq AI Provider for Monkey Coder
-Supports Qwen and Kimi models via Groq API
+Supports Llama, Qwen and Kimi models via Groq API
 """
 
 import os
 import asyncio
 from typing import Dict, Any, List, Optional, AsyncGenerator
 import logging
+from datetime import datetime
 from groq import AsyncGroq, Groq
-from .base_provider import BaseAIProvider, AIModel, AIResponse, StreamingResponse
+from . import BaseProvider
+from ..models import ProviderType, ProviderError, ModelInfo
 
 logger = logging.getLogger(__name__)
 
 
-class GroqProvider(BaseAIProvider):
-    """Groq AI provider for Qwen and Kimi models."""
+class GroqProvider(BaseProvider):
+    """Groq AI provider for hardware-accelerated model inference."""
 
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GROQ_API_KEY")
-        if not self.api_key:
+    def __init__(self, api_key: Optional[str] = None, **kwargs):
+        api_key = api_key or os.getenv("GROQ_API_KEY")
+        if not api_key:
             raise ValueError("GROQ_API_KEY is required")
+        
+        super().__init__(api_key, **kwargs)
 
-        self.client = AsyncGroq(api_key=self.api_key)
-        self.sync_client = Groq(api_key=self.api_key)
+    @property
+    def provider_type(self) -> ProviderType:
+        return ProviderType.GROQ
 
-        # Groq-available models from Production and Preview lists
-        self.models = {
+    @property
+    def name(self) -> str:
+        return "Groq"
+
+    async def initialize(self) -> None:
+        """Initialize the Groq client."""
+        try:
+            self.client = AsyncGroq(api_key=self.api_key)
+            self.sync_client = Groq(api_key=self.api_key)
+
+            # Test the connection
+            await self._test_connection()
+            logger.info("Groq provider initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize Groq provider: {e}")
+            raise ProviderError(
+                f"Groq initialization failed: {e}",
+                provider="Groq",
+                error_code="INIT_FAILED",
+            )
+
+    async def cleanup(self) -> None:
+        """Cleanup Groq client resources."""
+        self.client = None
+        self.sync_client = None
+        logger.info("Groq provider cleaned up")
+
+    async def _test_connection(self) -> None:
+        """Test the Groq API connection."""
+        if not self.client:
+            raise ProviderError(
+                "Groq client not available for testing",
+                provider="Groq",
+                error_code="CLIENT_NOT_INITIALIZED",
+            )
+
+        try:
+            # Simple API call to test connection
+            response = await self.client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=1,
+            )
+            if not response:
+                raise ProviderError(
+                    "No response from Groq API",
+                    provider="Groq",
+                    error_code="NO_RESPONSE",
+                )
+        except Exception as e:
+            raise ProviderError(
+                f"Groq API connection test failed: {e}",
+                provider="Groq",
+                error_code="CONNECTION_FAILED",
+            )
+
+    # Groq-available models from Production and Preview lists
+    VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
             # Production Llama models
-            "llama-3.1-8b-instant": AIModel(
-                id="llama-3.1-8b-instant",
-                name="Llama 3.1 8B - Fast, lightweight model",
-                provider="groq",
-                context_window=131072,
-                max_tokens=131072,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.00005,  # Input cost
-            ),
-            "llama-3.3-70b-versatile": AIModel(
-                id="llama-3.3-70b-versatile",
-                name="Llama 3.3 70B - Versatile language model",
-                provider="groq",
-                context_window=131072,
-                max_tokens=32768,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.00059,  # Input cost
-            ),
+            "llama-3.1-8b-instant": {
+                "name": "llama-3.1-8b-instant",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 131072,
+                "input_cost": 0.05,  # per 1M tokens
+                "output_cost": 0.08,  # per 1M tokens
+                "description": "Llama 3.1 8B - Fast, lightweight model",
+                "capabilities": ["text", "streaming"],
+                "version": "3.1",
+                "release_date": datetime(2024, 7, 1),
+            },
+            "llama-3.3-70b-versatile": {
+                "name": "llama-3.3-70b-versatile",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 32768,
+                "input_cost": 0.59,  # per 1M tokens
+                "output_cost": 0.79,  # per 1M tokens
+                "description": "Llama 3.3 70B - Versatile language model",
+                "capabilities": ["text", "streaming"],
+                "version": "3.3",
+                "release_date": datetime(2024, 9, 1),
+            },
             # Preview Llama models
-            "meta-llama/llama-4-maverick-17b-128e-instruct": AIModel(
-                id="meta-llama/llama-4-maverick-17b-128e-instruct",
-                name="Llama 4 Maverick 17B Instruct",
-                provider="groq",
-                context_window=131072,
-                max_tokens=8192,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0002,  # Estimate
-            ),
-            "meta-llama/llama-4-scout-17b-16e-instruct": AIModel(
-                id="meta-llama/llama-4-scout-17b-16e-instruct",
-                name="Llama 4 Scout 17B Instruct",
-                provider="groq",
-                context_window=131072,
-                max_tokens=8192,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0002,  # Estimate
-            ),
+            "meta-llama/llama-4-maverick-17b-128e-instruct": {
+                "name": "meta-llama/llama-4-maverick-17b-128e-instruct",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 8192,
+                "input_cost": 0.20,  # per 1M tokens (estimate)
+                "output_cost": 0.30,  # per 1M tokens (estimate)
+                "description": "Llama 4 Maverick 17B Instruct",
+                "capabilities": ["text", "streaming"],
+                "version": "4-maverick",
+                "release_date": datetime(2024, 12, 1),
+            },
+            "meta-llama/llama-4-scout-17b-16e-instruct": {
+                "name": "meta-llama/llama-4-scout-17b-16e-instruct",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 8192,
+                "input_cost": 0.20,  # per 1M tokens (estimate)
+                "output_cost": 0.30,  # per 1M tokens (estimate)
+                "description": "Llama 4 Scout 17B Instruct",
+                "capabilities": ["text", "streaming"],
+                "version": "4-scout",
+                "release_date": datetime(2024, 12, 1),
+            },
             # Preview Kimi model
-            "moonshotai/kimi-k2-instruct": AIModel(
-                id="moonshotai/kimi-k2-instruct",
-                name="Kimi K2 Instruct - Advanced MoE model",
-                provider="groq",
-                context_window=131072,
-                max_tokens=16384,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0008,  # Estimate
-            ),
+            "moonshotai/kimi-k2-instruct": {
+                "name": "moonshotai/kimi-k2-instruct",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 16384,
+                "input_cost": 0.80,  # per 1M tokens (estimate)
+                "output_cost": 1.20,  # per 1M tokens (estimate)
+                "description": "Kimi K2 Instruct - Advanced MoE model",
+                "capabilities": ["text", "streaming"],
+                "version": "k2",
+                "release_date": datetime(2024, 11, 1),
+            },
             # Preview Qwen model
-            "qwen/qwen3-32b": AIModel(
-                id="qwen/qwen3-32b",
-                name="Qwen 3 32B - Advanced reasoning and multilingual",
-                provider="groq",
-                context_window=131072,
-                max_tokens=40960,
-                supports_streaming=True,
-                cost_per_1k_tokens=0.0004,  # Estimate
-            ),
+            "qwen/qwen3-32b": {
+                "name": "qwen/qwen3-32b",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 40960,
+                "input_cost": 0.40,  # per 1M tokens (estimate)
+                "output_cost": 0.60,  # per 1M tokens (estimate)
+                "description": "Qwen 3 32B - Advanced reasoning and multilingual",
+                "capabilities": ["text", "streaming"],
+                "version": "3",
+                "release_date": datetime(2024, 10, 1),
+            },
         }
 
-    def get_provider_name(self) -> str:
-        return "groq"
+    async def validate_model(self, model_name: str) -> bool:
+        """Validate model name against available Groq models."""
+        return model_name in self.VALIDATED_MODELS
 
-    def get_available_models(self) -> List[AIModel]:
-        return list(self.models.values())
+    async def get_available_models(self) -> List[ModelInfo]:
+        """Get list of available models from Groq."""
+        models = []
 
-    def validate_model(self, model_id: str) -> bool:
-        return model_id in self.models
+        for model_name, info in self.VALIDATED_MODELS.items():
+            model_info = ModelInfo(
+                name=info["name"],
+                provider=self.provider_type,
+                type=info["type"],
+                context_length=info["context_length"],
+                input_cost=info["input_cost"] / 1_000_000,  # Convert to per-token cost
+                output_cost=info["output_cost"] / 1_000_000,
+                capabilities=info["capabilities"],
+                description=info["description"],
+                version=info.get("version"),
+                release_date=info.get("release_date"),
+            )
+            models.append(model_info)
 
-    async def generate_response(
+        return models
+
+    async def get_model_info(self, model_name: str) -> ModelInfo:
+        """Get detailed information about a specific model."""
+        if model_name in self.VALIDATED_MODELS:
+            info = self.VALIDATED_MODELS[model_name]
+            return ModelInfo(
+                name=info["name"],
+                provider=self.provider_type,
+                type=info["type"],
+                context_length=info["context_length"],
+                input_cost=info["input_cost"] / 1_000_000,
+                output_cost=info["output_cost"] / 1_000_000,
+                capabilities=info["capabilities"],
+                description=info["description"],
+                version=info.get("version"),
+                release_date=info.get("release_date"),
+            )
+
+        raise ProviderError(
+            f"Model {model_name} not found",
+            provider="Groq",
+            error_code="MODEL_NOT_FOUND",
+        )
+
+    async def generate_completion(
         self,
-        messages: List[Dict[str, str]],
-        model_id: str = "llama-3.1-8b-instant",
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
-        **kwargs,
-    ) -> AIResponse:
-        """Generate a response using Groq API."""
-
-        if not self.validate_model(model_id):
-            raise ValueError(f"Model {model_id} not supported by Groq provider")
+        model: str,
+        messages: List[Dict[str, Any]],
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Generate completion using Groq's API."""
+        if not self.client:
+            raise ProviderError(
+                "Groq client not initialized",
+                provider="Groq",
+                error_code="CLIENT_NOT_INITIALIZED",
+            )
 
         try:
+            # Validate model
+            if not await self.validate_model(model):
+                raise ProviderError(
+                    f"Invalid model: {model}",
+                    provider="Groq",
+                    error_code="INVALID_MODEL",
+                )
+
+            # Make the API call
+            start_time = datetime.utcnow()
             response = await self.client.chat.completions.create(
-                model=model_id,
+                model=model,
                 messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                temperature=kwargs.get("temperature", 0.7),
+                max_tokens=kwargs.get("max_tokens", 2048),
                 stream=False,
-                **kwargs,
+                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens"]}
             )
+            end_time = datetime.utcnow()
 
-            return AIResponse(
-                content=response.choices[0].message.content,
-                model=model_id,
-                provider="groq",
-                tokens_used=response.usage.total_tokens if response.usage else 0,
-                cost_estimate=self._calculate_cost(
-                    model_id, response.usage.total_tokens if response.usage else 0
-                ),
-                metadata={
-                    "finish_reason": response.choices[0].finish_reason,
-                    "usage": response.usage.dict() if response.usage else None,
+            # Calculate metrics
+            usage = response.usage
+            execution_time = (end_time - start_time).total_seconds()
+
+            return {
+                "content": response.choices[0].message.content,
+                "role": "assistant",
+                "finish_reason": response.choices[0].finish_reason,
+                "usage": {
+                    "prompt_tokens": usage.prompt_tokens if usage else 0,
+                    "completion_tokens": usage.completion_tokens if usage else 0,
+                    "total_tokens": usage.total_tokens if usage else 0,
                 },
-            )
+                "model": response.model,
+                "execution_time": execution_time,
+                "provider": "groq",
+            }
+
 
         except Exception as e:
-            logger.error(f"Groq API error: {e}")
-            raise
+            logger.error(f"Groq completion failed: {e}")
+            raise ProviderError(
+                f"Completion generation failed: {e}",
+                provider="Groq",
+                error_code="COMPLETION_FAILED",
+            )
 
-    async def generate_streaming_response(
-        self,
-        messages: List[Dict[str, str]],
-        model_id: str = "llama-3.1-8b-instant",
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
-        **kwargs,
-    ) -> AsyncGenerator[StreamingResponse, None]:
-        """Generate a streaming response using Groq API."""
-
-        if not self.validate_model(model_id):
-            raise ValueError(f"Model {model_id} not supported by Groq provider")
+    async def health_check(self) -> Dict[str, Any]:
+        """Perform health check on Groq provider."""
+        if not self.client:
+            return {
+                "status": "unhealthy",
+                "error": "Groq client not initialized",
+                "last_updated": datetime.utcnow().isoformat(),
+            }
 
         try:
-            stream = await self.client.chat.completions.create(
-                model=model_id,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stream=True,
-                **kwargs,
+            # Test a simple completion
+            test_response = await self.client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=5,
             )
 
-            async for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    yield StreamingResponse(
-                        content=chunk.choices[0].delta.content,
-                        model=model_id,
-                        provider="groq",
-                        is_complete=chunk.choices[0].finish_reason is not None,
-                        metadata={"finish_reason": chunk.choices[0].finish_reason},
-                    )
+            return {
+                "status": "healthy",
+                "model_count": len(self.VALIDATED_MODELS),
+                "available_models": list(self.VALIDATED_MODELS.keys()),
+                "test_completion": test_response.choices[0].message.content,
+                "hardware_accelerated": True,
+                "last_updated": datetime.utcnow().isoformat(),
+            }
 
         except Exception as e:
-            logger.error(f"Groq streaming API error: {e}")
-            raise
-
-    def _calculate_cost(self, model_id: str, tokens: int) -> float:
-        """Calculate cost based on model and token usage."""
-        if model_id in self.models:
-            return (tokens / 1000) * self.models[model_id].cost_per_1k_tokens
-        return 0.0
+            logger.error(f"Groq health check failed: {e}")
+            return {
+                "status": "unhealthy",
+                "error": str(e),
+                "last_updated": datetime.utcnow().isoformat(),
+            }
