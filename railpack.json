@@ -1,16 +1,11 @@
 {
   "$schema": "https://schema.railpack.com",
-  "providers": ["python"],
-  "python": {
-    "version": "3.11"
-  },
-  "install": {
-    "cmds": [
-      "pip install -e packages/core"
-    ]
+  "providers": ["docker"],
+  "build": {
+    "dockerfile": "Dockerfile.unified"
   },
   "start": {
-    "cmd": "python -m monkey_coder.app.main"
+    "cmd": "python -m packages.core.monkey_coder.app.main"
   },
   "healthcheck": {
     "path": "/health",

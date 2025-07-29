@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import time
 from pathlib import Path
@@ -610,6 +611,16 @@ def create_app() -> FastAPI:
         Configured FastAPI application instance
     """
     return app
+
+
+# Mount static files for Next.js frontend (must be after all API routes)
+static_dir = Path(__file__).parent.parent.parent.parent / "web" / "out"
+if static_dir.exists():
+    # Mount static files with fallback to index.html for SPA routing
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    logger.info(f"Serving static files from: {static_dir}")
+else:
+    logger.warning(f"Static directory not found: {static_dir}. Frontend will not be served.")
 
 
 if __name__ == "__main__":

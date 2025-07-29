@@ -25,6 +25,8 @@
     "dev": "yarn workspaces foreach -pi run dev",
     "release": "yarn changeset publish",
     "release:version": "yarn changeset version",
+    "publish-npm": "yarn workspace monkey-coder-cli publish --access public && yarn workspace monkey-coder-sdk publish --access public",
+    "publish-pypi": "cd packages/core && python -m build && python -m twine upload dist/* && cd ../sdk/src/python && python -m build && python -m twine upload dist/*",
     "docs:dev": "yarn workspace docs run dev",
     "docs:build": "yarn workspace docs run build",
     "docs:serve": "yarn workspace docs run serve",
