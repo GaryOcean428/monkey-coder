@@ -145,7 +145,7 @@ except ImportError:
 
 # Function to validate TypeScript package
 validate_typescript_package() {
-    echo -e "\n📦 Validating TypeScript Package (@monkey-coder/cli)"
+    echo -e "\n📦 Validating TypeScript Package (monkey-coder-cli)"
     echo "----------------------------------------------------"
     
     cd packages/cli
@@ -176,10 +176,10 @@ validate_typescript_package() {
     
     # Check package name
     PACKAGE_NAME=$(node -p "require('./package.json').name" 2>/dev/null || echo "unknown")
-    if [ "$PACKAGE_NAME" = "@monkey-coder/cli" ]; then
+    if [ "$PACKAGE_NAME" = "monkey-coder-cli" ]; then
         print_status "success" "Package name: $PACKAGE_NAME"
     else
-        print_status "error" "Package name should be @monkey-coder/cli, got: $PACKAGE_NAME"
+        print_status "error" "Package name should be monkey-coder-cli, got: $PACKAGE_NAME"
         return 1
     fi
     

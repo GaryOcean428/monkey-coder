@@ -22,9 +22,9 @@ Run these commands to gather diagnostic information:
 ### Issue H1: Package Naming Confusion
 
 **Symptoms:**
-- `@monkey-coder/cli` not found in npm registry
+- `monkey-coder-cli` not found in npm registry
 - Installation fails with 404 errors
-- References to `monkey-coder-cli` vs `@monkey-coder/cli`
+- References to `monkey-coder-cli` vs `monkey-coder-cli`
 
 **Root Cause:**
 Package naming inconsistency between published package and documentation.
@@ -33,12 +33,12 @@ Package naming inconsistency between published package and documentation.
 ```bash
 # Check which package is actually published
 npm view monkey-coder-cli
-npm view @monkey-coder/cli
+npm view monkey-coder-cli
 
 # Install the correct package
-npm install -g @monkey-coder/cli
+npm install -g monkey-coder-cli
 
-# If @monkey-coder/cli doesn't exist, use:
+# If monkey-coder-cli doesn't exist, use:
 npm install -g monkey-coder-cli
 ```
 
@@ -61,10 +61,10 @@ Post-install scripts attempting to download models or contact APIs during instal
 **Solution:**
 ```bash
 # Install with CI flag to skip network-dependent scripts
-CI=true npm install -g @monkey-coder/cli
+CI=true npm install -g monkey-coder-cli
 
 # Or disable all scripts
-npm install -g @monkey-coder/cli --ignore-scripts
+npm install -g monkey-coder-cli --ignore-scripts
 ```
 
 **For CI/CD Pipelines:**
@@ -73,7 +73,7 @@ npm install -g @monkey-coder/cli --ignore-scripts
 - name: Install CLI
   run: |
     export CI=true
-    npm install -g @monkey-coder/cli
+    npm install -g monkey-coder-cli
   env:
     NODE_ENV: production
 ```
@@ -193,7 +193,7 @@ Trace all network requests during installation:
 
 ```bash
 # Full network trace
-NODE_DEBUG=request npm install -g @monkey-coder/cli 2>&1 | tee install-trace.log
+NODE_DEBUG=request npm install -g monkey-coder-cli 2>&1 | tee install-trace.log
 
 # Analyze HTTP requests
 grep -E "(GET|POST)" install-trace.log
@@ -268,7 +268,7 @@ curl https://monkey-coder.up.railway.app/api/health
 - name: Install CLI
   run: |
     echo "registry=https://registry.npmjs.org/" >> .npmrc
-    CI=true npm install -g @monkey-coder/cli
+    CI=true npm install -g monkey-coder-cli
     
 - name: Validate Installation
   run: |

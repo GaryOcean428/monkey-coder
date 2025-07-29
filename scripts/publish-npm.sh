@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# NPM Publishing Script for @monkey-coder/cli
+# NPM Publishing Script for monkey-coder-cli
 # This script publishes the TypeScript CLI package to NPM
 
 set -e

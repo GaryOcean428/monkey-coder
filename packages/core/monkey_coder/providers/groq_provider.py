@@ -43,6 +43,24 @@ class GroqProvider(BaseAIProvider):
                 supports_streaming=True,
                 cost_per_1k_tokens=0.0009
             ),
+            "qwen/qwen3-32b": AIModel(
+                id="qwen/qwen3-32b",
+                name="Qwen 3 32B",
+                provider="groq",
+                context_window=32768,
+                max_tokens=8192,
+                supports_streaming=True,
+                cost_per_1k_tokens=0.0006
+            ),
+            "moonshotai/kimi-k2-instruct": AIModel(
+                id="moonshotai/kimi-k2-instruct",
+                name="Kimi K2 Instruct",
+                provider="groq",
+                context_window=200000,
+                max_tokens=8192,
+                supports_streaming=True,
+                cost_per_1k_tokens=0.0008
+            ),
             "mixtral-8x7b-32768": AIModel(
                 id="mixtral-8x7b-32768",
                 name="Mixtral 8x7B",

@@ -118,11 +118,11 @@ kubectl apply -f deploy/k8s/
 
 ### **NPM Package (CLI)**
 
-The CLI is published as `@monkey-coder/cli`:
+The CLI is published as `monkey-coder-cli`:
 
 ```bash
 # Install globally
-npm install -g @monkey-coder/cli
+npm install -g monkey-coder-cli
 
 # Use as 'monkey' command
 monkey --version
@@ -356,7 +356,7 @@ k6 run scripts/load-test.js
 
 ```bash
 # Update CLI
-npm update -g @monkey-coder/cli
+npm update -g monkey-coder-cli
 
 # Update Python packages
 pip install --upgrade monkey-coder-core monkey-coder-sdk

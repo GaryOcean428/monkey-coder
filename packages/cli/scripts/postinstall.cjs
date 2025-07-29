@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Post-install script for @monkey-coder/cli
+ * Post-install script for monkey-coder-cli
  * Handles safe installation with CI guards and network call prevention
  */
 

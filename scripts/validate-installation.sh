@@ -9,7 +9,7 @@ echo "==========================================="
 
 # 1. Capture install logs with verbose output
 echo -e "\n📋 Step 1: Testing package installation with verbose logging"
-echo "Command: npm install @monkey-coder/cli --verbose"
+echo "Command: npm install monkey-coder-cli --verbose"
 
 # Create temp directory for logs
 LOG_DIR="/tmp/monkey-install-logs"
@@ -17,7 +17,7 @@ mkdir -p "$LOG_DIR"
 
 # Capture verbose install logs
 echo "Capturing installation logs to $LOG_DIR/install.log..."
-if NODE_DEBUG=request npm install @monkey-coder/cli --verbose 2>&1 | tee "$LOG_DIR/install.log"; then
+if NODE_DEBUG=request npm install monkey-coder-cli --verbose 2>&1 | tee "$LOG_DIR/install.log"; then
     echo "✅ Installation successful"
 else
     echo "❌ Installation failed"
@@ -40,13 +40,13 @@ fi
 
 # 3. Package verification
 echo -e "\n📋 Step 3: Verifying package availability"
-if npm view @monkey-coder/cli version; then
-    echo "✅ Package @monkey-coder/cli found in registry"
+if npm view monkey-coder-cli version; then
+    echo "✅ Package monkey-coder-cli found in registry"
 else
-    echo "❌ Package @monkey-coder/cli not found in registry"
+    echo "❌ Package monkey-coder-cli not found in registry"
     echo "Checking if monkey-coder-cli exists instead..."
     if npm view monkey-coder-cli version; then
-        echo "⚠️  Found monkey-coder-cli instead of @monkey-coder/cli"
+        echo "⚠️  Found monkey-coder-cli instead of monkey-coder-cli"
         echo "This indicates a package naming issue that needs to be resolved"
     fi
 fi

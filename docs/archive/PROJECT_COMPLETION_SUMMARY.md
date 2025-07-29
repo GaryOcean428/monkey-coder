@@ -46,7 +46,7 @@ requested features implemented and tested.
 
 ### **Published Packages**
 
-1. **NPM Package**: `@monkey-coder/cli` - Global CLI tool installable as `monkey` command
+1. **NPM Package**: `monkey-coder-cli` - Global CLI tool installable as `monkey` command
 2. **PyPI Core**: `monkey-coder-core` - Python orchestration engine
 3. **PyPI SDK**: `monkey-coder-sdk` - Python developer SDK
 4. **TypeScript SDK**: Ready for npm publishing
@@ -118,7 +118,7 @@ yarn lint         # ✓ Code quality checks passed
 
 - **Repository**: https://github.com/GaryOcean428/monkey-coder
 - **Production Tag**: https://github.com/GaryOcean428/monkey-coder/releases/tag/v1.0.0
-- **CLI Package**: `npm install -g @monkey-coder/cli`
+- **CLI Package**: `npm install -g monkey-coder-cli`
 - **Python Core**: `pip install monkey-coder-core`
 - **Python SDK**: `pip install monkey-coder-sdk`
 

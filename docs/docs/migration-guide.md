@@ -206,7 +206,7 @@ Remove old Qwen3-Coder dependencies and use Monkey Coder packages:
 {
   "dependencies": {
     "@monkey-coder/sdk": "^1.0.0",
-    "@monkey-coder/cli": "^1.0.0"
+    "monkey-coder-cli": "^1.0.0"
   }
 }
 ```

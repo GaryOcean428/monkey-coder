@@ -52,16 +52,16 @@ else
 fi
 
 # 0.2 Capture verbose install log for public CLI
-echo "📋 Phase 0.2: Testing @monkey-coder/cli installation..."
-if npm view @monkey-coder/cli version 2>/dev/null; then
-    phase_status "0.2" "success" "Package @monkey-coder/cli exists in registry"
+echo "📋 Phase 0.2: Testing monkey-coder-cli installation..."
+if npm view monkey-coder-cli version 2>/dev/null; then
+    phase_status "0.2" "success" "Package monkey-coder-cli exists in registry"
 else
-    echo "Package @monkey-coder/cli not found. Checking monkey-coder-cli..."
+    echo "Package monkey-coder-cli not found. Checking monkey-coder-cli..."
     if npm view monkey-coder-cli version 2>/dev/null; then
         CLI_VERSION=$(npm view monkey-coder-cli version)
-        phase_status "0.2" "error" "Found monkey-coder-cli v$CLI_VERSION instead of @monkey-coder/cli (H1 - Package naming issue confirmed)"
+        phase_status "0.2" "error" "Found monkey-coder-cli v$CLI_VERSION instead of monkey-coder-cli (H1 - Package naming issue confirmed)"
     else
-        phase_status "0.2" "error" "Neither @monkey-coder/cli nor monkey-coder-cli found"
+        phase_status "0.2" "error" "Neither monkey-coder-cli nor monkey-coder-cli found"
     fi
 fi
 
@@ -297,14 +297,14 @@ echo "==============================="
 echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo ""
 echo "Key Findings:"
-echo "1. Package Naming Issue (H1): @monkey-coder/cli doesn't exist, monkey-coder-cli does"
+echo "1. Package Naming Issue (H1): monkey-coder-cli doesn't exist, monkey-coder-cli does"
 echo "2. Railway Health Endpoint: /health working, /healthz needs implementation"
 echo "3. Registry Configuration: .npmrc properly configured"
 echo "4. Post-install Safety: CI guards implemented"
 echo "5. Environment Variables: Validation shows missing vars"
 echo ""
 echo "Next Actions Required:"
-echo "1. Publish @monkey-coder/cli to npm registry OR update references to monkey-coder-cli"
+echo "1. Publish monkey-coder-cli to npm registry OR update references to monkey-coder-cli"
 echo "2. Add /healthz endpoint support to match railpack.json configuration"
 echo "3. Install Railway CLI for full deployment management"
 echo "4. Configure missing environment variables"

@@ -1,5 +1,5 @@
 /**
- * Installation tests for @monkey-coder/cli
+ * Installation tests for monkey-coder-cli
  * Ensures the package installs correctly without network dependencies
  */
 
@@ -42,7 +42,7 @@ describe('CLI Installation', () => {
     
     try {
       const { stdout, stderr } = await execAsync(
-        'npm install @monkey-coder/cli --no-save --silent',
+        'npm install monkey-coder-cli --no-save --silent',
         { env, timeout: 60000 }
       );
       
@@ -57,7 +57,7 @@ describe('CLI Installation', () => {
     } catch (error) {
       // If package doesn't exist, that's the issue we're fixing
       if (error.message.includes('404') || error.message.includes('Not Found')) {
-        console.log('⚠️  @monkey-coder/cli not found in registry - this is the expected issue');
+        console.log('⚠️  monkey-coder-cli not found in registry - this is the expected issue');
         expect(error.message).toContain('404');
       } else {
         throw error;
@@ -153,7 +153,7 @@ describe('CLI Installation', () => {
     const packageJson = await fs.readJson(packageJsonPath);
     
     // Should use scoped name
-    expect(packageJson.name).toBe('@monkey-coder/cli');
+    expect(packageJson.name).toBe('monkey-coder-cli');
     
     // Should have bin entries
     expect(packageJson.bin).toHaveProperty('monkey');

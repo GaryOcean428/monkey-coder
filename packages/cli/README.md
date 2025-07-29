@@ -17,10 +17,10 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 
 ```bash
 # Install globally
-npm install -g @monkey-coder/cli
+npm install -g monkey-coder-cli
 
 # Or use yarn
-yarn global add @monkey-coder/cli
+yarn global add monkey-coder-cli
 ```
 
 ## Quick Start

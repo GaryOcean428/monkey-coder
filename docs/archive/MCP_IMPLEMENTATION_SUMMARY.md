@@ -264,7 +264,7 @@ The packages are ready for publishing with:
    - Dependencies properly specified
    - PyPI token available for publishing
 
-2. **TypeScript Package (@monkey-coder/cli)**
+2. **TypeScript Package (monkey-coder-cli)**
    - Version: 1.0.0
    - MCP commands integrated
    - Dependencies updated

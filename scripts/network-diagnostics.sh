@@ -30,7 +30,7 @@ cat > package.json << 'EOF'
 EOF
 
 echo "Testing clean install with request tracing..."
-NODE_DEBUG=request npm install @monkey-coder/cli 2>&1 | tee "$LOG_DIR/clean-install-trace.log"
+NODE_DEBUG=request npm install monkey-coder-cli 2>&1 | tee "$LOG_DIR/clean-install-trace.log"
 
 # 2. Capture all network requests during installation
 echo -e "\n📋 Step 2: Detailed network request analysis"
@@ -95,7 +95,7 @@ echo "Testing npm registry connectivity..."
 curl -v https://registry.npmjs.org/ 2>&1 | tee "$LOG_DIR/registry-connectivity.log"
 
 echo "Testing package availability..."
-curl -v "https://registry.npmjs.org/@monkey-coder/cli" 2>&1 | tee "$LOG_DIR/package-availability.log"
+curl -v "https://registry.npmjs.org/monkey-coder-cli" 2>&1 | tee "$LOG_DIR/package-availability.log"
 
 # 7. Generate network analysis report
 echo -e "\n📊 Network Diagnostics Summary"
