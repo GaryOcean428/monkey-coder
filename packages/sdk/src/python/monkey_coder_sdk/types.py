@@ -124,7 +124,7 @@ class ExecuteRequest:
     task_type: TaskType
     prompt: str
     context: ExecutionContext
-    superclause_config: SuperClaudeConfig
+    superclaude_config: SuperClaudeConfig
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     files: Optional[List[FileData]] = None
     monkey1_config: Optional[Monkey1Config] = None

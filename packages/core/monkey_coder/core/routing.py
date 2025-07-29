@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..models import (
     ExecuteRequest, 
@@ -149,7 +149,7 @@ class AdvancedRouter:
                 complexity_level, context_type, persona, provider, model
             ),
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "slash_command": slash_command,
                 "context_type": context_type.value,
                 "complexity_level": complexity_level.value,
@@ -247,7 +247,7 @@ class AdvancedRouter:
         """Extract primary context type from request."""
         prompt = request.prompt.lower()
         
-        # Task type mapping
+        # Task type mapping - used as fallback if keyword detection doesn't find a strong match
         task_context_map = {
             TaskType.CODE_GENERATION: ContextType.CODE_GENERATION,
             TaskType.CODE_REVIEW: ContextType.CODE_REVIEW,
@@ -257,10 +257,7 @@ class AdvancedRouter:
             TaskType.REFACTORING: ContextType.REFACTORING,
         }
         
-        if request.task_type in task_context_map:
-            return task_context_map[request.task_type]
-        
-        # Keyword-based detection with weighted scoring
+        # Keyword-based detection with weighted scoring - prioritize this over task type
         context_keywords = {
             ContextType.CODE_GENERATION: {
                 'primary': ['generate', 'create', 'write', 'implement', 'build', 'function', 'class'],
@@ -303,15 +300,23 @@ class AdvancedRouter:
         best_match = ContextType.CODE_GENERATION
         max_score = 0
         
+        prompt = prompt.lower()  # Convert to lowercase for case-insensitive matching
+        
         for context_type, keyword_groups in context_keywords.items():
             # Weighted scoring: primary keywords = 2 points, secondary = 1 point
-            primary_score = sum(2 for kw in keyword_groups['primary'] if kw in prompt)
-            secondary_score = sum(1 for kw in keyword_groups['secondary'] if kw in prompt)
+            primary_score = sum(2 for kw in keyword_groups['primary'] 
+                              if re.search(r'\b' + re.escape(kw) + r'\b', prompt))
+            secondary_score = sum(1 for kw in keyword_groups['secondary'] 
+                                if re.search(r'\b' + re.escape(kw) + r'\b', prompt))
             total_score = primary_score + secondary_score
             
             if total_score > max_score:
                 max_score = total_score
                 best_match = context_type
+        
+        # If no keywords matched (max_score == 0), fallback to task type mapping
+        if max_score == 0 and request.task_type in task_context_map:
+            return task_context_map[request.task_type]
                 
         return best_match
     
@@ -371,9 +376,9 @@ class AdvancedRouter:
                 return context_persona
         
         # Explicit persona from request config (lower priority than specific contexts)
-        if hasattr(request, 'superclause_config') and request.superclause_config:
-            if hasattr(request.superclause_config, 'persona'):
-                return request.superclause_config.persona
+        if hasattr(request, 'superclaude_config') and request.superclaude_config:
+            if hasattr(request.superclaude_config, 'persona'):
+                return request.superclaude_config.persona
         
         # Fallback to context-based or default
         return context_persona_map.get(context_type, PersonaType.DEVELOPER)
