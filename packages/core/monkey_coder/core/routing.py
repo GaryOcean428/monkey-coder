@@ -172,8 +172,9 @@ class AdvancedRouter:
         score = 0.0
         prompt = request.prompt.lower()
         
-        # Base score for any coding task
-        if any(indicator in prompt for indicator in ['function', 'class', 'method', 'code', 'implement', 'create']):
+        # Base score for any coding task - use word boundaries for accurate matching
+        base_indicators = ['function', 'class', 'method', 'code', 'implement', 'create']
+        if any(re.search(r'\b' + re.escape(indicator) + r'\b', prompt) for indicator in base_indicators):
             score += 0.2
         
         # Text length indicators - adjusted for better distribution
@@ -197,13 +198,13 @@ class AdvancedRouter:
             'fault tolerance', 'auto-scaling', 'real-time', 'serving'
         ]
         
-        keyword_matches = sum(1 for kw in complex_keywords if kw in prompt)
+        keyword_matches = sum(1 for kw in complex_keywords if re.search(r'\b' + re.escape(kw) + r'\b', prompt))
         # Adjusted weighting for better balance
         score += min(keyword_matches * 0.08, 0.3)
         
-        # Multi-step process indicators
+        # Multi-step process indicators - use word boundaries to avoid false matches
         step_indicators = ['step', 'phase', 'first', 'then', 'next', 'finally', 'multi-step', 'multi-phase']
-        step_count = sum(1 for ind in step_indicators if ind in prompt)
+        step_count = sum(1 for ind in step_indicators if re.search(r'\b' + re.escape(ind) + r'\b', prompt))
         if step_count >= 2:
             score += 0.2
         elif step_count >= 1:
@@ -288,7 +289,7 @@ class AdvancedRouter:
                 'secondary': ['readme', 'guide', 'manual', 'specification']
             },
             ContextType.TESTING: {
-                'primary': ['test', 'unittest', 'spec', 'verify', 'validate', 'unit tests'],
+                'primary': ['test', 'tests', 'unittest', 'spec', 'verify', 'validate', 'unit test', 'unit tests'],
                 'secondary': ['testing', 'assertion', 'mock', 'coverage']
             },
             ContextType.REFACTORING: {
