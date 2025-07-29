@@ -94,7 +94,7 @@ Then check:
 
 Your packages will be published as:
 - **PyPI**: `monkey-coder-core`, `monkey-coder-sdk`
-- **npm**: `@monkey-coder/cli`, `@monkey-coder/sdk`
+- **npm**: `monkey-coder-cli`, `monkey-coder-sdk`
 
 ## 🛡️ Safety Features
 

@@ -29,8 +29,8 @@ Version numbers are automatically bumped based on commit message patterns:
 ### Package Detection
 
 The workflow detects changes in:
-- **NPM packages**: `packages/cli/`, `packages/sdk/src/typescript/`, `packages/web/`
-- **PyPI packages**: `packages/core/`, `packages/sdk/src/python/`
+- **npm packages**: `packages/cli/`, `packages/sdk/src/TypeScript/`, `packages/web/`
+- **PyPI packages**: `packages/core/`, `packages/sdk/src/Python/`
 
 ### Publishing Process
 
@@ -48,12 +48,12 @@ Add these secrets to your GitHub repository:
 
 ### PyPI Publishing
 - `PYPI_TOKEN`: PyPI API token for publishing Python packages
-  - Get from: https://pypi.org/manage/account/token/
+  - Get from: <https://pypi.org/manage/account/token/>
   - Scope: Can upload to specific projects or entire account
 
-### NPM Publishing
-- `NPM_ACCESS_TOKEN`: NPM access token for publishing JavaScript packages
-  - Get from: https://www.npmjs.com/settings/{username}/tokens
+### npm Publishing
+- `NPM_ACCESS_TOKEN`: npm access token for publishing JavaScript packages
+  - Get from: <https://www.npmjs.com/settings/{username}/tokens>
   - Type: Automation token recommended
 
 ### Optional
@@ -88,9 +88,9 @@ git commit -m "chore: cleaned up dependencies"
 
 ## Published Packages
 
-### NPM Packages
-- `@monkey-coder/cli` - Command-line interface
-- `@monkey-coder/sdk` - JavaScript/TypeScript SDK
+### npm Packages
+- `monkey-coder-cli` - Command-line interface
+- `monkey-coder-sdk` - JavaScript/TypeScript SDK
 
 ### PyPI Packages
 - `monkey-coder-core` - Core Python library
@@ -138,7 +138,7 @@ If you need to publish manually, use the existing scripts:
 
 ## Workflow File
 
-The workflow is defined in: `.github/workflows/continuous-publish.yml`
+The workflow is defined in: `.GitHub/workflows/continuous-publish.yml`
 
 ## Disabling Continuous Publishing
 

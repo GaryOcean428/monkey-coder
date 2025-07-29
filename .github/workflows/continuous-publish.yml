@@ -339,10 +339,10 @@ jobs:
             echo "## 🚀 Continuous Release"
             echo ""
             if [ -n "${{ steps.versions.outputs.npm-version }}" ]; then
-              echo "### 📦 NPM Packages: v${{ steps.versions.outputs.npm-version }}"
-              echo "- \`@monkey-coder/cli\`"
-              echo "- \`@monkey-coder/sdk\`"
-              echo ""
+            echo "### 📦 NPM Packages: v${{ steps.versions.outputs.npm-version }}"
+            echo "- \`monkey-coder-cli\`"
+            echo "- \`monkey-coder-sdk\`"
+            echo ""
             fi
             if [ -n "${{ steps.versions.outputs.pypi-version }}" ]; then
               echo "### 🐍 PyPI Packages: v${{ steps.versions.outputs.pypi-version }}"
@@ -356,8 +356,8 @@ jobs:
             echo "### 📥 Installation"
             echo "\`\`\`bash"
             echo "# NPM"
-            echo "npm install -g @monkey-coder/cli"
-            echo "npm install @monkey-coder/sdk"
+            echo "npm install -g monkey-coder-cli"
+            echo "npm install monkey-coder-sdk"
             echo ""
             echo "# PyPI"
             echo "pip install monkey-coder-core"

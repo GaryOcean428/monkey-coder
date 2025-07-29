@@ -1,5 +1,5 @@
 {
-  "name": "@monkey-coder/sdk",
+  "name": "monkey-coder-sdk",
   "version": "1.0.0",
   "description": "Official TypeScript/JavaScript and Python SDK for Monkey Coder - AI-powered code generation and analysis",
   "main": "dist/index.js",
