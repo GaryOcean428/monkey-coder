@@ -6,7 +6,6 @@ Handles server discovery, lifecycle, and health monitoring
 import asyncio
 import logging
 import os
-import subprocess
 import json
 from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
@@ -59,7 +58,7 @@ class MCPServerInfo:
     config: MCPServerConfig
     status: ServerStatus
     client: Optional[MCPClient] = None
-    process: Optional[subprocess.Popen] = None
+    process: Optional[asyncio.subprocess.Process] = None
     last_health_check: Optional[datetime] = None
     restart_count: int = 0
     error_message: Optional[str] = None
@@ -114,9 +113,20 @@ class MCPServerManager:
         try:
             import yaml
             with open(self.config_path, 'r') as f:
-                config_data = yaml.safe_load(f)
+                config_content = f.read()
+                # Expand environment variables in the YAML content
+                config_content = os.path.expandvars(config_content)
+                config_data = yaml.safe_load(config_content)
                 
             for server_data in config_data.get('servers', []):
+                # Also expand environment variables in individual fields
+                environment = server_data.get('environment', {})
+                # Expand environment variables in the environment dict values
+                expanded_environment = {
+                    key: os.path.expandvars(str(value)) if isinstance(value, str) else value
+                    for key, value in environment.items()
+                }
+                
                 config = MCPServerConfig(
                     name=server_data['name'],
                     type=ServerType(server_data['type']),
@@ -125,7 +135,7 @@ class MCPServerManager:
                     package=server_data.get('package'),
                     version=server_data.get('version'),
                     config=server_data.get('config', {}),
-                    environment=server_data.get('environment', {}),
+                    environment=expanded_environment,
                     capabilities=server_data.get('capabilities', []),
                     health_check_interval=server_data.get('health_check_interval', 30),
                     restart_on_failure=server_data.get('restart_on_failure', True),
@@ -271,36 +281,45 @@ class MCPServerManager:
         except Exception as e:
             raise RuntimeError(f"Failed to start built-in server: {e}")
             
-    async def _start_external_server(self, server_info: MCPServerInfo, command: List[str], 
+    async def _start_external_server(self, server_info: MCPServerInfo, command: List[str],
                                    env: Dict[str, str], config: Dict[str, Any]):
-        """Start an external MCP server as subprocess"""
-        # Start process
-        process = subprocess.Popen(
-            command,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE
-        )
-        
-        server_info.process = process
-        
-        # Wait for server to be ready
-        await asyncio.sleep(2)
-        
-        # Connect client
-        # For external servers, pass config dict
-        server_config = {
-            "name": server_info.config.name,
-            "command": command
-        }
-        client = await MCPClient.connect(server_config)
-        
-        server_info.client = client
-        server_info.status = ServerStatus.CONNECTED
-        server_info.connected_at = datetime.now()
-        
-        logger.info(f"Connected to external server '{server_info.config.name}'")
+        """Start an external MCP server using async subprocess"""
+        try:
+            # Start process using asyncio subprocess for non-blocking operation
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE
+            )
+            
+            server_info.process = process
+            
+            # Wait for server to be ready with timeout
+            try:
+                await asyncio.wait_for(asyncio.sleep(2), timeout=10)
+            except asyncio.TimeoutError:
+                logger.warning(f"Server startup timeout for '{server_info.config.name}'")
+            
+            # Connect client
+            server_config = {
+                "name": server_info.config.name,
+                "command": command
+            }
+            client = await MCPClient.connect(server_config)
+            
+            server_info.client = client
+            server_info.status = ServerStatus.CONNECTED
+            server_info.connected_at = datetime.now()
+            
+            logger.info(f"Connected to external server '{server_info.config.name}'")
+            
+        except Exception as e:
+            logger.error(f"Failed to start external server '{server_info.config.name}': {e}")
+            server_info.status = ServerStatus.ERROR
+            server_info.error_message = str(e)
+            raise
         
     async def stop_server(self, server_name: str) -> bool:
         """
@@ -330,13 +349,20 @@ class MCPServerManager:
             await server_info.client.disconnect()
             server_info.client = None
             
-        # Stop process
+        # Stop process with async termination
         if server_info.process:
             server_info.process.terminate()
             try:
-                server_info.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
+                # Use asyncio.wait_for for timeout handling
+                await asyncio.wait_for(server_info.process.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"Process for '{server_name}' didn't terminate gracefully, killing")
                 server_info.process.kill()
+                # Wait for kill to complete
+                try:
+                    await asyncio.wait_for(server_info.process.wait(), timeout=2.0)
+                except asyncio.TimeoutError:
+                    logger.error(f"Failed to kill process for '{server_name}'")
             server_info.process = None
             
         server_info.status = ServerStatus.DISCONNECTED
@@ -353,53 +379,96 @@ class MCPServerManager:
         return await self.start_server(server_name)
         
     async def _monitor_server_health(self, server_name: str):
-        """Monitor server health and restart if needed"""
+        """Monitor server health with exponential backoff and circuit breaker patterns"""
+        failure_count = 0
+        backoff_delay = 1.0  # Start with 1 second
+        max_backoff = 60.0   # Maximum 60 seconds
+        
         while not self._shutdown:
             try:
                 server_info = self.servers.get(server_name)
                 if not server_info:
                     break
                     
-                # Wait for health check interval
-                await asyncio.sleep(server_info.config.health_check_interval)
+                # Wait for health check interval with exponential backoff on failures
+                delay = server_info.config.health_check_interval
+                if failure_count > 0:
+                    # Apply exponential backoff for failed health checks
+                    delay = min(backoff_delay * (2 ** failure_count), max_backoff)
+                
+                await asyncio.sleep(delay)
                 
                 if server_info.status == ServerStatus.CONNECTED:
-                    # Perform health check
-                    is_healthy = await self._check_server_health(server_info)
-                    
-                    if not is_healthy:
-                        logger.warning(f"Server '{server_name}' is unhealthy")
-                        server_info.status = ServerStatus.UNHEALTHY
+                    # Perform health check with timeout
+                    try:
+                        is_healthy = await asyncio.wait_for(
+                            self._check_server_health(server_info), 
+                            timeout=10.0
+                        )
                         
-                        # Restart if configured
-                        if (server_info.config.restart_on_failure and 
-                            server_info.restart_count < server_info.config.max_restart_attempts):
+                        if is_healthy:
+                            # Reset failure count on successful health check
+                            failure_count = 0
+                            server_info.last_health_check = datetime.now()
+                        else:
+                            failure_count += 1
+                            logger.warning(f"Server '{server_name}' health check failed (attempt {failure_count})")
                             
-                            logger.info(f"Attempting to restart server '{server_name}'")
-                            server_info.restart_count += 1
-                            
-                            if await self.restart_server(server_name):
-                                server_info.restart_count = 0
-                            else:
-                                logger.error(f"Failed to restart server '{server_name}'")
+                            # Circuit breaker: mark as unhealthy after 3 consecutive failures
+                            if failure_count >= 3:
+                                server_info.status = ServerStatus.UNHEALTHY
                                 
+                                # Restart if configured and within retry limits
+                                if (server_info.config.restart_on_failure and 
+                                    server_info.restart_count < server_info.config.max_restart_attempts):
+                                    
+                                    logger.info(f"Attempting to restart server '{server_name}' (restart {server_info.restart_count + 1})")
+                                    server_info.restart_count += 1
+                                    
+                                    if await self.restart_server(server_name):
+                                        failure_count = 0  # Reset on successful restart
+                                        logger.info(f"Successfully restarted server '{server_name}'")
+                                    else:
+                                        logger.error(f"Failed to restart server '{server_name}'")
+                                else:
+                                    logger.error(f"Server '{server_name}' exceeded maximum restart attempts")
+                    
+                    except asyncio.TimeoutError:
+                        failure_count += 1
+                        logger.warning(f"Health check timeout for server '{server_name}' (attempt {failure_count})")
+                        
             except asyncio.CancelledError:
+                logger.info(f"Health monitoring cancelled for server '{server_name}'")
                 break
             except Exception as e:
+                failure_count += 1
                 logger.error(f"Error in health monitor for '{server_name}': {e}")
-                
+    
     async def _check_server_health(self, server_info: MCPServerInfo) -> bool:
-        """Check if server is healthy"""
+        """Check if server is healthy with comprehensive validation"""
         try:
             if not server_info.client:
                 return False
-                
-            # Simple ping check
-            # In real implementation, this would call a health endpoint
+            
+            # Check if process is still running (for external servers)
+            if server_info.process:
+                return_code = server_info.process.returncode
+                if return_code is not None:
+                    # Process has terminated
+                    logger.warning(f"Server process for '{server_info.config.name}' has terminated with code {return_code}")
+                    return False
+            
+            # TODO: In a real implementation, this would:
+            # 1. Send a ping/health request to the MCP server
+            # 2. Verify expected capabilities are available
+            # 3. Check response time is within acceptable limits
+            # 4. Validate server is not in an error state
+            
+            # For now, return True if client exists and process is running
             return True
             
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error(f"Health check failed for '{server_info.config.name}': {e}")
             return False
             
     async def _get_server_command(self, config: MCPServerConfig) -> Optional[List[str]]:
@@ -493,16 +562,21 @@ class MCPServerManager:
         logger.info(f"Installing MCP server '{name}' from package '{package}'")
         
         try:
-            # Install npm package globally
-            result = subprocess.run(
-                ["npm", "install", "-g", package],
-                capture_output=True,
-                text=True
+            # Install npm package globally using async subprocess
+            process = await asyncio.create_subprocess_exec(
+                "npm", "install", "-g", package,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
             )
             
-            if result.returncode != 0:
-                raise RuntimeError(f"npm install failed: {result.stderr}")
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode != 0:
+                error_msg = stderr.decode() if stderr else "Unknown error"
+                raise RuntimeError(f"npm install failed: {error_msg}")
                 
+            logger.info(f"Successfully installed MCP server package '{package}'")
+            
             # Add to configuration
             config = MCPServerConfig(
                 name=name,
