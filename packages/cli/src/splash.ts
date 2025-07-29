@@ -19,7 +19,7 @@ export function printSplash(suppress = false): void {
   if (
     suppress ||
     !process.stdout.isTTY ||
-    process.env.MONKEY_CLI_NO_SPLASH ||
+    process.env.MONKEY_CLI_NO_SPLASH || process.env.MONKEY_CODER_NO_SPLASH ||
     !config.getShowSplash()
   ) {
     return;

@@ -41,20 +41,24 @@ if (process.env.SENTRY_DSN) {
 // Load environment variables
 dotenv.config();
 
-// Show splash screen
-printSplash();
-
 const program = new Command();
 const config = new ConfigManager();
+
+// Show splash screen unless --no-splash is passed
+const noSplashIndex = process.argv.indexOf('--no-splash');
+if (noSplashIndex === -1) {
+  printSplash();
+}
 
 program
   .name('monkey-coder')
   .description('Monkey Coder CLI - AI-powered code generation and analysis')
-  .version('1.0.1')
+  .version('1.1.0')
   .option('--api-key <key>', 'API key for authentication')
   .option('--base-url <url>', 'Base URL for the API', 'http://localhost:8000')
   .option('--config <path>', 'Path to configuration file')
   .option('--verbose', 'Enable verbose output')
+  .option('--no-splash', 'Disable splash screen')
   .hook('preAction', async thisCommand => {
     // Load custom config if specified
     const options = thisCommand.opts();
@@ -743,7 +747,7 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
 // If no command was provided, start chat mode
 if (process.argv.length === 2) {
   // Start chat with default options
-  printSplash();
+  // printSplash() was already called above
   process.argv.push('chat');
 }
 

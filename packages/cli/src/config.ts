@@ -108,7 +108,7 @@ export class ConfigManager {
    * Get default model
    */
   getDefaultModel(): string {
-    return this.config.defaultModel || 'gpt-4';
+    return this.config.defaultModel || 'gpt-4.1';
   }
 
   /**

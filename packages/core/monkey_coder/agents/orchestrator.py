@@ -222,8 +222,8 @@ class AgentOrchestrator:
             else:
                 estimated_tokens = base_tokens * 2
                 
-            # Get model pricing (assuming GPT-4 for now)
-            pricing = get_model_pricing("gpt-4")
+            # Get model pricing (assuming GPT-4.1 for now)
+            pricing = get_model_pricing("gpt-4.1")
             if pricing:
                 cost = pricing.calculate_cost(estimated_tokens // 2, estimated_tokens // 2)[2]
             else:
@@ -425,7 +425,7 @@ class AgentOrchestrator:
             
             # Calculate actual cost (simplified for now)
             tokens_used = len(str(result)) // 4  # Rough estimate
-            pricing = get_model_pricing("gpt-4")
+            pricing = get_model_pricing("gpt-4.1")
             actual_cost = pricing.calculate_cost(tokens_used // 2, tokens_used // 2)[2] if pricing else 0.0
             
             return AgentResult(
