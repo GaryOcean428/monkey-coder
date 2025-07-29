@@ -91,12 +91,35 @@ jobs:
       - name: Bump versions
         id: bump
         run: |
-          # Bump version for all npm packages
-          yarn workspaces foreach --all version ${{ steps.bump-type.outputs.type }}
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./packages/cli/package.json').version")
           
-          # Get the new version from CLI package
-          NEW_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          # Calculate new version
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          if [ "${{ steps.bump-type.outputs.type }}" = "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "${{ steps.bump-type.outputs.type }}" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Update package.json files
+          cd packages/cli
+          npm version $NEW_VERSION --no-git-tag-version
+          cd ../sdk
+          npm version $NEW_VERSION --no-git-tag-version
+          cd ../..
 
       - name: Commit version bump
         run: |
