@@ -136,10 +136,10 @@ POST /v1/router/debug
   "debug_info": {
     "routing_decision": {
       "provider": "openai",
-      "model": "gpt-4o",
+      "model": "gpt-4.1",
       "persona": "architect",
       "confidence": 0.89,
-      "reasoning": "Selected openai/gpt-4o for complex architecture task..."
+      "reasoning": "Selected openai/gpt-4.1 for complex architecture task..."
     },
     "scoring_breakdown": {
       "complexity_score": 0.65,
@@ -202,17 +202,17 @@ python demo_routing.py
 1. Simple Function
 ------------------------------
 📝 Prompt: Write a Python function to add two numbers
-🎯 Selected Model: openai/gpt-4o-mini
+🎯 Selected Model: openai/gpt-4.1-mini
 👤 Persona: developer
 🧮 Complexity: 0.10 (trivial)
 ⚡ Capability: 1.08
 🎪 Confidence: 0.71
-💭 Reasoning: Selected openai/gpt-4o-mini for trivial code_generation task...
+💭 Reasoning: Selected openai/gpt-4.1-mini for trivial code_generation task...
 
 2. Architecture with Slash Command
 ------------------------------
 📝 Prompt: /arch Design a scalable microservices architecture...
-🎯 Selected Model: openai/gpt-4o
+🎯 Selected Model: openai/gpt-4.1
 👤 Persona: architect
 🧮 Complexity: 0.40 (moderate)
 ⚡ Slash Command: /arch
@@ -226,8 +226,8 @@ python demo_routing.py
 
 **OpenAI:**
 
-- gpt-4o (high capability, premium)
-- gpt-4o-mini (balanced, cost-effective)
+- gpt-4.1 (high capability, premium)
+- gpt-4.1-mini (balanced, cost-effective)
 - o1-preview (reasoning specialist)
 
 **Anthropic:**

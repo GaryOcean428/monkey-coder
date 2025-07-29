@@ -12,7 +12,7 @@ import os
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
@@ -47,7 +47,8 @@ from ..security import (
     JWTUser,
     UserRole,
     Permission,
-    get_user_permissions
+    get_user_permissions,
+    get_user_store
 )
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations
@@ -102,6 +103,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Database migrations failed: {e}")
         # Continue startup even if migrations fail (for development)
     
+    import traceback
     # Initialize core components with health checks
     try:
         app.state.orchestrator = MultiAgentOrchestrator()
@@ -134,6 +136,7 @@ async def lifespan(app: FastAPI):
         
     except Exception as e:
         logger.error(f"❌ Component initialization failed: {e}")
+        traceback.print_exc()
         # Continue startup even if some components fail
         # This allows the health endpoint to report component status
     
@@ -340,30 +343,45 @@ async def login(request: LoginRequest) -> AuthResponse:
         JWT tokens and user information
     """
     try:
-        # For demo purposes, create a mock user
-        # In production, you would validate against a database
-        mock_user = JWTUser(
-            user_id="demo_user_123",
-            username=request.email.split("@")[0],
-            email=request.email,
-            roles=[UserRole.DEVELOPER],
-            permissions=get_user_permissions([UserRole.DEVELOPER]),
-            mfa_verified=True
+        # Authenticate user against the user store
+        user_store = get_user_store()
+        user = user_store.authenticate_user(request.email, request.password)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        
+        # Create JWT user from authenticated user
+        jwt_user = JWTUser(
+            user_id=user.user_id,
+            username=user.username,
+            email=user.email,
+            roles=user.roles,
+            permissions=get_user_permissions(user.roles),
+            mfa_verified=True  # MFA not implemented yet
         )
         
         # Create tokens
-        access_token = create_access_token(mock_user)
-        refresh_token = create_refresh_token(mock_user.user_id)
+        access_token = create_access_token(jwt_user)
+        refresh_token = create_refresh_token(jwt_user.user_id)
+        
+        # Set credits and subscription tier based on user type
+        credits = 10000 if user.is_developer else 100  # Developer account gets more credits
+        subscription_tier = "developer" if user.is_developer else "free"
         
         return AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             user={
-                "id": mock_user.user_id,
-                "email": mock_user.email,
-                "name": mock_user.username,
-                "credits": 10000,  # Mock credits (100.00 USD)
-                "subscription_tier": "developer"
+                "id": jwt_user.user_id,
+                "email": jwt_user.email,
+                "name": jwt_user.username,
+                "credits": credits,
+                "subscription_tier": subscription_tier,
+                "is_developer": user.is_developer,
+                "roles": [role.value for role in user.roles]
             }
         )
         

@@ -162,10 +162,10 @@ The CLI supports configuration through:
 ### Configuration Keys
 
 - `apiKey` - Your API key for authentication
-- `baseUrl` - Base URL for the API (default: http://localhost:8000)
+- `baseUrl` - Base URL for the API (default: https://monkey-coder.up.railway.app)
 - `defaultPersona` - Default AI persona (default: developer)
-- `defaultModel` - Default AI model (default: gpt-4)
-- `defaultProvider` - Default AI provider (default: openai)
+- `defaultModel` - Default AI model (default: claude-sonnet-4-20250514)
+- `defaultProvider` - Default AI provider (default: anthropic)
 - `defaultTemperature` - Default model temperature (default: 0.1)
 - `defaultTimeout` - Default request timeout (default: 300)
 

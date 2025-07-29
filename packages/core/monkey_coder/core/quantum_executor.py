@@ -7,6 +7,7 @@ strategy developed for superior parallelism and decision making with Gary8D.
 
 import logging
 from typing import Any
+from ..agents.base_agent import AgentContext
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,12 @@ class QuantumExecutor:
 
     def __init__(self):
         logger.info("QuantumExecutor initialized.")
+        self.code_generation = self._initialize_code_generation()
+
+    def _initialize_code_generation(self):
+        # Implementation of code generation initialization
+        from ..agents.specialized.code_generator import CodeGeneratorAgent
+        return CodeGeneratorAgent()
 
     async def execute(self, task, parallel_futures: bool = True) -> Any:
         """
@@ -39,15 +46,10 @@ class QuantumExecutor:
         
         # Implement quantum-inspired execution logic here
         if parallel_futures:
-            # Placeholder for parallel execution logic
-            pass
+            # Use code_generation agent for parallel execution
+            result = await self.code_generation.process(task, AgentContext(task_id="quantum_task", user_id="system", session_id="quantum_session"))
+        else:
+            result = {"outcome": "success", "details": "Sequential execution"}
 
-        # Placeholder for execution result
-        result = {
-            "outcome": "success",
-            "details": "Task completed using quantum execution flow."
-        }
-        
-        logger.info("Quantum task execution completed:", result)
+        logger.info("Quantum task execution completed: %s", result)
         return result
-

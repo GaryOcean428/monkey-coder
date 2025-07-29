@@ -42,7 +42,8 @@ class ProviderType(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
-    QWEN = "qwen"
+    GROK = "grok"
+    GROQ = "groq"  # Hardware-accelerated inference provider
 
 
 class TaskStatus(str, Enum):
@@ -133,8 +134,8 @@ class ExecuteRequest:
     model_preferences: Optional[Dict[ProviderType, str]] = None
 
     def __post_init__(self):
-        if not self.prompt or len(self.prompt.strip()) < 10:
-            raise ValueError("Prompt must be at least 10 characters long")
+        if not self.prompt or len(self.prompt.strip()) < 1:
+            raise ValueError("Prompt must contain at least one character")
         self.prompt = self.prompt.strip()
 
 
@@ -225,7 +226,7 @@ class HealthResponse:
 @dataclass
 class MonkeyCoderClientConfig:
     """Configuration for MonkeyCoderClient."""
-    base_url: str = "http://localhost:8000"
+    base_url: str = "https://monkey-coder.up.railway.app"
     api_key: Optional[str] = None
     timeout: float = 300.0  # 5 minutes default
     retries: int = 3

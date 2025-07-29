@@ -540,3 +540,125 @@ async def verify_permissions(api_key: str, permission: str = None) -> bool:
     
     # Check specific permission
     return api_key_manager.check_permission(key_info, permission)
+
+
+# Simple User Store for Development/Testing
+# In production, this should be replaced with a proper database
+
+@dataclass
+class User:
+    """User model for authentication."""
+    user_id: str
+    username: str
+    email: str
+    hashed_password: str
+    roles: List[UserRole]
+    is_active: bool = True
+    is_developer: bool = False
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+
+
+class UserStore:
+    """Simple in-memory user store for development."""
+    
+    def __init__(self):
+        self._users: Dict[str, User] = {}
+        self._email_to_user_id: Dict[str, str] = {}
+        self._ensure_developer_account()
+        
+    def _ensure_developer_account(self):
+        """Ensure the developer account exists."""
+        dev_email = "braden.lang77@gmail.com"
+        dev_username = "GaryOcean"
+        dev_password = "I.Am.Dev.1"
+        
+        if dev_email not in self._email_to_user_id:
+            user_id = f"dev_{secrets.token_hex(8)}"
+            hashed_password = hash_password(dev_password)
+            
+            user = User(
+                user_id=user_id,
+                username=dev_username,
+                email=dev_email,
+                hashed_password=hashed_password,
+                roles=[UserRole.DEVELOPER, UserRole.ADMIN],
+                is_active=True,
+                is_developer=True
+            )
+            
+            self._users[user_id] = user
+            self._email_to_user_id[dev_email] = user_id
+            
+            logger.info(f"Created developer account: {dev_email} ({dev_username})")
+    
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by email address."""
+        user_id = self._email_to_user_id.get(email)
+        if user_id:
+            return self._users.get(user_id)
+        return None
+    
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Get user by user ID."""
+        return self._users.get(user_id)
+    
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        """Authenticate user with email and password."""
+        user = self.get_user_by_email(email)
+        if not user:
+            logger.warning(f"Authentication failed: user not found for email {email}")
+            return None
+        
+        if not user.is_active:
+            logger.warning(f"Authentication failed: user account inactive for {email}")
+            return None
+        
+        if not verify_password(password, user.hashed_password):
+            logger.warning(f"Authentication failed: invalid password for {email}")
+            return None
+        
+        logger.info(f"User authenticated successfully: {email}")
+        return user
+    
+    def create_user(self, username: str, email: str, password: str, roles: List[UserRole] = None) -> User:
+        """Create a new user."""
+        if email in self._email_to_user_id:
+            raise ValueError(f"User with email {email} already exists")
+        
+        user_id = f"user_{secrets.token_hex(8)}"
+        hashed_password = hash_password(password)
+        
+        if roles is None:
+            roles = [UserRole.USER]
+        
+        user = User(
+            user_id=user_id,
+            username=username,
+            email=email,
+            hashed_password=hashed_password,
+            roles=roles,
+            is_active=True,
+            is_developer=UserRole.DEVELOPER in roles
+        )
+        
+        self._users[user_id] = user
+        self._email_to_user_id[email] = user_id
+        
+        logger.info(f"Created user account: {email} ({username})")
+        return user
+
+
+# Global user store instance
+_user_store = None
+
+
+def get_user_store() -> UserStore:
+    """Get the global user store instance."""
+    global _user_store
+    if _user_store is None:
+        _user_store = UserStore()
+    return _user_store
