@@ -56,7 +56,7 @@ program
   .description('Monkey Coder CLI - AI-powered code generation and analysis')
   .version('1.1.0')
   .option('--api-key <key>', 'API key for authentication')
-  .option('--base-url <url>', 'Base URL for the API', 'http://localhost:8000')
+  .option('--base-url <url>', 'Base URL for the API', process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000')
   .option('--config <path>', 'Path to configuration file')
   .option('--verbose', 'Enable verbose output')
   .option('--no-splash', 'Disable splash screen')

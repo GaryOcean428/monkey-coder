@@ -189,7 +189,7 @@ export class MonkeyCoderClient {
 
   constructor(config: MonkeyCoderClientConfig = {}) {
     const {
-      baseURL = 'http://localhost:8000',
+      baseURL = process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
       apiKey,
       timeout = 300000, // 5 minutes default
       retries = 3,

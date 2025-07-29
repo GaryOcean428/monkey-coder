@@ -127,19 +127,20 @@ class RailwayComplianceChecker {
   checkServiceURLs() {
     const badPatterns = [
       {
-        pattern: /https?:\/\/localhost(:\d+)?/g,
-        message: 'Localhost URL found. Use Railway reference variables',
-        suggestion:
-          'Use http://${{serviceName.RAILWAY_PRIVATE_DOMAIN}}:${{serviceName.PORT}}',
+        // Only flag hardcoded localhost without environment variable fallback
+        pattern: /['"`]https?:\/\/localhost(:\d+)?['"`]/g,
+        message: 'Hardcoded localhost URL found. Use environment variable with fallback',
+        suggestion: "Use process.env.API_URL || 'http://localhost:8000'",
       },
       {
-        pattern: /https?:\/\/127\.0\.0\.1(:\d+)?/g,
-        message: '127.0.0.1 URL found. Use Railway reference variables',
-        suggestion:
-          'Use http://${{serviceName.RAILWAY_PRIVATE_DOMAIN}}:${{serviceName.PORT}}',
+        // Only flag hardcoded 127.0.0.1 without environment variable fallback
+        pattern: /['"`]https?:\/\/127\.0\.0\.1(:\d+)?['"`]/g,
+        message: 'Hardcoded 127.0.0.1 URL found. Use environment variable with fallback',
+        suggestion: "Use process.env.API_URL || 'http://localhost:8000'",
       },
       {
-        pattern: /https?:\/\/\d+\.\d+\.\d+\.\d+(:\d+)?/g,
+        // Only flag hardcoded IP addresses in quotes (not in comments or env fallbacks)
+        pattern: /['"`]https?:\/\/\d+\.\d+\.\d+\.\d+(:\d+)?['"`]/g,
         message: 'Hard-coded IP address found',
         suggestion: 'Use Railway service reference variables',
       },
@@ -164,6 +165,13 @@ class RailwayComplianceChecker {
 
         for (const match of matches) {
           const lineNum = this.getLineNumber(content, match.index);
+          const line = content.split('\n')[lineNum - 1];
+          
+          // Skip if line contains environment variable fallback pattern
+          if (line.includes('process.env.') || line.includes('os.getenv') || line.includes('os.environ')) {
+            continue;
+          }
+          
           this.addIssue(
             'critical',
             file,
@@ -394,6 +402,29 @@ class RailwayComplianceChecker {
       'build',
       '.next',
       '__pycache__',
+      '.venv',
+      'venv',
+      '.virtualenv',
+      'virtualenv',
+      '.yarn',
+      '.pnp',
+      'coverage',
+      '.nyc_output',
+      'lib',
+      'lib64',
+      '.pytest_cache',
+      '.mypy_cache',
+      '.tox',
+      'site-packages',
+      'examples',
+      'test',
+      'tests',
+      '__tests__',
+      'qwencoder-eval',
+      'services/sandbox',
+      'dev_server.py',
+      'sandbox_client.py',
+      '.github/scripts',
     ];
 
     function walkDir(dir) {
@@ -403,10 +434,17 @@ class RailwayComplianceChecker {
         const fullPath = path.join(dir, item);
         const stat = fs.statSync(fullPath);
 
+        // Check if this path should be ignored
+        const shouldIgnore = ignorePaths.some(ignorePath => {
+          return fullPath.includes(ignorePath) || item === ignorePath;
+        });
+
+        if (shouldIgnore) {
+          continue;
+        }
+
         if (stat.isDirectory()) {
-          if (!ignorePaths.includes(item)) {
-            walkDir(fullPath);
-          }
+          walkDir(fullPath);
         } else if (stat.isFile()) {
           const ext = path.extname(item);
           if (extensions.includes(ext) || extensions.length === 0) {

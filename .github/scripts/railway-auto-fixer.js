@@ -105,7 +105,7 @@ class RailwayAutoFixer {
         pattern: /http:\/\/localhost(:\d+)?/g,
         replacement: (match, port) => {
           // Try to determine service name from context
-          return `process.env.API_URL || 'http://localhost${port || ''}'`;
+          return `process.env.API_URL || 'http://\${process.env.RAILWAY_PRIVATE_DOMAIN || "localhost"}${port || ":8000"}'`;
         },
         description: 'Replace localhost URLs with environment variables',
       },

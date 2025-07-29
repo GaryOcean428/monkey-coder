@@ -116,7 +116,7 @@ def read_file():
         return f.read()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')  # Debug mode in production
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))  # Debug mode in production
         '''
         
         files = [create_file_data('./app.py', vulnerable_code, 'python')]
