@@ -57,6 +57,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.57.0",
     "@sentry/browser": "^9.42.0",
     "@sentry/node": "^9.42.0",
     "@sentry/profiling-node": "^9.42.0",
