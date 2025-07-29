@@ -181,17 +181,40 @@ def create_refresh_token(user_id: str) -> str:
 
 def verify_token(token: str) -> Dict[str, Any]:
     """
-    Verify and decode JWT token.
+    Verify and decode JWT token or API key.
     
     Args:
-        token: JWT token to verify
+        token: JWT token or API key to verify
         
     Returns:
-        Decoded token payload
+        Decoded token payload or API key user payload
         
     Raises:
         HTTPException: If token is invalid, expired, or malformed
     """
+    # Check if it's an API key
+    if token and token.startswith('mk-'):
+        if not _validate_api_key(token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key"
+            )
+        
+        # Return API key user payload
+        return {
+            "sub": "api_user",
+            "username": "api_user",
+            "email": "",
+            "roles": ["api_user"],
+            "permissions": ["code:execute", "code:read", "billing:read", "models:read", "providers:read", "billing:manage", "router:debug"],
+            "type": "access",
+            "mfa_verified": True,
+            "session_id": token[-8:],  # Use last 8 chars as session ID
+            "iat": datetime.now(timezone.utc).timestamp(),
+            "exp": (datetime.now(timezone.utc) + timedelta(days=365)).timestamp()  # API keys don't expire
+        }
+    
+    # Otherwise, handle as JWT
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         
@@ -220,10 +243,10 @@ def verify_token(token: str) -> Dict[str, Any]:
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> JWTUser:
     """
-    Extract and validate current user from JWT token.
+    Extract and validate current user from JWT token or API key.
     
     Args:
-        credentials: HTTP authorization credentials containing JWT
+        credentials: HTTP authorization credentials containing JWT or API key
         
     Returns:
         Current authenticated user
@@ -237,7 +260,34 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Authentication token required"
         )
     
-    payload = verify_token(credentials.credentials)
+    token = credentials.credentials
+    
+    # Handle API keys
+    if token and token.startswith('mk-'):
+        if not _validate_api_key(token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key"
+            )
+        
+        # Return API key user with all necessary permissions
+        return JWTUser(
+            user_id="api_user",
+            username="api_user",
+            email="",
+            roles=[UserRole.API_USER],
+            permissions=[
+                Permission.CODE_EXECUTE,
+                Permission.CODE_READ,
+                Permission.BILLING_READ,
+                # Add additional permissions as strings for endpoints that use string permissions
+            ],
+            mfa_verified=True,
+            session_id=token[-8:]  # Use last 8 chars as session ID
+        )
+    
+    # Handle JWT tokens
+    payload = verify_token(token)
     
     # Extract user information from JWT payload
     user_id = payload.get("sub")
@@ -456,15 +506,21 @@ def _validate_api_key(api_key: str) -> bool:
     return api_key and api_key.startswith('mk-') and len(api_key) > 10
 
 
-async def verify_permissions(api_key: str) -> bool:
+async def verify_permissions(api_key: str, permission: str = None) -> bool:
     """
     Verify permissions for API key.
     
     Args:
         api_key: The API key to verify permissions for
+        permission: The specific permission to check (optional)
         
     Returns:
         True if permissions are valid
     """
-    # For development, always return True for valid API keys
-    return _validate_api_key(api_key)
+    # Validate API key first
+    if not _validate_api_key(api_key):
+        return False
+    
+    # For now, return True for all valid API keys
+    # In production, you would check specific permissions here
+    return True

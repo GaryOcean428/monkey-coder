@@ -22,7 +22,7 @@ Code Quality & Standards Rules
 •  Use comments judiciously to clarify complex logic
 •  Maintain high test coverage and quality
 •  Use version control effectively (e.g., Git)
-•  Ensure code is well-documented and easy to understand
+•  Ensure code is well-documented and easy to understand and consistent with specification documentation. regularly clean up FIX.md files and guides. 
 - Review the roadmap.md and update before any commits. use the docs folder, to store any documentation and fix files. cleanup unneded .md's if they are onetime use.
 
 Technical Standards Rules
