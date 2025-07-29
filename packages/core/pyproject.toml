@@ -56,6 +56,10 @@ dependencies = [
     "html2text>=2020.1.16",
     "prometheus-client>=0.19.0",
     "stripe>=7.0.0",
+    # Quantum routing dependencies
+    "numpy>=1.21.0",
+    "scikit-learn>=1.1.0",
+    "matplotlib>=3.5.0",
 ]
 
 [project.optional-dependencies]

@@ -103,6 +103,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Database migrations failed: {e}")
         # Continue startup even if migrations fail (for development)
     
+    import traceback
     # Initialize core components with health checks
     try:
         app.state.orchestrator = MultiAgentOrchestrator()
@@ -135,6 +136,7 @@ async def lifespan(app: FastAPI):
         
     except Exception as e:
         logger.error(f"❌ Component initialization failed: {e}")
+        traceback.print_exc()
         # Continue startup even if some components fail
         # This allows the health endpoint to report component status
     
