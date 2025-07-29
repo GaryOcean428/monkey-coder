@@ -5,14 +5,27 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { createParser } from 'eventsource-parser';
+import fs from 'fs-extra';
+import path from 'path';
 import { ExecuteRequest, ExecuteResponse, StreamEvent } from './types.js';
+
+// Dynamic version loading from package.json
+function getPackageVersion(): string {
+  try {
+    const packageJsonPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.version || '1.0.0';
+  } catch {
+    return '1.0.0';
+  }
+}
 
 export class MonkeyCoderAPIClient {
   private client: AxiosInstance;
   private baseUrl: string;
   private apiKey: string;
 
-  constructor(baseUrl: string = 'http://localhost:8000', apiKey: string = '') {
+  constructor(baseUrl: string = process.env.MONKEY_CODER_API_URL || 'https://monkey-coder.up.railway.app', apiKey: string = '') {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
     this.apiKey = apiKey;
     
@@ -21,10 +34,9 @@ export class MonkeyCoderAPIClient {
       timeout: 300000, // 5 minutes default timeout
       headers: {
         'Content-Type': 'application/json',
-        // TODO: The User-Agent is hardcoded. This should be dynamically managed,
-        // possibly from package.json, to avoid version mismatches with the API.
-        // Reference: Analysis document section on request-building.
-        'User-Agent': 'monkey-coder-cli/1.0.0',
+        // Dynamic User-Agent with current package version
+        'User-Agent': `monkey-coder-cli/${getPackageVersion()}`,
+        'X-Client-Version': getPackageVersion(),
       },
     });
 

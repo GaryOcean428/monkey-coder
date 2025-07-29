@@ -1,3 +1,4 @@
+
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
@@ -8,44 +9,65 @@ import { ConfigManager } from './config.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const MONKEY_ASCII = `                                                                                                   
+// Load the new splash art from assets/splashmonkey4.txt
+function loadSplashArt(): string {
+  try {
+    const artPath = path.join(__dirname, '..', '..', 'assets', 'splashmonkey4.txt');
+    let art = fs.readFileSync(artPath, 'utf8');
+    
+    // Process color template variables
+    art = art.replace(/\${c1}/g, chalk.hex('#9ACD32')(''))  // Yellow-green
+             .replace(/\${c2}/g, chalk.hex('#00BFFF')(''))  // Deep sky blue
+             .replace(/\${c3}/g, chalk.hex('#FF6347')(''))  // Tomato
+             .replace(/\${c4}/g, chalk.hex('#9370DB')(''));  // Medium purple
+    
+    // Remove the color definition line
+    art = art.replace(/colors \d+ \d+ \d+ \d+\n/, '');
+    
+    return art;
+  } catch (error) {
+    // Fallback to original if file not found
+    return `                                                                                                   
                                                                                                    
                                                                                                    
                                                                                                    
                                                                                                    
                                                                                                    
-[38;5;183m                                _a                                                                 
+                                _a                                                                 
                             _-*  /__@                                                              
-                       __="      "  }         [38;5;173m;gg   ag;  _ggg_  gg   gg gg   gg ;ggggg gg   gg     
-                     [38;5;183m_F            /          [38;5;173m[@@   @@| @@@@@@g @@B  @g @@  &@  [@@@@@ [@, [@'     
-                   [38;5;183m_"               ",        [38;5;173m[@@; ;@@| @@  [@@ @@@  @g @@ ,@N  [@      @B @@      
-                  [38;5;183m/                   ,       [38;5;173m[@@@ @@@| @@  [@@ @@@1 @g @@ @@   [@      [@_@'      
-                 [38;5;183m,      ___           '       [38;5;173m[@h@u@M@| @@  [@@ @@B@_@g @@@@'   [@ggg    @@@       
-              [38;5;183m___[    a@@@@@g_  _g@@g, 1_     [38;5;173m[@ @@@ @| @@  [@@ @@ @@@g @@B@g   [@@@@    9@F       
-             [38;5;183m8   "   @@BBB@@@@g@@@@BBB ""f    [38;5;173m[@ [@' @| @@  [@@ @@ [@@g @@ @@,  [@       [@|       
-            [38;5;183m[ ,_                          |   [38;5;173m[@  @  @| @@  [@@ @@  @@g @@  @@  [@       [@|       
-            [38;5;183m[ g t   'g                 !, '   [38;5;173m[@  W  @| @@@@@@N @@  @@g @@  [@l [@@@@@   [@|       
-            [38;5;183m' @;     g        ,g       ['[    [38;5;173m'=  '  ='  <==="  ==  '=* ==   == "=====   "='       
-             [38;5;183mo[  t   ',      _@@L      &_                                                          
+                       __="      "  }         ;gg   ag;  _ggg_  gg   gg gg   gg ;ggggg gg   gg     
+                     _F            /          [@@   @@| @@@@@@g @@B  @g @@  &@  [@@@@@ [@, [@'     
+                   _"               ",        [@@; ;@@| @@  [@@ @@@  @g @@ ,@N  [@      @B @@      
+                  /                   ,       [@@@ @@@| @@  [@@ @@@1 @g @@ @@   [@      [@_@'      
+                 ,      ___           '       [@h@u@M@| @@  [@@ @@B@_@g @@@@'   [@ggg    @@@       
+              ___[    a@@@@@g_  _g@@g, 1_     [@ @@@ @| @@  [@@ @@ @@@g @@B@g   [@@@@    9@F       
+             8   "   @@BBB@@@@g@@@@BBB ""f    [@ [@' @| @@  [@@ @@ [@@g @@ @@,  [@       [@|       
+            [ ,_                          |   [@  @  @| @@  [@@ @@  @@g @@  @@  [@       [@|       
+            [ g t   'g                 !, '   [@  W  @| @@@@@@N @@  @@g @@  [@l [@@@@@   [@|       
+            ' @;     g        ,g       ['[    '=  '  ='  <==="  ==  '=* ==   == "=====   "='       
+             o[  t   ',      _@@L      &_                                                          
               [@  ,    *__gg" "@""@B"  W                                                           
-                4m@,     ,@@gg,[ ggg  ,        [38;5;154m_gg  ,gg_   ggg,  ;gg;  ;gg,                        
-                   [38;5;183m}     @@@@@@@/@@@, N        [38;5;154m@    [| @   @ [g  [[_   [1_}                        
-                   [38;5;183mg    [@@@@@@@@@@@@ [        [38;5;154m@__  [1_@   @_[g  [[_   [T"@   g   g   g            
-                   [38;5;183m'    @@P"   __     [        [38;5;154m"""   "*"   """   """"  "' "   "   "   "            
-                    [38;5;183m\\,  "  _@@@@@@@N  '                                                            
-              [38;5;208mf@L     [38;5;183mL   @@@@@@@@W  "                                                             
-               [38;5;208m'@@,    [38;5;183mt,  f@@@@@F  ?                                                              
-                 [38;5;208m[@L     [38;5;183mo_   '   _"                                                               
-                 [38;5;208m_@F       [38;5;183m"=___m"                                                                 
-                [38;5;208m@@                                                                                 
+                4m@,     ,@@gg,[ ggg  ,        _gg  ,gg_   ggg,  ;gg;  ;gg,                        
+                   }     @@@@@@@/@@@, N        @    [| @   @ [g  [[_   [1_}                        
+                   g    [@@@@@@@@@@@@ [        @__  [1_@   @_[g  [[_   [T"@   g   g   g            
+                   '    @@P"   __     [        """   "*"   """   """"  "' "   "   "   "            
+                    \\,  "  _@@@@@@@N  '                                                            
+              f@L     L   @@@@@@@@W  "                                                             
+               '@@,    t,  f@@@@@F  ?                                                              
+                 [@L     o_   '   _"                                                               
+                 _@F       "=___m"                                                                 
+                @@                                                                                 
               _@P                                                                                  
                                                                                                    
                                                                                                    
                                                                                                    
                                                                                                    
                                                                                                    
-                                                                                                   [0m
-`;
+                                                                                                   `;
+  }
+}
+
+const MONKEY_ASCII = loadSplashArt();
 
 function printColorizedSplash(): void {
   console.clear();

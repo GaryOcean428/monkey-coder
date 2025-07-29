@@ -94,7 +94,7 @@ export class ConfigManager {
    * Get base URL from config or environment
    */
   getBaseUrl(): string {
-    return process.env.MONKEY_CODER_API_URL || this.config.baseUrl || 'http://localhost:8000';
+    return process.env.MONKEY_CODER_API_URL || this.config.baseUrl || 'https://monkey-coder.up.railway.app';
   }
 
   /**
