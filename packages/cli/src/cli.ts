@@ -26,7 +26,7 @@ import { validateTaskType, validatePersona } from './type-guards.js';
 import { createAuthCommand, requireAuth } from './commands/auth.js';
 import { createUsageCommand, createBillingCommand } from './commands/usage.js';
 import { createMCPCommand } from './commands/mcp.js';
-import { printSplash } from './splash.js';
+import { printSplashSync } from './splash.js';
 
 
 // Initialize Sentry for error tracking
@@ -47,7 +47,7 @@ const config = new ConfigManager();
 // Show splash screen unless --no-splash is passed
 const noSplashIndex = process.argv.indexOf('--no-splash');
 if (noSplashIndex === -1) {
-  printSplash();
+  printSplashSync();
 }
 
 program
@@ -747,7 +747,7 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
 // If no command was provided, start chat mode
 if (process.argv.length === 2) {
   // Start chat with default options
-  // printSplash() was already called above
+  // printSplashSync() was already called above
   process.argv.push('chat');
 }
 
