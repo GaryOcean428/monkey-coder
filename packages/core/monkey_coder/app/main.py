@@ -13,9 +13,10 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
@@ -264,6 +265,14 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(..., description="JWT refresh token")
 
 
+class SignupRequest(BaseModel):
+    """Signup request model."""
+    name: str = Field(..., description="User full name")
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+    plan: str = Field(default="hobby", description="Subscription plan")
+
+
 # Root endpoint removed to allow Next.js static files to be served at root path
 
 
@@ -332,6 +341,7 @@ async def prometheus_metrics():
 
 # Authentication Endpoints
 @app.post("/v1/auth/login", response_model=AuthResponse)
+@app.post("/api/auth/login", response_model=AuthResponse)  # Frontend compatibility alias
 async def login(request: LoginRequest) -> AuthResponse:
     """
     User login endpoint.
@@ -388,6 +398,83 @@ async def login(request: LoginRequest) -> AuthResponse:
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.post("/v1/auth/signup", response_model=AuthResponse)
+@app.post("/api/auth/signup", response_model=AuthResponse)  # Frontend compatibility alias
+async def signup(request: SignupRequest) -> AuthResponse:
+    """
+    User signup endpoint.
+    
+    Args:
+        request: Signup credentials and information
+        
+    Returns:
+        JWT tokens and user information for new user
+    """
+    try:
+        # Get user store
+        user_store = get_user_store()
+        
+        # Check if user already exists
+        if user_store.get_user_by_email(request.email):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists"
+            )
+        
+        # Create new user
+        from ..security import UserData
+        new_user = UserData(
+            user_id=str(uuid4()),
+            username=request.name,
+            email=request.email,
+            password_hash=hash_password(request.password),
+            roles=[UserRole.USER],
+            is_developer=request.plan == "pro"
+        )
+        
+        # Add user to store
+        user_store.add_user(new_user)
+        
+        # Create JWT user
+        jwt_user = JWTUser(
+            user_id=new_user.user_id,
+            username=new_user.username,
+            email=new_user.email,
+            roles=new_user.roles,
+            permissions=get_user_permissions(new_user.roles),
+            mfa_verified=True
+        )
+        
+        # Create tokens
+        access_token = create_access_token(jwt_user)
+        refresh_token = create_refresh_token(jwt_user.user_id)
+        
+        # Set credits and subscription tier based on plan
+        credits = 10000 if request.plan == "pro" else 100
+        
+        logger.info(f"Created new user account: {request.email}")
+        
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user={
+                "id": jwt_user.user_id,
+                "email": jwt_user.email,
+                "name": jwt_user.username,
+                "credits": credits,
+                "subscription_tier": request.plan,
+                "is_developer": new_user.is_developer,
+                "roles": [role.value for role in new_user.roles]
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Signup failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create account")
 
 
 @app.get("/v1/auth/status", response_model=UserStatusResponse)
