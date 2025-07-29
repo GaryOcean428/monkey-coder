@@ -12,7 +12,7 @@ from typing import Dict, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from ..config import config
+from ..config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -350,7 +350,8 @@ async def update_pricing_data(force_update: bool = False) -> bool:
     """
     try:
         # Use configured pricing file path
-        pricing_file = config.STORAGE.pricing_data_file
+        config = get_config()
+        pricing_file = config.storage.pricing_data_file
         should_update = force_update
         
         if not should_update:
@@ -460,7 +461,8 @@ def load_pricing_from_file() -> None:
     that was fetched by the nightly cron job.
     """
     try:
-        pricing_file = config.STORAGE.pricing_data_file
+        config = get_config()
+        pricing_file = config.storage.pricing_data_file
         if not pricing_file.exists():
             logger.debug(f"No pricing data file found at {pricing_file}")
             return
