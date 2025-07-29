@@ -1,0 +1,229 @@
+# Scoring Configuration for Monkey Coder Routing System
+# This file allows adjusting scoring parameters without code changes
+
+# Complexity Scoring Configuration
+complexity:
+  # Base indicators for coding tasks (weight: 0.2 if any match)
+  base_indicators:
+    - function
+    - class
+    - method
+    - code
+    - implement
+    - create
+  
+  # Technical complexity keywords (weight: 0.08 per keyword, max 0.3)
+  complex_keywords:
+    - architecture
+    - design pattern
+    - scalability
+    - performance
+    - optimization
+    - algorithm
+    - data structure
+    - system design
+    - distributed
+    - microservices
+    - database
+    - security
+    - concurrent
+    - async
+    - threading
+    - machine learning
+    - ai
+    - neural network
+    - authentication
+    - session
+    - validation
+    - comprehensive
+    - pipeline
+    - fault tolerance
+    - auto-scaling
+    - real-time
+    - serving
+  
+  # Step indicators for multi-step processes
+  step_indicators:
+    - step
+    - phase
+    - first
+    - then
+    - next
+    - finally
+    - multi-step
+    - multi-phase
+  
+  # Complex phrases (weight: 0.1 per phrase, max 0.2)
+  complex_phrases:
+    - requiring deep technical expertise
+    - with methods for
+    - include detailed
+    - comprehensive
+    - e-commerce platform
+  
+  # Word count thresholds and weights
+  word_count_thresholds:
+    - threshold: 100
+      weight: 0.3
+    - threshold: 50
+      weight: 0.2
+    - threshold: 20
+      weight: 0.1
+    - threshold: 10
+      weight: 0.05
+  
+  # File count thresholds and weights
+  file_count_thresholds:
+    - threshold: 8
+      weight: 0.3
+    - threshold: 5
+      weight: 0.2
+    - threshold: 1
+      weight: 0.1
+  
+  # Complexity level thresholds
+  complexity_levels:
+    critical: 0.8
+    complex: 0.6
+    moderate: 0.4
+    simple: 0.2
+    trivial: 0.0
+
+# Context Classification Configuration
+context:
+  # Context type keywords with primary and secondary indicators
+  CODE_GENERATION:
+    primary:
+      - generate
+      - create
+      - write
+      - implement
+      - build
+      - function
+      - class
+    secondary:
+      - code
+      - develop
+      - program
+      - script
+  
+  CODE_REVIEW:
+    primary:
+      - review
+      - analyze
+      - check
+      - evaluate
+      - assess
+      - examine
+    secondary:
+      - bugs
+      - issues
+      - quality
+  
+  DEBUGGING:
+    primary:
+      - debug
+      - fix
+      - error
+      - bug
+      - issue
+      - problem
+      - traceback
+    secondary:
+      - exception
+      - crash
+      - fault
+  
+  ARCHITECTURE:
+    primary:
+      - architecture
+      - design
+      - structure
+      - pattern
+      - overall
+    secondary:
+      - system
+      - component
+      - framework
+      - blueprint
+  
+  SECURITY:
+    primary:
+      - security
+      - vulnerability
+      - exploit
+      - secure
+      - auth
+      - audit
+    secondary:
+      - authentication
+      - authorization
+      - encryption
+      - attack
+  
+  PERFORMANCE:
+    primary:
+      - performance
+      - optimize
+      - speed
+      - memory
+      - efficient
+    secondary:
+      - fast
+      - slow
+      - bottleneck
+      - scalability
+  
+  DOCUMENTATION:
+    primary:
+      - document
+      - explain
+      - describe
+      - comment
+      - api
+    secondary:
+      - readme
+      - guide
+      - manual
+      - specification
+  
+  TESTING:
+    primary:
+      - test
+      - tests
+      - unittest
+      - spec
+      - verify
+      - validate
+      - unit test
+      - unit tests
+    secondary:
+      - testing
+      - assertion
+      - mock
+      - coverage
+  
+  REFACTORING:
+    primary:
+      - refactor
+      - improve
+      - clean
+      - restructure
+    secondary:
+      - optimize
+      - reorganize
+      - simplify
+
+# Scoring weights
+scoring_weights:
+  # Context classification weights
+  context_primary_keyword: 2.0
+  context_secondary_keyword: 1.0
+  
+  # Step indicator weights
+  step_indicator_multiple: 0.2  # when >= 2 matches
+  step_indicator_single: 0.1    # when >= 1 match
+  
+  # Maximum scores
+  max_keyword_score: 0.3
+  max_phrase_score: 0.2
