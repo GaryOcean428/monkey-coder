@@ -12,7 +12,7 @@ from typing import Dict, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from ..config import config
+from monkey_coder.config import config
 
 logger = logging.getLogger(__name__)
 

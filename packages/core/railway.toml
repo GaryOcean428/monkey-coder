@@ -1,0 +1,15 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python -m monkey_coder.app.main"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[deploy.envVars]
+PYTHONPATH = "/app"
+ENVIRONMENT = "production"
+DEBUG = "false"
+
+[[deploy.healthcheckPaths]]
+path = "/health"
