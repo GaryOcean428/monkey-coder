@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+// Trigger CI/CD pipeline for npm publishing
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
