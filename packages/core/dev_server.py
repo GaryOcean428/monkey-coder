@@ -140,7 +140,7 @@ async def execute_task(
         result = {
             "result": f"Hello! I'm your {persona} assistant. You said: '{request.prompt}'. I'm a mock AI response for development. How can I help you with coding today?",
             "provider": request.preferred_providers[0] if request.preferred_providers else "openai",
-            "model": "gpt-4-mock",
+            "model": "gpt-4.1-mock",
             "persona": persona
         }
     else:
@@ -148,7 +148,7 @@ async def execute_task(
             "result": f"# Generated code for: {request.prompt}\nprint('Hello from Monkey Coder!')\n\n# This is a mock response for task type: {task_type}",
             "explanation": f"This code implements: {request.prompt}",
             "provider": request.preferred_providers[0] if request.preferred_providers else "openai",
-            "model": "gpt-4-mock",
+            "model": "gpt-4.1-mock",
             "persona": persona
         }
     
@@ -187,7 +187,7 @@ async def execute_task_stream(
             result = {
                 "result": f"Hello! I'm your {persona} assistant. You said: '{request.prompt}'. I'm a mock AI response for development. How can I help you with coding today?",
                 "provider": request.preferred_providers[0] if request.preferred_providers else "openai",
-                "model": "gpt-4-mock",
+                "model": "gpt-4.1-mock",
                 "persona": persona
             }
         else:
@@ -195,7 +195,7 @@ async def execute_task_stream(
                 "result": f"# Generated code for: {request.prompt}\nprint('Hello from Monkey Coder!')\n\n# This is a mock response for task type: {task_type}",
                 "explanation": f"This code implements: {request.prompt}",
                 "provider": request.preferred_providers[0] if request.preferred_providers else "openai",
-                "model": "gpt-4-mock",
+                "model": "gpt-4.1-mock",
                 "persona": persona
             }
         
@@ -241,10 +241,10 @@ async def list_models(api_key: str = Depends(validate_api_key)):
     """List available AI models."""
     return {
         "models": [
-            {"id": "gpt-4", "provider": "openai", "description": "GPT-4 model"},
-            {"id": "gpt-3.5-turbo", "provider": "openai", "description": "GPT-3.5 Turbo"},
-            {"id": "claude-3-sonnet", "provider": "anthropic", "description": "Claude 3 Sonnet"},
-            {"id": "qwen2.5-coder-32b", "provider": "qwen", "description": "Qwen 2.5 Coder 32B"}
+            {"id": "gpt-4.1", "provider": "openai", "description": "GPT-4.1 flagship model"},
+            {"id": "gpt-4.1-mini", "provider": "openai", "description": "GPT-4.1 Mini model"},
+            {"id": "claude-sonnet-4-20250514", "provider": "anthropic", "description": "Claude Sonnet 4"},
+            {"id": "qwen/qwen3-32b", "provider": "groq", "description": "Qwen 3 32B via Groq"}
         ]
     }
 

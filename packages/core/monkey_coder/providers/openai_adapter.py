@@ -768,7 +768,7 @@ class OpenAIProvider(BaseProvider):
                 "api_models_available": len(models.data),
                 "validated_models": model_stats,
                 "latest_models": [model[0] for model in latest_models],
-                "model_families": ["o1", "o3", "o4", "gpt-4.1", "gpt-4o"],
+                "model_families": ["o1", "o3", "o4", "gpt-4.1"],
                 "capabilities": [
                     "reasoning",
                     "conversation",
