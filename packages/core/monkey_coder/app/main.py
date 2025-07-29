@@ -122,14 +122,14 @@ async def lifespan(app: FastAPI):
     logger.info("Shutdown complete")
 
 
-# Create FastAPI application
+# Create FastAPI application with API docs under /api path
 app = FastAPI(
     title="Monkey Coder Core",
     description="Python orchestration core for AI-powered code generation and analysis",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
 
@@ -230,43 +230,7 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(..., description="JWT refresh token")
 
 
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """
-    Root endpoint that returns an HTML landing page.
-    """
-    # Get the directory of this file
-    current_dir = Path(__file__).parent
-    index_path = current_dir / "index.html"
-    
-    # Read and return the HTML file
-    if index_path.exists():
-        with open(index_path, "r") as f:
-            return HTMLResponse(content=f.read())
-    else:
-        # Fallback HTML if file not found
-        return HTMLResponse(content="""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Monkey Coder API</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
-                h1 { color: #333; }
-                a { color: #007bff; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <h1>Monkey Coder Core API</h1>
-            <p>Welcome to the Monkey Coder API. This is a backend service.</p>
-            <p>
-                <a href="/docs">API Documentation</a> | 
-                <a href="/health">Health Check</a>
-            </p>
-        </body>
-        </html>
-        """)
+# Root endpoint removed to allow Next.js static files to be served at root path
 
 
 @app.get("/health", response_model=HealthResponse)

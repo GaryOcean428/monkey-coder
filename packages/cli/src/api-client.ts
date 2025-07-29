@@ -68,7 +68,7 @@ export class MonkeyCoderAPIClient {
    * Execute a task (non-streaming)
    */
   async execute(request: ExecuteRequest): Promise<ExecuteResponse> {
-    const response = await this.client.post('/v1/execute', request);
+    const response = await this.client.post('/api/v1/execute', request);
     return response.data;
   }
 
@@ -139,7 +139,7 @@ export class MonkeyCoderAPIClient {
 
       // Make streaming request
       this.client
-        .post('/v1/execute/stream', request, {
+        .post('/api/v1/execute/stream', request, {
           responseType: 'stream',
           headers: {
             Accept: 'text/event-stream',
@@ -187,7 +187,7 @@ export class MonkeyCoderAPIClient {
     endDate?: string;
     granularity?: string;
   }): Promise<any> {
-    const response = await this.client.get('/v1/billing/usage', { params });
+    const response = await this.client.get('/api/v1/billing/usage', { params });
     return response.data;
   }
 
@@ -211,7 +211,7 @@ export class MonkeyCoderAPIClient {
    * Authenticate user with email and password
    */
   async authenticate(credentials: { email: string; password: string }): Promise<any> {
-    const response = await this.client.post('/v1/auth/login', credentials);
+    const response = await this.client.post('/api/v1/auth/login', credentials);
     return response.data;
   }
 
@@ -219,14 +219,14 @@ export class MonkeyCoderAPIClient {
    * Logout current user
    */
   async logout(): Promise<void> {
-    await this.client.post('/v1/auth/logout');
+    await this.client.post('/api/v1/auth/logout');
   }
 
   /**
    * Get current user status
    */
   async getUserStatus(): Promise<any> {
-    const response = await this.client.get('/v1/auth/status');
+    const response = await this.client.get('/api/v1/auth/status');
     return response.data;
   }
 
@@ -234,7 +234,7 @@ export class MonkeyCoderAPIClient {
    * Refresh authentication token
    */
   async refreshToken(refreshToken: string): Promise<any> {
-    const response = await this.client.post('/v1/auth/refresh', { refresh_token: refreshToken });
+    const response = await this.client.post('/api/v1/auth/refresh', { refresh_token: refreshToken });
     return response.data;
   }
 
@@ -242,7 +242,7 @@ export class MonkeyCoderAPIClient {
    * Create billing portal session
    */
   async createBillingPortalSession(data: { return_url: string }): Promise<any> {
-    const response = await this.client.post('/v1/billing/portal', data);
+    const response = await this.client.post('/api/v1/billing/portal', data);
     return response.data;
   }
 
@@ -255,7 +255,7 @@ export class MonkeyCoderAPIClient {
     success_url: string;
     cancel_url: string;
   }): Promise<any> {
-    const response = await this.client.post('/v1/billing/payment', data);
+    const response = await this.client.post('/api/v1/billing/payment', data);
     return response.data;
   }
 
