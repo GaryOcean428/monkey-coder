@@ -445,13 +445,14 @@ MODEL_REGISTRY = {
         "grok-3-fast",
     ],
     ProviderType.GROQ: [
-        # Production models available through Groq's hardware acceleration
-        "llama-3.1-8b-instant",
+        # Llama models (excluding R1)
         "llama-3.3-70b-versatile",
-        # Preview models
+        "llama-3.1-8b-instant",
         "meta-llama/llama-4-maverick-17b-128e-instruct",
         "meta-llama/llama-4-scout-17b-16e-instruct",
+        # Kimi model
         "moonshotai/kimi-k2-instruct",
+        # Qwen model
         "qwen/qwen3-32b",
     ],
 }

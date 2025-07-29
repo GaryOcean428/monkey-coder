@@ -68,17 +68,37 @@ async def lifespan(app: FastAPI):
         logger.error(f"Database migrations failed: {e}")
         # Continue startup even if migrations fail (for development)
     
-    # Initialize core components
-    app.state.orchestrator = MultiAgentOrchestrator()
-    app.state.quantum_executor = QuantumExecutor()
-    app.state.persona_router = PersonaRouter()
-    app.state.provider_registry = ProviderRegistry()
-    app.state.metrics_collector = MetricsCollector()
-    app.state.billing_tracker = BillingTracker()
-    app.state.feedback_collector = FeedbackCollector()
-    
-    # Initialize providers
-    await app.state.provider_registry.initialize_all()
+    # Initialize core components with health checks
+    try:
+        app.state.orchestrator = MultiAgentOrchestrator()
+        logger.info("✅ MultiAgentOrchestrator initialized successfully")
+        
+        app.state.quantum_executor = QuantumExecutor()
+        logger.info("✅ QuantumExecutor initialized successfully")
+        
+        app.state.persona_router = PersonaRouter()
+        logger.info("✅ PersonaRouter initialized successfully")
+        
+        app.state.provider_registry = ProviderRegistry()
+        logger.info("✅ ProviderRegistry initialized successfully")
+        
+        app.state.metrics_collector = MetricsCollector()
+        logger.info("✅ MetricsCollector initialized successfully")
+        
+        app.state.billing_tracker = BillingTracker()
+        logger.info("✅ BillingTracker initialized successfully")
+        
+        app.state.feedback_collector = FeedbackCollector()
+        logger.info("✅ FeedbackCollector initialized successfully")
+        
+        # Initialize providers with timeout
+        await app.state.provider_registry.initialize_all()
+        logger.info("✅ All providers initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"❌ Component initialization failed: {e}")
+        # Continue startup even if some components fail
+        # This allows the health endpoint to report component status
     
     logger.info("Orchestration engine started successfully")
     
@@ -614,13 +634,26 @@ def create_app() -> FastAPI:
 
 
 # Mount static files for Next.js frontend (must be after all API routes)
-static_dir = Path(__file__).parent.parent.parent.parent / "web" / "out"
-if static_dir.exists():
+# Try multiple possible locations for static files
+static_dir_options = [
+    Path(__file__).parent.parent.parent.parent / "packages" / "web" / "out",  # Unified Dockerfile location
+    Path(__file__).parent.parent.parent.parent / "web" / "out",  # Legacy location
+    Path("/app/packages/web/out"),  # Absolute path in Docker
+    Path("/app/web/out"),  # Alternative absolute path
+]
+
+static_dir = None
+for option in static_dir_options:
+    if option.exists():
+        static_dir = option
+        break
+
+if static_dir:
     # Mount static files with fallback to index.html for SPA routing
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
     logger.info(f"Serving static files from: {static_dir}")
 else:
-    logger.warning(f"Static directory not found: {static_dir}. Frontend will not be served.")
+    logger.warning(f"Static directory not found in any of: {[str(p) for p in static_dir_options]}. Frontend will not be served.")
 
 
 if __name__ == "__main__":

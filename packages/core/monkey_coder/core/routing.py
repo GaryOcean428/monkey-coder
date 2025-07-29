@@ -88,6 +88,7 @@ class AdvancedRouter:
     """
     
     def __init__(self):
+        self._validate_providers()
         self.model_capabilities = self._initialize_model_capabilities()
         self.persona_mappings = self._initialize_persona_mappings()
         self.slash_commands = self._initialize_slash_commands()
@@ -610,29 +611,11 @@ class AdvancedRouter:
             specializations=["multimodal", "fast", "efficient"]
         )
         
-        # Qwen models
-        capabilities[(ProviderType.QWEN, "qwen-coder-3-32b")] = ModelCapabilities(
+        # Groq-hosted Qwen models
+        capabilities[(ProviderType.GROQ, "qwen/qwen3-32b")] = ModelCapabilities(
             code_generation=0.94, reasoning=0.85, context_window=32768,
-            latency_ms=3000, cost_per_token=0.002, reliability=0.90,
-            specializations=["coding", "open_source", "multilingual"]
-        )
-        
-        capabilities[(ProviderType.QWEN, "qwen-coder-3-14b")] = ModelCapabilities(
-            code_generation=0.91, reasoning=0.83, context_window=32768,
-            latency_ms=2200, cost_per_token=0.0012, reliability=0.88,
-            specializations=["coding", "open_source", "balanced"]
-        )
-        
-        capabilities[(ProviderType.QWEN, "qwen-coder-3-7b")] = ModelCapabilities(
-            code_generation=0.88, reasoning=0.80, context_window=32768,
-            latency_ms=1500, cost_per_token=0.0008, reliability=0.85,
-            specializations=["coding", "open_source", "efficient"]
-        )
-        
-        capabilities[(ProviderType.QWEN, "qwen-coder-3-1.5b")] = ModelCapabilities(
-            code_generation=0.80, reasoning=0.75, context_window=32768,
-            latency_ms=800, cost_per_token=0.0004, reliability=0.80,
-            specializations=["coding", "open_source", "fast"]
+            latency_ms=1500, cost_per_token=0.0002, reliability=0.90,
+            specializations=["coding", "fast_hardware", "multilingual"]
         )
         
         # Grok models
@@ -648,21 +631,59 @@ class AdvancedRouter:
             specializations=["reasoning", "coding", "fast"]
         )
         
-        # Moonshot models
-        capabilities[(ProviderType.MOONSHOT, "kimi-k2")] = ModelCapabilities(
+        # Groq-hosted Llama models
+        capabilities[(ProviderType.GROQ, "llama-3.3-70b-versatile")] = ModelCapabilities(
+            code_generation=0.92, reasoning=0.94, context_window=131072,
+            latency_ms=800, cost_per_token=0.0001, reliability=0.92,
+            specializations=["coding", "fast_hardware", "versatile"]
+        )
+        
+        capabilities[(ProviderType.GROQ, "llama-3.1-8b-instant")] = ModelCapabilities(
+            code_generation=0.85, reasoning=0.87, context_window=32768,
+            latency_ms=400, cost_per_token=0.00005, reliability=0.88,
+            specializations=["coding", "fast_hardware", "instant"]
+        )
+        
+        capabilities[(ProviderType.GROQ, "meta-llama/llama-4-maverick-17b-128e-instruct")] = ModelCapabilities(
+            code_generation=0.88, reasoning=0.90, context_window=131072,
+            latency_ms=600, cost_per_token=0.00008, reliability=0.89,
+            specializations=["coding", "fast_hardware", "instruct"]
+        )
+        
+        capabilities[(ProviderType.GROQ, "meta-llama/llama-4-scout-17b-16e-instruct")] = ModelCapabilities(
+            code_generation=0.86, reasoning=0.88, context_window=16384,
+            latency_ms=500, cost_per_token=0.00007, reliability=0.87,
+            specializations=["coding", "fast_hardware", "scout"]
+        )
+        
+        capabilities[(ProviderType.GROQ, "moonshotai/kimi-k2-instruct")] = ModelCapabilities(
             code_generation=0.90, reasoning=0.92, context_window=200000,
-            latency_ms=2200, cost_per_token=0.0015, reliability=0.90,
-            specializations=["long_context", "reasoning", "multilingual"]
+            latency_ms=1000, cost_per_token=0.0001, reliability=0.90,
+            specializations=["long_context", "fast_hardware", "multilingual"]
         )
         
         return capabilities
+    
+    def _validate_providers(self):
+        """Validate that all providers referenced in routing exist in the enum."""
+        try:
+            # Check that all providers in MODEL_REGISTRY are valid enum values
+            for provider in MODEL_REGISTRY.keys():
+                if not isinstance(provider, ProviderType):
+                    logger.error(f"Invalid provider type in MODEL_REGISTRY: {provider}")
+                    raise ValueError(f"Provider {provider} is not a valid ProviderType enum value")
+            
+            logger.info("Provider validation completed successfully")
+        except Exception as e:
+            logger.error(f"Provider validation failed: {e}")
+            raise
     
     def _initialize_persona_mappings(self) -> Dict[PersonaType, Dict[str, Any]]:
         """Initialize persona configuration mappings."""
         return {
             PersonaType.DEVELOPER: {
                 "specializations": ["coding", "implementation", "debugging"],
-                "preferred_providers": [ProviderType.QWEN, ProviderType.OPENAI],
+                "preferred_providers": [ProviderType.GROQ, ProviderType.OPENAI],
                 "context_boost": {"code_generation": 1.2, "debugging": 1.1}
             },
             PersonaType.ARCHITECT: {
