@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class TaskStatus(str, Enum):
@@ -70,13 +70,15 @@ class ExecutionContext(BaseModel):
     max_tokens: int = Field(default=4096, description="Maximum tokens for generation")
     temperature: float = Field(default=0.1, description="Model temperature")
 
-    @validator("timeout")
+    @field_validator("timeout")
+    @classmethod
     def validate_timeout(cls, v):
         if v < 1 or v > 3600:
             raise ValueError("Timeout must be between 1 and 3600 seconds")
         return v
 
-    @validator("temperature")
+    @field_validator("temperature")
+    @classmethod
     def validate_temperature(cls, v):
         if v < 0.0 or v > 2.0:
             raise ValueError("Temperature must be between 0.0 and 2.0")
@@ -114,7 +116,8 @@ class Monkey1Config(BaseModel):
         default=5, description="Maximum orchestration iterations"
     )
 
-    @validator("agent_count")
+    @field_validator("agent_count")
+    @classmethod
     def validate_agent_count(cls, v):
         if v < 1 or v > 10:
             raise ValueError("Agent count must be between 1 and 10")
@@ -138,7 +141,8 @@ class Gary8DConfig(BaseModel):
         default=0.1, description="Uncertainty threshold"
     )
 
-    @validator("quantum_coherence")
+    @field_validator("quantum_coherence")
+    @classmethod
     def validate_coherence(cls, v):
         if v < 0.0 or v > 1.0:
             raise ValueError("Quantum coherence must be between 0.0 and 1.0")
@@ -157,7 +161,7 @@ class ExecuteRequest(BaseModel):
 
     # Configuration sections
     context: ExecutionContext = Field(..., description="Execution context")
-    superclause_config: SuperClaudeConfig = Field(
+    superclaude_config: SuperClaudeConfig = Field(
         ..., description="SuperClaude configuration"
     )
     monkey1_config: Monkey1Config = Field(
@@ -175,7 +179,8 @@ class ExecuteRequest(BaseModel):
         default_factory=dict, description="Model preferences by provider"
     )
 
-    @validator("prompt")
+    @field_validator("prompt")
+    @classmethod
     def validate_prompt(cls, v):
         if not v or len(v.strip()) == 0:
             raise ValueError("Prompt cannot be empty")
@@ -254,7 +259,8 @@ class UsageRequest(BaseModel):
         default=False, description="Include detailed breakdown"
     )
 
-    @validator("granularity")
+    @field_validator("granularity")
+    @classmethod
     def validate_granularity(cls, v):
         if v not in ["hourly", "daily", "weekly", "monthly"]:
             raise ValueError(

@@ -12,9 +12,8 @@ This module implements sophisticated routing logic with:
 import re
 import logging
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..models import (
     ExecuteRequest, 
@@ -23,30 +22,9 @@ from ..models import (
     TaskType,
     MODEL_REGISTRY
 )
+from .scoring import ScoringManager, ComplexityLevel, ContextType
 
 logger = logging.getLogger(__name__)
-
-
-class ComplexityLevel(str, Enum):
-    """Task complexity levels for routing decisions."""
-    TRIVIAL = "trivial"        # Simple queries, basic info retrieval
-    SIMPLE = "simple"          # Straightforward coding tasks
-    MODERATE = "moderate"      # Multi-step processes, standard algorithms
-    COMPLEX = "complex"        # Architecture decisions, complex logic
-    CRITICAL = "critical"      # Mission-critical, high-stakes tasks
-
-
-class ContextType(str, Enum):
-    """Context types for routing analysis."""
-    CODE_GENERATION = "code_generation"
-    CODE_REVIEW = "code_review" 
-    DEBUGGING = "debugging"
-    ARCHITECTURE = "architecture"
-    SECURITY = "security"
-    PERFORMANCE = "performance"
-    DOCUMENTATION = "documentation"
-    TESTING = "testing"
-    REFACTORING = "refactoring"
 
 
 @dataclass
@@ -93,6 +71,9 @@ class AdvancedRouter:
         self.persona_mappings = self._initialize_persona_mappings()
         self.slash_commands = self._initialize_slash_commands()
         self.routing_history = []
+        
+        # Initialize modular scoring system
+        self.scoring_manager = ScoringManager()
         
     def route_request(self, request: ExecuteRequest) -> RoutingDecision:
         """
@@ -149,7 +130,7 @@ class AdvancedRouter:
                 complexity_level, context_type, persona, provider, model
             ),
             metadata={
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "slash_command": slash_command,
                 "context_type": context_type.value,
                 "complexity_level": complexity_level.value,
@@ -165,155 +146,40 @@ class AdvancedRouter:
     
     def _analyze_complexity(self, request: ExecuteRequest) -> float:
         """
-        Analyze request complexity using multiple signals.
+        Analyze request complexity using the modular scoring system.
         
         Returns complexity score from 0.0 (trivial) to 1.0 (critical)
         """
-        score = 0.0
-        prompt = request.prompt.lower()
-        
-        # Base score for any coding task
-        if any(indicator in prompt for indicator in ['function', 'class', 'method', 'code', 'implement', 'create']):
-            score += 0.2
-        
-        # Text length indicators - adjusted for better distribution
-        word_count = len(prompt.split())
-        if word_count > 100:
-            score += 0.3
-        elif word_count > 50:
-            score += 0.2
-        elif word_count > 20:
-            score += 0.1
-        elif word_count > 10:
-            score += 0.05
-            
-        # Technical complexity keywords - expanded and weighted
-        complex_keywords = [
-            'architecture', 'design pattern', 'scalability', 'performance',
-            'optimization', 'algorithm', 'data structure', 'system design',
-            'distributed', 'microservices', 'database', 'security', 'concurrent',
-            'async', 'threading', 'machine learning', 'ai', 'neural network',
-            'authentication', 'session', 'validation', 'comprehensive', 'pipeline',
-            'fault tolerance', 'auto-scaling', 'real-time', 'serving'
-        ]
-        
-        keyword_matches = sum(1 for kw in complex_keywords if kw in prompt)
-        # Adjusted weighting for better balance
-        score += min(keyword_matches * 0.08, 0.3)
-        
-        # Multi-step process indicators
-        step_indicators = ['step', 'phase', 'first', 'then', 'next', 'finally', 'multi-step', 'multi-phase']
-        step_count = sum(1 for ind in step_indicators if ind in prompt)
-        if step_count >= 2:
-            score += 0.2
-        elif step_count >= 1:
-            score += 0.1
-            
-        # File count complexity
-        if request.files and len(request.files) > 8:
-            score += 0.3
-        elif request.files and len(request.files) > 5:
-            score += 0.2
-        elif request.files and len(request.files) > 1:
-            score += 0.1
-        
-        # Specific complexity phrases
-        complex_phrases = [
-            'requiring deep technical expertise',
-            'with methods for',
-            'include detailed',
-            'comprehensive',
-            'e-commerce platform'
-        ]
-        phrase_matches = sum(1 for phrase in complex_phrases if phrase in prompt)
-        score += min(phrase_matches * 0.1, 0.2)
-            
-        return min(score, 1.0)
+        score, _ = self.scoring_manager.get_complexity_score(request)
+        return score
     
     def _classify_complexity(self, score: float) -> ComplexityLevel:
-        """Classify numeric complexity score into levels."""
-        if score >= 0.8:
-            return ComplexityLevel.CRITICAL
-        elif score >= 0.6:
-            return ComplexityLevel.COMPLEX
-        elif score >= 0.4:
-            return ComplexityLevel.MODERATE
-        elif score >= 0.2:
-            return ComplexityLevel.SIMPLE
-        else:
-            return ComplexityLevel.TRIVIAL
+        """Classify numeric complexity score into levels using the scoring manager."""
+        return self.scoring_manager.complexity_scorer.classify_complexity(score)
     
     def _extract_context_type(self, request: ExecuteRequest) -> ContextType:
-        """Extract primary context type from request."""
-        prompt = request.prompt.lower()
+        """Extract primary context type from request using the modular scoring system."""
+        context_type, _ = self.scoring_manager.get_context_classification(request)
+        return context_type
+    
+    def get_scoring_breakdown(self, request: ExecuteRequest) -> Dict[str, Any]:
+        """
+        Get detailed scoring breakdown for transparency and debugging.
         
-        # Task type mapping
-        task_context_map = {
-            TaskType.CODE_GENERATION: ContextType.CODE_GENERATION,
-            TaskType.CODE_REVIEW: ContextType.CODE_REVIEW,
-            TaskType.DEBUGGING: ContextType.DEBUGGING,
-            TaskType.DOCUMENTATION: ContextType.DOCUMENTATION,
-            TaskType.TESTING: ContextType.TESTING,
-            TaskType.REFACTORING: ContextType.REFACTORING,
+        Returns a dictionary with individual scoring contributions from each strategy.
+        """
+        complexity_score, complexity_level = self.scoring_manager.get_complexity_score(request)
+        context_type, context_confidence = self.scoring_manager.get_context_classification(request)
+        breakdown = self.scoring_manager.get_scoring_breakdown(request)
+        
+        return {
+            "complexity_score": complexity_score,
+            "complexity_level": complexity_level.value,
+            "context_type": context_type.value,
+            "context_confidence": context_confidence,
+            "strategy_scores": breakdown,
+            "total_strategies": len(breakdown)
         }
-        
-        if request.task_type in task_context_map:
-            return task_context_map[request.task_type]
-        
-        # Keyword-based detection with weighted scoring
-        context_keywords = {
-            ContextType.CODE_GENERATION: {
-                'primary': ['generate', 'create', 'write', 'implement', 'build', 'function', 'class'],
-                'secondary': ['code', 'develop', 'program', 'script']
-            },
-            ContextType.CODE_REVIEW: {
-                'primary': ['review', 'analyze', 'check', 'evaluate', 'assess', 'examine'],
-                'secondary': ['bugs', 'issues', 'quality']
-            },
-            ContextType.DEBUGGING: {
-                'primary': ['debug', 'fix', 'error', 'bug', 'issue', 'problem', 'traceback'],
-                'secondary': ['exception', 'crash', 'fault']
-            },
-            ContextType.ARCHITECTURE: {
-                'primary': ['architecture', 'design', 'structure', 'pattern', 'overall'],
-                'secondary': ['system', 'component', 'framework', 'blueprint']
-            },
-            ContextType.SECURITY: {
-                'primary': ['security', 'vulnerability', 'exploit', 'secure', 'auth', 'audit'],
-                'secondary': ['authentication', 'authorization', 'encryption', 'attack']
-            },
-            ContextType.PERFORMANCE: {
-                'primary': ['performance', 'optimize', 'speed', 'memory', 'efficient'],
-                'secondary': ['fast', 'slow', 'bottleneck', 'scalability']
-            },
-            ContextType.DOCUMENTATION: {
-                'primary': ['document', 'explain', 'describe', 'comment', 'api'],
-                'secondary': ['readme', 'guide', 'manual', 'specification']
-            },
-            ContextType.TESTING: {
-                'primary': ['test', 'unittest', 'spec', 'verify', 'validate', 'unit tests'],
-                'secondary': ['testing', 'assertion', 'mock', 'coverage']
-            },
-            ContextType.REFACTORING: {
-                'primary': ['refactor', 'improve', 'clean', 'restructure'],
-                'secondary': ['optimize', 'reorganize', 'simplify']
-            },
-        }
-        
-        best_match = ContextType.CODE_GENERATION
-        max_score = 0
-        
-        for context_type, keyword_groups in context_keywords.items():
-            # Weighted scoring: primary keywords = 2 points, secondary = 1 point
-            primary_score = sum(2 for kw in keyword_groups['primary'] if kw in prompt)
-            secondary_score = sum(1 for kw in keyword_groups['secondary'] if kw in prompt)
-            total_score = primary_score + secondary_score
-            
-            if total_score > max_score:
-                max_score = total_score
-                best_match = context_type
-                
-        return best_match
     
     def _score_context_match(self, request: ExecuteRequest, context_type: ContextType) -> float:
         """Score how well the request matches the identified context."""
@@ -371,9 +237,9 @@ class AdvancedRouter:
                 return context_persona
         
         # Explicit persona from request config (lower priority than specific contexts)
-        if hasattr(request, 'superclause_config') and request.superclause_config:
-            if hasattr(request.superclause_config, 'persona'):
-                return request.superclause_config.persona
+        if hasattr(request, 'superclaude_config') and request.superclaude_config:
+            if hasattr(request.superclaude_config, 'persona'):
+                return request.superclaude_config.persona
         
         # Fallback to context-based or default
         return context_persona_map.get(context_type, PersonaType.DEVELOPER)
