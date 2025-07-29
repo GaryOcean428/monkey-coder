@@ -75,9 +75,69 @@
 - **Edge Case Handling**: Robust validation for minimal prompts and unknown inputs
 - **Production Hardening**: Enhanced error handling, monitoring, and deployment stability
 
-**Ready for Phase 2:** All Phase 1 foundations are complete with significant enhancements. The system now includes advanced orchestration patterns and validation capabilities that provide a strong foundation for quantum routing development.
+**Ready for Phase 1.5:** Phase 1 foundations are complete, but QA analysis reveals critical technical debt and security issues that should be resolved before quantum routing development.
 
-## Phase 2: Quantum Routing Engine (6-8 weeks) - **NEXT PHASE**
+## Phase 1.5: Technical Debt Resolution & Hardening (2-3 weeks) - **NEXT PHASE**
+
+**Goal:** Address critical technical debt, security vulnerabilities, and architectural improvements identified in QA analysis
+**Success Criteria:** Improved code maintainability, enhanced security posture, better type safety, modular architecture
+**Status:** Ready to begin - Phase 1 complete, QA analysis complete
+
+### Critical Issues (Must-Have)
+
+- [ ] **Core Routing Refactor** - Modularize monolithic AdvancedRouter with pluggable scoring strategies `L`
+- [ ] **Security Enhancement** - Replace localStorage token storage with httpOnly cookies, secure CLI token storage `M`
+- [ ] **Type Safety Improvements** - Replace `any` types, add comprehensive TypeScript interfaces, Python type hints `S`
+- [ ] **MCP Server Manager** - Replace blocking subprocess calls with async operations, modular health checks `M`
+- [ ] **API Model Cleanup** - Fix naming inconsistencies (superclause_config), split heavy ExecuteRequest model `S`
+
+### Important Improvements (Should-Have)
+
+- [ ] **CLI Error Handling** - Implement unified error handling, remove premature process.exit calls `S`
+- [ ] **Frontend Accessibility** - Add ARIA labels, password visibility toggle, responsive design improvements `M`
+- [ ] **Configuration Management** - Externalize routing heuristics to YAML, environment variable expansion `S`
+- [ ] **Testing Infrastructure** - Add unit tests for routing logic, CLI commands, API endpoints `L`
+- [ ] **Documentation Updates** - Fix package.json metadata, update README links, add CONTRIBUTING.md `S`
+
+### Nice-to-Have Features
+
+- [ ] **Design System** - Implement consistent UI components and styling across web frontend `M`
+- [ ] **Internationalization** - Extract hardcoded strings, add i18n support `L`
+- [ ] **Performance Monitoring** - Add instrumentation for routing performance, cache frequently used prompts `S`
+
+### Dependencies
+
+- Phase 1 completion ✅
+- QA analysis completion ✅
+- Development team availability
+
+### Technical Debt Priority Matrix
+
+| Issue | Impact | Complexity | Priority |
+|-------|--------|------------|----------|
+| Security vulnerabilities (token storage) | High | Medium | P0 |
+| Monolithic router architecture | High | Medium | P0 |
+| Type safety gaps | Medium | Low | P1 |
+| MCP blocking operations | Medium | Medium | P1 |
+| API model inconsistencies | Low | Low | P2 |
+
+### Security & Performance Improvements
+
+**Security Enhancements:**
+- [ ] **Token Security Audit** - Replace localStorage with httpOnly cookies, implement secure CLI token storage with keytar
+- [ ] **Input Validation** - Add comprehensive input sanitization and validation across all API endpoints
+- [ ] **Dependency Security** - Run bandit (Python) and npm audit, integrate Snyk security scanning
+- [ ] **CSRF Protection** - Implement CSRF tokens for state-changing operations
+- [ ] **Rate Limiting** - Add intelligent rate limiting to prevent abuse
+
+**Performance Optimizations:**
+- [ ] **Router Performance** - Instrument scoring functions, add caching for repeated prompts
+- [ ] **Async Operations** - Convert blocking operations to async/await patterns
+- [ ] **Bundle Optimization** - Optimize frontend bundle size and loading performance
+- [ ] **Database Performance** - Add connection pooling and query optimization
+- [ ] **Monitoring Integration** - Add performance metrics collection and alerting
+
+## Phase 2: Quantum Routing Engine (6-8 weeks) - **UPCOMING**
 
 **Goal:** Implement advanced AI model routing using Q-learning principles
 **Success Criteria:** Dynamic model selection with 25%+ improvement in task completion accuracy
@@ -97,11 +157,15 @@
 - [ ] A/B Testing Framework - Compare routing strategies `L`
 - [ ] Fallback Mechanisms - Graceful degradation when preferred models unavailable `M`
 
-### Dependencies
+### Updated Dependencies
 
-- Phase 1 completion
+- Phase 1.5 technical debt resolution ✅ (NEW REQUIREMENT)
+- Modular routing architecture with pluggable scoring
+- Secure authentication implementation 
+- Comprehensive type safety across TypeScript and Python codebases
 - Redis infrastructure setup
 - AI provider API integrations stable
+- Unit testing framework established
 
 ## Phase 3: Multi-Agent Orchestration (8-10 weeks)
 
@@ -182,13 +246,26 @@
 - Compliance and security audits
 - Advanced Railway scaling configuration
 
-## Implementation Timeline
+## Updated Implementation Timeline
 
-**Total Duration:** 32-44 weeks (8-11 months)
+**Total Duration:** 35-47 weeks (9-12 months) - **+3 weeks due to Phase 1.5**
 **Team Size:** 3-5 developers (1 Frontend, 2 Backend/AI, 1 DevOps, 1 Product)
 
-### Phase Overlaps
-- Phase 1-2: 2 week overlap for routing integration
+### Timeline Impact Analysis
+
+**Phase 1.5 Addition:** +2-3 weeks
+- **Impact:** Essential for code quality and security before scaling to quantum routing
+- **Risk Mitigation:** Prevents technical debt accumulation that would slow Phase 2-5
+- **ROI:** Estimated 20-30% faster development in subsequent phases due to improved architecture
+
+**Benefits of Technical Debt Resolution:**
+- Reduced debugging time in Phase 2+ (estimated 40% reduction)
+- Improved developer velocity through better type safety and modular architecture
+- Enhanced security posture before enterprise features (Phase 5)
+- Better foundation for quantum routing algorithms (Phase 2)
+
+### Updated Phase Overlaps
+- Phase 1.5-2: 1 week overlap for routing preparation and architecture validation
 - Phase 2-3: 3 week overlap for agent-routing integration  
 - Phase 3-4: 2 week overlap for quantum-agent coordination
 - Phase 4-5: 4 week overlap for enterprise quantum features
