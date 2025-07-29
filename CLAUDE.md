@@ -9,6 +9,7 @@ Monkey Coder is an AI-powered code generation and analysis platform that transfo
 ## Common Development Commands
 
 ### Building and Testing
+
 ```bash
 # Build all packages
 yarn build
@@ -36,6 +37,7 @@ yarn format
 ```
 
 ### Package-Specific Commands
+
 ```bash
 # CLI package (TypeScript)
 cd packages/cli
@@ -46,9 +48,9 @@ yarn typecheck    # TypeScript checking
 
 # Core package (Python)
 cd packages/core
-python -m pytest                    # Run tests
-python -m pytest -v                 # Verbose tests
-python -m pytest --cov=monkey_coder # Coverage
+Python -m pytest                    # Run tests
+Python -m pytest -v                 # Verbose tests
+Python -m pytest --cov=monkey_coder # Coverage
 black .                             # Format code
 isort .                             # Sort imports
 mypy monkey_coder                   # Type checking
@@ -56,11 +58,12 @@ mypy monkey_coder                   # Type checking
 # SDK package (TypeScript + Python)
 cd packages/sdk
 yarn build:ts      # Build TypeScript SDK
-yarn build:python  # Build Python SDK
+yarn build:Python  # Build Python SDK
 yarn examples:node # Test Node.js example
 ```
 
 ### Documentation Commands
+
 ```bash
 # Start documentation dev server
 yarn docs:dev
@@ -93,7 +96,7 @@ yarn docs:validate-links
 
 #### CLI Architecture (`packages/cli/`)
 - **cli.ts**: Main command dispatcher with authentication hooks
-- **api-client.ts**: HTTP client for backend communication with streaming support
+- **API-client.ts**: HTTP client for backend communication with streaming support
 - **config.ts**: Configuration management with file persistence
 - **commands/**: Modular command implementations (auth, usage, mcp)
 - **splash.ts**: ASCII art splash screen (can be disabled with `--no-splash`)
@@ -109,6 +112,7 @@ yarn docs:validate-links
 ## Configuration
 
 ### Environment Variables
+
 ```bash
 # Required for API functionality
 OPENAI_API_KEY=your_openai_key
@@ -121,7 +125,8 @@ MONKEY_CODER_NO_SPLASH=1  # Disable CLI splash screen
 ```
 
 ### CLI Configuration
-The CLI stores configuration in `~/.monkey-coder/config.json`:
+The CLI stores configuration in `~/.monkey-coder/config.JSON`:
+
 ```json
 {
   "apiKey": "your_api_key",
@@ -147,24 +152,25 @@ The CLI stores configuration in `~/.monkey-coder/config.json`:
 - Markers: `@pytest.mark.slow`, `@pytest.mark.integration`
 
 ### Running Specific Tests
+
 ```bash
 # Single test file
 yarn workspace monkey-coder-cli test install.test.ts
-python -m pytest tests/test_quantum.py
+Python -m pytest tests/test_quantum.py
 
 # Test with debugging
 yarn test --verbose
-python -m pytest -v -s
+Python -m pytest -v -s
 
 # Integration tests
-python -m pytest -m integration
+Python -m pytest -m integration
 ```
 
 ## Development Workflow
 
 ### Authentication Flow
 Commands requiring API access (`implement`, `analyze`, `build`, `test`, `chat`) automatically check for authentication:
-1. Check for `--api-key` flag
+1. Check for `--API-key` flag
 2. Check configuration file
 3. Prompt for login if not authenticated
 
@@ -189,6 +195,7 @@ The CLI builds structured requests with:
 - **monkey-coder-cli** (npm): v1.1.0 - TypeScript CLI (ready to publish)
 
 ### Release Process
+
 ```bash
 # Version bump
 yarn changeset
@@ -210,12 +217,13 @@ yarn publish-npm     # npm packages
 4. **Streaming issues**: Check network connectivity and timeout settings
 
 ### Debug Commands
+
 ```bash
 # CLI debug mode
 monkey --verbose implement "your prompt"
 
 # Python debugging
-python -m monkey_coder.core.orchestrator --debug
+Python -m monkey_coder.core.orchestrator --debug
 
 # Check health
 monkey health
@@ -236,3 +244,27 @@ Follow conventional commits with these scopes:
 - `chore(deps)`: Dependency updates
 
 Valid commit types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
+
+## CRITICAL FILE PROTECTION
+
+### Protected Configuration Files
+**NEVER MODIFY** the following files without explicit approval:
+- `packages/core/monkey_coder/models.py` - Contains validated AI model configurations critical for system stability
+- Any file containing model definitions, API keys, or core provider configurations
+
+**Rationale**: These files contain carefully validated configurations that ensure API compatibility and system stability. Unauthorized modifications can break the entire platform.
+
+**Prohibited Actions**:
+- Adding new models or providers
+- Modifying existing model names, parameters, or capabilities
+- Changing provider configurations or API endpoints
+- Updating model limits or pricing information
+
+**If changes are required**: Consult project maintainers and get explicit written approval before making ANY modifications to protected files.
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+**NEVER MODIFY PROTECTED FILES** - Especially `packages/core/monkey_coder/models.py` which is STRICTLY PROHIBITED from any changes.

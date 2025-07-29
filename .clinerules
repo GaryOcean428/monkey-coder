@@ -195,3 +195,19 @@ After each deploy:
 ---
 
 **Done?** ✅ Commit the fixed files and push.
+
+## Critical File Protection Rules
+
+14. **NEVER MODIFY CORE MODEL CONFIGURATIONS**: The following files are STRICTLY PROTECTED and must NEVER be modified:
+   - `packages/core/monkey_coder/models.py` - Contains validated AI model configurations
+   - Any file containing model definitions, API keys, or core provider configurations
+   
+   **Rationale**: These files contain carefully validated model configurations that are critical for system stability and API compatibility. Any modifications could break the entire system.
+   
+   **Actions Prohibited**:
+   - Adding new models without explicit approval
+   - Modifying existing model names or parameters
+   - Changing provider configurations
+   - Updating model capabilities or limits
+   
+   **If changes are needed**: Consult project documentation and get explicit approval before making ANY modifications to these protected files.

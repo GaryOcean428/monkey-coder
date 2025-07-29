@@ -47,9 +47,10 @@ Based on the requirements to use only modern models, the following updates have 
 
 ## Files Updated
 
-1. **packages/core/monkey_coder/models.py**
+1. **packages/core/monkey_coder/models.py** [PROTECTED FILE - NO FUTURE MODIFICATIONS ALLOWED]
    - Updated `MODEL_REGISTRY` with correct model names
    - Added GROK and MOONSHOT to `ProviderType` enum
+   - **WARNING**: This file is now STRICTLY PROTECTED and must not be modified without explicit approval
 
 2. **packages/core/monkey_coder/providers/openai_adapter.py**
    - Updated `VALIDATED_MODELS` to include only gpt-4.1 and gpt-4.1-mini

@@ -25,7 +25,7 @@ packages/core/monkey_coder/
 │   ├── orchestrator.py             # monkey1 multi-agent system
 │   └── quantum_executor.py         # Gary8D quantum execution
 ├── app/main.py                     # FastAPI app with /v1/router/debug
-├── models.py                       # Pydantic models with persona types
+├── models.py                       # Pydantic models with persona types [PROTECTED - DO NOT MODIFY]
 ├── security.py                     # API key validation
 ├── monitoring.py                   # Metrics & billing tracking
 └── providers/__init__.py           # Provider registry
