@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description: 'Transform your ideas into production-ready code with AI. Powered by advanced language models.',
   keywords: 'AI, code generation, programming, development, automation',
   authors: [{ name: 'Monkey Coder Team' }],
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
   openGraph: {
     title: 'Monkey Coder - AI-Powered Code Generation',
     description: 'Transform your ideas into production-ready code with AI',
