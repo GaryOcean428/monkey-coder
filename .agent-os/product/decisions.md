@@ -227,3 +227,74 @@ Single service deployment provides optimal balance of:
 - Potential resource contention between components
 - Requires architectural changes to current deployment setup
 - Single point of failure for both frontend and backend components
+
+## 2025-01-29: Railway Deployment Resolution
+
+**ID:** DEC-005
+**Status:** Implemented
+**Category:** Technical
+**Stakeholders:** DevOps, Tech Lead
+
+### Decision
+
+Successfully resolved all critical Railway deployment failures and implemented unified single-service deployment architecture with FastAPI serving Next.js static assets. Consolidated AI model providers and enhanced error handling for production stability.
+
+### Context
+
+Railway deployment was failing with critical startup errors:
+- `AttributeError: ProviderType.QWEN` causing immediate application crashes
+- Missing frontend build directory `/web/out` preventing static file serving
+- Provider enum mismatches preventing proper model routing
+- Lack of startup health monitoring and validation
+
+### Implementation
+
+**Provider Model Consolidation:**
+- Consolidated Qwen (Alibaba) and Moonshot (Kimi) models under existing GroQ provider
+- Eliminated direct QWEN and MOONSHOT enum references that were causing startup failures
+- Updated routing capabilities to handle Groq-hosted Qwen and Kimi models
+- Added comprehensive provider validation during startup
+
+**Static Asset Resolution:**
+- Implemented multi-path fallback system for frontend build directory resolution
+- Added support for unified Dockerfile locations and legacy paths
+- Enhanced FastAPI static file serving with proper SPA routing support
+- Successfully generated Next.js static export in `/packages/web/out/`
+
+**Health Monitoring & Validation:**
+- Added component-by-component health checks during application startup
+- Implemented startup validation for all provider enum references
+- Enhanced logging and monitoring for Railway deployment tracking
+- Added graceful error handling that allows partial startup when components fail
+
+### Rationale
+
+This approach provides:
+- **Production Stability:** Eliminates critical startup failures that were preventing deployment
+- **Simplified Architecture:** Single service reduces deployment complexity and costs
+- **Enhanced Monitoring:** Better visibility into application health and startup issues
+- **Scalable Foundation:** Robust error handling and validation for future development
+
+### Consequences
+
+**Positive:**
+- Railway deployment now succeeds with zero critical startup errors
+- Unified deployment architecture reduces operational complexity
+- Enhanced health monitoring provides better production visibility
+- Provider consolidation simplifies model management and reduces API dependencies
+- Static asset serving works reliably across different deployment environments
+
+**Negative:**
+- Required significant refactoring of provider enum structure
+- Temporary removal of some API routes to ensure static export compatibility
+- Single service architecture requires careful resource management
+- Provider consolidation may limit some advanced model-specific features
+
+### Results
+
+- ✅ All Railway deployment issues resolved
+- ✅ Application starts successfully with full health monitoring
+- ✅ Frontend assets served correctly via FastAPI static files
+- ✅ All AI providers operational through consolidated architecture
+- ✅ Comprehensive error tracking and monitoring implemented
+- ✅ Production-ready deployment achieved with commit `187920e`

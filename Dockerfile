@@ -1,4 +1,13 @@
-# Core Dockerfile for Monkey Coder Python orchestration
+# Multi-stage build for Monkey Coder
+# Stage 1: Build frontend
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY packages/web/package.json packages/web/package-lock.json* ./
+RUN npm ci
+COPY packages/web/ ./
+RUN npm run build
+
+# Stage 2: Python runtime
 FROM python:3.11-slim
 
 # Set environment variables
@@ -18,9 +27,14 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies from core package
+# Copy Python dependencies and install
 COPY packages/core/ ./
 RUN pip install -e .
+
+# Copy frontend build from first stage
+COPY --from=frontend-builder /app/out ./packages/web/out/
+
+# Set ownership
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user

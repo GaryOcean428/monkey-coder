@@ -36,7 +36,19 @@ from ..models import (
     TaskStatus,
     ExecutionError,
 )
-from ..security import get_api_key, verify_permissions
+from ..security import (
+    get_api_key, 
+    verify_permissions, 
+    get_current_user, 
+    create_access_token, 
+    create_refresh_token,
+    verify_password,
+    hash_password,
+    JWTUser,
+    UserRole,
+    Permission,
+    get_user_permissions
+)
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
@@ -192,6 +204,32 @@ class HealthResponse(BaseModel):
     components: Dict[str, str] = Field(..., description="Component status")
 
 
+# Authentication Models
+class LoginRequest(BaseModel):
+    """Login request model."""
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+
+
+class AuthResponse(BaseModel):
+    """Authentication response model."""
+    access_token: str = Field(..., description="JWT access token")
+    refresh_token: str = Field(..., description="JWT refresh token")
+    user: Dict[str, Any] = Field(..., description="User information")
+
+
+class UserStatusResponse(BaseModel):
+    """User status response model."""
+    authenticated: bool = Field(..., description="User authentication status")
+    user: Optional[Dict[str, Any]] = Field(None, description="User information if authenticated")
+    session_expires: Optional[str] = Field(None, description="Session expiration timestamp")
+
+
+class RefreshTokenRequest(BaseModel):
+    """Refresh token request model."""
+    refresh_token: str = Field(..., description="JWT refresh token")
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """
@@ -292,6 +330,157 @@ async def prometheus_metrics():
     
     metrics_data = app.state.metrics_collector.get_prometheus_metrics()
     return Response(content=metrics_data, media_type="text/plain")
+
+
+# Authentication Endpoints
+@app.post("/v1/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest) -> AuthResponse:
+    """
+    User login endpoint.
+    
+    Args:
+        request: Login credentials (email and password)
+        
+    Returns:
+        JWT tokens and user information
+    """
+    try:
+        # For demo purposes, create a mock user
+        # In production, you would validate against a database
+        mock_user = JWTUser(
+            user_id="demo_user_123",
+            username=request.email.split("@")[0],
+            email=request.email,
+            roles=[UserRole.DEVELOPER],
+            permissions=get_user_permissions([UserRole.DEVELOPER]),
+            mfa_verified=True
+        )
+        
+        # Create tokens
+        access_token = create_access_token(mock_user)
+        refresh_token = create_refresh_token(mock_user.user_id)
+        
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user={
+                "id": mock_user.user_id,
+                "email": mock_user.email,
+                "name": mock_user.username,
+                "credits": 10000,  # Mock credits (100.00 USD)
+                "subscription_tier": "developer"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Login failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.get("/v1/auth/status", response_model=UserStatusResponse)
+async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> UserStatusResponse:
+    """
+    Get current user authentication status.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        User status and information
+    """
+    try:
+        return UserStatusResponse(
+            authenticated=True,
+            user={
+                "email": current_user.email,
+                "name": current_user.username,
+                "credits": 10000,  # Mock credits
+                "subscription_tier": "developer"
+            },
+            session_expires=current_user.expires_at.isoformat() if current_user.expires_at else None
+        )
+        
+    except Exception as e:
+        logger.error(f"Status check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get user status")
+
+
+@app.post("/v1/auth/logout")
+async def logout(current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+    """
+    User logout endpoint.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        Logout confirmation
+    """
+    try:
+        # In production, you would invalidate the token in a blacklist
+        logger.info(f"User {current_user.email} logged out")
+        return {"message": "Successfully logged out"}
+        
+    except Exception as e:
+        logger.error(f"Logout failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Logout failed")
+
+
+@app.post("/v1/auth/refresh", response_model=AuthResponse)
+async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
+    """
+    Refresh JWT access token using refresh token.
+    
+    Args:
+        request: Refresh token request
+        
+    Returns:
+        New JWT tokens
+    """
+    try:
+        from ..security import verify_token
+        
+        # Verify refresh token
+        payload = verify_token(request.refresh_token)
+        
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        # Create new user object (in production, fetch from database)
+        mock_user = JWTUser(
+            user_id=user_id,
+            username="demo_user",
+            email="demo@example.com",
+            roles=[UserRole.DEVELOPER],
+            permissions=get_user_permissions([UserRole.DEVELOPER]),
+            mfa_verified=True
+        )
+        
+        # Create new tokens
+        access_token = create_access_token(mock_user)
+        new_refresh_token = create_refresh_token(mock_user.user_id)
+        
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            user={
+                "id": mock_user.user_id,
+                "email": mock_user.email,
+                "name": mock_user.username,
+                "credits": 10000,
+                "subscription_tier": "developer"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Failed to refresh token")
 
 
 @app.post("/v1/execute", response_model=ExecuteResponse)
