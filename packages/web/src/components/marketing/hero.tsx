@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Code2, Sparkles, Zap } from 'lucide-react'
 
@@ -8,7 +9,22 @@ export function Hero() {
       <div className="absolute inset-0 bg-grid-black/[0.02] -z-10" />
       <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-40">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-8 flex justify-center">
+          {/* Large Hero Logo */}
+          <div className="mb-12 flex justify-center animate-fade-up">
+            <div className="relative">
+              <Image
+                src="/splash.png"
+                alt="Monkey Coder"
+                width={400}
+                height={107}
+                className="h-32 w-auto drop-shadow-2xl"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent rounded-lg blur-xl -z-10" />
+            </div>
+          </div>
+
+          <div className="mb-8 flex justify-center animate-fade-up animation-delay-100">
             <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-muted-foreground ring-1 ring-gray-900/10 hover:ring-gray-900/20 dark:ring-gray-100/10 dark:hover:ring-gray-100/20">
               Powered by state-of-the-art AI models{' '}
               <Link href="/docs" className="font-semibold text-primary">

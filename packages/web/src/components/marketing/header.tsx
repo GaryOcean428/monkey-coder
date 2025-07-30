@@ -23,9 +23,9 @@ export function Header() {
             <Image
               src="/splash.png"
               alt="Monkey Coder Logo"
-              width={240}
-              height={64}
-              className="h-16 w-auto"
+              width={300}
+              height={80}
+              className="h-20 w-auto"
             />
           </Link>
         </div>

@@ -60,20 +60,13 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Image
-                src="/favicon.ico"
-                alt="Favicon Logo"
-                width={24}
-                height={24}
-                className="h-6 w-6"
-              />
+            <Link href="/dashboard" className="flex items-center">
               <Image
                 src="/splash.png"
-                alt="Splash Logo"
-                width={120}
-                height={32}
-                className="h-8 w-8"
+                alt="Monkey Coder Logo"
+                width={240}
+                height={64}
+                className="h-16 w-auto"
               />
             </Link>
             <nav className="hidden md:flex items-center gap-6">
