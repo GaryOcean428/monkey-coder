@@ -26,9 +26,9 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 206, 201, 0.1);
 }
 
-/* Dark mode - enhanced with navy background theme */
+/* Dark mode - enhanced with navy background theme and neon accents */
 [data-theme='dark'] {
-  /* Primary brand color - brighter cyan for dark backgrounds */
+  /* Primary brand color - neon cyan with glow */
   --ifm-color-primary: #00cec9;
   --ifm-color-primary-dark: #00b8b3;
   --ifm-color-primary-darker: #00aea9;
@@ -42,6 +42,19 @@
   --ifm-background-surface-color: #1a1f2e;
   --ifm-color-content: #f8f9fa;
   --ifm-color-content-secondary: #adb5bd;
+
+  /* Neon accent colors for dark theme */
+  --ifm-color-success: #00b894;
+  --ifm-color-warning: #fdcb6e;
+  --ifm-color-danger: #ff4757;
+  --ifm-color-info: #a29bfe;
+
+  /* Custom neon accent properties */
+  --neon-cyan: #00cec9;
+  --neon-purple: #a29bfe;
+  --neon-coral: #ff4757;
+  --neon-yellow: #fdcb6e;
+  --neon-green: #00b894;
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 206, 201, 0.2);
 }
@@ -65,4 +78,77 @@
 .badge--primary {
   background-color: var(--ifm-color-primary);
   color: white;
+}
+
+/* Neon glow effects for dark theme */
+[data-theme='dark'] .button--primary,
+[data-theme='dark'] .navbar__link:hover,
+[data-theme='dark'] .menu__link:hover,
+[data-theme='dark'] .pagination-nav__link--next,
+[data-theme='dark'] .pagination-nav__link--prev {
+  box-shadow: 0 0 10px rgba(0, 206, 201, 0.5);
+  transition: box-shadow 0.3s ease;
+}
+
+[data-theme='dark'] .button--primary:hover {
+  box-shadow: 0 0 20px rgba(0, 206, 201, 0.8);
+}
+
+/* Neon accent for success elements */
+[data-theme='dark'] .alert--success,
+[data-theme='dark'] .badge--success {
+  box-shadow: 0 0 8px rgba(0, 184, 148, 0.4);
+}
+
+/* Neon accent for warning elements */
+[data-theme='dark'] .alert--warning,
+[data-theme='dark'] .badge--warning {
+  box-shadow: 0 0 8px rgba(253, 203, 110, 0.4);
+}
+
+/* Neon accent for danger elements */
+[data-theme='dark'] .alert--danger,
+[data-theme='dark'] .badge--danger {
+  box-shadow: 0 0 8px rgba(255, 71, 87, 0.4);
+}
+
+/* Neon accent for info elements */
+[data-theme='dark'] .alert--info,
+[data-theme='dark'] .badge--info {
+  box-shadow: 0 0 8px rgba(162, 155, 254, 0.4);
+}
+
+/* Neon border glow for code blocks */
+[data-theme='dark'] .prism-code {
+  border: 1px solid rgba(0, 206, 201, 0.3);
+  box-shadow: 0 0 10px rgba(0, 206, 201, 0.1);
+}
+
+/* Neon glow animation for interactive elements */
+[data-theme='dark'] .button--primary,
+[data-theme='dark'] .navbar__brand:hover {
+  animation: neon-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+  0% { box-shadow: 0 0 5px rgba(0, 206, 201, 0.2); }
+  100% { box-shadow: 0 0 20px rgba(0, 206, 201, 0.6); }
+}
+
+/* Enhanced link glow effects */
+[data-theme='dark'] a:hover {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 8px rgba(0, 206, 201, 0.6);
+  transition: all 0.3s ease;
+}
+
+/* Table border glow in dark mode */
+[data-theme='dark'] table {
+  border: 1px solid rgba(0, 206, 201, 0.2);
+  box-shadow: 0 0 5px rgba(0, 206, 201, 0.1);
+}
+
+[data-theme='dark'] th {
+  background-color: rgba(0, 206, 201, 0.1);
+  border-bottom: 1px solid rgba(0, 206, 201, 0.3);
 }
