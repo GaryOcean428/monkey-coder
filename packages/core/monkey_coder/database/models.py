@@ -323,3 +323,208 @@ class BillingCustomer(BaseModel):
             if row:
                 return cls(**dict(row))
             return None
+
+
+class User(BaseModel):
+    """
+    Model for user accounts and authentication.
+    
+    This model stores user information for authentication and account management.
+    """
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4()), description="User ID")
+    username: str = Field(..., description="Username")
+    email: str = Field(..., description="User email address")
+    password_hash: str = Field(..., description="Hashed password")
+    
+    # User metadata
+    full_name: Optional[str] = Field(None, description="User's full name")
+    is_active: bool = Field(default=True, description="Whether user account is active")
+    is_verified: bool = Field(default=False, description="Whether email is verified")
+    
+    # Roles and permissions
+    roles: List[str] = Field(default_factory=list, description="User roles")
+    is_developer: bool = Field(default=False, description="Whether user has developer access")
+    
+    # Subscription and billing
+    subscription_plan: str = Field(default="hobby", description="User's subscription plan")
+    api_key_hash: Optional[str] = Field(None, description="Associated API key hash")
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = Field(None, description="Last login timestamp")
+    
+    # Additional metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional user metadata")
+    
+    class Config:
+        """Pydantic configuration."""
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            UUID: str,
+        }
+
+    @classmethod
+    async def create(cls, **kwargs) -> "User":
+        """
+        Create a new user in the database.
+        
+        Args:
+            **kwargs: User data
+            
+        Returns:
+            User: Created user
+        """
+        user = cls(**kwargs)
+        
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute("""
+                INSERT INTO users (
+                    id, username, email, password_hash,
+                    full_name, is_active, is_verified,
+                    roles, is_developer, subscription_plan, api_key_hash,
+                    created_at, updated_at, last_login, metadata
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+                )
+            """,
+                user.id, user.username, user.email, user.password_hash,
+                user.full_name, user.is_active, user.is_verified,
+                json.dumps(user.roles), user.is_developer, user.subscription_plan, user.api_key_hash,
+                user.created_at, user.updated_at, user.last_login, json.dumps(user.metadata)
+            )
+        
+        logger.info(f"Created user: {user.id} ({user.email})")
+        return user
+    
+    @classmethod
+    async def get_by_id(cls, user_id: str) -> Optional["User"]:
+        """
+        Get user by ID.
+        
+        Args:
+            user_id: User ID
+            
+        Returns:
+            Optional[User]: User if found
+        """
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            row = await connection.fetchrow("""
+                SELECT * FROM users WHERE id = $1 AND is_active = true
+            """, user_id)
+            
+            if row:
+                user_data = dict(row)
+                if user_data.get('roles'):
+                    user_data['roles'] = json.loads(user_data['roles'])
+                else:
+                    user_data['roles'] = []
+                if user_data.get('metadata'):
+                    user_data['metadata'] = json.loads(user_data['metadata'])
+                else:
+                    user_data['metadata'] = {}
+                return cls(**user_data)
+            return None
+    
+    @classmethod
+    async def get_by_email(cls, email: str) -> Optional["User"]:
+        """
+        Get user by email address.
+        
+        Args:
+            email: User email
+            
+        Returns:
+            Optional[User]: User if found
+        """
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            row = await connection.fetchrow("""
+                SELECT * FROM users WHERE email = $1 AND is_active = true
+            """, email.lower())
+            
+            if row:
+                user_data = dict(row)
+                if user_data.get('roles'):
+                    user_data['roles'] = json.loads(user_data['roles'])
+                else:
+                    user_data['roles'] = []
+                if user_data.get('metadata'):
+                    user_data['metadata'] = json.loads(user_data['metadata'])
+                else:
+                    user_data['metadata'] = {}
+                return cls(**user_data)
+            return None
+    
+    @classmethod
+    async def get_by_username(cls, username: str) -> Optional["User"]:
+        """
+        Get user by username.
+        
+        Args:
+            username: Username
+            
+        Returns:
+            Optional[User]: User if found
+        """
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            row = await connection.fetchrow("""
+                SELECT * FROM users WHERE username = $1 AND is_active = true
+            """, username)
+            
+            if row:
+                user_data = dict(row)
+                if user_data.get('roles'):
+                    user_data['roles'] = json.loads(user_data['roles'])
+                else:
+                    user_data['roles'] = []
+                if user_data.get('metadata'):
+                    user_data['metadata'] = json.loads(user_data['metadata'])
+                else:
+                    user_data['metadata'] = {}
+                return cls(**user_data)
+            return None
+    
+    async def update_last_login(self) -> None:
+        """Update the user's last login timestamp."""
+        self.last_login = datetime.utcnow()
+        
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute("""
+                UPDATE users SET last_login = $1, updated_at = $2 WHERE id = $3
+            """, self.last_login, datetime.utcnow(), self.id)
+    
+    async def update(self, **kwargs) -> None:
+        """
+        Update user fields.
+        
+        Args:
+            **kwargs: Fields to update
+        """
+        # Update local fields
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        
+        self.updated_at = datetime.utcnow()
+        
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute("""
+                UPDATE users SET 
+                    username = $1, email = $2, password_hash = $3,
+                    full_name = $4, is_active = $5, is_verified = $6,
+                    roles = $7, is_developer = $8, subscription_plan = $9, api_key_hash = $10,
+                    updated_at = $11, last_login = $12, metadata = $13
+                WHERE id = $14
+            """,
+                self.username, self.email, self.password_hash,
+                self.full_name, self.is_active, self.is_verified,
+                json.dumps(self.roles), self.is_developer, self.subscription_plan, self.api_key_hash,
+                self.updated_at, self.last_login, json.dumps(self.metadata),
+                self.id
+            )

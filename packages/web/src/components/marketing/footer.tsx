@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Code2, Github, Twitter } from 'lucide-react'
+import Image from 'next/image'
+import { Github, Twitter } from 'lucide-react'
 
 const navigation = {
   product: [
@@ -43,8 +44,20 @@ export function Footer() {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8">
             <div className="flex items-center gap-2">
-              <Code2 className="h-8 w-8 text-primary" />
-              <span className="font-bold text-xl">Monkey Coder</span>
+              <Image
+                src="/favicon.ico"
+                alt="Favicon Logo"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
+              <Image
+                src="/splash.png"
+                alt="Splash Logo"
+                width={120}
+                height={32}
+                className="h-8 w-8"
+              />
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
               AI-powered code generation for modern developers. Build faster, ship better.

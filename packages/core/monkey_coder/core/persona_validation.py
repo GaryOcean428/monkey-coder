@@ -52,98 +52,98 @@ class PersonaValidator:
         return {
             # Development commands
             "build": {
-                "task_type": TaskType.code_generation,
-                "persona": PersonaType.developer,
+                "task_type": TaskType.CODE_GENERATION,
+                "persona": PersonaType.DEVELOPER,
                 "template": "Build a {context} application with proper structure and configuration",
                 "confidence": 0.8
             },
             "deploy": {
-                "task_type": TaskType.custom,
-                "persona": PersonaType.architect,
+                "task_type": TaskType.CUSTOM,
+                "persona": PersonaType.ARCHITECT,
                 "template": "Deploy the application to {context} with proper configuration and monitoring",
                 "confidence": 0.8
             },
             "test": {
-                "task_type": TaskType.testing,
-                "persona": PersonaType.reviewer,
+                "task_type": TaskType.TESTING,
+                "persona": PersonaType.TESTER,
                 "template": "Create comprehensive tests for {context} with full coverage",
                 "confidence": 0.9
             },
             "debug": {
-                "task_type": TaskType.code_analysis,
-                "persona": PersonaType.reviewer,
+                "task_type": TaskType.CODE_ANALYSIS,
+                "persona": PersonaType.REVIEWER,
                 "template": "Debug and analyze issues in {context} with detailed troubleshooting",
                 "confidence": 0.8
             },
             "optimize": {
-                "task_type": TaskType.code_analysis,
-                "persona": PersonaType.architect,
+                "task_type": TaskType.CODE_ANALYSIS,
+                "persona": PersonaType.ARCHITECT,
                 "template": "Optimize {context} for performance, scalability, and maintainability",
                 "confidence": 0.8
             },
             "refactor": {
-                "task_type": TaskType.code_generation,
-                "persona": PersonaType.developer,
+                "task_type": TaskType.CODE_GENERATION,
+                "persona": PersonaType.DEVELOPER,
                 "template": "Refactor {context} to improve code quality and maintainability",
                 "confidence": 0.8
             },
             
             # Analysis commands
             "analyze": {
-                "task_type": TaskType.code_analysis,
-                "persona": PersonaType.reviewer,
+                "task_type": TaskType.CODE_ANALYSIS,
+                "persona": PersonaType.REVIEWER,
                 "template": "Analyze {context} and provide detailed insights and recommendations",
                 "confidence": 0.9
             },
             "review": {
-                "task_type": TaskType.code_analysis,
-                "persona": PersonaType.reviewer,
+                "task_type": TaskType.CODE_ANALYSIS,
+                "persona": PersonaType.REVIEWER,
                 "template": "Review {context} for quality, security, and best practices",
                 "confidence": 0.9
             },
             "audit": {
-                "task_type": TaskType.code_analysis,
-                "persona": PersonaType.reviewer,
+                "task_type": TaskType.CODE_ANALYSIS,
+                "persona": PersonaType.REVIEWER,
                 "template": "Conduct comprehensive audit of {context} for compliance and security",
                 "confidence": 0.8
             },
             
             # Creation commands  
             "create": {
-                "task_type": TaskType.code_generation,
-                "persona": PersonaType.developer,
+                "task_type": TaskType.CODE_GENERATION,
+                "persona": PersonaType.DEVELOPER,
                 "template": "Create {context} with proper structure and best practices",
                 "confidence": 0.7
             },
             "implement": {
-                "task_type": TaskType.code_generation,
-                "persona": PersonaType.developer,
+                "task_type": TaskType.CODE_GENERATION,
+                "persona": PersonaType.DEVELOPER,
                 "template": "Implement {context} with robust architecture and error handling",
                 "confidence": 0.8
             },
             "generate": {
-                "task_type": TaskType.code_generation,
-                "persona": PersonaType.developer,
+                "task_type": TaskType.CODE_GENERATION,
+                "persona": PersonaType.DEVELOPER,
                 "template": "Generate {context} with comprehensive documentation and examples",
                 "confidence": 0.7
             },
             
             # Architecture commands
             "design": {
-                "task_type": TaskType.custom,
-                "persona": PersonaType.architect,
+                "task_type": TaskType.CUSTOM,
+                "persona": PersonaType.ARCHITECT,
                 "template": "Design {context} architecture with scalability and maintainability in mind",
                 "confidence": 0.8
             },
             "architect": {
-                "task_type": TaskType.custom,
-                "persona": PersonaType.architect,
+                "task_type": TaskType.CUSTOM,
+                "persona": PersonaType.ARCHITECT,
                 "template": "Architect {context} system with best practices and design patterns",
                 "confidence": 0.9
             },
             "plan": {
-                "task_type": TaskType.custom,
-                "persona": PersonaType.architect,
+                "task_type": TaskType.CUSTOM,
+                "persona": PersonaType.ARCHITECT,
                 "template": "Plan {context} implementation with detailed roadmap and milestones",
                 "confidence": 0.8
             }
@@ -166,19 +166,19 @@ class PersonaValidator:
     def _init_persona_keywords(self) -> Dict[PersonaType, List[str]]:
         """Initialize persona-specific keywords for enhanced routing."""
         return {
-            PersonaType.developer: [
+            PersonaType.DEVELOPER: [
                 "code", "function", "class", "method", "variable", "implementation",
                 "feature", "bug", "fix", "develop", "write", "program"
             ],
-            PersonaType.reviewer: [
+            PersonaType.REVIEWER: [
                 "review", "analyze", "check", "audit", "validate", "inspect",
                 "quality", "security", "performance", "best practices", "standards"
             ],
-            PersonaType.architect: [
+            PersonaType.ARCHITECT: [
                 "design", "architecture", "system", "structure", "pattern",
                 "scalability", "maintainability", "planning", "strategy", "roadmap"
             ],
-            PersonaType.tester: [
+            PersonaType.TESTER: [
                 "test", "testing", "spec", "requirement", "validation",
                 "verification", "coverage", "scenario", "case", "automation"
             ]
@@ -378,11 +378,11 @@ class PersonaValidator:
                 return f"the project ({', '.join(set(file_types))})"
         
         # Infer from task type
-        if request.task_type == TaskType.code_generation:
+        if request.task_type == TaskType.CODE_GENERATION:
             return "the codebase"
-        elif request.task_type == TaskType.code_analysis:
+        elif request.task_type == TaskType.CODE_ANALYSIS:
             return "the code analysis"
-        elif request.task_type == TaskType.testing:
+        elif request.task_type == TaskType.TESTING:
             return "the test suite"
         else:
             return "the current project"
@@ -415,16 +415,16 @@ class PersonaValidator:
         
         # Check partial matches or related terms
         if any(term in word_lower for term in ["develop", "code", "program", "implement"]):
-            return PersonaType.developer
+            return PersonaType.DEVELOPER
         elif any(term in word_lower for term in ["review", "analyze", "check", "audit"]):
-            return PersonaType.reviewer
+            return PersonaType.REVIEWER
         elif any(term in word_lower for term in ["design", "architect", "plan", "structure"]):
-            return PersonaType.architect
+            return PersonaType.ARCHITECT
         elif any(term in word_lower for term in ["test", "spec", "validate"]):
-            return PersonaType.tester
+            return PersonaType.TESTER
         
         # Default to developer for unknown words
-        return PersonaType.developer
+        return PersonaType.DEVELOPER
     
     def get_validation_stats(self) -> Dict[str, Any]:
         """Get validation statistics and patterns."""

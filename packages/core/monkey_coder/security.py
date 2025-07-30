@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 # Security configuration from environment variables (as per security policies)
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+)
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # MFA Configuration
@@ -36,12 +38,15 @@ security = HTTPBearer()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 if not JWT_SECRET_KEY:
-    logger.warning("JWT_SECRET_KEY not set in environment variables. Using temporary key for development.")
+    logger.warning(
+        "JWT_SECRET_KEY not set in environment variables. Using temporary key for development."
+    )
     JWT_SECRET_KEY = secrets.token_urlsafe(64)
 
 
 class UserRole(str, Enum):
     """User roles defining access levels and scopes."""
+
     ADMIN = "admin"
     DEVELOPER = "developer"
     VIEWER = "viewer"
@@ -50,21 +55,22 @@ class UserRole(str, Enum):
 
 class Permission(str, Enum):
     """Granular permissions for different operations."""
+
     # Core permissions
     CODE_EXECUTE = "code:execute"
     CODE_READ = "code:read"
     CODE_WRITE = "code:write"
-    
+
     # Sandbox permissions
     SANDBOX_CREATE = "sandbox:create"
     SANDBOX_DELETE = "sandbox:delete"
     SANDBOX_ACCESS = "sandbox:access"
-    
+
     # Billing permissions
     BILLING_READ = "billing:read"
     BILLING_WRITE = "billing:write"
     BILLING_ADMIN = "billing:admin"
-    
+
     # Admin permissions
     USER_MANAGE = "user:manage"
     SYSTEM_CONFIG = "system:config"
@@ -74,6 +80,7 @@ class Permission(str, Enum):
 @dataclass
 class JWTUser:
     """JWT user claims and metadata."""
+
     user_id: str
     username: str
     email: str
@@ -124,22 +131,26 @@ ROLE_PERMISSIONS: Dict[UserRole, List[Permission]] = {
 }
 
 
-def create_access_token(user: JWTUser, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    user: JWTUser, expires_delta: Optional[timedelta] = None
+) -> str:
     """
     Create a JWT access token for authenticated user.
-    
+
     Args:
         user: User information and claims
         expires_delta: Optional custom expiration time
-        
+
     Returns:
         Encoded JWT token string
     """
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     # Build JWT payload with security claims
     payload = {
         "sub": user.user_id,
@@ -151,125 +162,132 @@ def create_access_token(user: JWTUser, expires_delta: Optional[timedelta] = None
         "session_id": user.session_id or secrets.token_urlsafe(16),
         "iat": datetime.now(timezone.utc),
         "exp": expire,
-        "type": "access"
+        "type": "access",
     }
-    
+
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
 def create_refresh_token(user_id: str) -> str:
     """
     Create a JWT refresh token for token renewal.
-    
+
     Args:
         user_id: User identifier
-        
+
     Returns:
         Encoded JWT refresh token string
     """
     expire = datetime.now(timezone.utc) + timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
-    
+
     payload = {
         "sub": user_id,
         "exp": expire,
         "type": "refresh",
-        "jti": secrets.token_urlsafe(32)  # Unique token ID for revocation
+        "jti": secrets.token_urlsafe(32),  # Unique token ID for revocation
     }
-    
+
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
 def verify_token(token: str) -> Dict[str, Any]:
     """
     Verify and decode JWT token or API key.
-    
+
     Args:
         token: JWT token or API key to verify
-        
+
     Returns:
         Decoded token payload or API key user payload
-        
+
     Raises:
         HTTPException: If token is invalid, expired, or malformed
     """
     # Check if it's an API key
-    if token and token.startswith('mk-'):
+    if token and token.startswith("mk-"):
         if not _validate_api_key(token):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
             )
-        
+
         # Return API key user payload
         return {
             "sub": "api_user",
             "username": "api_user",
             "email": "",
             "roles": ["api_user"],
-            "permissions": ["code:execute", "code:read", "billing:read", "models:read", "providers:read", "billing:manage", "router:debug"],
+            "permissions": [
+                "code:execute",
+                "code:read",
+                "billing:read",
+                "models:read",
+                "providers:read",
+                "billing:manage",
+                "router:debug",
+            ],
             "type": "access",
             "mfa_verified": True,
             "session_id": token[-8:],  # Use last 8 chars as session ID
             "iat": datetime.now(timezone.utc).timestamp(),
-            "exp": (datetime.now(timezone.utc) + timedelta(days=365)).timestamp()  # API keys don't expire
+            "exp": (
+                datetime.now(timezone.utc) + timedelta(days=365)
+            ).timestamp(),  # API keys don't expire
         }
-    
+
     # Otherwise, handle as JWT
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        
+
         # Validate token type
         token_type = payload.get("type")
         if token_type not in ["access", "refresh"]:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
             )
-        
+
         return payload
-        
+
     except jwt.ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
         )
     except (jwt.InvalidTokenError, jwt.DecodeError, Exception) as e:
         logger.warning(f"JWT validation failed: {e}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> JWTUser:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> JWTUser:
     """
     Extract and validate current user from JWT token or API key.
-    
+
     Args:
         credentials: HTTP authorization credentials containing JWT or API key
-        
+
     Returns:
         Current authenticated user
-        
+
     Raises:
         HTTPException: If token is invalid or user cannot be authenticated
     """
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication token required"
+            detail="Authentication token required",
         )
-    
+
     token = credentials.credentials
-    
+
     # Handle API keys
-    if token and token.startswith('mk-'):
+    if token and token.startswith("mk-"):
         if not _validate_api_key(token):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
             )
-        
+
         # Return API key user with all necessary permissions
         return JWTUser(
             user_id="api_user",
@@ -283,20 +301,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
                 # Add additional permissions as strings for endpoints that use string permissions
             ],
             mfa_verified=True,
-            session_id=token[-8:]  # Use last 8 chars as session ID
+            session_id=token[-8:],  # Use last 8 chars as session ID
         )
-    
+
     # Handle JWT tokens
     payload = verify_token(token)
-    
+
     # Extract user information from JWT payload
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: missing user ID"
+            detail="Invalid token: missing user ID",
         )
-    
+
     # Build user object from JWT claims
     user = JWTUser(
         user_id=user_id,
@@ -307,68 +325,74 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         mfa_verified=payload.get("mfa_verified", False),
         session_id=payload.get("session_id"),
         created_at=datetime.fromtimestamp(payload.get("iat", 0), timezone.utc),
-        expires_at=datetime.fromtimestamp(payload.get("exp", 0), timezone.utc)
+        expires_at=datetime.fromtimestamp(payload.get("exp", 0), timezone.utc),
     )
-    
+
     # Validate MFA requirement
     if MFA_ENABLED and not user.mfa_verified:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Multi-factor authentication required"
+            detail="Multi-factor authentication required",
         )
-    
+
     return user
 
 
 def require_permission(required_permission: Permission):
     """
     Dependency factory for requiring specific permissions.
-    
+
     Args:
         required_permission: The permission required to access the endpoint
-        
+
     Returns:
         FastAPI dependency function
     """
-    async def permission_checker(current_user: JWTUser = Depends(get_current_user)) -> JWTUser:
+
+    async def permission_checker(
+        current_user: JWTUser = Depends(get_current_user),
+    ) -> JWTUser:
         if required_permission not in current_user.permissions:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Insufficient permissions: {required_permission.value} required"
+                detail=f"Insufficient permissions: {required_permission.value} required",
             )
         return current_user
-    
+
     return permission_checker
 
 
 def require_role(required_role: UserRole):
     """
     Dependency factory for requiring specific roles.
-    
+
     Args:
         required_role: The role required to access the endpoint
-        
+
     Returns:
         FastAPI dependency function
     """
-    async def role_checker(current_user: JWTUser = Depends(get_current_user)) -> JWTUser:
+
+    async def role_checker(
+        current_user: JWTUser = Depends(get_current_user),
+    ) -> JWTUser:
         if required_role not in current_user.roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Insufficient role: {required_role.value} required"
+                detail=f"Insufficient role: {required_role.value} required",
             )
         return current_user
-    
+
     return role_checker
 
 
 def get_user_permissions(roles: List[UserRole]) -> List[Permission]:
     """
     Get all permissions for a list of user roles.
-    
+
     Args:
         roles: List of user roles
-        
+
     Returns:
         Combined list of unique permissions
     """
@@ -381,10 +405,10 @@ def get_user_permissions(roles: List[UserRole]) -> List[Permission]:
 def hash_password(password: str) -> str:
     """
     Hash a password using bcrypt.
-    
+
     Args:
         password: Plain text password
-        
+
     Returns:
         Hashed password
     """
@@ -394,11 +418,11 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against its hash.
-    
+
     Args:
         plain_password: Plain text password
         hashed_password: Hashed password
-        
+
     Returns:
         True if password matches, False otherwise
     """
@@ -408,45 +432,47 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def generate_mfa_secret() -> str:
     """
     Generate a new MFA secret key.
-    
+
     Returns:
         Base32-encoded secret key
     """
     import base64
+
     secret_bytes = secrets.token_bytes(MFA_SECRET_LENGTH)
-    return base64.b32encode(secret_bytes).decode('utf-8')
+    return base64.b32encode(secret_bytes).decode("utf-8")
 
 
 def generate_mfa_qr_uri(user_email: str, secret: str) -> str:
     """
     Generate MFA QR code URI for authenticator apps.
-    
+
     Args:
         user_email: User's email address
         secret: MFA secret key
-        
+
     Returns:
         QR code URI string
     """
     from urllib.parse import quote
-    
+
     return f"otpauth://totp/{quote(MFA_ISSUER)}:{quote(user_email)}?secret={secret}&issuer={quote(MFA_ISSUER)}"
 
 
 def verify_mfa_token(secret: str, token: str, window: int = 1) -> bool:
     """
     Verify MFA TOTP token.
-    
+
     Args:
         secret: MFA secret key
         token: TOTP token to verify
         window: Time window for token validation (default: 1)
-        
+
     Returns:
         True if token is valid, False otherwise
     """
     try:
         import pyotp
+
         totp = pyotp.TOTP(secret)
         return totp.verify(token, valid_window=window)
     except ImportError:
@@ -458,27 +484,28 @@ def verify_mfa_token(secret: str, token: str, window: int = 1) -> bool:
 
 
 # Legacy API key support for backward compatibility
-async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+async def get_api_key(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
     """
     Enhanced API key validation with proper key management.
-    
+
     Args:
         credentials: HTTP authorization credentials
-        
+
     Returns:
         Valid API key string
-        
+
     Raises:
         HTTPException: If API key is invalid or missing
     """
     if not credentials or not credentials.credentials:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required"
         )
-    
+
     api_key = credentials.credentials
-    
+
     # Try JWT token first, fall back to API key validation
     try:
         verify_token(api_key)
@@ -486,179 +513,61 @@ async def get_api_key(credentials: HTTPAuthorizationCredentials = Depends(securi
     except HTTPException:
         # Import here to avoid circular dependency
         from .auth import get_api_key_manager
-        
+
         # Use API key manager for validation
         api_key_manager = get_api_key_manager()
         key_info = api_key_manager.validate_api_key(api_key)
-        
+
         if not key_info:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key or token"
+                detail="Invalid API key or token",
             )
-        
+
         return api_key
 
 
 def _validate_api_key(api_key: str) -> bool:
     """
     Legacy API key format validation (deprecated - use APIKeyManager).
-    
+
     Args:
         api_key: The API key to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
-    return api_key and api_key.startswith('mk-') and len(api_key) > 10
+    return api_key and api_key.startswith("mk-") and len(api_key) > 10
 
 
 async def verify_permissions(api_key: str, permission: str = None) -> bool:
     """
     Verify permissions for API key using the API key manager.
-    
+
     Args:
         api_key: The API key to verify permissions for
         permission: The specific permission to check (optional)
-        
+
     Returns:
         True if permissions are valid
     """
     # Import here to avoid circular dependency
     from .auth import get_api_key_manager
-    
+
     # Use API key manager for validation and permission checking
     api_key_manager = get_api_key_manager()
     key_info = api_key_manager.validate_api_key(api_key)
-    
+
     if not key_info:
         return False
-    
+
     # If no specific permission requested, just validate the key
     if not permission:
         return True
-    
+
     # Check specific permission
     return api_key_manager.check_permission(key_info, permission)
 
 
-# Simple User Store for Development/Testing
-# In production, this should be replaced with a proper database
-
-@dataclass
-class User:
-    """User model for authentication."""
-    user_id: str
-    username: str
-    email: str
-    hashed_password: str
-    roles: List[UserRole]
-    is_active: bool = True
-    is_developer: bool = False
-    created_at: datetime = None
-    
-    def __post_init__(self):
-        if self.created_at is None:
-            self.created_at = datetime.utcnow()
-
-
-class UserStore:
-    """Simple in-memory user store for development."""
-    
-    def __init__(self):
-        self._users: Dict[str, User] = {}
-        self._email_to_user_id: Dict[str, str] = {}
-        self._ensure_developer_account()
-        
-    def _ensure_developer_account(self):
-        """Ensure the developer account exists."""
-        dev_email = "braden.lang77@gmail.com"
-        dev_username = "GaryOcean"
-        dev_password = "I.Am.Dev.1"
-        
-        if dev_email not in self._email_to_user_id:
-            user_id = f"dev_{secrets.token_hex(8)}"
-            hashed_password = hash_password(dev_password)
-            
-            user = User(
-                user_id=user_id,
-                username=dev_username,
-                email=dev_email,
-                hashed_password=hashed_password,
-                roles=[UserRole.DEVELOPER, UserRole.ADMIN],
-                is_active=True,
-                is_developer=True
-            )
-            
-            self._users[user_id] = user
-            self._email_to_user_id[dev_email] = user_id
-            
-            logger.info(f"Created developer account: {dev_email} ({dev_username})")
-    
-    def get_user_by_email(self, email: str) -> Optional[User]:
-        """Get user by email address."""
-        user_id = self._email_to_user_id.get(email)
-        if user_id:
-            return self._users.get(user_id)
-        return None
-    
-    def get_user_by_id(self, user_id: str) -> Optional[User]:
-        """Get user by user ID."""
-        return self._users.get(user_id)
-    
-    def authenticate_user(self, email: str, password: str) -> Optional[User]:
-        """Authenticate user with email and password."""
-        user = self.get_user_by_email(email)
-        if not user:
-            logger.warning(f"Authentication failed: user not found for email {email}")
-            return None
-        
-        if not user.is_active:
-            logger.warning(f"Authentication failed: user account inactive for {email}")
-            return None
-        
-        if not verify_password(password, user.hashed_password):
-            logger.warning(f"Authentication failed: invalid password for {email}")
-            return None
-        
-        logger.info(f"User authenticated successfully: {email}")
-        return user
-    
-    def create_user(self, username: str, email: str, password: str, roles: List[UserRole] = None) -> User:
-        """Create a new user."""
-        if email in self._email_to_user_id:
-            raise ValueError(f"User with email {email} already exists")
-        
-        user_id = f"user_{secrets.token_hex(8)}"
-        hashed_password = hash_password(password)
-        
-        if roles is None:
-            roles = [UserRole.USER]
-        
-        user = User(
-            user_id=user_id,
-            username=username,
-            email=email,
-            hashed_password=hashed_password,
-            roles=roles,
-            is_active=True,
-            is_developer=UserRole.DEVELOPER in roles
-        )
-        
-        self._users[user_id] = user
-        self._email_to_user_id[email] = user_id
-        
-        logger.info(f"Created user account: {email} ({username})")
-        return user
-
-
-# Global user store instance
-_user_store = None
-
-
-def get_user_store() -> UserStore:
-    """Get the global user store instance."""
-    global _user_store
-    if _user_store is None:
-        _user_store = UserStore()
-    return _user_store
+# Legacy User Store has been replaced with database-backed implementation
+# See monkey_coder.database.user_store and monkey_coder.database.models for current implementation

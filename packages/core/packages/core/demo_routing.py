@@ -28,7 +28,7 @@ def demonstrate_routing():
     
     # Create context for requests
     context = ExecutionContext(user_id="demo_user")
-    superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+    superclaude_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
     
     # Sample prompts demonstrating different complexity levels and contexts
     sample_prompts = [
@@ -77,7 +77,7 @@ def demonstrate_routing():
             prompt=sample["prompt"],
             task_type=sample["task_type"],
             context=context,
-            superclause_config=superclause_config,
+            superclaude_config=superclaude_config,
             files=sample.get("files", [])
         )
         
@@ -103,13 +103,13 @@ def demonstrate_debug_info():
     
     router = AdvancedRouter()
     context = ExecutionContext(user_id="debug_user")
-    superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+    superclaude_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
     
     request = ExecuteRequest(
         prompt="/arch Design a distributed system with high availability and fault tolerance",
         task_type=TaskType.CUSTOM,
         context=context,
-        superclause_config=superclause_config,
+        superclaude_config=superclaude_config,
     )
     
     print("\n\n🔍 Debug Information Example")
@@ -136,7 +136,7 @@ def demonstrate_slash_commands():
     
     router = AdvancedRouter()
     context = ExecutionContext(user_id="slash_user")
-    superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+    superclaude_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
     
     print("\n\n⚡ Slash Command Demonstration")
     print("=" * 50)
@@ -155,7 +155,7 @@ def demonstrate_slash_commands():
             prompt=command_prompt,
             task_type=TaskType.CUSTOM,
             context=context,
-            superclause_config=superclause_config,
+            superclaude_config=superclaude_config,
         )
         
         decision = router.route_request(request)

@@ -28,7 +28,7 @@ def demonstrate_routing():
     
     # Create context for requests
     context = ExecutionContext(user_id="demo_user")
-    superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+    superclaude_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
     
     # Sample prompts demonstrating different complexity levels and contexts
     sample_prompts = [
@@ -77,7 +77,7 @@ def demonstrate_routing():
             prompt=sample["prompt"],
             task_type=sample["task_type"],
             context=context,
-            superclause_config=superclause_config,
+            superclaude_config=superclaude_config,
             files=sample.get("files", [])
         )
         

@@ -112,6 +112,48 @@ MIGRATIONS = {
                 applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
         """
+    ),
+    
+    "004_create_users_table": Migration(
+        version="004",
+        description="Create users table for authentication and account management",
+        sql="""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(36) PRIMARY KEY,
+                username VARCHAR(100) NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                
+                -- User metadata
+                full_name VARCHAR(255),
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                is_verified BOOLEAN NOT NULL DEFAULT false,
+                
+                -- Roles and permissions
+                roles JSONB NOT NULL DEFAULT '[]',
+                is_developer BOOLEAN NOT NULL DEFAULT false,
+                
+                -- Subscription and billing
+                subscription_plan VARCHAR(50) NOT NULL DEFAULT 'hobby',
+                api_key_hash VARCHAR(64),
+                
+                -- Timestamps
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                last_login TIMESTAMP WITH TIME ZONE,
+                
+                -- Additional metadata as JSON
+                metadata JSONB NOT NULL DEFAULT '{}'
+            );
+            
+            -- Create indexes for efficient queries
+            CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+            CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
+            CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription_plan);
+            CREATE INDEX IF NOT EXISTS idx_users_api_key_hash ON users(api_key_hash);
+            CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+        """
     )
 }
 

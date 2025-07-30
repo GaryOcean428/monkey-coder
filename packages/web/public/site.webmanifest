@@ -1,0 +1,21 @@
+{
+  "name": "Monkey Coder",
+  "short_name": "Monkey Coder",
+  "description": "AI-Powered Code Generation Platform",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x90",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x239",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#00cec9",
+  "background_color": "#fefefe",
+  "display": "standalone",
+  "start_url": "/"
+}
