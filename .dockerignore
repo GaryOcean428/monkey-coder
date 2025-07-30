@@ -6,10 +6,8 @@ yarn-error.log*
 package-lock.json
 pnpm-lock.yaml
 
-# Next.js build output (we build inside Docker)
+# Next.js build output (we use pre-built assets)
 .next/
-out/
-packages/web/out/
 packages/web/.next/
 
 # Next.js cache and build artifacts

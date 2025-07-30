@@ -1,21 +1,4 @@
-# Multi-stage build for Monkey Coder
-# Stage 1: Build frontend assets
-FROM node:18-alpine AS frontend-builder
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files and install dependencies
-COPY packages/web/package*.json ./packages/web/
-RUN cd packages/web && npm ci --only=production
-
-# Copy frontend source code
-COPY packages/web ./packages/web/
-
-# Build frontend assets
-RUN cd packages/web && npm run build
-
-# Stage 2: Main application build
+# Single-stage build for Monkey Coder using pre-built frontend assets
 FROM python:3.11-slim AS runtime
 
 # Set environment variables
@@ -39,8 +22,8 @@ RUN apt-get update && apt-get install -y \
 COPY packages/core/ ./
 RUN pip install -e .
 
-# Copy built frontend assets from previous stage
-COPY --from=frontend-builder /app/packages/web/out ./packages/web/out/
+# Copy pre-built frontend assets directly (build context must include them)
+COPY packages/web/out ./packages/web/out/
 
 # Set ownership
 RUN chown -R appuser:appuser /app

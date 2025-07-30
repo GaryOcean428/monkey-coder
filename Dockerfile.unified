@@ -11,6 +11,9 @@ COPY packages/web/package.json ./packages/web/
 COPY .yarnrc.yml ./
 COPY .yarn ./.yarn
 
+# Enable Corepack for Yarn 4.9.2 support
+RUN corepack enable
+
 # Install dependencies
 RUN yarn install --frozen-lockfile
 
