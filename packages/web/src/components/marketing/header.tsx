@@ -21,19 +21,13 @@ export function Header() {
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
             <Image
-              src="/favicon.ico"
-              alt="Favicon Logo"
-              width={24}
-              height={24}
-              className="h-6 w-6"
-            />
-            <Image
               src="/splash.png"
-              alt="Splash Logo"
+              alt="Monkey Coder Logo"
               width={120}
               height={32}
-              className="h-8 w-8"
+              className="h-8 w-auto"
             />
+            <span className="font-bold text-xl">Monkey Coder</span>
           </Link>
         </div>
         <div className="flex lg:hidden">
@@ -74,19 +68,13 @@ export function Header() {
           <div className="flex items-center justify-between">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
             <Image
-              src="/favicon.ico"
-              alt="Favicon Logo"
-              width={24}
-              height={24}
-              className="h-6 w-6"
-            />
-            <Image
               src="/splash.png"
-              alt="Splash Logo"
+              alt="Monkey Coder Logo"
               width={120}
               height={32}
-              className="h-8 w-8"
+              className="h-8 w-auto"
             />
+            <span className="font-bold text-xl">Monkey Coder</span>
           </Link>
             <button
               type="button"
