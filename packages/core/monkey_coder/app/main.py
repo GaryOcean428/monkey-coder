@@ -241,6 +241,35 @@ async def metrics_middleware(request: Request, call_next):
     return response
 
 
+# Add font headers middleware
+@app.middleware("http")  
+async def font_headers_middleware(request: Request, call_next):
+    """Middleware to add proper headers for font files."""
+    response = await call_next(request)
+    
+    # Check if this is a font file request
+    path = request.url.path
+    if path.endswith(('.woff2', '.woff', '.ttf', '.otf', '.eot')):
+        # Set proper MIME type for font files
+        if path.endswith('.woff2'):
+            response.headers["Content-Type"] = "font/woff2"
+        elif path.endswith('.woff'):
+            response.headers["Content-Type"] = "font/woff"
+        elif path.endswith('.ttf'):
+            response.headers["Content-Type"] = "font/ttf"
+        elif path.endswith('.otf'):
+            response.headers["Content-Type"] = "font/otf"
+        elif path.endswith('.eot'):
+            response.headers["Content-Type"] = "application/vnd.ms-fontobject"
+            
+        # Add proper caching and CORS headers for fonts
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    return response
+
+
 class HealthResponse(BaseModel):
     """Health check response model."""
 
@@ -1385,61 +1414,16 @@ for option in static_dir_options:
         break
 
 if static_dir:
-    # Create custom StaticFiles class with proper MIME types for fonts
+    # Configure MIME types for fonts before mounting
     import mimetypes
-    from fastapi.staticfiles import StaticFiles
-    from starlette.responses import FileResponse
-    from starlette.exceptions import HTTPException as StarletteHTTPException
+    mimetypes.add_type('font/woff2', '.woff2')
+    mimetypes.add_type('font/woff', '.woff') 
+    mimetypes.add_type('font/ttf', '.ttf')
+    mimetypes.add_type('font/otf', '.otf')
+    mimetypes.add_type('application/vnd.ms-fontobject', '.eot')
     
-    class FontStaticFiles(StaticFiles):
-        """Custom StaticFiles with proper font MIME types."""
-        
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            # Add font MIME types
-            mimetypes.add_type('font/woff2', '.woff2')
-            mimetypes.add_type('font/woff', '.woff')
-            mimetypes.add_type('font/ttf', '.ttf')
-            mimetypes.add_type('font/otf', '.otf')
-            mimetypes.add_type('font/eot', '.eot')
-            
-        async def get_response(self, path: str, scope):
-            """Get response with proper MIME type."""
-            try:
-                response = await super().get_response(path, scope)
-                
-                # Fix MIME type for font files
-                if path.endswith(('.woff2', '.woff', '.ttf', '.otf', '.eot')):
-                    if path.endswith('.woff2'):
-                        response.media_type = 'font/woff2'
-                    elif path.endswith('.woff'):
-                        response.media_type = 'font/woff'
-                    elif path.endswith('.ttf'):
-                        response.media_type = 'font/ttf'
-                    elif path.endswith('.otf'):
-                        response.media_type = 'font/otf'
-                    elif path.endswith('.eot'):
-                        response.media_type = 'application/vnd.ms-fontobject'
-                    
-                    # Add proper headers for font files
-                    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-                    response.headers["Access-Control-Allow-Origin"] = "*"
-                
-                return response
-            except StarletteHTTPException as e:
-                if e.status_code == 404 and self.html:
-                    # For SPA routing, serve index.html for 404s
-                    index_path = self.directory / "index.html"
-                    if index_path.exists():
-                        return FileResponse(
-                            index_path,
-                            media_type="text/html",
-                            headers={"Cache-Control": "no-cache"}
-                        )
-                raise
-
-    # Mount static files with proper font MIME types
-    app.mount("/", FontStaticFiles(directory=str(static_dir), html=True), name="static")
+    # Mount static files with fallback to index.html for SPA routing
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
     logger.info(f"✅ Static files served from: {static_dir} with proper font MIME types")
 else:
     logger.warning(
