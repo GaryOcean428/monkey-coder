@@ -3,7 +3,7 @@
  * Ensures the package installs correctly without network dependencies
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, jest } from '@jest/globals';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs-extra';
@@ -56,7 +56,7 @@ describe('CLI Installation', () => {
       
     } catch (error) {
       // If package doesn't exist, that's the issue we're fixing
-      if (error.message.includes('404') || error.message.includes('Not Found')) {
+      if (error instanceof Error && (error.message.includes('404') || error.message.includes('Not Found'))) {
         console.log('⚠️  monkey-coder-cli not found in registry - this is the expected issue');
         expect(error.message).toContain('404');
       } else {
@@ -70,7 +70,7 @@ describe('CLI Installation', () => {
     const originalFetch = global.fetch;
     const networkCalls: string[] = [];
     
-    global.fetch = jest.fn(async (url) => {
+    global.fetch = jest.fn(async (url: string) => {
       networkCalls.push(url.toString());
       throw new Error('Network calls blocked in test');
     }) as jest.MockedFunction<typeof fetch>;
@@ -144,7 +144,7 @@ describe('CLI Installation', () => {
       }
     } catch (error) {
       // Post-install should never fail the installation
-      fail('Post-install script should handle errors gracefully');
+      throw new Error('Post-install script should handle errors gracefully');
     }
   });
 
@@ -185,8 +185,8 @@ describe('CLI Installation', () => {
       }
     } catch (error) {
       // Should not fail due to network issues
-      expect(error.message).not.toContain('network');
-      expect(error.message).not.toContain('ENOTFOUND');
+      expect(error instanceof Error ? error.message : '').not.toContain('network');
+      expect(error instanceof Error ? error.message : '').not.toContain('ENOTFOUND');
     }
   });
 });

@@ -1,1 +1,0 @@
-{"detail":[{"type":"enum","loc":["body","task_type"],"msg":"Input should be 'code_generation', 'code_analysis', 'code_review', 'documentation', 'testing', 'debugging', 'refactoring' or 'custom'","input":"invalid_task_type","ctx":{"expected":"'code_generation', 'code_analysis', 'code_review', 'documentation', 'testing', 'debugging', 'refactoring' or 'custom'"}}]}
