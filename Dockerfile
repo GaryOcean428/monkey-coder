@@ -1,6 +1,22 @@
-# Simplified build for Monkey Coder - Python only with static assets
-# Use single-stage build since we have pre-built frontend assets
-FROM python:3.11-slim
+# Multi-stage build for Monkey Coder
+# Stage 1: Build frontend assets
+FROM node:18-alpine AS frontend-builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY packages/web/package*.json ./packages/web/
+RUN cd packages/web && npm ci --only=production
+
+# Copy frontend source code
+COPY packages/web ./packages/web/
+
+# Build frontend assets
+RUN cd packages/web && npm run build
+
+# Stage 2: Main application build
+FROM python:3.11-slim AS runtime
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -23,8 +39,8 @@ RUN apt-get update && apt-get install -y \
 COPY packages/core/ ./
 RUN pip install -e .
 
-# Copy pre-built frontend assets
-COPY packages/web/out ./packages/web/out/
+# Copy built frontend assets from previous stage
+COPY --from=frontend-builder /app/packages/web/out ./packages/web/out/
 
 # Set ownership
 RUN chown -R appuser:appuser /app
