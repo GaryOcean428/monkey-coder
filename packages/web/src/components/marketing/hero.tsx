@@ -17,19 +17,19 @@ export function Hero() {
               </Link>
             </div>
           </div>
-          
+
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl animate-fade-up">
             Transform ideas into
             <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               {' '}production-ready code
             </span>
           </h1>
-          
+
           <p className="mt-6 text-lg leading-8 text-muted-foreground animate-fade-up animation-delay-100">
-            Monkey Coder uses advanced AI to generate, analyze, and optimize code across 358+ programming languages. 
+            Monkey Coder uses advanced AI to generate, analyze, and optimize code across 358+ programming languages.
             Build faster, ship better, and let AI handle the repetitive tasks.
           </p>
-          
+
           <div className="mt-10 flex items-center justify-center gap-x-6 animate-fade-up animation-delay-200">
             <Link href="/signup">
               <Button size="lg" className="gap-2">
@@ -43,7 +43,7 @@ export function Hero() {
               </Button>
             </Link>
           </div>
-          
+
           <div className="mt-10 flex items-center justify-center gap-x-8 text-sm text-muted-foreground animate-fade-up animation-delay-300">
             <div className="flex items-center gap-2">
               <Code2 className="h-4 w-4" />
@@ -59,7 +59,7 @@ export function Hero() {
             </div>
           </div>
         </div>
-        
+
         {/* Code Preview */}
         <div className="mt-16 flow-root sm:mt-24">
           <div className="relative rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
