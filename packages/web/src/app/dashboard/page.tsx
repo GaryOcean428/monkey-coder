@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Code2, Zap, Clock, BarChart3, CreditCard, Settings, LogOut, ArrowUpRight } from 'lucide-react'
+import { Zap, Clock, BarChart3, CreditCard, Settings, LogOut, ArrowUpRight } from 'lucide-react'
 
 interface User {
   id: string
@@ -60,8 +61,20 @@ export default function DashboardPage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Code2 className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">Monkey Coder</span>
+              <Image
+                src="/favicon.ico"
+                alt="Favicon Logo"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
+              <Image
+                src="/splash.png"
+                alt="Splash Logo"
+                width={120}
+                height={32}
+                className="h-8 w-8"
+              />
             </Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/dashboard" className="text-sm font-medium">
@@ -78,7 +91,7 @@ export default function DashboardPage() {
               </Link>
             </nav>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" className="gap-2">
               <CreditCard className="h-4 w-4" />
@@ -180,7 +193,7 @@ export default function DashboardPage() {
           <div className="rounded-lg border bg-card p-6">
             <h3 className="font-semibold mb-2">Manage Subscription</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {user.plan === 'pro' 
+              {user.plan === 'pro'
                 ? 'Manage your Pro subscription and billing'
                 : 'Upgrade to Pro for unlimited generations'
               }

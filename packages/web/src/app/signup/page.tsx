@@ -79,14 +79,20 @@ export default function SignupPage() {
       <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="flex items-center gap-2 mb-8">
-            <Image 
-              src="/splash.png" 
-              alt="Monkey Coder Logo" 
-              width={32} 
-              height={32} 
-              className="h-8 w-8" 
+            <Image
+              src="/favicon.ico"
+              alt="Favicon Logo"
+              width={24}
+              height={24}
+              className="h-6 w-6"
             />
-            <span className="font-bold text-xl">Monkey Coder</span>
+            <Image
+              src="/splash.png"
+              alt="Splash Logo"
+              width={120}
+              height={32}
+              className="h-8 w-8"
+            />
           </Link>
 
           <h1 className="text-2xl font-bold mb-2">Create your account</h1>

@@ -45,10 +45,10 @@ export default function LoginPage() {
       }
 
       const result = await response.json()
-      
+
       // Store auth token (in production, use secure httpOnly cookies)
       localStorage.setItem('authToken', result.token)
-      
+
       // Redirect to dashboard
       router.push('/dashboard')
     } catch (error) {
@@ -65,14 +65,20 @@ export default function LoginPage() {
       <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="flex items-center gap-2 mb-8">
-            <Image 
-              src="/splash.png" 
-              alt="Monkey Coder Logo" 
-              width={32} 
-              height={32} 
-              className="h-8 w-8" 
+            <Image
+              src="/favicon.ico"
+              alt="Favicon Logo"
+              width={24}
+              height={24}
+              className="h-6 w-6"
             />
-            <span className="font-bold text-xl">Monkey Coder</span>
+            <Image
+              src="/splash.png"
+              alt="Splash Logo"
+              width={120}
+              height={32}
+              className="h-8 w-8"
+            />
           </Link>
 
           <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
@@ -185,7 +191,7 @@ export default function LoginPage() {
           <p className="text-lg text-muted-foreground mb-8">
             Sign in to access your AI-powered development tools and continue building amazing software.
           </p>
-          
+
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="rounded-full bg-primary/10 p-1 mt-0.5">
