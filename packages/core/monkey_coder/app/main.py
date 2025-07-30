@@ -423,19 +423,17 @@ async def signup(request: SignupRequest) -> AuthResponse:
                 detail="User with this email already exists"
             )
         
-        # Create new user
-        from ..security import UserData
-        new_user = UserData(
-            user_id=str(uuid4()),
+        # Create new user with appropriate roles
+        roles = [UserRole.API_USER]  # Use API_USER instead of USER
+        if request.plan == "pro":
+            roles.append(UserRole.DEVELOPER)
+        
+        new_user = user_store.create_user(
             username=request.name,
             email=request.email,
-            password_hash=hash_password(request.password),
-            roles=[UserRole.USER],
-            is_developer=request.plan == "pro"
+            password=request.password,  # create_user handles hashing internally
+            roles=roles
         )
-        
-        # Add user to store
-        user_store.add_user(new_user)
         
         # Create JWT user
         jwt_user = JWTUser(
