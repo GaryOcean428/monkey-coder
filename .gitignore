@@ -173,6 +173,21 @@ pnpm-lock.yaml
 # Node.js dependencies
 node_modules/
 
+# Next.js build output
+.next/
+out/
+packages/web/out/
+packages/web/.next/
+
+# Next.js cache and build artifacts
+.next/cache/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# TypeScript build output
+*.tsbuildinfo
+
 # Yarn Berry
 .yarn/*
 !.yarn/patches
