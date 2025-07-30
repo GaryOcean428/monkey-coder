@@ -1,0 +1,21 @@
+{
+    "editor.autoIndentOnPaste": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.codeActions.triggerOnFocusChange": true,
+    "editor.experimental.preferTreeSitter.css": true,
+    "editor.experimental.asyncTokenizationVerification": true,
+    "editor.experimental.asyncTokenizationLogging": true,
+    "editor.experimental.preferTreeSitter.regex": true,
+    "editor.experimental.preferTreeSitter.typescript": true,
+    "editor.experimental.treeSitterTelemetry": true,
+    "editor.guides.bracketPairs": true,
+    "editor.inlayHints.padding": true,
+    "editor.inlineCompletionsAccessibilityVerbose": false,
+    "editor.linkedEditing": true,
+    "editor.formatOnSave": true,
+    "files.autoSave": "afterDelay",
+    "editor.formatOnPaste": true,
+    "editor.tabCompletion": "on",
+    "auto-close-tag.insertSpaceBeforeSelfClosingTag": true,
+    "auto-close-tag.SublimeText3Mode": true
+}
