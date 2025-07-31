@@ -559,3 +559,39 @@ If you are interested to leave a message to either our research team or product 
         ↑ Back to Top ↑
     </a>
 </p>
+
+## 🚀 Development Environment
+
+### Dev Container (Recommended)
+
+The fastest way to get started with development is using our pre-configured dev container:
+
+1. **Prerequisites**: Install [Docker](https://docs.docker.com/get-docker/) and [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+2. **Open in Container**: 
+   - Open the project in VS Code
+   - Click "Reopen in Container" when prompted
+   - Wait for the setup to complete (~3-5 minutes)
+
+3. **Start Developing**: All dependencies, databases, and tools are automatically configured!
+
+**Features:**
+- ✅ Python 3.11 + Node.js 18 pre-installed
+- ✅ PostgreSQL 15 + Redis 7 running automatically  
+- ✅ All VS Code extensions and settings optimized
+- ✅ Automatic dependency installation
+- ✅ Database migrations and setup
+- ✅ Pre-commit hooks configured
+
+**Available Services:**
+- Frontend: http://localhost:3000
+- API: http://localhost:8000  
+- Docs: http://localhost:3001
+- Metrics: http://localhost:9090
+
+See [.devcontainer/README.md](.devcontainer/README.md) for detailed information.
+
+### Manual Setup
+
+If you prefer to set up the environment manually, see the [Local Development](#local-development) section below.
+

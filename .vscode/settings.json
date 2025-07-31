@@ -18,5 +18,41 @@
     "editor.tabCompletion": "on",
     "auto-close-tag.insertSpaceBeforeSelfClosingTag": true,
     "auto-close-tag.SublimeText3Mode": true,
-    "jdk.advanced.disable.nbjavac": false
+    "jdk.advanced.disable.nbjavac": false,
+    
+    "python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
+    "python.terminal.activateEnvironment": false,
+    "python.analysis.extraPaths": [
+        "/workspace/packages/core",
+        "/workspace/packages/sdk/src/python"
+    ],
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.suggest.autoImports": true,
+    "eslint.workingDirectories": [
+        "packages/cli",
+        "packages/web", 
+        "packages/sdk",
+        "docs"
+    ],
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.git": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/coverage": true,
+        "**/.venv": true,
+        "**/venv": true
+    },
+    "files.associations": {
+        "*.md": "markdown"
+    },
+    "markdown.extension.toc.levels": "2..6",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#2D3748",
+        "activityBar.foreground": "#ffffff"
+    }
 }
