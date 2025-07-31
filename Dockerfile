@@ -6,17 +6,20 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Enable Corepack for Yarn 4.9.2 support
-RUN corepack enable
+# Enable Corepack and set Yarn version to 4.9.2
+RUN corepack enable && corepack prepare yarn@4.9.2 --activate
 
-# Copy package files first for better layer caching
-COPY packages/web/package.json packages/web/yarn.lock* ./packages/web/
+# Copy workspace configuration files
+COPY package.json yarn.lock ./
+
+# Copy web package.json 
+COPY packages/web/package.json ./packages/web/
+
+# Install dependencies for workspace (must run from root for workspaces)
+RUN yarn install --frozen-lockfile
 
 # Set working directory to web package
 WORKDIR /app/packages/web
-
-# Install dependencies with frozen lockfile
-RUN yarn install --frozen-lockfile
 
 # Copy all web source files including src directory
 COPY packages/web/ ./
