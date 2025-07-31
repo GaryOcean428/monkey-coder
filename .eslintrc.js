@@ -17,5 +17,7 @@ module.exports = {
     'finetuning/',
     '**/*.ts',
     '**/*.tsx',
+    '.next/',
+    'out/',
   ],
 };

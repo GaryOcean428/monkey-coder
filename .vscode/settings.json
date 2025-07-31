@@ -45,7 +45,38 @@
         "**/.pytest_cache": true,
         "**/coverage": true,
         "**/.venv": true,
-        "**/venv": true
+        "**/venv": true,
+        "**/.next": true,
+        "**/out": true
+    },
+    "files.exclude": {
+        "**/.next": true,
+        "**/out": true
+    },
+    "files.watcherExclude": {
+        "**/.next/**": true,
+        "**/out/**": true
+    },
+    "htmlhint.exclude": [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/out/**",
+        "**/dist/**",
+        "**/build/**"
+    ],
+    "edge-devtools.webhintIgnoreList": [
+        "**/.next/**",
+        "**/out/**",
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**"
+    ],
+    "edge-devtools.sourceMapPathOverrides": {
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///src/*": "${webRoot}/*",
+        "webpack:///*": "*",
+        "webpack:///./~/*": "${webRoot}/node_modules/*",
+        "meteor://💻app/*": "${webRoot}/*"
     },
     "files.associations": {
         "*.md": "markdown"
