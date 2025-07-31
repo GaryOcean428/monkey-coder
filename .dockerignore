@@ -6,15 +6,23 @@ yarn-error.log*
 package-lock.json
 pnpm-lock.yaml
 
-# Next.js build output (we use pre-built assets)
+# Next.js build output and cache (rebuild fresh in Docker)
 .next/
 packages/web/.next/
+*/.next/
 
 # Next.js cache and build artifacts
 .next/cache/
+packages/web/.next/cache/
+*/.next/cache/
 .vercel/
 *.tsbuildinfo
 next-env.d.ts
+
+# Next.js standalone output (we build this in Docker)
+packages/web/out/
+packages/web/build/
+packages/web/dist/
 
 # Python build artifacts
 __pycache__/
@@ -139,10 +147,11 @@ examples/
 railway.json
 railpack.json
 
-# Frontend build artifacts (we build these in Docker)
+# Frontend build artifacts (we build these fresh in Docker)
 packages/web/out/
 packages/web/.next/
 packages/web/dist/
+packages/web/build/
 
 # Development files not needed in production
 __tests__/

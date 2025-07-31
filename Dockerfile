@@ -1,19 +1,37 @@
 # Stage 1: Build Next.js Frontend
 FROM node:18-alpine AS web-builder
+
+# Install system dependencies for Alpine
+RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
 # Enable Corepack for Yarn 4.9.2 support
 RUN corepack enable
 
-# Create minimal workspace structure for web package only
-COPY packages/web/package.json ./package.json
+# Copy package files first for better layer caching
+COPY packages/web/package.json packages/web/yarn.lock* ./packages/web/
 
-# Install dependencies ignoring lockfile for simplified build
-RUN yarn install
+# Set working directory to web package
+WORKDIR /app/packages/web
 
-# Copy web source and build
+# Install dependencies with frozen lockfile
+RUN yarn install --frozen-lockfile
+
+# Copy all web source files including src directory
 COPY packages/web/ ./
+
+# Clean any existing build artifacts to ensure fresh build
+RUN rm -rf .next out build dist
+
+# Set NODE_ENV for production build
+ENV NODE_ENV=production
+
+# Build Next.js with proper static export (fresh build)
 RUN yarn build
+
+# Verify build output exists
+RUN ls -la out/ || (echo "Build failed: no output directory" && exit 1)
 
 # Stage 2: Production Python Backend
 FROM python:3.11-slim AS production
@@ -28,8 +46,8 @@ RUN apt-get update && apt-get install -y \
 COPY packages/core/ ./
 RUN pip install -e .
 
-# Copy built frontend assets from Stage 1
-COPY --from=web-builder /app/out ./packages/web/out/
+# Copy built frontend assets from Stage 1 with correct path
+COPY --from=web-builder /app/packages/web/out/ ./packages/web/out/
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
