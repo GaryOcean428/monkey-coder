@@ -1,43 +1,47 @@
-# Single-stage Dockerfile for Monkey Coder with pre-built frontend
+# Stage 1: Build Next.js Frontend
+FROM node:18-alpine AS web-builder
+WORKDIR /app
 
-FROM python:3.11-slim AS runtime
+# Enable Corepack for Yarn 4.9.2 support
+RUN corepack enable
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+# Create minimal workspace structure for web package only
+COPY packages/web/package.json ./package.json
 
-# Create app directory and user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Install dependencies ignoring lockfile for simplified build
+RUN yarn install
+
+# Copy web source and build
+COPY packages/web/ ./
+RUN yarn build
+
+# Stage 2: Production Python Backend
+FROM python:3.11-slim AS production
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    build-essential \
+    curl git build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies and install
+# Copy and install Python dependencies
 COPY packages/core/ ./
 RUN pip install -e .
 
-# Copy pre-built frontend assets (must be built locally first)
-COPY packages/web/out ./packages/web/out/
+# Copy built frontend assets from Stage 1
+COPY --from=web-builder /app/out ./packages/web/out/
 
-# Set ownership
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
 USER appuser
 
-# Expose dynamic port from environment
-ARG PORT
-ENV PORT=${PORT:-8000}
+# Dynamic port configuration
+ARG PORT=8000
+ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-# Health check
+# Health check optimized for Railway
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 

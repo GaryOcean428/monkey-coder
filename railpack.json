@@ -5,11 +5,11 @@
     "dockerfile": "Dockerfile"
   },
   "start": {
-    "cmd": "python -m packages.core.monkey_coder.app.main"
+    "cmd": "python -m monkey_coder.app.main"
   },
   "healthcheck": {
     "path": "/health",
-    "timeout": 100
+    "timeout": 30
   },
   "environments": {
     "production": {
@@ -17,16 +17,24 @@
         "optimize": true
       },
       "env": {
+        "ENVIRONMENT": "production",
         "LOG_LEVEL": "INFO",
         "JSON_LOGS": "true",
-        "PERFORMANCE_LOGS": "true"
+        "PERFORMANCE_LOGS": "true",
+        "DEBUG": "false",
+        "ENABLE_METRICS": "true",
+        "ENABLE_SECURITY_HEADERS": "true",
+        "CORS_ORIGINS": "*",
+        "TRUSTED_HOSTS": "*"
       }
     },
     "development": {
       "env": {
+        "ENVIRONMENT": "development",
         "LOG_LEVEL": "DEBUG",
         "JSON_LOGS": "false",
-        "PERFORMANCE_LOGS": "true"
+        "PERFORMANCE_LOGS": "true",
+        "DEBUG": "true"
       }
     }
   }

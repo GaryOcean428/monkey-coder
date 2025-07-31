@@ -137,3 +137,30 @@ examples/
 # Railway and deployment
 .railway/
 railway.json
+railpack.json
+
+# Frontend build artifacts (we build these in Docker)
+packages/web/out/
+packages/web/.next/
+packages/web/dist/
+
+# Development files not needed in production
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+jest.config.*
+*.md
+docs/
+demo/
+examples/
+monitoring/
+
+# Additional build optimizations
+.git/
+.github/
+.vscode/
+.clinerules
+*.orig
+*.bak
