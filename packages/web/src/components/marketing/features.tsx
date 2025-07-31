@@ -3,7 +3,7 @@ import { Code2, Zap, Shield, Brain, Layers, Globe, GitBranch, Sparkles } from 'l
 const features = [
   {
     name: 'Multi-Language Support',
-    description: 'Generate code in 358+ programming languages from Python to Rust, JavaScript to Go.',
+    description: 'Generate code in multiple programming languages from Python to Rust, JavaScript to Go.',
     icon: Globe,
   },
   {
@@ -53,16 +53,16 @@ export function Features() {
             Powerful features for modern development
           </p>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Monkey Coder provides all the tools you need to accelerate your development workflow 
+            Monkey Coder provides all the tools you need to accelerate your development workflow
             and build better software faster.
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
           <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-4">
             {features.map((feature) => (
-              <div key={feature.name} className="flex flex-col">
+              <div key={feature.name} className="flex flex-col neon-card p-4 rounded-lg">
                 <dt className="flex items-center gap-x-3 text-base font-semibold leading-7">
-                  <feature.icon className="h-5 w-5 flex-none text-primary" aria-hidden="true" />
+                  <feature.icon className="h-5 w-5 flex-none text-primary neon-text-cyan" aria-hidden="true" />
                   {feature.name}
                 </dt>
                 <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-muted-foreground">

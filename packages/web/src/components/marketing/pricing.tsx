@@ -78,7 +78,7 @@ export function PricingSection() {
                 tier.mostPopular ? 'lg:z-10 lg:rounded-b-none' : 'lg:mt-8',
                 tierIdx === 0 ? 'lg:rounded-r-none' : '',
                 tierIdx === tiers.length - 1 ? 'lg:rounded-l-none' : '',
-                'flex flex-col justify-between rounded-3xl bg-white p-8 ring-1 ring-gray-200 xl:p-10 dark:bg-gray-900 dark:ring-gray-800'
+                'flex flex-col justify-between rounded-3xl bg-white p-8 ring-1 ring-gray-200 xl:p-10 dark:bg-gray-900 dark:ring-gray-800 neon-card'
               )}
             >
               <div>
@@ -122,7 +122,7 @@ export function PricingSection() {
               </div>
               <Link href={tier.href} className="mt-8">
                 <Button
-                  className="w-full"
+                  className={`w-full ${tier.mostPopular ? 'neon-button-cyan' : 'neon-button-cyan'}`}
                   variant={tier.mostPopular ? 'default' : 'outline'}
                   size="lg"
                 >

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 const navigation = [
   { name: 'Features', href: '#features' },
@@ -17,14 +18,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-[#1a1f2e] backdrop-blur
-                      supports-[backdrop-filter]:bg-[#1a1f2e]/90">
+                      supports-[backdrop-filter]:bg-[#1a1f2e]/90 neon-header">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4
                       xs:p-5
                       sm:p-6
                       lg:px-8"
            aria-label="Global">
         <div className="flex lg:flex-1">
-          <Link href="/" 
+          <Link href="/"
                 className="-m-1.5 p-1.5 flex items-center rounded-lg
                           hover:bg-white/5
                           focus:outline-none focus:ring-2 focus:ring-[#00cec9] focus:ring-offset-2 focus:ring-offset-[#1a1f2e]"
@@ -36,7 +37,7 @@ export function Header() {
               height={80}
               className="h-16 w-auto
                         xs:h-18
-                        sm:h-20"
+                        sm:h-20 neon-logo"
               priority
             />
           </Link>
@@ -73,8 +74,9 @@ export function Header() {
         </div>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-3
                         xl:gap-x-4">
+          <ThemeToggle />
           <Link href="/login">
-            <Button variant="ghost" 
+            <Button variant="ghost"
                     className="text-white border-transparent
                               hover:text-white hover:bg-white/10 hover:border-white/20
                               focus:ring-2 focus:ring-[#00cec9] focus:ring-offset-2 focus:ring-offset-[#1a1f2e]">
@@ -104,7 +106,7 @@ export function Header() {
                         xs:px-5
                         sm:max-w-sm sm:px-6 sm:ring-1 sm:ring-white/10">
           <div className="flex items-center justify-between">
-            <Link href="/" 
+            <Link href="/"
                   className="-m-1.5 p-1.5 flex items-center rounded-lg
                             hover:bg-white/5
                             focus:outline-none focus:ring-2 focus:ring-[#00cec9] focus:ring-offset-2 focus:ring-offset-[#1a1f2e]"
@@ -116,7 +118,7 @@ export function Header() {
                 width={240}
                 height={64}
                 className="h-14 w-auto
-                          xs:h-16"
+                          xs:h-16 neon-logo"
               />
             </Link>
             <button
@@ -151,17 +153,20 @@ export function Header() {
               </div>
               <div className="py-6 space-y-3
                               xs:space-y-4">
-                <Link href="/login" 
+                <div className="flex items-center justify-center">
+                  <ThemeToggle />
+                </div>
+                <Link href="/login"
                       className="block"
                       onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" 
+                  <Button variant="outline"
                           className="w-full text-white border-white/20 bg-transparent
                                     hover:bg-white/10 hover:border-white/30
                                     focus:ring-2 focus:ring-[#00cec9] focus:ring-offset-2 focus:ring-offset-[#1a1f2e]">
                     Log in
                   </Button>
                 </Link>
-                <Link href="/signup" 
+                <Link href="/signup"
                       className="block"
                       onClick={() => setMobileMenuOpen(false)}>
                   <Button className="w-full bg-[#00cec9] text-white border-[#00cec9]

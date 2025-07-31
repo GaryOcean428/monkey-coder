@@ -17,7 +17,7 @@ export function Hero() {
                 alt="Monkey Coder"
                 width={400}
                 height={107}
-                className="h-32 w-auto drop-shadow-2xl"
+                className="h-32 w-auto drop-shadow-2xl neon-logo"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent rounded-lg blur-xl -z-10" />
@@ -42,19 +42,19 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 text-lg leading-8 text-muted-foreground animate-fade-up animation-delay-100">
-            Monkey Coder uses advanced AI to generate, analyze, and optimize code across 358+ programming languages.
+            Monkey Coder uses advanced AI to generate, analyze, and optimize code across multiple programming languages.
             Build faster, ship better, and let AI handle the repetitive tasks.
           </p>
 
           <div className="mt-10 flex items-center justify-center gap-x-6 animate-fade-up animation-delay-200">
             <Link href="/signup">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 neon-button-cyan">
                 Start coding for free
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link href="#demo">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="neon-button-cyan">
                 Watch demo
               </Button>
             </Link>
@@ -63,7 +63,7 @@ export function Hero() {
           <div className="mt-10 flex items-center justify-center gap-x-8 text-sm text-muted-foreground animate-fade-up animation-delay-300">
             <div className="flex items-center gap-2">
               <Code2 className="h-4 w-4" />
-              <span>358+ languages</span>
+              <span>Multi-language</span>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4" />

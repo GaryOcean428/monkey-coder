@@ -43,20 +43,13 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8">
-            <div className="flex items-center gap-2">
-              <Image
-                src="/favicon.ico"
-                alt="Favicon Logo"
-                width={24}
-                height={24}
-                className="h-6 w-6"
-              />
+            <div className="flex items-center">
               <Image
                 src="/splash.png"
-                alt="Splash Logo"
+                alt="Monkey Coder Logo"
                 width={120}
                 height={32}
-                className="h-8 w-8"
+                className="h-8 w-auto"
               />
             </div>
             <p className="text-sm leading-6 text-muted-foreground">

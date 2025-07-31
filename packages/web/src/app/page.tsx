@@ -11,17 +11,17 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      
+
       <main className="flex-1">
         {/* Hero Section */}
         <Hero />
-        
+
         {/* Features Section */}
         <Features />
-        
+
         {/* Pricing Section */}
         <PricingSection />
-        
+
         {/* CTA Section */}
         <section className="border-t bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
           <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
@@ -48,40 +48,48 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        
+
         {/* Stats Section */}
         <section className="bg-primary/5 py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Building the Future of Development
+              </h2>
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+                Join us on our journey to revolutionize how developers build software.
+              </p>
+            </div>
             <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
               <div className="mx-auto flex max-w-xs flex-col gap-y-4">
                 <dt className="text-base leading-7 text-muted-foreground">
-                  Active developers
+                  AI Models Supported
                 </dt>
                 <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  10k+
+                  5+
                 </dd>
               </div>
               <div className="mx-auto flex max-w-xs flex-col gap-y-4">
                 <dt className="text-base leading-7 text-muted-foreground">
-                  Code generated
+                  Code Generation
                 </dt>
                 <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  1M+ lines
+                  AI-Powered
                 </dd>
               </div>
               <div className="mx-auto flex max-w-xs flex-col gap-y-4">
                 <dt className="text-base leading-7 text-muted-foreground">
-                  Languages supported
+                  Development Speed
                 </dt>
                 <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  358
+                  10x
                 </dd>
               </div>
             </dl>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   )
