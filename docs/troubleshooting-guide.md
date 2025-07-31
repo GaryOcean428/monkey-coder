@@ -10,7 +10,7 @@ Run these commands to gather diagnostic information:
 # 1. Validate installation
 ./scripts/validate-installation.sh
 
-# 2. Network diagnostics 
+# 2. Network diagnostics
 ./scripts/network-diagnostics.sh
 
 # 3. Railway environment validation
@@ -269,12 +269,12 @@ curl https://monkey-coder.up.railway.app/api/health
   run: |
     echo "registry=https://registry.npmjs.org/" >> .npmrc
     CI=true npm install -g monkey-coder-cli
-    
+
 - name: Validate Installation
   run: |
     monkey-coder --version
     monkey-coder config set baseUrl "${{ secrets.API_BASE_URL }}"
-    
+
 - name: Health Check
   run: |
     curl -sf "${{ secrets.API_BASE_URL }}/health"
@@ -296,6 +296,44 @@ curl https://monkey-coder.up.railway.app/api/health
 3. **Test locally before deploying**
 4. **Monitor deployment logs**
 
+### Issue H6: Docker Buildx Build Failures with Yarn
+
+**Symptoms:**
+- Docker Buildx build fails with "Couldn't find the node_modules state file - running an install might help"
+- Build fails during Yarn installation phase
+- Next.js build fails due to missing dependencies
+
+**Root Cause:**
+Using `yarn install --mode=update-lockfile` only updates the lockfile but doesn't actually install and link dependencies in the node_modules directory.
+
+**Solution:**
+Modify the Dockerfile to run both commands sequentially:
+
+```dockerfile
+# Instead of:
+RUN yarn install --mode=update-lockfile
+
+# Use:
+RUN yarn install --mode=update-lockfile && yarn install
+```
+
+This ensures:
+1. First, Yarn updates the lockfile to resolve any dependency conflicts
+2. Then, Yarn performs the actual installation and linking of dependencies
+
+**Verification:**
+```bash
+# Test the fix locally
+docker build -t test-build .
+
+# For Railway deployment:
+railway up
+```
+
+**Expected Build Time:**
+- Local build: ~60-90 seconds
+- Railway cloud build: ~200-220 seconds (including push time)
+
 ## Getting Help
 
 If issues persist:
@@ -311,3 +349,4 @@ If issues persist:
 - Output from `./scripts/railway-validation.sh`
 - Railway logs: `railway logs --tail 500`
 - npm install logs with verbose output
+- Docker build logs: `docker build --progress=plain . 2>&1 | tee build.log`
