@@ -10,9 +10,23 @@ const nextConfig = {
     unoptimized: true,
     domains: ['localhost', 'monkey-coder.up.railway.app'],
   },
-  webpack: (config, { isServer }) => {
-    // Add path alias for Docker builds to ensure @/ resolves correctly
-    config.resolve.alias['@'] = path.join(__dirname, 'src')
+  webpack: (config, { isServer, dev }) => {
+    // Add path alias for both development and production builds
+    // This ensures @/ resolves correctly in Docker and local environments
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    }
+    
+    // Additional webpack optimizations for production builds
+    if (!dev && !isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        module: false,
+      }
+    }
+    
     return config
   },
   experimental: {

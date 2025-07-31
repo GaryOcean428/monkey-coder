@@ -24,6 +24,14 @@ COPY packages/web/ ./
 # Clean any existing build artifacts to ensure fresh build
 RUN rm -rf .next out build dist
 
+# Debug: Show directory structure for troubleshooting
+RUN echo "=== Web package structure ===" && \
+    ls -la && \
+    echo "=== Source directory structure ===" && \
+    ls -la src/ && \
+    echo "=== Lib directory check ===" && \
+    ls -la src/lib/ || echo "No lib directory found"
+
 # Set NODE_ENV for production build
 ENV NODE_ENV=production
 
