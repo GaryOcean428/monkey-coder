@@ -1,0 +1,186 @@
+{
+  "name": "Monkey Coder Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "installDirectlyFromGitHubRelease": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": true,
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "version": "18",
+      "nvmVersion": "latest"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11",
+      "installTools": true,
+      "optimize": true,
+      "enableShared": true,
+      "installPath": "/usr/local/python",
+      "installJupyterlab": true,
+      "configureGitCredentialHelper": true
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.pylint",
+        "ms-python.flake8",
+        "ms-python.mypy-type-checker",
+        "ms-python.debugpy",
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-eslint",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-docker",
+        "ms-azuretools.vscode-docker",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-ossdata.vscode-postgresql",
+        "ckolkman.vscode-postgres",
+        "yzhang.markdown-all-in-one",
+        "shd101wyy.markdown-preview-enhanced",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "GitHub.vscode-pull-request-github",
+        "humao.rest-client",
+        "ms-vscode.vscode-thunder-client",
+        "ms-vscode.hexeditor",
+        "ms-vscode.vscode-serial-monitor",
+        "ms-vscode-remote.remote-containers",
+        "streetsidesoftware.code-spell-checker",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense"
+      ],
+      
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackArgs": ["--line-length=88"],
+        "python.sortImports.args": ["--profile", "black"],
+        "python.analysis.autoImportCompletions": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.suggest.autoImports": true,
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "javascript.suggest.autoImports": true,
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true,
+          "source.fixAll.eslint": true
+        },
+        "editor.rulers": [88, 120],
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh"
+          }
+        },
+        "git.enableSmartCommit": true,
+        "git.confirmSync": false,
+        "git.autofetch": true,
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/.git": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/coverage": true
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [
+    3000,
+    8000,
+    8001,
+    5432,
+    6379,
+    9090
+  ],
+
+  "portsAttributes": {
+    "3000": {
+      "label": "Web Frontend",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "API Backend",
+      "onAutoForward": "notify"
+    },
+    "8001": {
+      "label": "Sandbox Service",
+      "onAutoForward": "ignore"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "ignore"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "ignore"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "ignore"
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  "mounts": [
+    "source=${localWorkspaceFolder}/.env,target=/workspace/.env,type=bind,consistency=cached",
+    "source=monkey-coder-node-modules,target=/workspace/node_modules,type=volume",
+    "source=monkey-coder-python-cache,target=/home/vscode/.cache,type=volume"
+  ],
+
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "ENVIRONMENT": "development",
+    "DEBUG": "true",
+    "PYTHONPATH": "/workspace/packages/core:/workspace/packages/sdk/src/python",
+    "PATH": "/workspace/node_modules/.bin:${PATH}"
+  },
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true
+}

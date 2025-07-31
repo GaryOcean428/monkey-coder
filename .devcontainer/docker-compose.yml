@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace:cached
+      - monkey-coder-node-modules:/workspace/node_modules
+      - monkey-coder-python-cache:/home/vscode/.cache
+    command: sleep infinity
+    environment:
+      - NODE_ENV=development
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql://postgres:monkey-coder-dev@postgres:5432/monkey_coder_dev
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - monkey-coder-dev
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: monkey_coder_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: monkey-coder-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - monkey-coder-dev
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - monkey-coder-dev
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - monkey-coder-dev
+
+volumes:
+  monkey-coder-node-modules:
+  monkey-coder-python-cache:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+
+networks:
+  monkey-coder-dev:
+    driver: bridge

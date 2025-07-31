@@ -130,6 +130,10 @@ docs/_build/
 README.md
 *.md
 
+# Large evaluation and example directories
+qwencoder-eval/
+examples/
+
 # Railway and deployment
 .railway/
 railway.json

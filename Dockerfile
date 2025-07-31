@@ -1,4 +1,5 @@
-# Single-stage build for Monkey Coder using pre-built frontend assets
+# Single-stage Dockerfile for Monkey Coder with pre-built frontend
+
 FROM python:3.11-slim AS runtime
 
 # Set environment variables
@@ -22,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 COPY packages/core/ ./
 RUN pip install -e .
 
-# Copy pre-built frontend assets directly (build context must include them)
+# Copy pre-built frontend assets (must be built locally first)
 COPY packages/web/out ./packages/web/out/
 
 # Set ownership
