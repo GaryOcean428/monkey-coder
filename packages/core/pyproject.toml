@@ -60,6 +60,10 @@ dependencies = [
     "numpy>=1.21.0",
     "scikit-learn>=1.1.0",
     "matplotlib>=3.5.0",
+    # Security enhancements for httpOnly cookies
+    "python-multipart>=0.0.6",
+    "itsdangerous>=2.1.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.optional-dependencies]
@@ -93,7 +97,7 @@ Documentation = "https://github.com/GaryOcean428/monkey-coder/docs"
 "Bug Tracker" = "https://github.com/GaryOcean428/monkey-coder/issues"
 
 [tool.setuptools.packages.find]
-where = ["."] 
+where = ["."]
 include = ["monkey_coder*"]
 exclude = ["tests*"]
 namespaces = false
