@@ -3,7 +3,8 @@
 ## Issues Resolved
 
 ### 1. Next.js Build Output Warnings
-The majority of workspace diagnostics were coming from the `.next/` directory containing Next.js build output. These auto-generated files were being analyzed by various linters, causing numerous warnings about:
+The majority of workspace diagnostics were coming from the `.next/` directory containing Next.js build output.
+These auto-generated files were being analyzed by various linters, causing numerous warnings about:
 - CSS inline styles
 - HTML attribute casing (React/JSX style vs HTML style)
 - Browser compatibility warnings
@@ -18,7 +19,7 @@ The majority of workspace diagnostics were coming from the `.next/` directory co
 ### 1. Updated `.prettierignore`
 Added exclusions for Next.js build directories:
 
-```
+```text
 .next/
 out/
 ```
@@ -31,7 +32,7 @@ Added to `ignorePatterns`:
 'out/',
 ```
 
-### 3. Updated `.vscode/settings.json`
+### 3. Updated `.vscode/settings.JSON`
 Added comprehensive exclusions:
 - `search.exclude`: Added `.next` and `out`
 - `files.exclude`: Hide these directories in VS Code explorer
@@ -56,4 +57,7 @@ These changes ensure that:
 - The `.next/` directory remains in `.gitignore` (verified)
 
 ## Note
-The warnings about Next.js build output are normal when using `output: 'export'` mode, which generates static HTML. The linters were analyzing these files as if they were hand-written HTML/JavaScript, which caused false positives. By excluding these directories from analysis, we maintain clean diagnostics while allowing Next.js to generate its optimized output.
+The warnings about Next.js build output are normal when using `output: 'export'` mode, which generates static HTML.
+The linters were analyzing these files as if they were hand-written HTML/JavaScript, which caused false positives.
+By excluding these directories from analysis, we maintain clean diagnostics while allowing Next.js to generate its
+optimized output.
