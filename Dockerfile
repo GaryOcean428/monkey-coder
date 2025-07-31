@@ -4,24 +4,15 @@ FROM node:18-alpine AS web-builder
 # Install system dependencies for Alpine
 RUN apk add --no-cache libc6-compat
 
-WORKDIR /app
-
-# Enable Corepack and set Yarn version to 4.9.2
-RUN corepack enable && corepack prepare yarn@4.9.2 --activate
-
-# Copy workspace configuration files
-COPY package.json yarn.lock ./
-
-# Copy web package.json 
-COPY packages/web/package.json ./packages/web/
-
-# Install dependencies for workspace (must run from root for workspaces)
-RUN yarn install --frozen-lockfile
-
-# Set working directory to web package
 WORKDIR /app/packages/web
 
-# Copy all web source files including src directory
+# Copy web package.json
+COPY packages/web/package.json ./
+
+# Install dependencies with npm (ignoring peer dependency warnings)
+RUN npm install --legacy-peer-deps --production=false
+
+# Copy web source files
 COPY packages/web/ ./
 
 # Clean any existing build artifacts to ensure fresh build
@@ -39,7 +30,7 @@ RUN echo "=== Web package structure ===" && \
 ENV NODE_ENV=production
 
 # Build Next.js with proper static export (fresh build)
-RUN yarn build
+RUN npm run build
 
 # Verify build output exists
 RUN ls -la out/ || (echo "Build failed: no output directory" && exit 1)
