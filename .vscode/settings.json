@@ -12,7 +12,7 @@
     "editor.inlayHints.padding": true,
     "editor.inlineCompletionsAccessibilityVerbose": false,
     "editor.linkedEditing": true,
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "files.autoSave": "afterDelay",
     "editor.formatOnPaste": true,
     "editor.tabCompletion": "on",
@@ -89,5 +89,6 @@
     "chat.mcp.autostart": "newAndOutdated",
     "chat.edits2.enabled": true,
     "chat.editor.wordWrap": "on",
-    "chat.agent.maxRequests": 200
+    "chat.agent.maxRequests": 200,
+    "java.format.onType.enabled": false
 }
