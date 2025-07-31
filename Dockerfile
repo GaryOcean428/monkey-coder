@@ -4,36 +4,51 @@ FROM node:18-alpine AS web-builder
 # Install system dependencies for Alpine
 RUN apk add --no-cache libc6-compat
 
-WORKDIR /app/packages/web
+# Enable Corepack to use the correct Yarn version
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy root-level yarn configuration for workspace
+COPY yarn.lock ./
+COPY .yarnrc.yml ./
+COPY package.json ./
 
 # Copy web package.json
-COPY packages/web/package.json ./
+COPY packages/web/package.json ./packages/web/
 
-# Install dependencies with npm (ignoring peer dependency warnings)
-RUN npm install --legacy-peer-deps --production=false
+# Install dependencies with Yarn (project's preferred package manager)
+# First update lockfile to resolve conflicts, then install dependencies
+RUN yarn install --mode=update-lockfile && yarn install
 
 # Copy web source files
-COPY packages/web/ ./
+COPY packages/web/ ./packages/web/
 
 # Clean any existing build artifacts to ensure fresh build
 RUN rm -rf .next out build dist
 
-# Debug: Show directory structure for troubleshooting
+# Enhanced debugging for Railway build troubleshooting
 RUN echo "=== Web package structure ===" && \
-    ls -la && \
+    ls -la packages/web/ && \
     echo "=== Source directory structure ===" && \
-    ls -la src/ && \
+    ls -la packages/web/src/ && \
     echo "=== Lib directory check ===" && \
-    ls -la src/lib/ || echo "No lib directory found"
+    ls -la packages/web/src/lib/ && \
+    echo "=== Utils file verification ===" && \
+    ls -la packages/web/src/lib/utils.ts && \
+    echo "=== Package.json verification ===" && \
+    cat packages/web/package.json | grep -A 5 -B 5 "clsx\|tailwind-merge" && \
+    echo "=== Node modules verification ===" && \
+    ls -la node_modules/clsx node_modules/tailwind-merge 2>/dev/null || echo "Missing critical dependencies"
 
 # Set NODE_ENV for production build
 ENV NODE_ENV=production
 
 # Build Next.js with proper static export (fresh build)
-RUN npm run build
+RUN cd packages/web && yarn build
 
 # Verify build output exists
-RUN ls -la out/ || (echo "Build failed: no output directory" && exit 1)
+RUN ls -la packages/web/out/ || (echo "Build failed: no output directory" && exit 1)
 
 # Stage 2: Production Python Backend
 FROM python:3.11-slim AS production
