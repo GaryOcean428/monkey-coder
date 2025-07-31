@@ -19,7 +19,7 @@
     "auto-close-tag.insertSpaceBeforeSelfClosingTag": true,
     "auto-close-tag.SublimeText3Mode": true,
     "jdk.advanced.disable.nbjavac": false,
-    
+
     "python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
     "python.terminal.activateEnvironment": false,
     "python.analysis.extraPaths": [
@@ -32,7 +32,7 @@
     "typescript.suggest.autoImports": true,
     "eslint.workingDirectories": [
         "packages/cli",
-        "packages/web", 
+        "packages/web",
         "packages/sdk",
         "docs"
     ],
@@ -54,5 +54,9 @@
     "workbench.colorCustomizations": {
         "activityBar.background": "#2D3748",
         "activityBar.foreground": "#ffffff"
-    }
+    },
+    "chat.mcp.autostart": "newAndOutdated",
+    "chat.edits2.enabled": true,
+    "chat.editor.wordWrap": "on",
+    "chat.agent.maxRequests": 200
 }

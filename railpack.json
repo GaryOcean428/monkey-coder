@@ -2,7 +2,7 @@
   "$schema": "https://schema.railpack.com",
   "providers": ["docker"],
   "build": {
-    "dockerfile": "Dockerfile.unified"
+    "dockerfile": "Dockerfile"
   },
   "start": {
     "cmd": "python -m packages.core.monkey_coder.app.main"
