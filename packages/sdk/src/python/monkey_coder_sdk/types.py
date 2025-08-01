@@ -26,7 +26,7 @@ class TaskType(str, Enum):
 
 
 class PersonaType(str, Enum):
-    """SuperClaude persona types."""
+    """Monkey Coder persona types."""
     DEVELOPER = "developer"
     ARCHITECT = "architect"
     REVIEWER = "reviewer"
@@ -74,8 +74,8 @@ class ExecutionContext:
 
 
 @dataclass
-class SuperClaudeConfig:
-    """Configuration for SuperClaude slash-command & persona router."""
+class PersonaConfig:
+    """Configuration for Monkey Coder persona routing and specialization."""
     persona: PersonaType
     slash_commands: List[str] = field(default_factory=list)
     context_window: int = 32768
@@ -84,8 +84,8 @@ class SuperClaudeConfig:
 
 
 @dataclass
-class Monkey1Config:
-    """Configuration for monkey1 multi-agent orchestrator."""
+class OrchestrationConfig:
+    """Configuration for multi-agent orchestration system."""
     agent_count: int = 3
     coordination_strategy: str = "collaborative"
     consensus_threshold: float = 0.7
@@ -98,8 +98,8 @@ class Monkey1Config:
 
 
 @dataclass
-class Gary8DConfig:
-    """Configuration for Gary8D functional-quantum executor."""
+class QuantumConfig:
+    """Configuration for quantum execution system."""
     parallel_futures: bool = True
     collapse_strategy: str = "weighted_average"
     quantum_coherence: float = 0.8
@@ -125,11 +125,11 @@ class ExecuteRequest:
     task_type: TaskType
     prompt: str
     context: ExecutionContext
-    superclaude_config: SuperClaudeConfig
+    persona_config: PersonaConfig
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     files: Optional[List[FileData]] = None
-    monkey1_config: Optional[Monkey1Config] = None
-    gary8d_config: Optional[Gary8DConfig] = None
+    orchestration_config: Optional[OrchestrationConfig] = None
+    quantum_config: Optional[QuantumConfig] = None
     preferred_providers: Optional[List[ProviderType]] = None
     model_preferences: Optional[Dict[ProviderType, str]] = None
 

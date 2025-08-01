@@ -9,9 +9,9 @@ from typing import List, Optional, Dict
 from .types import (
     ExecuteRequest,
     ExecutionContext,
-    SuperClaudeConfig,
-    Monkey1Config,
-    Gary8DConfig,
+    PersonaConfig,
+    OrchestrationConfig,
+    QuantumConfig,
     TaskType,
     PersonaType,
     ProviderType,
@@ -39,13 +39,13 @@ def create_execute_request(
     Returns:
         ExecuteRequest object
     """
-    superclaude_config = SuperClaudeConfig(persona=persona)
+    persona_config = PersonaConfig(persona=persona)
     
     return ExecuteRequest(
         task_type=task_type,
         prompt=prompt,
         context=context,
-        superclaude_config=superclaude_config,
+        persona_config=persona_config,
         **kwargs
     )
 
