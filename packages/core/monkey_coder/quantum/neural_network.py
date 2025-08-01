@@ -66,8 +66,11 @@ class DQNNetwork:
             self.model = self._build_numpy_model()
             logger.warning("TensorFlow not available, using numpy-based fallback network")
     
-    def _build_tensorflow_model(self) -> keras.Model:
+    def _build_tensorflow_model(self):
         """Build the neural network using TensorFlow/Keras."""
+        if not TENSORFLOW_AVAILABLE or keras is None:
+            raise RuntimeError("TensorFlow is not available")
+            
         model = keras.Sequential()
         
         # Input layer
