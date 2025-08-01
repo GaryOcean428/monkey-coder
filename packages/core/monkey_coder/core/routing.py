@@ -1,12 +1,12 @@
 """
-Advanced Router System (Gary8D-inspired) for intelligent model and persona selection.
+Advanced Router System for intelligent model and persona selection.
 
 This module implements sophisticated routing logic with:
 - Complexity analysis and scoring
 - Context-aware model selection
 - Capability matching with provider models
-- SuperClaude persona integration
-- Slash-command parsing and routing
+- Persona-based routing integration
+- Command parsing and optimization
 """
 
 import re
@@ -55,13 +55,13 @@ class ModelCapabilities:
 
 class AdvancedRouter:
     """
-    Gary8D-inspired Advanced Router with quantum-inspired decision making.
+    Advanced Router with quantum-inspired decision making.
     
     Features:
     - Multi-dimensional complexity analysis
     - Context-aware persona selection
     - Dynamic capability scoring
-    - SuperClaude slash-command integration
+    - Intelligent command parsing and routing
     - Cost-performance optimization
     """
     

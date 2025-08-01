@@ -76,7 +76,7 @@ class Context(BaseModel):
     max_tokens: Optional[int] = 4096
     temperature: Optional[float] = 0.7
 
-class SuperClaudeConfig(BaseModel):
+class PersonaConfig(BaseModel):
     persona: str = "assistant"
     slash_commands: list = []
     context_window: int = 32768
@@ -89,7 +89,7 @@ class ExecuteRequest(BaseModel):
     prompt: str = Field(..., description="Task or code generation prompt")
     files: Optional[list[FileData]] = Field(default=[], description="Input files")
     context: Context
-    superclaude_config: SuperClaudeConfig
+    persona_config: PersonaConfig
     preferred_providers: list[str] = ["openai"]
     model_preferences: Dict[str, str] = {}
     model_config: Optional[Dict[str, Any]] = {}
@@ -133,7 +133,7 @@ async def execute_task(
     logger.info(f"Executing task {task_id} for API key {api_key[:15]}...")
     
     # Mock response for development
-    persona = request.superclaude_config.persona
+    persona = request.persona_config.persona
     task_type = request.task_type
     
     if task_type == 'chat':
@@ -180,7 +180,7 @@ async def execute_task_stream(
         await asyncio.sleep(0.2)  # Small delay for realism
         
         # Mock response for development
-        persona = request.superclaude_config.persona
+        persona = request.persona_config.persona
         task_type = request.task_type
         
         if task_type == 'chat':

@@ -1,8 +1,8 @@
 """
 Enhanced Orchestration Coordinator
 
-Implements advanced orchestration patterns from reference projects monkey1 and Gary8D
-for improved task coordination, agent handoff, and execution strategies.
+Implements advanced orchestration patterns for improved task coordination, 
+agent handoff, and execution strategies.
 """
 
 import asyncio
@@ -238,9 +238,9 @@ class OrchestrationCoordinator:
                 completed_at=datetime.utcnow(),
                 usage=None,  # Will be populated by actual execution
                 execution_time=None,  # Will be populated by actual execution
-                superclause_routing=context.shared_context.get("persona_routing", {}),
-                monkey1_orchestration=context.get_context_summary(),
-                gary8d_execution=context.metadata
+                persona_routing=context.shared_context.get("persona_routing", {}),
+                orchestration_info=context.get_context_summary(),
+                quantum_execution=context.metadata
             )
 
             logger.info(f"Orchestration completed successfully: {context.orchestration_id}")
@@ -259,9 +259,9 @@ class OrchestrationCoordinator:
                 completed_at=datetime.utcnow(),
                 usage=None,  # No usage for failed execution
                 execution_time=None,  # Will be populated by actual execution
-                superclause_routing={},  # Empty for error case
-                monkey1_orchestration=context.get_context_summary(),
-                gary8d_execution={}  # Empty for error case
+                persona_routing={},  # Empty for error case
+                orchestration_info=context.get_context_summary(),
+                quantum_execution={}  # Empty for error case
             )
 
         finally:
@@ -323,9 +323,9 @@ class OrchestrationCoordinator:
 
         # Configuration complexity
         config_sections = [
-            request.superclaude_config,
-            request.monkey1_config,
-            request.gary8d_config
+            request.persona_config,
+            request.orchestration_config,
+            request.quantum_config
         ]
 
         active_configs = sum(1 for config in config_sections if config is not None)
