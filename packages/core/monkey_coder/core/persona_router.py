@@ -1,5 +1,5 @@
 """
-PersonaRouter module for SuperClaude slash-command & persona integration.
+PersonaRouter module for Monkey Coder persona integration.
 
 This module provides the interface between the main application and the 
 AdvancedRouter system, focusing on persona-based routing decisions with
@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 
 class PersonaRouter:
     """
-    Persona-focused router interface for SuperClaude integration.
+    Persona-focused router interface for Monkey Coder integration.
     
     This class wraps the AdvancedRouter to provide persona-specific 
-    routing functionality with SuperClaude slash-command support and
+    routing functionality with enhanced slash-command support and
     enhanced validation for edge cases like single-word inputs.
     """
     

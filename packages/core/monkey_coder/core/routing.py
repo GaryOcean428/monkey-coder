@@ -421,57 +421,51 @@ class AdvancedRouter:
             specializations=["general", "coding", "fast", "vision"]
         )
         
-        # Anthropic models
-        capabilities[(ProviderType.ANTHROPIC, "claude-4-opus")] = ModelCapabilities(
+        # Anthropic models (using exact registry names)
+        capabilities[(ProviderType.ANTHROPIC, "claude-opus-4-20250514")] = ModelCapabilities(
             code_generation=0.96, reasoning=0.97, context_window=200000,
             latency_ms=3000, cost_per_token=0.015, reliability=0.95,
             specializations=["coding", "analysis", "long_context", "reasoning"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-4-sonnet")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-sonnet-4-20250514")] = ModelCapabilities(
             code_generation=0.92, reasoning=0.94, context_window=200000,
             latency_ms=2500, cost_per_token=0.003, reliability=0.93,
             specializations=["coding", "analysis", "long_context", "balanced"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3.7-sonnet")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3-7-sonnet-20250219")] = ModelCapabilities(
             code_generation=0.90, reasoning=0.92, context_window=200000,
             latency_ms=2200, cost_per_token=0.0025, reliability=0.92,
             specializations=["coding", "analysis", "improved"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-sonnet")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-sonnet-20241022")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=200000,
             latency_ms=2000, cost_per_token=0.002, reliability=0.90,
             specializations=["coding", "stable", "reliable"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-haiku")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-haiku-20241022")] = ModelCapabilities(
             code_generation=0.80, reasoning=0.82, context_window=200000,
             latency_ms=800, cost_per_token=0.0008, reliability=0.88,
             specializations=["fast", "efficient", "basic_coding"]
         )
         
-        # Google models
+        # Google models (using exact registry names)
         capabilities[(ProviderType.GOOGLE, "gemini-2.5-pro")] = ModelCapabilities(
             code_generation=0.93, reasoning=0.95, context_window=2000000,
             latency_ms=2500, cost_per_token=0.0025, reliability=0.92,
             specializations=["multimodal", "long_context", "reasoning"]
         )
         
-        capabilities[(ProviderType.GOOGLE, "gemini-2.5-flash")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-flash")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=1000000,
             latency_ms=1200, cost_per_token=0.001, reliability=0.87,
             specializations=["multimodal", "long_context", "fast"]
         )
         
-        capabilities[(ProviderType.GOOGLE, "gemini-2.0-pro")] = ModelCapabilities(
-            code_generation=0.90, reasoning=0.92, context_window=1000000,
-            latency_ms=2200, cost_per_token=0.002, reliability=0.90,
-            specializations=["multimodal", "long_context", "stable"]
-        )
-        
-        capabilities[(ProviderType.GOOGLE, "gemini-2.0-flash")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "models/gemini-2.0-flash")] = ModelCapabilities(
             code_generation=0.85, reasoning=0.87, context_window=1000000,
             latency_ms=1000, cost_per_token=0.0008, reliability=0.85,
             specializations=["multimodal", "fast", "efficient"]
@@ -484,8 +478,8 @@ class AdvancedRouter:
             specializations=["coding", "fast_hardware", "multilingual"]
         )
         
-        # Grok models
-        capabilities[(ProviderType.GROK, "grok-4")] = ModelCapabilities(
+        # Grok models (using exact registry names)
+        capabilities[(ProviderType.GROK, "grok-4-latest")] = ModelCapabilities(
             code_generation=0.93, reasoning=0.95, context_window=131072,
             latency_ms=2500, cost_per_token=0.003, reliability=0.92,
             specializations=["reasoning", "coding", "analysis"]
@@ -526,6 +520,40 @@ class AdvancedRouter:
             code_generation=0.90, reasoning=0.92, context_window=200000,
             latency_ms=1000, cost_per_token=0.0001, reliability=0.90,
             specializations=["long_context", "fast_hardware", "multilingual"]
+        )
+        
+        # Additional OpenAI models
+        capabilities[(ProviderType.OPENAI, "gpt-4.1-nano")] = ModelCapabilities(
+            code_generation=0.80, reasoning=0.85, context_window=131072,
+            latency_ms=800, cost_per_token=0.00008, reliability=0.88,
+            specializations=["general", "coding", "nano", "fast"]
+        )
+        
+        # OpenAI reasoning models
+        capabilities[(ProviderType.OPENAI, "o1")] = ModelCapabilities(
+            code_generation=0.92, reasoning=0.99, context_window=200000,
+            latency_ms=15000, cost_per_token=0.015, reliability=0.95,
+            specializations=["reasoning", "complex_problems", "deep_thinking"]
+        )
+        
+        capabilities[(ProviderType.OPENAI, "o1-mini")] = ModelCapabilities(
+            code_generation=0.88, reasoning=0.95, context_window=131072,
+            latency_ms=8000, cost_per_token=0.003, reliability=0.92,
+            specializations=["reasoning", "coding", "math", "fast_reasoning"]
+        )
+        
+        # Additional Google models
+        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-flash-lite")] = ModelCapabilities(
+            code_generation=0.82, reasoning=0.85, context_window=1000000,
+            latency_ms=800, cost_per_token=0.0005, reliability=0.83,
+            specializations=["multimodal", "lite", "efficient"]
+        )
+        
+        # Additional Grok models
+        capabilities[(ProviderType.GROK, "grok-3-mini")] = ModelCapabilities(
+            code_generation=0.82, reasoning=0.85, context_window=32768,
+            latency_ms=1500, cost_per_token=0.001, reliability=0.85,
+            specializations=["reasoning", "coding", "mini", "efficient"]
         )
         
         return capabilities

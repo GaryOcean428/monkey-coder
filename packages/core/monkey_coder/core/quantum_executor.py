@@ -1,8 +1,8 @@
 """
-QuantumExecutor module for Gary8D quantum-inspired execution.
+QuantumExecutor module for quantum-inspired execution system.
 
 This module handles execution of tasks according to the quantum-influenced 
-strategy developed for superior parallelism and decision making with Gary8D.
+strategy for superior parallelism and decision making.
 """
 
 import logging
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class QuantumExecutor:
     """
-    Quantum-inspired executor for task execution with Gary8D framework.
+    Quantum-inspired executor for task execution.
     
     Features:
     - Parallel execution using quantum-influenced strategies

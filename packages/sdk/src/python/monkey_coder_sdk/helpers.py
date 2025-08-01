@@ -33,7 +33,7 @@ def create_execute_request(
         task_type: Type of task to execute
         prompt: Task prompt or description
         context: Execution context
-        persona: SuperClaude persona type
+        persona: Monkey Coder persona type
         **kwargs: Additional ExecuteRequest fields
     
     Returns:
@@ -284,7 +284,7 @@ def create_multi_agent_config(
     consensus_threshold: float = 0.7,
     enable_reflection: bool = True,
     max_iterations: int = 5
-) -> Monkey1Config:
+) -> OrchestrationConfig:
     """
     Create a multi-agent configuration for complex tasks.
     
@@ -296,9 +296,9 @@ def create_multi_agent_config(
         max_iterations: Maximum orchestration iterations
     
     Returns:
-        Monkey1Config object
+        OrchestrationConfig object
     """
-    return Monkey1Config(
+    return OrchestrationConfig(
         agent_count=agent_count,
         coordination_strategy=coordination_strategy,
         consensus_threshold=consensus_threshold,
@@ -313,7 +313,7 @@ def create_quantum_config(
     quantum_coherence: float = 0.8,
     execution_branches: int = 3,
     uncertainty_threshold: float = 0.1
-) -> Gary8DConfig:
+) -> QuantumConfig:
     """
     Create a quantum execution configuration.
     
@@ -325,9 +325,9 @@ def create_quantum_config(
         uncertainty_threshold: Threshold for uncertainty handling
     
     Returns:
-        Gary8DConfig object
+        QuantumConfig object
     """
-    return Gary8DConfig(
+    return QuantumConfig(
         parallel_futures=parallel_futures,
         collapse_strategy=collapse_strategy,
         quantum_coherence=quantum_coherence,

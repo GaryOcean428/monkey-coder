@@ -2,7 +2,7 @@
 Test suite for Enhanced DQN Agent
 
 This module tests the DQN routing agent implementation,
-ensuring it follows the patterns from monkey1 and meets
+ensuring it follows proven multi-agent patterns and meets
 the requirements for quantum routing.
 """
 

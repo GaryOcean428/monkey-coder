@@ -1,5 +1,5 @@
 """
-MultiAgentOrchestrator for monkey1 multi-agent system.
+MultiAgentOrchestrator for multi-agent orchestration system.
 
 This module orchestrates multiple agents in a collaborative manner
 for complex task execution and coordination with enhanced orchestration patterns.
