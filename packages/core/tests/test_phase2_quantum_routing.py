@@ -14,7 +14,10 @@ import numpy as np
 from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any
 
-from monkey_coder.models import ExecuteRequest, PersonaType, ProviderType, TaskType
+from monkey_coder.models import (
+    ExecuteRequest, PersonaType, ProviderType, TaskType,
+    ExecutionContext, PersonaConfig, OrchestrationConfig, QuantumConfig
+)
 from monkey_coder.quantum import (
     DQNRoutingAgent,
     RoutingState,
@@ -26,6 +29,23 @@ from monkey_coder.quantum import (
 )
 from monkey_coder.quantum.router_integration import QuantumRouterIntegration
 from monkey_coder.quantum.neural_network import DQNNetwork, NumpyDQNModel
+
+def create_test_execute_request(prompt: str, task_type: TaskType) -> ExecuteRequest:
+    """Create a valid ExecuteRequest object for testing."""
+    return ExecuteRequest(
+        prompt=prompt,
+        task_type=task_type,
+        context=ExecutionContext(
+            user_id="test_user",
+            session_id="test_session",
+            environment="test"
+        ),
+        persona_config=PersonaConfig(
+            persona=PersonaType.DEVELOPER
+        ),
+        orchestration_config=OrchestrationConfig(),
+        quantum_config=QuantumConfig()
+    )
 
 
 class TestDQNNetworkImplementation:
@@ -193,9 +213,9 @@ class TestQuantumRoutingManager:
     @pytest.mark.asyncio
     async def test_routing_strategy_execution(self):
         """Test execution of different routing strategies."""
-        request = ExecuteRequest(
-            prompt="Create a Python function for data processing",
-            task_type=TaskType.CODE_GENERATION
+        request = create_test_execute_request(
+            "Create a Python function for data processing",
+            TaskType.CODE_GENERATION
         )
         
         # Test task-optimized routing
@@ -211,9 +231,9 @@ class TestQuantumRoutingManager:
     @pytest.mark.asyncio
     async def test_quantum_routing_execution(self):
         """Test full quantum routing with multiple strategies."""
-        request = ExecuteRequest(
-            prompt="Analyze code performance and suggest optimizations",
-            task_type=TaskType.CODE_ANALYSIS
+        request = create_test_execute_request(
+            "Analyze code performance and suggest optimizations",
+            TaskType.CODE_ANALYSIS
         )
         
         result = await self.manager.route_with_quantum_strategies(
@@ -231,9 +251,9 @@ class TestQuantumRoutingManager:
     
     def test_routing_state_conversion(self):
         """Test conversion of request to routing state."""
-        request = ExecuteRequest(
-            prompt="Debug this Python code",
-            task_type=TaskType.DEBUGGING
+        request = create_test_execute_request(
+            "Debug this Python code",
+            TaskType.DEBUGGING
         )
         
         routing_state = self.manager._request_to_routing_state(request)
@@ -363,24 +383,28 @@ class TestPerformanceMetricsCollector:
 class TestRouterIntegration:
     """Test the quantum router integration layer."""
     
+    @pytest.fixture(autouse=True)
     def setup_method(self):
         """Setup test fixtures."""
-        self.integration = QuantumRouterIntegration(
+        # Use async-safe initialization
+        pass
+    
+    @pytest.mark.asyncio
+    async def test_quantum_routing_integration(self):
+        """Test integrated quantum routing."""
+        # Create integration inside async context to avoid event loop issues
+        integration = QuantumRouterIntegration(
             enable_quantum=True,
             quantum_timeout=5.0,
             fallback_on_failure=True,
             performance_comparison=False  # Disable for simpler testing
         )
-    
-    @pytest.mark.asyncio
-    async def test_quantum_routing_integration(self):
-        """Test integrated quantum routing."""
-        request = ExecuteRequest(
-            prompt="Write a unit test for this function",
-            task_type=TaskType.TESTING
+        request = create_test_execute_request(
+            "Write a unit test for this function",
+            TaskType.TESTING
         )
         
-        decision = await self.integration.route_request(request, force_method="quantum")
+        decision = await integration.route_request(request, force_method="quantum")
         
         assert decision.provider is not None
         assert decision.model is not None
@@ -389,12 +413,18 @@ class TestRouterIntegration:
     @pytest.mark.asyncio
     async def test_classic_routing_fallback(self):
         """Test fallback to classic routing."""
-        request = ExecuteRequest(
-            prompt="Review this code for security issues",
-            task_type=TaskType.CODE_REVIEW
+        integration = QuantumRouterIntegration(
+            enable_quantum=True,
+            quantum_timeout=5.0,
+            fallback_on_failure=True,
+            performance_comparison=False
+        )
+        request = create_test_execute_request(
+            "Review this code for security issues",
+            TaskType.CODE_REVIEW
         )
         
-        decision = await self.integration.route_request(request, force_method="classic")
+        decision = await integration.route_request(request, force_method="classic")
         
         assert decision.provider is not None
         assert decision.model is not None
@@ -402,9 +432,9 @@ class TestRouterIntegration:
     
     def test_routing_method_determination(self):
         """Test routing method determination logic."""
-        request = ExecuteRequest(
-            prompt="Test request",
-            task_type=TaskType.CODE_GENERATION
+        request = create_test_execute_request(
+            "Test request",
+            TaskType.CODE_GENERATION
         )
         
         # Test forced method
@@ -462,9 +492,9 @@ class TestEndToEndIntegration:
         )
         
         # Create test request
-        request = ExecuteRequest(
-            prompt="Create a comprehensive data validation system with error handling",
-            task_type=TaskType.CODE_GENERATION
+        request = create_test_execute_request(
+            "Create a comprehensive data validation system with error handling",
+            TaskType.CODE_GENERATION
         )
         
         # Execute routing
@@ -488,7 +518,7 @@ class TestEndToEndIntegration:
         
         # Simulate multiple routing requests for learning
         requests = [
-            ExecuteRequest(prompt=f"Test request {i}", task_type=TaskType.CODE_GENERATION)
+            create_test_execute_request(f"Test request {i}", TaskType.CODE_GENERATION)
             for i in range(5)
         ]
         
@@ -531,9 +561,9 @@ class TestPerformanceBenchmarks:
         import time
         start_time = time.time()
         
-        request = ExecuteRequest(
-            prompt="Benchmark test request",
-            task_type=TaskType.CODE_GENERATION
+        request = create_test_execute_request(
+            "Benchmark test request",
+            TaskType.CODE_GENERATION
         )
         
         await integration.route_request(request, force_method="quantum")
