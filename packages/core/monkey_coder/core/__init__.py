@@ -2,10 +2,10 @@
 Core modules for Monkey Coder orchestration engine.
 
 This package contains the core components:
-- AdvancedRouter: Gary8D-inspired routing system
-- PersonaRouter: SuperClaude persona integration
-- MultiAgentOrchestrator: monkey1 coordination system
-- QuantumExecutor: Gary8D execution engine
+- AdvancedRouter: Intelligent routing system with quantum decision making
+- PersonaRouter: Persona-based routing integration  
+- MultiAgentOrchestrator: Multi-agent coordination system
+- QuantumExecutor: Advanced quantum execution engine
 """
 
 from .routing import AdvancedRouter, RoutingDecision, ComplexityLevel, ContextType

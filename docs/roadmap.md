@@ -169,7 +169,7 @@ ModelValidator.BLOCKED_MODELS = {
 - [ ] **Type Safety Improvements** - Replace `any` types, add comprehensive TypeScript interfaces, Python type hints `S`
   - [ ] TypeScript: Replace all `any` types with proper interfaces
   - [ ] Python: Add comprehensive type hints across all modules
-  - [ ] API Models: Fix naming inconsistencies (superclause_config)
+  - [x] API Models: Fix naming inconsistencies (superclause_config → persona_config) ✅
   - [ ] Request Models: Split heavy ExecuteRequest model into focused components
 
 ### Important Improvements (Priority 1 - Should Complete)

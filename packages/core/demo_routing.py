@@ -2,11 +2,11 @@
 """
 Demonstration script for the AdvancedRouter system.
 
-This script shows how the Gary8D-inspired AdvancedRouter works with:
+This script shows how the intelligent AdvancedRouter works with:
 - Complexity analysis and scoring
 - Context-aware model selection
-- SuperClaude persona integration
-- Slash-command parsing
+- Persona-based routing integration
+- Command parsing and optimization
 """
 
 import json
@@ -15,7 +15,7 @@ from monkey_coder.models import (
     TaskType,
     PersonaType,
     ExecutionContext,
-    SuperClaudeConfig,
+    PersonaConfig,
 )
 from monkey_coder.core.routing import AdvancedRouter
 
@@ -28,7 +28,7 @@ def demonstrate_routing():
     
     # Create context for requests
     context = ExecutionContext(user_id="demo_user")
-    superclaude_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+    persona_config = PersonaConfig(persona=PersonaType.DEVELOPER)
     
     # Sample prompts demonstrating different complexity levels and contexts
     sample_prompts = [
@@ -77,7 +77,7 @@ def demonstrate_routing():
             prompt=sample["prompt"],
             task_type=sample["task_type"],
             context=context,
-            superclaude_config=superclaude_config,
+            persona_config=persona_config,
             files=sample.get("files", [])
         )
         
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         print("🎯 Key Features Demonstrated:")
         print("  • Complexity analysis and classification")
         print("  • Context-aware model selection")
-        print("  • SuperClaude persona integration")
+        print("  • Persona-based routing integration")
         print("  • Slash-command parsing and routing")
         print("  • Cost-performance optimization")
         

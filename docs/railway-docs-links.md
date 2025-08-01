@@ -140,7 +140,7 @@ requested):
 <https://e2b.dev/docs/cli/auth> <https://e2b.dev/docs/cli/list-sandboxes>
 <https://e2b.dev/docs/cli/shutdown-sandboxes>
 
-# Gary8D Railway Deployment Status
+# Monkey Coder Railway Deployment Status
 
 ## Deployment History
 

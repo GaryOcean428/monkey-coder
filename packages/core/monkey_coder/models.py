@@ -47,7 +47,7 @@ class ProviderType(str, Enum):
 
 
 class PersonaType(str, Enum):
-    """SuperClaude persona types."""
+    """Monkey Coder persona types for specialized AI assistance."""
 
     DEVELOPER = "developer"
     ARCHITECT = "architect"
@@ -85,8 +85,8 @@ class ExecutionContext(BaseModel):
         return v
 
 
-class SuperClaudeConfig(BaseModel):
-    """Configuration for SuperClaude slash-command & persona router."""
+class PersonaConfig(BaseModel):
+    """Configuration for Monkey Coder persona routing and specialization."""
 
     persona: PersonaType = Field(..., description="Persona type for task execution")
     slash_commands: List[str] = Field(
@@ -101,8 +101,8 @@ class SuperClaudeConfig(BaseModel):
     )
 
 
-class Monkey1Config(BaseModel):
-    """Configuration for monkey1 multi-agent orchestrator."""
+class OrchestrationConfig(BaseModel):
+    """Configuration for multi-agent orchestration system."""
 
     agent_count: int = Field(default=3, description="Number of agents")
     coordination_strategy: str = Field(
@@ -124,8 +124,8 @@ class Monkey1Config(BaseModel):
         return v
 
 
-class Gary8DConfig(BaseModel):
-    """Configuration for Gary8D functional-quantum executor."""
+class QuantumConfig(BaseModel):
+    """Configuration for quantum execution system."""
 
     parallel_futures: bool = Field(
         default=True, description="Enable parallel execution"
@@ -161,14 +161,14 @@ class ExecuteRequest(BaseModel):
 
     # Configuration sections
     context: ExecutionContext = Field(..., description="Execution context")
-    superclaude_config: SuperClaudeConfig = Field(
-        ..., description="SuperClaude configuration"
+    persona_config: PersonaConfig = Field(
+        ..., description="Persona configuration"
     )
-    monkey1_config: Monkey1Config = Field(
-        default_factory=Monkey1Config, description="Monkey1 configuration"
+    orchestration_config: OrchestrationConfig = Field(
+        default_factory=OrchestrationConfig, description="Multi-agent orchestration configuration"
     )
-    gary8d_config: Gary8DConfig = Field(
-        default_factory=Gary8DConfig, description="Gary8D configuration"
+    quantum_config: QuantumConfig = Field(
+        default_factory=QuantumConfig, description="Quantum execution configuration"
     )
 
     # Provider preferences
@@ -238,14 +238,14 @@ class ExecuteResponse(BaseModel):
     execution_time: Optional[float] = Field(None, description="Total execution time")
 
     # Integration info
-    superclause_routing: Dict[str, Any] = Field(
-        default_factory=dict, description="SuperClaude routing info"
+    persona_routing: Dict[str, Any] = Field(
+        default_factory=dict, description="Persona routing info"
     )
-    monkey1_orchestration: Dict[str, Any] = Field(
-        default_factory=dict, description="Monkey1 orchestration info"
+    orchestration_info: Dict[str, Any] = Field(
+        default_factory=dict, description="Multi-agent orchestration info"
     )
-    gary8d_execution: Dict[str, Any] = Field(
-        default_factory=dict, description="Gary8D execution info"
+    quantum_execution: Dict[str, Any] = Field(
+        default_factory=dict, description="Quantum execution info"
     )
 
 
