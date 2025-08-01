@@ -79,7 +79,7 @@ export function Hero() {
         {/* Code Preview */}
         <div className="mt-16 flow-root sm:mt-24">
           <div className="relative rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
-            <div className="rounded-md bg-gray-900 p-4 text-sm text-gray-300 shadow-2xl ring-1 ring-white/10">
+            <div className="rounded-md bg-gray-900 p-4 text-sm text-gray-300 shadow-2xl ring-1 ring-white/10 neon-code-preview">
               <pre className="overflow-x-auto">
                 <code>{`// Generate a REST API endpoint
 const prompt = "Create a user authentication endpoint with JWT"

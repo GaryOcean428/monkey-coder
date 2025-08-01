@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-[#1a1f2e] backdrop-blur
-                      supports-[backdrop-filter]:bg-[#1a1f2e]/90 neon-header">
+                      supports-[backdrop-filter]:bg-[#1a1f2e]/90 neon-header neon-nav-border">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4
                       xs:p-5
                       sm:p-6
