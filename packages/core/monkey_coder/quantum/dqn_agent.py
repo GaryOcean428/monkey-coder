@@ -188,11 +188,24 @@ class DQNRoutingAgent:
         self.routing_performance = {}  # Track performance by provider/model
         
         # Initialize Q-network and target Q-network
-        # Note: Actual neural network implementation will be added in T2.1.3
-        self.q_network = None  # Will be initialized when neural network is implemented
-        self.target_q_network = None  # Will be initialized when neural network is implemented
+        from .neural_network import create_dqn_network
         
-        logger.info(f"Initialized DQN routing agent with state_size={state_size}, action_size={action_size}")
+        self.q_network = create_dqn_network(
+            state_size=state_size,
+            action_size=action_size,
+            learning_rate=learning_rate
+        )
+        
+        self.target_q_network = create_dqn_network(
+            state_size=state_size,
+            action_size=action_size,
+            learning_rate=learning_rate
+        )
+        
+        # Initialize target network with same weights as main network
+        self.update_target_network()
+        
+        logger.info(f"Initialized DQN routing agent with neural networks: state_size={state_size}, action_size={action_size}")
     
     def remember(
         self,
@@ -240,16 +253,10 @@ class DQNRoutingAgent:
             logger.debug(f"Exploration: selected random action {action_index}")
         else:
             # Exploit: choose best action based on Q-values
-            if self.q_network is None:
-                # Fallback to random action if network not initialized
-                action_index = random.randrange(self.action_size)
-                logger.warning("Q-network not initialized, using random action")
-            else:
-                # This will be implemented when neural network is ready (T2.1.3)
-                state_vector = state.to_vector().reshape(1, -1)
-                q_values = self.q_network.predict(state_vector, verbose=0)
-                action_index = np.argmax(q_values[0])
-                logger.debug(f"Exploitation: selected action {action_index} with Q-value {q_values[0][action_index]:.3f}")
+            state_vector = state.to_vector().reshape(1, -1)
+            q_values = self.q_network.predict(state_vector, verbose=0)
+            action_index = np.argmax(q_values[0])
+            logger.debug(f"Exploitation: selected action {action_index} with Q-value {q_values[0][action_index]:.3f}")
         
         return RoutingAction.from_action_index(action_index)
     
@@ -318,10 +325,6 @@ class DQNRoutingAgent:
         if len(self.memory) < self.batch_size:
             return None
         
-        if self.q_network is None or self.target_q_network is None:
-            logger.warning("Neural networks not initialized, skipping replay")
-            return None
-        
         # Sample random minibatch from experience buffer
         minibatch = random.sample(self.memory, self.batch_size)
         
@@ -373,9 +376,6 @@ class DQNRoutingAgent:
     
     def update_target_network(self) -> None:
         """Update target Q-network with weights from main Q-network."""
-        if self.q_network is None or self.target_q_network is None:
-            return
-        
         # Copy weights from main network to target network
         self.target_q_network.set_weights(self.q_network.get_weights())
         logger.debug("Updated target network weights")
@@ -429,9 +429,8 @@ class DQNRoutingAgent:
             filepath: Path to save the model
         """        
         try:
-            # Save neural network weights (if available)
-            if self.q_network is not None:
-                self.q_network.save_weights(f"{filepath}_weights.h5")
+            # Save neural network weights
+            self.q_network.save_weights(f"{filepath}_weights.h5")
             
             # Save agent configuration and performance data
             config_data = {
@@ -478,10 +477,9 @@ class DQNRoutingAgent:
             self.routing_performance = config_data.get("routing_performance", {})
             self.training_history = config_data.get("training_history", [])
             
-            # Load neural network weights (when network is implemented)
-            if self.q_network is not None:
-                self.q_network.load_weights(f"{filepath}_weights.h5")
-                self.update_target_network()
+            # Load neural network weights
+            self.q_network.load_weights(f"{filepath}_weights.h5")
+            self.update_target_network()
             
             logger.info(f"Loaded DQN model from {filepath}")
             return True
