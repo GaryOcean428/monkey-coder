@@ -253,16 +253,45 @@
   box-shadow: 0 2px 20px rgba(0, 206, 201, 0.2);
 }
 
-/* Logo neon effect */
+/* Logo neon effect - darker and more subtle */
 .dark .neon-logo {
-  filter: drop-shadow(0 0 3px rgba(0, 206, 201, 0.8))
-          drop-shadow(0 0 6px rgba(0, 206, 201, 0.6))
-          drop-shadow(0 0 9px rgba(0, 206, 201, 0.4));
+  filter: drop-shadow(0 0 2px rgba(108, 92, 231, 0.4))
+          drop-shadow(0 0 4px rgba(108, 92, 231, 0.3))
+          drop-shadow(0 0 6px rgba(108, 92, 231, 0.2));
   transition: all 0.3s ease;
 }
 
 .dark .neon-logo:hover {
-  filter: drop-shadow(0 0 5px rgba(0, 206, 201, 1))
-          drop-shadow(0 0 10px rgba(0, 206, 201, 0.8))
-          drop-shadow(0 0 15px rgba(0, 206, 201, 0.6));
+  filter: drop-shadow(0 0 3px rgba(108, 92, 231, 0.6))
+          drop-shadow(0 0 6px rgba(108, 92, 231, 0.4))
+          drop-shadow(0 0 9px rgba(108, 92, 231, 0.3));
+}
+
+/* Subtle neon effects for dividing lines and borders */
+.dark .neon-divider {
+  border-color: rgba(108, 92, 231, 0.3);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.2),
+              0 0 16px rgba(108, 92, 231, 0.1);
+}
+
+.dark .neon-border-subtle {
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  box-shadow: 0 0 6px rgba(108, 92, 231, 0.15),
+              inset 0 0 6px rgba(108, 92, 231, 0.05);
+}
+
+/* Code preview block neon effect */
+.dark .neon-code-preview {
+  border: 1px solid rgba(108, 92, 231, 0.25);
+  background: rgba(16, 20, 38, 0.85);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 12px rgba(108, 92, 231, 0.2),
+              0 0 24px rgba(108, 92, 231, 0.1),
+              inset 0 0 12px rgba(108, 92, 231, 0.05);
+}
+
+/* Navigation and section dividers */
+.dark .neon-nav-border {
+  border-color: rgba(108, 92, 231, 0.25);
+  box-shadow: 0 1px 8px rgba(108, 92, 231, 0.15);
 }
