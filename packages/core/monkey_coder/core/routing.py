@@ -452,8 +452,8 @@ class AdvancedRouter:
             specializations=["fast", "efficient", "basic_coding"]
         )
         
-        # Google models (using exact registry names)
-        capabilities[(ProviderType.GOOGLE, "gemini-2.5-pro")] = ModelCapabilities(
+        # Google models (consistent naming with models/ prefix)
+        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-pro")] = ModelCapabilities(
             code_generation=0.93, reasoning=0.95, context_window=2000000,
             latency_ms=2500, cost_per_token=0.0025, reliability=0.92,
             specializations=["multimodal", "long_context", "reasoning"]
