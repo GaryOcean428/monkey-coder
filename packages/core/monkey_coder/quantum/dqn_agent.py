@@ -2,7 +2,7 @@
 Enhanced DQN Agent for Quantum Routing Engine
 
 This module implements a Deep Q-Network agent for intelligent AI model routing,
-building on proven patterns from the monkey1 project and adapted for the 
+building on proven multi-agent patterns and adapted for the 
 Monkey Coder platform's quantum routing requirements.
 """
 

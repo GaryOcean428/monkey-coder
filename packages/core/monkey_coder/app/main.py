@@ -4,7 +4,7 @@ FastAPI main application for Monkey Coder Core Orchestration Engine.
 This module provides the core FastAPI application with:
 - /v1/execute endpoint for task routing & quantum execution
 - /v1/billing/usage endpoint for metering
-- Integration with SuperClaude, monkey1, and Gary8D systems
+- Integration with persona routing, multi-agent orchestration, and quantum execution systems
 """
 
 import logging
@@ -905,9 +905,9 @@ async def execute_task(
     Main task execution endpoint with routing & quantum execution.
 
     This endpoint:
-    1. Routes tasks through SuperClaude slash-command & persona router
-    2. Orchestrates execution via monkey1 multi-agent system
-    3. Executes tasks using Gary8D functional-quantum executor
+    1. Routes tasks through persona slash-command & routing system
+    2. Orchestrates execution via multi-agent orchestration system
+    3. Executes tasks using quantum-inspired execution engine
     4. Tracks usage and billing metrics
 
     Args:
@@ -928,15 +928,15 @@ async def execute_task(
         # Start metrics collection
         execution_id = app.state.metrics_collector.start_execution(request)
 
-        # Route through persona system (SuperClaude integration)
+        # Route through persona system
         persona_context = await app.state.persona_router.route_request(request)
 
-        # Execute through multi-agent orchestrator (monkey1 integration)
+        # Execute through multi-agent orchestrator
         orchestration_result = await app.state.orchestrator.orchestrate(
             request, persona_context
         )
 
-        # Execute via quantum executor (Gary8D integration)
+        # Execute via quantum executor
         execution_result = await app.state.quantum_executor.execute(
             orchestration_result, parallel_futures=True
         )

@@ -172,9 +172,9 @@ class ExecuteResponse:
     completed_at: Optional[str] = None
     usage: Optional[UsageMetrics] = None
     execution_time: Optional[float] = None
-    superclause_routing: Dict[str, Any] = field(default_factory=dict)
-    monkey1_orchestration: Dict[str, Any] = field(default_factory=dict)
-    gary8d_execution: Dict[str, Any] = field(default_factory=dict)
+    persona_routing: Dict[str, Any] = field(default_factory=dict)
+    orchestration_info: Dict[str, Any] = field(default_factory=dict)
+    quantum_execution: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
