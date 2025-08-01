@@ -730,7 +730,7 @@ program.addCommand(createAuthCommand(config));
 // Add usage command
 program.addCommand(createUsageCommand(config));
 
-// Add billing command  
+// Add billing command
 program.addCommand(createBillingCommand(config));
 
 // Add MCP command
@@ -748,7 +748,6 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
 // If no command was provided, start chat mode
 if (process.argv.length === 2) {
   // Start chat with default options
-  // printSplashSync() was already called above
   process.argv.push('chat');
 }
 

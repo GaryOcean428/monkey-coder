@@ -81,7 +81,7 @@
 - **Package Management:** Yarn workspaces for monorepo structure
 
 ## AI & ML Infrastructure
-- **Model Providers:** OpenAI, Anthropic, Google GenAI, Groq, Grok
+- **Model Providers:** OpenAI, Anthropic, Google GenAI, Groq
 - **Provider Consolidation:** Qwen and Moonshot models served through Groq provider
 - **Routing Engine:** Advanced persona-aware routing with intelligent validation
 - **Orchestration Framework:** Multi-strategy coordination (Sequential, Parallel, Quantum, Hybrid)
@@ -89,6 +89,55 @@
 - **Multi-Agent System:** Python-based agent orchestration with advanced coordination patterns
 - **Quantum Framework:** Framework ready for quantum computing principles implementation
 - **Health Monitoring:** Component-by-component validation and startup checks
+
+### Complete Model Inventory (27 Models Across 4 Providers)
+
+#### OpenAI Provider (11 Models)
+**Reasoning Models (o1/o3/o4 Series):**
+- `o4-mini` - Fast, affordable reasoning with advanced problem-solving
+- `o3-pro` - Most powerful reasoning with extended compute for complex tasks
+- `o3` - Powerful reasoning for complex problem-solving and analysis
+- `o3-mini` - Compact reasoning optimized for speed and efficiency
+- `o1` - Advanced reasoning with extended thinking for complex problems
+- `o1-mini` - Faster reasoning for coding and STEM tasks
+- `o1-preview` - Preview version with advanced reasoning capabilities
+
+**GPT-4.1 Family:**
+- `gpt-4.1` - Flagship model for complex conversational tasks
+- `gpt-4.1-mini` - Efficient model optimized for fast, lightweight tasks
+- `gpt-4.1-vision` - Optimized for vision and multimodal understanding
+
+#### Anthropic Provider (6 Models - Claude 3.5+ Only)
+- `claude-opus-4-20250514` - Most capable and intelligent model
+- `claude-sonnet-4-20250514` - High-performance with exceptional reasoning
+- `claude-3-7-sonnet-20250219` - High-performance with early extended thinking
+- `claude-3-5-sonnet-20241022` - Upgraded version with enhanced capabilities
+- `claude-3-5-sonnet-20240620` - Original version with high intelligence
+- `claude-3-5-haiku-20241022` - Intelligence at blazing speeds
+
+#### Google Provider (4 Models - Gemini 2.5 Series)
+- `gemini-2.5-pro` - State-of-the-art for complex reasoning in code, math, and STEM
+- `gemini-2.5-flash` - Best price-performance for large-scale, low-latency tasks
+- `gemini-2.5-flash-lite` - Cost-efficient and high-throughput version
+- `gemini-2.0-flash` - Next-gen features with superior speed, native tool use
+
+#### Groq Provider (6 Models - Hardware Accelerated)
+**Llama Models:**
+- `llama-3.1-8b-instant` - Fast, lightweight model
+- `llama-3.3-70b-versatile` - Versatile language model
+- `meta-llama/llama-4-maverick-17b-128e-instruct` - Latest Llama 4 preview
+- `meta-llama/llama-4-scout-17b-16e-instruct` - Latest Llama 4 preview
+
+**Specialized Models:**
+- `moonshotai/kimi-k2-instruct` - Advanced MoE model (Kimi K2)
+- `qwen/qwen3-32b` - Advanced reasoning and multilingual (Qwen 3)
+
+### Model Compliance System
+- **Automatic Legacy Model Replacement:** Deprecated models automatically replaced with current versions
+- **Validation at Every Layer:** Model names validated against official provider documentation
+- **Cost Transparency:** Per-token pricing with real-time usage tracking
+- **Capability Mapping:** Detailed model capabilities and use case recommendations
+- **Provider Fallback:** Intelligent fallback between providers for reliability
 
 ## Configuration Management
 - **Environment Configuration:** Centralized type-safe configuration management
@@ -116,7 +165,7 @@
 - **Capabilities Endpoint:** /v1/capabilities for comprehensive system status and feature documentation
 
 ## Enhanced Features (Phase 1 Completion)
-- **Single-Word Input Support:** Users can enter commands like "build", "test", "debug" 
+- **Single-Word Input Support:** Users can enter commands like "build", "test", "debug"
 - **Edge Case Handling:** Intelligent prompt enhancement for minimal inputs
 - **Advanced Orchestration:** 5 orchestration strategies with intelligent selection
 - **Production Hardening:** Comprehensive error handling and monitoring

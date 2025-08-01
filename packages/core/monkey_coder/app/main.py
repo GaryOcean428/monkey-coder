@@ -50,6 +50,15 @@ from ..security import (
     Permission,
     get_user_permissions,
 )
+from ..auth.cookie_auth import (
+    get_current_user_from_cookie,
+    login_with_cookies,
+    refresh_with_cookies,
+    logout_with_cookies,
+    get_user_status_from_cookie,
+    cookie_auth_manager,
+    CookieAuthResponse,
+)
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, User, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
@@ -242,11 +251,11 @@ async def metrics_middleware(request: Request, call_next):
 
 
 # Add font headers middleware
-@app.middleware("http")  
+@app.middleware("http")
 async def font_headers_middleware(request: Request, call_next):
     """Middleware to add proper headers for font files."""
     response = await call_next(request)
-    
+
     # Check if this is a font file request
     path = request.url.path
     if path.endswith(('.woff2', '.woff', '.ttf', '.otf', '.eot')):
@@ -261,12 +270,12 @@ async def font_headers_middleware(request: Request, call_next):
             response.headers["Content-Type"] = "font/otf"
         elif path.endswith('.eot'):
             response.headers["Content-Type"] = "application/vnd.ms-fontobject"
-            
+
         # Add proper caching and CORS headers for fonts
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
-    
+
     return response
 
 
@@ -529,7 +538,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
 
         # Create JWT user
         jwt_user = JWTUser(
-            user_id=new_user.id,
+            user_id=str(new_user.id) if new_user.id else "new_user",
             username=new_user.username,
             email=new_user.email,
             roles=user_roles,
@@ -646,7 +655,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
 
         # Create new user object (in production, fetch from database)
         mock_user = JWTUser(
-            user_id=user_id,
+            user_id=str(user_id) if user_id else "refreshed_user",
             username="demo_user",
             email="demo@example.com",
             roles=[UserRole.DEVELOPER],
@@ -675,6 +684,215 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
     except Exception as e:
         logger.error(f"Token refresh failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Failed to refresh token")
+
+
+# Cookie-based Authentication Endpoints (Enhanced Security)
+
+@app.post("/v1/auth/login/cookie", response_model=CookieAuthResponse)
+async def login_with_cookie_endpoint(request: LoginRequest) -> Response:
+    """
+    Enhanced user login endpoint with httpOnly cookies.
+
+    This endpoint provides secure authentication using httpOnly cookies
+    to prevent XSS attacks while maintaining backward compatibility.
+
+    Args:
+        request: Login credentials (email and password)
+
+    Returns:
+        CookieAuthResponse with user information and session details
+    """
+    try:
+        # Authenticate user and get response
+        auth_response = await login_with_cookies(request.email, request.password)
+
+        # Create response with cookies
+        response = JSONResponse(
+            content=auth_response.model_dump(),
+            status_code=200,
+        )
+
+        # Set httpOnly cookies with tokens
+        if auth_response.success:
+            # Create new tokens for cookie storage
+            user_store = get_user_store()
+            user = await user_store.authenticate_user(request.email, request.password)
+
+            if user:
+                # Convert database user roles to UserRole enums
+                user_roles = []
+                for role_str in user.roles:
+                    try:
+                        user_roles.append(UserRole(role_str))
+                    except ValueError:
+                        logger.warning(f"Invalid role '{role_str}' for user {user.email}")
+
+                # Create JWT user from authenticated user
+                jwt_user = JWTUser(
+                    user_id=str(user.id) if user.id else "unknown_user",
+                    username=user.username,
+                    email=user.email,
+                    roles=user_roles,
+                    permissions=get_user_permissions(user_roles),
+                    mfa_verified=True,
+                )
+
+                # Create tokens
+                access_token = create_access_token(jwt_user)
+                refresh_token = create_refresh_token(jwt_user.user_id)
+
+                # Set httpOnly cookies
+                cookie_auth_manager.set_auth_cookies(response, access_token, refresh_token)
+
+                # Log successful authentication
+                logger.info(f"User {request.email} authenticated successfully with httpOnly cookies")
+
+                # Set security headers
+                response.headers["X-Content-Type-Options"] = "nosniff"
+                response.headers["X-Frame-Options"] = "DENY"
+                response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Cookie login endpoint failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+
+@app.post("/v1/auth/refresh/cookie", response_model=CookieAuthResponse)
+async def refresh_with_cookie_endpoint(request: Request) -> Response:
+    """
+    Refresh access token using httpOnly cookies.
+
+    This endpoint securely refreshes the access token using the refresh token
+    stored in httpOnly cookies, preventing token exposure to JavaScript.
+
+    Args:
+        request: FastAPI request object containing cookies
+
+    Returns:
+        CookieAuthResponse with new tokens and user information
+    """
+    try:
+        # Get refresh token from cookie
+        refresh_token = cookie_auth_manager.get_refresh_token_from_cookie(request)
+        if not refresh_token:
+            raise HTTPException(
+                status_code=401, detail="No refresh token found in cookies"
+            )
+
+        # Refresh tokens
+        auth_response = await refresh_with_cookies(refresh_token)
+
+        # Create response with new cookies
+        response = JSONResponse(
+            content=auth_response.model_dump(),
+            status_code=200,
+        )
+
+        # Set new httpOnly cookies
+        if auth_response.success:
+            # Create new user object for token generation
+            mock_user = JWTUser(
+                user_id="refreshed_user",
+                username="refreshed_user",
+                email="refreshed@example.com",
+                roles=[UserRole.DEVELOPER],
+                permissions=get_user_permissions([UserRole.DEVELOPER]),
+                mfa_verified=True,
+            )
+
+            # Create new tokens
+            access_token = create_access_token(mock_user)
+            new_refresh_token = create_refresh_token(mock_user.user_id)
+
+            # Set new httpOnly cookies
+            cookie_auth_manager.set_auth_cookies(response, access_token, new_refresh_token)
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Cookie refresh endpoint failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Failed to refresh token")
+
+
+@app.post("/v1/auth/logout/cookie")
+async def logout_with_cookie_endpoint(request: Request) -> Response:
+    """
+    Secure logout endpoint that clears httpOnly cookies.
+
+    This endpoint clears all authentication cookies to securely
+    log out the user and prevent session hijacking.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        Logout confirmation message
+    """
+    try:
+        # Perform logout logic
+        logout_result = await logout_with_cookies()
+
+        # Create response and clear cookies
+        response = JSONResponse(content=logout_result, status_code=200)
+        cookie_auth_manager.clear_auth_cookies(response)
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Cookie logout endpoint failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Logout failed")
+
+
+@app.get("/v1/auth/status/cookie", response_model=CookieAuthResponse)
+async def get_user_status_with_cookie(request: Request) -> CookieAuthResponse:
+    """
+    Get user authentication status using httpOnly cookies.
+
+    This endpoint checks the user's authentication status using
+    secure httpOnly cookies without exposing tokens to JavaScript.
+
+    Args:
+        request: FastAPI request object containing cookies
+
+    Returns:
+        CookieAuthResponse with user status information
+    """
+    try:
+        return await get_user_status_from_cookie(request)
+
+    except Exception as e:
+        logger.error(f"Cookie status endpoint failed: {str(e)}")
+        return CookieAuthResponse(
+            success=False, message="Status check failed", user=None
+        )
+
+
+# Enhanced authentication dependency that supports both cookies and headers
+async def get_current_user_enhanced(request: Request) -> JWTUser:
+    """
+    Enhanced authentication dependency supporting both cookies and headers.
+
+    This function provides unified authentication that:
+    1. First attempts cookie-based authentication (more secure)
+    2. Falls back to Authorization header (backward compatibility)
+    3. Handles API keys seamlessly
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        Current authenticated user
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    return await get_current_user_from_cookie(request)
 
 
 @app.post("/v1/execute", response_model=ExecuteResponse)
@@ -726,9 +944,9 @@ async def execute_task(
         # Prepare response
         response = ExecuteResponse(
             execution_id=execution_id,
+            task_id=request.task_id,
             status=TaskStatus.COMPLETED,
             result=execution_result.result,
-            metadata=execution_result.metadata,
             usage=execution_result.usage,
             execution_time=execution_result.execution_time,
         )
@@ -739,7 +957,12 @@ async def execute_task(
         )
 
         # Complete metrics collection
-        app.state.metrics_collector.complete_execution(execution_id, response)
+        app.state.metrics_collector.complete_execution(
+            execution_id=execution_id,
+            response=response,
+            error=None,
+            completed_at=datetime.utcnow()
+        )
 
         return response
 
@@ -1148,7 +1371,7 @@ async def create_api_key(
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if UserRole.ADMIN not in current_user.roles and UserRole.DEVELOPER not in current_user.roles:
             raise HTTPException(
                 status_code=403, detail="Insufficient permissions to create API keys"
             )
@@ -1159,7 +1382,6 @@ async def create_api_key(
             description=request.description,
             permissions=request.permissions,
             expires_days=request.expires_days,
-            metadata={"created_by": current_user.user_id},
         )
 
         logger.info(f"Created API key '{request.name}' for user {current_user.user_id}")
@@ -1171,7 +1393,7 @@ async def create_api_key(
             description=key_data["description"],
             status=key_data["status"],
             created_at=key_data["created_at"],
-            expires_at=key_data["expires_at"],
+            expires_at=key_data["expires_at"] if "expires_at" in key_data else None,
             last_used=None,
             usage_count=0,
             permissions=key_data["permissions"],
@@ -1215,7 +1437,7 @@ async def create_development_api_key() -> APIKeyResponse:
             description=key_data["description"],
             status=key_data["status"],
             created_at=key_data["created_at"],
-            expires_at=key_data["expires_at"],
+            expires_at=key_data.get("expires_at"),
             last_used=None,
             usage_count=0,
             permissions=key_data["permissions"],
@@ -1246,9 +1468,9 @@ async def list_api_keys(
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if UserRole.ADMIN not in current_user.roles and UserRole.DEVELOPER not in current_user.roles:
             raise HTTPException(
-                status_code=403, detail="Insufficient permissions to list API keys"
+                status_code=403, detail="Insufficient permissions to create API keys"
             )
 
         # Get all API keys
@@ -1299,7 +1521,7 @@ async def revoke_api_key(
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if UserRole.ADMIN not in current_user.roles and UserRole.DEVELOPER not in current_user.roles:
             raise HTTPException(
                 status_code=403, detail="Insufficient permissions to revoke API keys"
             )
@@ -1339,7 +1561,7 @@ async def get_api_key_stats(
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN]:
+        if UserRole.ADMIN not in current_user.roles:
             raise HTTPException(
                 status_code=403,
                 detail="Admin permissions required for API key statistics",
@@ -1417,11 +1639,11 @@ if static_dir:
     # Configure MIME types for fonts before mounting
     import mimetypes
     mimetypes.add_type('font/woff2', '.woff2')
-    mimetypes.add_type('font/woff', '.woff') 
+    mimetypes.add_type('font/woff', '.woff')
     mimetypes.add_type('font/ttf', '.ttf')
     mimetypes.add_type('font/otf', '.otf')
     mimetypes.add_type('application/vnd.ms-fontobject', '.eot')
-    
+
     # Mount static files with fallback to index.html for SPA routing
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
     logger.info(f"✅ Static files served from: {static_dir} with proper font MIME types")
@@ -1452,7 +1674,7 @@ else:
                 <h1>🐒 Monkey Coder API</h1>
                 <p>FastAPI backend is running successfully!</p>
             </div>
-            
+
             <h2>API Documentation</h2>
             <ul>
                 <li><a href="/api/docs" class="api-link">Interactive API Documentation (Swagger)</a></li>
@@ -1460,7 +1682,7 @@ else:
                 <li><a href="/health" class="api-link">Health Check</a></li>
                 <li><a href="/metrics" class="api-link">Prometheus Metrics</a></li>
             </ul>
-            
+
             <h2>Available Endpoints</h2>
             <ul>
                 <li><code>POST /v1/auth/login</code> - User authentication</li>
@@ -1473,13 +1695,13 @@ else:
                 <li><code>GET /v1/models</code> - List available models</li>
                 <li><code>GET /v1/capabilities</code> - System capabilities and features</li>
             </ul>
-            
+
             <h2>🚀 Quick Start</h2>
             <p><strong>Get an API key for testing:</strong></p>
             <pre><code>curl -X POST https://your-domain.railway.app/v1/auth/keys/dev</code></pre>
             <p><strong>Then use it to test the API:</strong></p>
             <pre><code>curl -H "Authorization: Bearer mk-YOUR_KEY" https://your-domain.railway.app/v1/auth/status</code></pre>
-            
+
             <p><em>Frontend static files not found. API endpoints are fully functional.</em></p>
         </body>
         </html>

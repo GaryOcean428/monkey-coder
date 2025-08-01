@@ -73,6 +73,8 @@ User Experience Rules
 12. TypeScript & Modern Development Focus: When providing code solutions:
 ◦  Prioritize TypeScript with strict typing
 ◦  Use modern React patterns (functional components, hooks)
+◦  Use yarn 4.9.2 and above, pnpm fallback before using npm directly. (enable corepack as required)
+◦  Use uv then poetry before using pip directly for python 3.12+ projects
 ◦  Follow established naming conventions
 ◦  Implement proper error handling and loading states
 13. Responsive & Accessible Design: Ensure recommendations consider:
