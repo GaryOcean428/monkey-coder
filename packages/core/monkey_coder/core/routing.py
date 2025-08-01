@@ -238,7 +238,7 @@ class AdvancedRouter:
         
         # Explicit persona from request config (lower priority than specific contexts)
         if hasattr(request, 'persona_config') and request.persona_config:
-            if hasattr(request.persona_config, 'persona'):
+            if hasattr(request.persona_config, 'persona') and request.persona_config.persona:
                 return request.persona_config.persona
         
         # Fallback to context-based or default

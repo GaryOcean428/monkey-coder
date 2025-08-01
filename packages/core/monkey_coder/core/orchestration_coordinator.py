@@ -321,11 +321,11 @@ class OrchestrationCoordinator:
             file_count = len(request.files)
             score += min(file_count / 10, 0.2)  # Max 0.2 for file count
 
-        # Configuration complexity
+        # Configuration complexity - with defensive validation
         config_sections = [
-            request.persona_config,
-            request.orchestration_config,
-            request.quantum_config
+            getattr(request, 'persona_config', None),
+            getattr(request, 'orchestration_config', None),
+            getattr(request, 'quantum_config', None)
         ]
 
         active_configs = sum(1 for config in config_sections if config is not None)
