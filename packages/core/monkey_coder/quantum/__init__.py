@@ -54,6 +54,14 @@ from .quantum_routing_manager import (
     RoutingMetrics
 )
 
+# Phase 2: Training Pipeline
+from .training_pipeline import (
+    TrainingConfig,
+    TrainingMode,
+    TrainingMetrics,
+    RoutingEnvironmentSimulator,
+    DQNTrainingPipeline
+)
 # Phase 2: Performance Metrics System
 from .performance_metrics import (
     PerformanceMetricsCollector,
@@ -84,6 +92,13 @@ __all__ = [
     "DQNNetwork",
     "NumpyDQNModel",
     "create_dqn_network",
+    
+    # Training pipeline components
+    "TrainingConfig",
+    "TrainingMode",
+    "TrainingMetrics",
+    "RoutingEnvironmentSimulator",
+    "DQNTrainingPipeline",
     
     # Quantum routing manager
     "QuantumRoutingManager",
