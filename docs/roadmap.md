@@ -87,16 +87,15 @@ monkey-coder/
 - `moonshotai/kimi-k2-instruct` - Advanced MoE model (Kimi K2)
 - `qwen/qwen3-32b` - Advanced reasoning and multilingual (Qwen 3)
 
-#### xAI Provider (6 Models - Grok Series)
+#### xAI Provider (5 Models - Grok Series)
 **Grok Models:**
 - `grok-4-latest` - xAI's most advanced reasoning model
-- `grok-4` - Advanced reasoning and conversation model
 - `grok-3` - Strong reasoning capabilities for general use
 - `grok-3-mini` - Efficient model for everyday tasks
 - `grok-3-mini-fast` - Ultra-fast responses for simple tasks
 - `grok-3-fast` - Balance of speed and capability
 
-**Total Available Models: 32 across 5 providers**
+**Total Available Models: 31 across 5 providers**
 
 **Model Validator Features:**
 

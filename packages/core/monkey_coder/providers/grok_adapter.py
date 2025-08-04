@@ -43,17 +43,7 @@ class GrokProvider(BaseProvider):
             "version": "4-latest",
             "release_date": datetime(2025, 1, 1),
         },
-        "grok-4": {
-            "name": "grok-4",
-            "type": "chat",
-            "context_length": 131072,
-            "input_cost": 5.00,  # per 1M tokens (estimate)
-            "output_cost": 15.00,  # per 1M tokens (estimate)
-            "description": "Grok-4 - xAI's advanced reasoning and conversation model",
-            "capabilities": ["text", "reasoning", "analysis", "conversation"],
-            "version": "4",
-            "release_date": datetime(2025, 1, 1),
-        },
+
         "grok-3": {
             "name": "grok-3",
             "type": "chat",
