@@ -12,6 +12,7 @@ providers:
     - openai
     - google
     - groq
+    - xai
   specialized:
     - together
     - openrouter
@@ -237,23 +238,6 @@ openai:
         - fast_reasoning
         - coding_tasks
         - stem_applications
-
-    o1-preview:
-      context_window: 128000
-      max_output: 32768
-      capabilities:
-        - reasoning
-        - advanced_thinking
-        - complex_analysis
-        - multi_step_reasoning
-        - academic_research
-      cost:
-        input: 0.015
-        output: 0.060
-      use_cases:
-        - preview_reasoning
-        - research_tasks
-        - complex_analysis
 
     # GPT-4.1 Family
     gpt-4.1:
@@ -507,6 +491,109 @@ groq:
         - advanced_reasoning
         - code_generation
         - qwen_capabilities
+```
+
+### xAI Models (Grok Series)
+
+```yaml
+grok:
+  models:
+    grok-4-latest:
+      context_window: 131072
+      max_output: 131072
+      capabilities:
+        - reasoning
+        - analysis
+        - conversation
+        - code_generation
+      cost:
+        input: 0.005
+        output: 0.015
+      use_cases:
+        - advanced_reasoning
+        - complex_analysis
+        - conversational_ai
+        - code_architecture
+
+    grok-4:
+      context_window: 131072
+      max_output: 131072
+      capabilities:
+        - reasoning
+        - analysis
+        - conversation
+        - code_generation
+      cost:
+        input: 0.005
+        output: 0.015
+      use_cases:
+        - advanced_reasoning
+        - complex_analysis
+        - conversational_ai
+        - code_architecture
+
+    grok-3:
+      context_window: 100000
+      max_output: 100000
+      capabilities:
+        - reasoning
+        - conversation
+        - code_generation
+      cost:
+        input: 0.002
+        output: 0.008
+      use_cases:
+        - general_reasoning
+        - conversation
+        - code_analysis
+        - balanced_performance
+
+    grok-3-mini:
+      context_window: 32768
+      max_output: 32768
+      capabilities:
+        - conversation
+        - basic_reasoning
+      cost:
+        input: 0.00025
+        output: 0.001
+      use_cases:
+        - everyday_tasks
+        - cost_efficient_operations
+        - quick_responses
+        - simple_coding
+
+    grok-3-mini-fast:
+      context_window: 16384
+      max_output: 16384
+      capabilities:
+        - conversation
+        - streaming
+        - fast_response
+      cost:
+        input: 0.0001
+        output: 0.0004
+      use_cases:
+        - ultra_fast_responses
+        - simple_tasks
+        - real_time_applications
+        - cost_optimization
+
+    grok-3-fast:
+      context_window: 65536
+      max_output: 65536
+      capabilities:
+        - conversation
+        - streaming
+        - balanced_performance
+      cost:
+        input: 0.001
+        output: 0.004
+      use_cases:
+        - speed_and_capability_balance
+        - interactive_coding
+        - real_time_conversations
+        - efficient_processing
 ```
 
 ### Together Models
@@ -878,12 +965,12 @@ async def generate_code(model="gpt-4o"):  # Automatically converts to gpt-4.1
 
 ## Model Statistics
 
-- **Total Available Models**: 25 across 4 primary providers
-- **Reasoning Models**: 7 (OpenAI o1/o3/o4 series)
-- **Chat Models**: 11 (OpenAI GPT-4.1 family + others)
+- **Total Available Models**: 30 across 5 primary providers
+- **Reasoning Models**: 6 (OpenAI o1/o3/o4 series)
+- **Chat Models**: 17 (OpenAI GPT-4.1 family + Anthropic Claude + xAI Grok + others)
 - **Multimodal Models**: 4 (Vision-capable models)
 - **Hardware Accelerated**: 6 (Groq models)
-- **Cost-Optimized**: 8 (Models under $0.001 per 1K tokens)
+- **Cost-Optimized**: 14 (Models under $0.001 per 1K tokens)
 
 ## Contact
 

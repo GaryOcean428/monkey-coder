@@ -48,7 +48,7 @@ monkey-coder/
 
 ### Complete Model Inventory
 
-#### OpenAI Provider (11 Models)
+#### OpenAI Provider (10 Models)
 **Reasoning Models (o1/o3/o4 Series):**
 - `o4-mini` - Fast, affordable reasoning with advanced problem-solving
 - `o3-pro` - Most powerful reasoning with extended compute for complex tasks
@@ -56,7 +56,6 @@ monkey-coder/
 - `o3-mini` - Compact reasoning optimized for speed and efficiency
 - `o1` - Advanced reasoning with extended thinking for complex problems
 - `o1-mini` - Faster reasoning for coding and STEM tasks
-- `o1-preview` - Preview version with advanced reasoning capabilities
 
 **GPT-4.1 Family:**
 - `gpt-4.1` - Flagship model for complex conversational tasks
@@ -88,7 +87,16 @@ monkey-coder/
 - `moonshotai/kimi-k2-instruct` - Advanced MoE model (Kimi K2)
 - `qwen/qwen3-32b` - Advanced reasoning and multilingual (Qwen 3)
 
-**Total Available Models: 27 across 4 providers**
+#### xAI Provider (6 Models - Grok Series)
+**Grok Models:**
+- `grok-4-latest` - xAI's most advanced reasoning model
+- `grok-4` - Advanced reasoning and conversation model
+- `grok-3` - Strong reasoning capabilities for general use
+- `grok-3-mini` - Efficient model for everyday tasks
+- `grok-3-mini-fast` - Ultra-fast responses for simple tasks
+- `grok-3-fast` - Balance of speed and capability
+
+**Total Available Models: 32 across 5 providers**
 
 **Model Validator Features:**
 
