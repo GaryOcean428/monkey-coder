@@ -515,22 +515,6 @@ grok:
         - conversational_ai
         - code_architecture
 
-    grok-4:
-      context_window: 131072
-      max_output: 131072
-      capabilities:
-        - reasoning
-        - analysis
-        - conversation
-        - code_generation
-      cost:
-        input: 0.005
-        output: 0.015
-      use_cases:
-        - advanced_reasoning
-        - complex_analysis
-        - conversational_ai
-        - code_architecture
 
     grok-3:
       context_window: 100000
@@ -965,7 +949,7 @@ async def generate_code(model="gpt-4o"):  # Automatically converts to gpt-4.1
 
 ## Model Statistics
 
-- **Total Available Models**: 30 across 5 primary providers
+- **Total Available Models**: 31 across 5 primary providers
 - **Reasoning Models**: 6 (OpenAI o1/o3/o4 series)
 - **Chat Models**: 17 (OpenAI GPT-4.1 family + Anthropic Claude + xAI Grok + others)
 - **Multimodal Models**: 4 (Vision-capable models)

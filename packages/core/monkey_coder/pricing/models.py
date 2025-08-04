@@ -246,13 +246,7 @@ MODEL_PRICING_DATA: Dict[str, ModelPricing] = {
         output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
         context_length=131072
     ),
-    "grok-4": ModelPricing(
-        model_id="grok-4",
-        provider="grok",
-        input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
-        output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
-        context_length=131072
-    ),
+
     "grok-3": ModelPricing(
         model_id="grok-3",
         provider="grok",

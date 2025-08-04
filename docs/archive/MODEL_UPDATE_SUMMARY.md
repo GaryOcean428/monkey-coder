@@ -36,7 +36,7 @@ Based on the requirements to use only modern models, the following updates have 
 
 ### Grok Models
 
-- ✅ `grok-4` - Latest generation
+- ✅ `grok-4-latest` - Latest generation with automatic updates
 - ✅ `grok-3` - Previous generation
 - ❌ Removed turbo variants
 

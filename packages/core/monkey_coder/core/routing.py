@@ -485,11 +485,7 @@ class AdvancedRouter:
             specializations=["reasoning", "coding", "analysis"]
         )
         
-        capabilities[(ProviderType.GROK, "grok-4")] = ModelCapabilities(
-            code_generation=0.93, reasoning=0.95, context_window=131072,
-            latency_ms=2500, cost_per_token=0.003, reliability=0.92,
-            specializations=["reasoning", "coding", "analysis"]
-        )
+
         
         capabilities[(ProviderType.GROK, "grok-3")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=65536,
