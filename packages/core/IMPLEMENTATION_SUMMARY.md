@@ -228,7 +228,7 @@ python demo_routing.py
 
 - gpt-4.1 (high capability, premium)
 - gpt-4.1-mini (balanced, cost-effective)
-- o1-preview (reasoning specialist)
+- o1 (reasoning specialist)
 
 **Anthropic:**
 
@@ -242,6 +242,12 @@ python demo_routing.py
 **Qwen:**
 
 - qwen2.5-coder-32b-instruct (coding specialist, open-source)
+
+**xAI:**
+
+- grok-4-latest (advanced reasoning, most capable)
+- grok-4 (advanced reasoning and conversation)
+- grok-3 (strong reasoning, general use)
 
 ---
 

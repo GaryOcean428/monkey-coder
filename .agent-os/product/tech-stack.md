@@ -100,7 +100,6 @@
 - `o3-mini` - Compact reasoning optimized for speed and efficiency
 - `o1` - Advanced reasoning with extended thinking for complex problems
 - `o1-mini` - Faster reasoning for coding and STEM tasks
-- `o1-preview` - Preview version with advanced reasoning capabilities
 
 **GPT-4.1 Family:**
 - `gpt-4.1` - Flagship model for complex conversational tasks
@@ -131,6 +130,15 @@
 **Specialized Models:**
 - `moonshotai/kimi-k2-instruct` - Advanced MoE model (Kimi K2)
 - `qwen/qwen3-32b` - Advanced reasoning and multilingual (Qwen 3)
+
+#### xAI Provider (6 Models - Grok Series)
+**Grok Models:**
+- `grok-4-latest` - xAI's most advanced reasoning model
+- `grok-4` - Advanced reasoning and conversation model
+- `grok-3` - Strong reasoning capabilities for general use
+- `grok-3-mini` - Efficient model for everyday tasks
+- `grok-3-mini-fast` - Ultra-fast responses for simple tasks
+- `grok-3-fast` - Balance of speed and capability
 
 ### Model Compliance System
 - **Automatic Legacy Model Replacement:** Deprecated models automatically replaced with current versions

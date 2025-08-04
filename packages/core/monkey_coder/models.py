@@ -459,6 +459,7 @@ MODEL_REGISTRY = {
     ProviderType.GROK: [
         # xAI Grok models
         "grok-4-latest",
+        "grok-4",
         "grok-3",
         "grok-3-mini",
         "grok-3-mini-fast",

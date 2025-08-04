@@ -183,27 +183,7 @@ class OpenAIProvider(BaseProvider):
             "release_date": datetime(2024, 9, 12),
             "reasoning_time_limit": 30,  # seconds for reasoning
         },
-        "o1-preview": {
-            "name": "o1-preview",
-            "api_name": "o1-preview",
-            "type": "reasoning",
-            "context_length": 128000,  # 128K tokens
-            "max_output_tokens": 32768,  # 32K tokens
-            "input_cost": 15.00,
-            "output_cost": 60.00,
-            "description": "Preview version of o1 with advanced reasoning capabilities",
-            "capabilities": [
-                "text",
-                "reasoning",
-                "advanced_thinking",
-                "complex_analysis",
-                "multi_step_reasoning",
-                "academic_research",
-            ],
-            "version": "1-preview",
-            "release_date": datetime(2024, 9, 12),
-            "reasoning_time_limit": 60,  # seconds for reasoning
-        },
+
         # === GPT-4.1 Family - Latest Flagship Models ===
         "gpt-4.1": {
             "name": "gpt-4.1",
