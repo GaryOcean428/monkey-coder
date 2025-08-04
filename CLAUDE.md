@@ -274,7 +274,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 ### Product Context
 - **Mission & Vision:** @.agent-os/product/mission.md
 - **Technical Architecture:** @.agent-os/product/tech-stack.md
-- **Development Roadmap:** @.agent-os/product/roadmap.md
+- **Development Roadmap:** @docs/roadmap.md
 - **Decision History:** @.agent-os/product/decisions.md
 - **System Enhancements:** @.agent-os/product/system-enhancements.md
 
@@ -291,7 +291,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 
 When asked to work on this codebase:
 
-1. **First**, check @.agent-os/product/roadmap.md for current priorities
+1. **First**, check @docs/roadmap.md for current priorities
 2. **Then**, follow the appropriate instruction file:
    - For new features: @.agent-os/instructions/create-spec.md
    - For tasks execution: @.agent-os/instructions/execute-tasks.md
