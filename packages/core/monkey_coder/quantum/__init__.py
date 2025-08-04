@@ -8,6 +8,7 @@ and Redis-based caching for optimal routing decisions.
 
 Phase 2 Features:
 - Enhanced DQN Agent with neural network implementation
+- Experience Replay Buffer with prioritized sampling
 - Quantum Routing Manager with multi-strategy execution
 - Comprehensive performance metrics and analytics
 - Real-time monitoring and alerting
@@ -31,6 +32,12 @@ from .dqn_agent import (
     DQNRoutingAgent,
     RoutingAction,
     RoutingState
+)
+
+from .experience_buffer import (
+    Experience,
+    ExperienceReplayBuffer,
+    PrioritizedExperienceBuffer
 )
 
 from .neural_network import (
@@ -67,6 +74,11 @@ __all__ = [
     "DQNRoutingAgent",
     "RoutingAction", 
     "RoutingState",
+    
+    # Experience replay components
+    "Experience",
+    "ExperienceReplayBuffer", 
+    "PrioritizedExperienceBuffer",
     
     # Neural network components
     "DQNNetwork",
