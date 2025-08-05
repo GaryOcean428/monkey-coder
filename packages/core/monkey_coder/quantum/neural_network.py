@@ -318,6 +318,11 @@ def _create_numpy_network(
     return network
 
 
+# Type aliases for backward compatibility and clearer interface
+DQNNetwork = Any  # Can be either keras.Model or NumPyNeuralNetwork
+NumpyDQNModel = NumPyNeuralNetwork  # Explicit alias for NumPy implementation
+
+
 def validate_network_compatibility() -> Dict[str, Any]:
     """
     Validate neural network implementation and return compatibility info.
