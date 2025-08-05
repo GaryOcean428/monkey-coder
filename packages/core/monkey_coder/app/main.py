@@ -13,7 +13,6 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, status
@@ -43,11 +42,9 @@ from ..security import (
     get_current_user,
     create_access_token,
     create_refresh_token,
-    verify_password,
     hash_password,
     JWTUser,
     UserRole,
-    Permission,
     get_user_permissions,
 )
 from ..auth.cookie_auth import (
@@ -64,11 +61,11 @@ from ..database import run_migrations, User, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from ..feedback_collector import FeedbackCollector
-from ..config.env_config import get_config, EnvironmentConfig
-from ..auth import get_api_key_manager, APIKeyManager
+from ..config.env_config import get_config
+from ..auth import get_api_key_manager
 
 # Import Railway-optimized logging first
-from ..logging_utils import setup_logging, get_performance_logger, monitor_api_calls
+from ..logging_utils import setup_logging, get_performance_logger
 
 # Configure Railway-optimized logging
 setup_logging()
@@ -439,15 +436,16 @@ async def login(request: LoginRequest) -> AuthResponse:
                 # Handle any invalid roles gracefully
                 logger.warning(f"Invalid role '{role_str}' for user {user.email}")
 
-        # Create JWT user from authenticated user
-        jwt_user = JWTUser(
-            user_id=user.id,
-            username=user.username,
-            email=user.email,
-            roles=user_roles,
-            permissions=get_user_permissions(user_roles),
-            mfa_verified=True,  # MFA not implemented yet
-        )
+                # Create JWT user from authenticated user
+                jwt_user = JWTUser(
+                    user_id=str(user.id) if user.id else "unknown_user",
+                    username=user.username,
+                    email=user.email,
+                    roles=user_roles,
+                    permissions=get_user_permissions(user_roles),
+                    mfa_verified=True,
+                    expires_at=None
+                )
 
         # Create tokens
         access_token = create_access_token(jwt_user)
@@ -544,6 +542,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=True,
+            expires_at=None
         )
 
         # Create tokens
@@ -661,6 +660,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
             roles=[UserRole.DEVELOPER],
             permissions=get_user_permissions([UserRole.DEVELOPER]),
             mfa_verified=True,
+            expires_at=None
         )
 
         # Create new tokens
@@ -735,6 +735,7 @@ async def login_with_cookie_endpoint(request: LoginRequest) -> Response:
                     roles=user_roles,
                     permissions=get_user_permissions(user_roles),
                     mfa_verified=True,
+                    expires_at=None
                 )
 
                 # Create tokens
@@ -802,6 +803,7 @@ async def refresh_with_cookie_endpoint(request: Request) -> Response:
                 roles=[UserRole.DEVELOPER],
                 permissions=get_user_permissions([UserRole.DEVELOPER]),
                 mfa_verified=True,
+                expires_at=None
             )
 
             # Create new tokens
@@ -961,7 +963,8 @@ async def execute_task(
             execution_id=execution_id,
             response=response,
             error=None,
-            completed_at=datetime.utcnow()
+            completed_at=datetime.utcnow(),
+            started_at=datetime.utcnow()
         )
 
         return response
@@ -971,7 +974,12 @@ async def execute_task(
 
         # Track error metrics
         if "execution_id" in locals():
-            app.state.metrics_collector.record_error(execution_id, str(e))
+            app.state.metrics_collector.record_error(
+                execution_id=execution_id,
+                error=str(e),
+                error_type=type(e).__name__,
+                timestamp=datetime.utcnow()
+            )
 
         # Return appropriate error response
         if isinstance(e, ExecutionError):
