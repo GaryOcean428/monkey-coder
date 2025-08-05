@@ -14,6 +14,11 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env
+.vscode
+.idea
+*.sublime-workspace
+*.sublime-project
 
 npm-debug.log*
 yarn-debug.log*
