@@ -7,17 +7,8 @@ showcasing both TensorFlow/Keras and NumPy fallback capabilities.
 """
 
 import logging
-import numpy as np
-from typing import List, Dict, Any
 import time
-import json
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+import numpy as np
 
 # Import quantum components
 from monkey_coder.quantum.neural_network import (
@@ -29,10 +20,15 @@ from monkey_coder.quantum.neural_network import (
 from monkey_coder.quantum.dqn_agent import (
     DQNRoutingAgent,
     RoutingState,
-    RoutingAction
 )
 from monkey_coder.quantum.experience_buffer import ExperienceBuffer
-from monkey_coder.models import ProviderType
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 def demo_network_compatibility():
@@ -60,7 +56,7 @@ def demo_network_creation():
     action_size = 5  # Example number of actions
     hidden_layers = (64, 32)  # Hidden layer sizes
 
-    print(f"\n🏗️  Creating DQN Network:")
+    print("\n🏗️  Creating DQN Network:")
     print(f"  State Size: {state_size}")
     print(f"  Action Size: {action_size}")
     print(f"  Hidden Layers: {hidden_layers}")
@@ -96,7 +92,7 @@ def demo_numpy_network():
         learning_rate=0.01
     )
 
-    print(f"\n🧮 NumPy Network Summary:")
+    print("\n🧮 NumPy Network Summary:")
     print(numpy_net.summary())
 
     # Test training
@@ -133,7 +129,7 @@ def demo_dqn_agent_integration():
         learning_rate=0.001
     )
 
-    print(f"\n🤖 DQN Agent Created:")
+    print("\n🤖 DQN Agent Created:")
     print(f"  State Size: {agent.state_size}")
     print(f"  Action Size: {agent.action_size}")
     print(f"  Network Type: {type(agent.q_network).__name__}")
@@ -189,7 +185,7 @@ def demo_dqn_agent_integration():
 
     # Get performance metrics
     metrics = agent.get_performance_metrics()
-    print(f"\n📊 Performance Metrics:")
+    print("\n📊 Performance Metrics:")
     print(f"  Exploration Rate: {metrics['exploration_rate']:.3f}")
     print(f"  Training Steps: {metrics['training_steps']}")
     print(f"  Memory Utilization: {metrics['memory_utilization']:.3f}")
@@ -206,7 +202,7 @@ def demo_experience_buffer():
     # Create experience buffer
     buffer = ExperienceBuffer(max_size=1000)
 
-    print(f"\n📦 Experience Buffer Created:")
+    print("\n📦 Experience Buffer Created:")
     print(f"  Max Size: {buffer.max_size}")
     print(f"  Priority Enabled: {buffer.enable_priority_sampling}")
 
@@ -225,18 +221,18 @@ def demo_experience_buffer():
             print(f"  Added {i + 1} experiences...")
 
     # Test sampling
-    print(f"\n🎲 Testing Experience Sampling:")
+    print("\n🎲 Testing Experience Sampling:")
     batch_size = 8
     batch = buffer.sample(batch_size)
     if batch is not None:
         print(f"  Sampled {len(batch)} experiences")
         print(f"  Average Reward: {np.mean([exp[2] for exp in batch]):.3f}")
     else:
-        print(f"  Insufficient experiences for sampling")
+        print("  Insufficient experiences for sampling")
 
     # Get statistics
     stats = buffer.get_statistics()
-    print(f"\n📈 Buffer Statistics:")
+    print("\n📈 Buffer Statistics:")
     print(f"  Total Experiences: {stats['total_added']}")
     print(f"  Buffer Size: {stats['size']}")
     print(f"  Utilization: {stats['utilization']:.3f}")
@@ -255,7 +251,7 @@ def demo_performance_comparison():
     action_size = 4
     num_samples = 100
 
-    print(f"\n⚡ Performance Comparison:")
+    print("\n⚡ Performance Comparison:")
     print(f"  State Size: {state_size}")
     print(f"  Action Size: {action_size}")
     print(f"  Test Samples: {num_samples}")
@@ -274,10 +270,10 @@ def demo_performance_comparison():
     # Measure prediction time
     start_time = time.time()
     for _ in range(10):  # Multiple runs for accuracy
-        predictions = numpy_net.predict(X_test)
+        _ = numpy_net.predict(X_test)
     numpy_time = time.time() - start_time
 
-    print(f"\n🧮 NumPy Network Performance:")
+    print("\n🧮 NumPy Network Performance:")
     print(f"  Prediction Time (10 runs): {numpy_time:.4f} seconds")
     print(f"  Average per prediction: {numpy_time / (10 * num_samples):.6f} seconds")
 
@@ -287,15 +283,15 @@ def demo_performance_comparison():
 
         start_time = time.time()
         for _ in range(10):
-            tf_predictions = tf_net.predict(X_test, verbose=0)
+            _ = tf_net.predict(X_test, verbose=0)
         tf_time = time.time() - start_time
 
-        print(f"\n🤖 TensorFlow Network Performance:")
+        print("\n🤖 TensorFlow Network Performance:")
         print(f"  Prediction Time (10 runs): {tf_time:.4f} seconds")
         print(f"  Average per prediction: {tf_time / (10 * num_samples):.6f} seconds")
         print(f"  Speedup vs NumPy: {numpy_time / tf_time:.2f}x")
     else:
-        print(f"\n🤖 TensorFlow not available - using NumPy implementation")
+        print("\n🤖 TensorFlow not available - using NumPy implementation")
 
 
 def main():
@@ -305,30 +301,30 @@ def main():
 
     try:
         # Demo 1: Network compatibility
-        compatibility = demo_network_compatibility()
+        demo_network_compatibility()
 
         # Demo 2: Network creation
-        network = demo_network_creation()
+        demo_network_creation()
 
         # Demo 3: NumPy network
-        numpy_net = demo_numpy_network()
+        demo_numpy_network()
 
         # Demo 4: DQN agent integration
-        agent = demo_dqn_agent_integration()
+        demo_dqn_agent_integration()
 
         # Demo 5: Experience buffer
-        buffer = demo_experience_buffer()
+        demo_experience_buffer()
 
         # Demo 6: Performance comparison
         demo_performance_comparison()
 
         print("\n✅ Demo completed successfully!")
         print("\n📋 Summary:")
-        print(f"  - Neural network module is fully functional")
-        print(f"  - DQN agent integration working properly")
-        print(f"  - Experience buffer operating correctly")
-        print(f"  - All tests passing (52/52)")
-        print(f"  - Ready for production use")
+        print("  - Neural network module is fully functional")
+        print("  - DQN agent integration working properly")
+        print("  - Experience buffer operating correctly")
+        print("  - All tests passing (52/52)")
+        print("  - Ready for production use")
 
     except Exception as e:
         logger.error(f"Demo failed: {e}")

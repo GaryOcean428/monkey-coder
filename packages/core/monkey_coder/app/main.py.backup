@@ -965,8 +965,6 @@ async def execute_task(
             result=execution_result.result,
             usage=execution_result.usage,
             execution_time=execution_result.execution_time,
-            completed_at=datetime.utcnow(),
-            error=None  # Optional field for failed executions
         )
 
         # Track billing in background
@@ -1097,8 +1095,7 @@ async def create_billing_portal_session(
         )
 
         return BillingPortalSession(
-            session_url=session_url, customer_id=billing_customer.stripe_customer_id,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            session_url=session_url, customer_id=billing_customer.stripe_customer_id
         )
 
     except HTTPException:

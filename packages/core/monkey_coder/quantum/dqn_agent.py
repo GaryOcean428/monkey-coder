@@ -192,9 +192,12 @@ class DQNRoutingAgent:
         self.training_history = []
         self.routing_performance = {}  # Track performance by provider/model
 
-        # Initialize Q-network and target Q-network as None (lazy initialization)
-        self.q_network: Optional[NeuralNetworkType] = None
-        self.target_q_network: Optional[NeuralNetworkType] = None
+        # Initialize Q-network and target Q-network as None (will be lazily initialized)
+        self.q_network = None
+        self.target_q_network = None
+
+        # Initialize networks
+        self._initialize_networks()
 
         logger.info(f"Initialized DQN routing agent: state_size={state_size}, action_size={action_size}")
 
@@ -565,4 +568,85 @@ class DQNRoutingAgent:
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
+            return False
+
+    def get_state_dict(self) -> Dict[str, Any]:
+        """
+        Get the state dictionary for saving the model state.
+
+        Returns:
+            Dictionary containing the model state
+        """
+        state_dict = {
+            "state_size": self.state_size,
+            "action_size": self.action_size,
+            "learning_rate": self.learning_rate,
+            "discount_factor": self.discount_factor,
+            "exploration_rate": self.exploration_rate,
+            "exploration_decay": self.exploration_decay,
+            "exploration_min": self.exploration_min,
+            "batch_size": self.batch_size,
+            "target_update_frequency": self.target_update_frequency,
+            "training_step": self.training_step,
+            "routing_performance": self.routing_performance,
+            "training_history": self.training_history[-100:],  # Keep last 100 entries
+            "memory_size": len(self.memory),
+            "has_network": self.q_network is not None,
+        }
+
+        # Add network weights if available
+        if self.q_network is not None:
+            try:
+                if hasattr(self.q_network, 'get_weights'):
+                    weights = self.q_network.get_weights()
+                    # Convert numpy arrays to lists for JSON serialization
+                    state_dict["network_weights"] = [w.tolist() if hasattr(w, 'tolist') else w for w in weights]
+            except Exception as e:
+                logger.warning(f"Could not extract network weights: {e}")
+
+        return state_dict
+
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> bool:
+        """
+        Load the model state from a state dictionary.
+
+        Args:
+            state_dict: Dictionary containing the model state
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Load configuration
+            self.exploration_rate = state_dict.get("exploration_rate", self.exploration_rate)
+            self.training_step = state_dict.get("training_step", 0)
+            self.routing_performance = state_dict.get("routing_performance", {})
+            self.training_history = state_dict.get("training_history", [])
+
+            # Load network weights if available and network was saved
+            has_network = state_dict.get("has_network", False)
+            if has_network and "network_weights" in state_dict:
+                # Initialize networks if not already done
+                if self.q_network is None:
+                    self._initialize_networks()
+
+                # Load weights
+                if self.q_network is not None:
+                    try:
+                        weights = state_dict["network_weights"]
+                        # Convert lists back to numpy arrays if needed
+                        import numpy as np
+                        processed_weights = [np.array(w) if isinstance(w, list) else w for w in weights]
+                        self.q_network.set_weights(processed_weights)
+                        self.update_target_network()
+                        logger.info("Successfully loaded network weights from state dict")
+                    except Exception as e:
+                        logger.error(f"Failed to load network weights: {e}")
+                        return False
+
+            logger.info("Successfully loaded state dictionary")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to load state dictionary: {e}")
             return False

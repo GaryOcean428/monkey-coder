@@ -43,8 +43,7 @@ from .neural_network import (
 from .quantum_routing_manager import (
     QuantumRoutingManager,
     RoutingStrategy,
-    QuantumRoutingResult,
-    RoutingMetrics
+    QuantumRoutingResult
 )
 
 # Phase 2: Performance Metrics System
@@ -58,27 +57,26 @@ from .performance_metrics import (
 __all__ = [
     # Core quantum execution
     "QuantumManager",
-    "TaskVariation", 
+    "TaskVariation",
     "CollapseStrategy",
     "QuantumResult",
     "quantum_task",
-    
+
     # DQN components
     "DQNRoutingAgent",
-    "RoutingAction", 
+    "RoutingAction",
     "RoutingState",
-    
+
     # Neural network components
     "DQNNetwork",
     "NumpyDQNModel",
     "create_dqn_network",
-    
+
     # Quantum routing manager
     "QuantumRoutingManager",
     "RoutingStrategy",
     "QuantumRoutingResult",
-    "RoutingMetrics",
-    
+
     # Performance metrics
     "PerformanceMetricsCollector",
     "MetricType",
