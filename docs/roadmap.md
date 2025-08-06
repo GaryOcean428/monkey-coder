@@ -2,7 +2,9 @@
 
 ## Executive Summary
 
-Monkey Coder is an advanced AI-powered development platform that combines multi-agent orchestration, quantum task execution, and MCP (Model Context Protocol) integration to deliver next-generation code generation and analysis capabilities.
+Monkey Coder is an advanced AI-powered development platform that combines multi-agent orchestration, quantum task
+execution, and MCP (Model Context Protocol) integration to deliver next-generation code generation and analysis
+capabilities.
 
 **Key Features:**
 - ✅ Multi-agent architecture with specialized agents
@@ -16,7 +18,7 @@ Monkey Coder is an advanced AI-powered development platform that combines multi-
 
 ### Core Components
 
-```
+```text
 monkey-coder/
 ├── packages/
 │   ├── core/                 # Python core engine
@@ -95,9 +97,9 @@ monkey-coder/
 - `grok-3-mini-fast` - Ultra-fast responses for simple tasks
 - `grok-3-fast` - Balance of speed and capability
 
-**Total Available Models: 31 across 5 providers**
+### Total Available Models: 31 across 5 providers
 
-**Model Validator Features:**
+### Model Validator Features
 
 ```python
 # Automatic enforcement
@@ -146,20 +148,23 @@ ModelValidator.BLOCKED_MODELS = {
 
 ### Phase 1.5: Technical Debt Resolution & Security Hardening (CRITICAL - IN PROGRESS)
 
-**Goal:** Address critical technical debt, security vulnerabilities, and architectural improvements identified in comprehensive QA analysis
-**Success Criteria:** Improved code maintainability, enhanced security posture, better type safety, modular architecture
+**Goal:** Address critical technical debt, security vulnerabilities, and architectural improvements identified in
+comprehensive QA analysis
+**Success Criteria:** Improved code maintainability, enhanced security posture, better type safety, modular
+architecture
 **Status:** 60% Complete - Critical naming issues resolved, security and infrastructure improvements in progress
 
-**Phase 1.5 Accomplishments (Completed January 2025):**
+### Phase 1.5 Accomplishments (Completed January 2025)
 
-**Critical Naming Convention Cleanup:**
+### Critical Naming Convention Cleanup
 - ✅ **API Models Standardized** - Fixed superclause_config → persona_config throughout codebase
-- ✅ **Configuration Classes Renamed** - SuperClaudeConfig → PersonaConfig, Monkey1Config → OrchestrationConfig, Gary8DConfig → QuantumConfig
+- ✅ **Configuration Classes Renamed** - SuperClaudeConfig → PersonaConfig, Monkey1Config → OrchestrationConfig,
+  Gary8DConfig → QuantumConfig
 - ✅ **Documentation Cleanup** - Removed inspiration repository references (monkey1, Gary8D, SuperClaude) from core documentation
 - ✅ **SDK Synchronization** - Updated Python SDK to match core naming conventions
 - ✅ **Backward Compatibility** - All API endpoints maintain same structure with improved internal naming
 
-**Files Updated (10 total):**
+### Files Updated (10 total)
 - `packages/core/monkey_coder/models.py` - Core model definitions (protected file - minimal surgical changes)
 - `packages/core/demo_routing.py` - Demo script with new config classes
 - `packages/core/dev_server.py` - Development server models updated
@@ -168,7 +173,7 @@ ModelValidator.BLOCKED_MODELS = {
 - `packages/sdk/src/Python/monkey_coder_sdk/*.py` - Python SDK alignment
 - `docs/*` - Documentation header standardization
 
-**Technical Validation:**
+### Technical Validation
 - ✅ All renamed classes instantiate correctly
 - ✅ API request/response models compile successfully
 - ✅ No breaking changes to existing functionality
@@ -243,14 +248,15 @@ ModelValidator.BLOCKED_MODELS = {
 
 ### Security & Performance Improvements
 
-**Security Enhancements:**
-- [ ] **Token Security Audit** - Replace localStorage with httpOnly cookies, implement secure CLI token storage with keytar
+### Security Enhancements
+- [ ] **Token Security Audit** - Replace localStorage with httpOnly cookies, implement secure CLI token storage with
+  keytar
 - [ ] **Input Validation** - Add comprehensive input sanitization and validation across all API endpoints
 - [ ] **Dependency Security** - Run bandit (Python) and npm audit, integrate Snyk security scanning
 - [ ] **CSRF Protection** - Implement CSRF tokens for state-changing operations
 - [ ] **Rate Limiting** - Add intelligent rate limiting to prevent abuse
 
-**Performance Optimizations:**
+### Performance Optimizations
 - [ ] **Router Performance** - Instrument scoring functions, add caching for repeated prompts
 - [ ] **Async Operations** - Convert blocking operations to async/await patterns
 - [ ] **Bundle Optimization** - Optimize frontend bundle size and loading performance
@@ -276,7 +282,7 @@ ModelValidator.BLOCKED_MODELS = {
 
 ### Phase 5: MCP Integration (Completed)
 
-**MCP Server Management System:**
+### MCP Server Management System
 
 ```python
 packages/core/monkey_coder/mcp/
@@ -292,7 +298,7 @@ packages/core/monkey_coder/mcp/
     └── database.py        ✅ Created
 ```
 
-**CLI Commands:**
+### CLI Commands
 
 ```bash
 # MCP Server Management (Implemented)
@@ -309,7 +315,7 @@ monkey analyze --mcp database "Review database schema"
 
 ### Phase 6: Package Publishing (Completed)
 
-**Published Packages:**
+### Published Packages
 - ✅ **monkey-coder-core v1.0.3** - Published to PyPI
   - Install: `pip install monkey-coder-core`
   - URL: <https://pypi.org/project/monkey-coder-core/1.0.3/>
@@ -323,7 +329,7 @@ monkey analyze --mcp database "Review database schema"
 
 ### Phase 7: Web Frontend & Deployment (In Progress)
 
-**Web Application:**
+#### Web Application
 - ✅ Next.js 15 frontend scaffolding
 - ✅ Landing page with hero, features, pricing
 - ✅ Authentication UI components
@@ -336,7 +342,7 @@ monkey analyze --mcp database "Review database schema"
 - 🚧 User dashboard
 - 🚧 API integration
 
-**Brand Identity System:**
+#### Brand Identity System
 - ✅ Logo Assets Integration
   - favicon.ico: 24x24px icon for headers/navigation
   - splash.png: 120x32px main logo display
@@ -347,7 +353,7 @@ monkey analyze --mcp database "Review database schema"
   - **Brand Gradient**: coral → orange → yellow → cyan → purple → magenta
   - Updated CSS variables in packages/web/src/styles/globals.CSS
 
-**Security Implementation: httpOnly Cookie Authentication**
+#### Security Implementation: httpOnly Cookie Authentication
 - ✅ Replaced insecure localStorage-based authentication with secure httpOnly cookies
 - ✅ Created packages/web/src/lib/auth.ts with core authentication utilities
 - ✅ Created packages/web/src/lib/auth-context.tsx with React Context components
@@ -359,7 +365,7 @@ monkey analyze --mcp database "Review database schema"
 - 📅 Component Updates: Migration to new auth system
 - 📅 Comprehensive security testing
 
-**Website Improvements: UI/UX Fixes and Theme Implementation (COMPLETED)**
+### Website Improvements: UI/UX Fixes and Theme Implementation (COMPLETED)
 - ✅ Fixed false claims about active users and statistics
 - ✅ Removed duplicate logos in footer
 - ✅ Fixed dead links in header navigation
@@ -371,14 +377,14 @@ monkey analyze --mcp database "Review database schema"
 - 📅 Accessibility improvements (ARIA labels, keyboard navigation)
 - 📅 Performance optimization for faster load times
 
-**Neon Glow Effects Implementation (NEW)**
+### Neon Glow Effects Implementation (NEW)
 - ✅ Created comprehensive neon CSS classes with subtle animations
 - ✅ Applied neon effects to header, logo, buttons, cards, and interactive elements
 - ✅ Enhanced user experience with modern, futuristic visual design
 - ✅ Maintained tasteful implementation that complements brand identity
 - ✅ Effects only active in dark mode for optimal user experience
 
-**Railway Deployment:**
+### Railway Deployment
 - ✅ Backend API deployed to Railway
 - ✅ Volume support for persistent storage
 - ✅ Fixed monitoring.py NameError issue (2025-01-28)
@@ -393,13 +399,13 @@ monkey analyze --mcp database "Review database schema"
 
 ### Q1 2025: Technical Debt Resolution & Quantum Preparation
 
-**Phase 1.5: Technical Debt Resolution (Weeks 1-3)**
+#### Phase 1.5: Technical Debt Resolution (Weeks 1-3)
 - [ ] **Security Hardening** - Complete httpOnly cookie implementation across all components
 - [ ] **Core Routing Refactor** - Modularize AdvancedRouter with pluggable strategies
 - [ ] **Type Safety Improvements** - Replace all `any` types with proper interfaces
 - [ ] **MCP Server Optimization** - Convert to async operations with proper error handling
 
-**Weeks 4-6: MCP Infrastructure**
+#### Weeks 4-6: MCP Infrastructure
 - [ ] Complete MCP server manager optimization
 - [ ] Built-in filesystem MCP server enhancement
 - [ ] MCP configuration system with YAML support
@@ -407,7 +413,7 @@ monkey analyze --mcp database "Review database schema"
 
 ### Q2 2025: Quantum Routing Engine (6-8 weeks)
 
-**Enhanced DQN Agent Implementation (Weeks 1-2)**
+#### Enhanced DQN Agent Implementation (Weeks 1-2)
 - ✅ Experience replay buffer with configurable memory size (default: 2000 experiences)
 - ✅ Neural network architecture with target network updating
 - ✅ Epsilon-greedy exploration strategy with decay optimization
@@ -417,19 +423,19 @@ monkey analyze --mcp database "Review database schema"
 - ✅ Model persistence (save/load functionality)
 - ✅ Performance tracking by provider/model combinations
 
-**Quantum Routing Manager (Weeks 3-4)**
+#### Quantum Routing Manager (Weeks 3-4)
 - [ ] Parallel strategy execution with 3-5 simultaneous routing approaches
 - [ ] Advanced collapse mechanisms (BEST_SCORE, WEIGHTED, CONSENSUS, FIRST_SUCCESS)
 - [ ] Thread management and performance monitoring
 - [ ] Configurable timeout and resource limits
 
-**Advanced Model Selection (Weeks 5-6)**
+#### Advanced Model Selection (Weeks 5-6)
 - [ ] Strategy-based selection (TASK_OPTIMIZED, COST_EFFICIENT, PERFORMANCE)
 - [ ] Provider management with sophisticated fallback mechanisms
 - [ ] Learning integration with DQN agent feedback
 - [ ] A/B testing framework for strategy comparison
 
-**Performance & Caching (Weeks 7-8)**
+### Performance & Caching (Weeks 7-8)
 - [ ] Redis-based intelligent caching with context-based key generation
 - [ ] Performance metrics collection with real-time monitoring
 - [ ] Analytics dashboard with quantum thread performance analysis
@@ -464,7 +470,7 @@ class MCPEnabledOrchestrator:
         )
 ```
 
-**User Experience Enhancement:**
+### User Experience Enhancement
 
 ```bash
 $ monkey generate "Create a REST API with user auth"
@@ -1324,7 +1330,7 @@ Brief description of changes made
 - **Examples**: Sample projects, tutorials, best practices
 - **Ecosystem**: MCP servers, integrations, plugins
 
-### Maintenance and Support
+### Maintenance and Support (First)
 
 **Issue Triage:**
 - **P0 (Critical)**: Production outages, security vulnerabilities
@@ -1469,7 +1475,7 @@ class AIProviderCircuitBreaker:
             raise e
 ```
 
-**Business Mitigations:**
+### Business Mitigations
 - Diversified revenue streams (API, enterprise, consulting)
 - Strong intellectual property protection
 - Multiple cloud provider relationships
@@ -1966,7 +1972,7 @@ monkey chat
 
 **Advanced Examples Repository:**
 
-```
+```text
 examples/
 ├── web-development/
 │   ├── React-todo-app/
@@ -1986,21 +1992,13 @@ examples/
     └── slack-bot/
 ```
 
-### Video Tutorials
-
-**YouTube Playlist: "Mastering Monkey Coder"**
+### YouTube Playlist: "Mastering Monkey Coder"
 1. Introduction and Setup (10 minutes)
 2. Basic Code Generation (15 minutes)
 3. Advanced Code Analysis (20 minutes)
 4. Multi-Agent Workflows (25 minutes)
 5. MCP Integration Deep Dive (30 minutes)
 6. Enterprise Features Overview (20 minutes)
-
-**Interactive Workshops:**
-- Monthly live coding sessions
-- Community Q&A sessions
-- Feature deep-dive webinars
-- Best practices workshops
 
 ### Documentation Structure
 
@@ -2078,6 +2076,16 @@ examples/
 
 ### Appendix D: Changelog
 
+**Version 1.0.5 (June 8, 2025):**
+- Main Application Linting Fixes: Resolved all ruff linter errors in packages/core/monkey_coder/app/main.py
+- JWT Authentication Improvements: Fixed missing JWTUser import and create_access_token parameter structure
+- Code Quality Enhancement: Improved import organization and type safety in core FastAPI application
+- Technical Debt Resolution: Addressed critical linting issues blocking development progress
+- Phase 2 Quantum Routing Async/Await Fixes: Successfully resolved all async/await issues in quantum routing test suite
+  - Fixed 4 locations where async methods were called without proper awaiting
+  - All 26 tests in quantum routing test suite now passing
+  - Eliminated coroutine object attribute errors throughout the system
+
 **Version 1.0.4 (January 31, 2025):**
 - Security Implementation: httpOnly Cookie Authentication
 - Website Improvements: UI/UX fixes and neon glow effects
@@ -2093,7 +2101,7 @@ examples/
 
 ---
 
-Last Updated: 2025-01-31 (22:30 GMT+8)
-Version: 1.1.0
+Last Updated: 2025-06-08 (14:06 GMT+8)
+Version: 1.0.5
 Document Length: 1,200+ lines
 Contributors: Core Team, Community Contributors

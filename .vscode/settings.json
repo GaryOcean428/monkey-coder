@@ -86,7 +86,7 @@
         "activityBar.background": "#2D3748",
         "activityBar.foreground": "#ffffff"
     },
-    "chat.mcp.autostart": "newAndOutdated",
+    "chat.mcp.autostart": "never",
     "chat.edits2.enabled": true,
     "chat.editor.wordWrap": "on",
     "chat.agent.maxRequests": 200,
