@@ -8,8 +8,12 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
-  { name: 'Features', href: '#features' },
-  { name: 'Pricing', href: '#pricing' },
+  { name: 'Getting Started', href: '/getting-started' },
+  { name: 'Features', href: '/#features' },
+  { name: 'Pricing', href: '/pricing' },
+  { name: 'Docs', href: '/docs/cli' },
+  { name: 'API Keys', href: '/api-keys' },
+  { name: 'Contact', href: '/contact' },
 ]
 
 export function Header() {
@@ -20,12 +24,12 @@ export function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
-            <Image 
-              src="/splash.png" 
-              alt="Monkey Coder Logo" 
-              width={32} 
-              height={32} 
-              className="h-8 w-8" 
+            <Image
+              src="/splash.png"
+              alt="Monkey Coder Logo"
+              width={32}
+              height={32}
+              className="h-8 w-8"
             />
             <span className="font-bold text-xl">Monkey Coder</span>
           </Link>
@@ -60,19 +64,19 @@ export function Header() {
           </Link>
         </div>
       </nav>
-      
+
       {/* Mobile menu */}
       <div className={cn('lg:hidden', mobileMenuOpen ? 'block' : 'hidden')}>
         <div className="fixed inset-0 z-50" />
         <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-background px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
             <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2">
-              <Image 
-                src="/splash.png" 
-                alt="Monkey Coder Logo" 
-                width={32} 
-                height={32} 
-                className="h-8 w-8" 
+              <Image
+                src="/splash.png"
+                alt="Monkey Coder Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8"
               />
               <span className="font-bold text-xl">Monkey Coder</span>
             </Link>
