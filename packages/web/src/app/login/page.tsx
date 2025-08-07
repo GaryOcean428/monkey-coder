@@ -66,18 +66,11 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-sm">
           <Link href="/" className="flex items-center gap-2 mb-8">
             <Image
-              src="/favicon.ico"
-              alt="Favicon Logo"
-              width={24}
-              height={24}
-              className="h-6 w-6"
-            />
-            <Image
               src="/splash.png"
-              alt="Splash Logo"
-              width={120}
-              height={32}
-              className="h-8 w-8"
+              alt="Monkey Coder Logo"
+              width={150}
+              height={40}
+              className="h-10"
             />
           </Link>
 

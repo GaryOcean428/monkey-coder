@@ -2,20 +2,44 @@
   "name": "Monkey Coder",
   "short_name": "Monkey Coder",
   "description": "AI-Powered Code Generation Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fefefe",
+  "theme_color": "#00cec9",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "developer", "utilities"],
   "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "theme_color": "#00cec9",
-  "background_color": "#fefefe",
-  "display": "standalone",
-  "start_url": "/"
+  "screenshots": [
+    {
+      "src": "/splash.png",
+      "sizes": "1068x874",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
 }

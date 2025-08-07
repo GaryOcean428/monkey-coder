@@ -3,6 +3,8 @@
  * Separated from auth.ts to avoid formatting issues
  */
 
+"use client"
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthUser, login, signup, logout, getUserStatus, refreshToken, clearLegacyTokens } from './auth';
