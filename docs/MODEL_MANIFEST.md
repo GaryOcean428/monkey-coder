@@ -25,6 +25,27 @@ providers:
 ```yaml
 anthropic:
   models:
+    claude-opus-4-1-20250805:
+      context_window: 200000
+      max_output: 32000
+      capabilities:
+        - advanced_reasoning
+        - code_generation
+        - analysis
+        - refactoring
+        - documentation
+        - extended_thinking
+        - superior_reasoning
+      cost:
+        input: 0.015
+        output: 0.075
+      use_cases:
+        - complex_reasoning
+        - large_codebase_analysis
+        - architectural_decisions
+        - advanced_problem_solving
+        - most_capable_tasks
+
     claude-opus-4-20250514:
       context_window: 200000
       max_output: 32000
@@ -660,9 +681,9 @@ openrouter:
 ```yaml
 task_routing:
   complex_reasoning:
-    primary: o3-pro
-    fallback: claude-opus-4-20250514
-    alternatives: [gemini-2.5-pro, o3]
+    primary: claude-opus-4-1-20250805
+    fallback: o3-pro
+    alternatives: [claude-opus-4-20250514, gemini-2.5-pro, o3]
 
   advanced_reasoning:
     primary: o3
@@ -736,6 +757,7 @@ cost_tiers:
 
   ultra_premium:
     models:
+      - claude-opus-4-1-20250805
       - o3-pro
       - claude-opus-4-20250514
     max_cost_per_1k_tokens: 0.100
@@ -843,6 +865,7 @@ benchmarks:
     together: 200
 
   reasoning_quality:
+    claude-opus-4-1-20250805: 9.9/10
     o3-pro: 9.8/10
     claude-opus-4-20250514: 9.7/10
     gemini-2.5-pro: 9.6/10
@@ -920,7 +943,8 @@ const modelReplacements = {
   "gpt-4-turbo": "gpt-4.1",
 
   // Anthropic legacy models
-  "claude-3-opus": "claude-opus-4-20250514",
+  "claude-3-opus": "claude-opus-4-1-20250805",
+  "claude-opus-4-20250514": "claude-opus-4-1-20250805",
   "claude-3-sonnet": "claude-3-5-sonnet-20241022",
   "claude-3-haiku": "claude-3-5-haiku-20241022",
 
@@ -934,7 +958,7 @@ const modelReplacements = {
 
 ```python
 @enforce_model_compliance
-async def generate_code(model="gpt-4o"):  # Automatically converts to gpt-4.1
+async def generate_code(model="claude-3-opus"):  # Automatically converts to claude-opus-4-1-20250805
     pass
 ```
 
@@ -949,9 +973,9 @@ async def generate_code(model="gpt-4o"):  # Automatically converts to gpt-4.1
 
 ## Model Statistics
 
-- **Total Available Models**: 31 across 5 primary providers
+- **Total Available Models**: 32 across 5 primary providers
 - **Reasoning Models**: 6 (OpenAI o1/o3/o4 series)
-- **Chat Models**: 17 (OpenAI GPT-4.1 family + Anthropic Claude + xAI Grok + others)
+- **Chat Models**: 18 (OpenAI GPT-4.1 family + Anthropic Claude + xAI Grok + others)
 - **Multimodal Models**: 4 (Vision-capable models)
 - **Hardware Accelerated**: 6 (Groq models)
 - **Cost-Optimized**: 14 (Models under $0.001 per 1K tokens)
@@ -960,7 +984,7 @@ async def generate_code(model="gpt-4o"):  # Automatically converts to gpt-4.1
 
 For model-specific questions or issues:
 - GitHub Issues: [monkey-coder/issues](https://github.com/GaryOcean428/monkey-coder/issues)
-- Model Selection: Use `o3-pro` for complex decisions, `gpt-4.1` for general tasks
+- Model Selection: Use `claude-opus-4-1-20250805` for complex decisions, `gpt-4.1` for general tasks
 - Performance Issues: Check Groq models first for speed-critical tasks
 - Cost Optimization: Use `gpt-4.1-mini` or `gemini-2.5-flash-lite` for budget constraints
 - Compliance: All models automatically validated against approved list

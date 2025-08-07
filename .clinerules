@@ -1,99 +1,139 @@
-Code Quality & Standards Rules
+# Monkey Coder Development Rules & Standards
 
-1. Multi-Persona Validation System: Before providing any solution, I should engage appropriate specialist personas (similar to .clinerules' {CODE_REVIEWER}, {SECURITY_SPECIALIST}, etc.) to validate different aspects:
-•  Security concerns → Security Specialist review
-•  Performance implications → Performance Optimizer review
-•  Architecture decisions → Technical Architect validation
-2. Duplication Prevention Protocol: Always check for existing similar functionality before creating new solutions. When replacement is necessary, follow a systematic approach:
-•  Search thoroughly for existing implementations
-•  Prefer extension/composition over duplication
-•  Document reasons for replacements clearly
-3. Thinking Process Documentation: Use structured thinking approaches:
-•  {[thinking]} tags for planning
-•  ```thinking code blocks for reasoning
-•  Blockquotes for shorter planning notes
-•  Clear problem → analysis → solution flow
-4. Technical Standards Rules: Adhere to established coding standards and best practices:
-•  Use mcp's like context7 to verify current LLM models, their API specifications and correct parameters.
-•  Follow language-specific conventions (e.g., TypeScript, React)
-•  Use consistent naming conventions
-•  Implement proper error handling and loading states
-•  Ensure code is modular and maintainable
-•  Use comments judiciously to clarify complex logic
-•  Maintain high test coverage and quality
-•  Use version control effectively (e.g., Git)
-•  Ensure code is well-documented and easy to understand and consistent with specification documentation. regularly clean up FIX.md files and guides.
-- Review the roadmap.md and update before any commits. use the docs folder, to store any documentation and fix files. cleanup unneded .md's if they are onetime use.
+*Consistent with Agent OS Standards (@~/.agent-os/standards/), CLAUDE.md, and docs/roadmap.md*
 
-Technical Standards Rules
+## Core Quality & Standards Rules
 
-4. Version Requirements Enforcement: Maintain awareness of minimum version requirements and recommend current/supported versions:
-•  Prioritize modern, well-supported versions
-•  Check compatibility before recommendations
-•  Warn about deprecated technologies
-5. Build vs. Remove Philosophy: Default to building and completing features rather than removing unused code:
-•  Investigate thoroughly before suggesting removals
-•  Prioritize feature completion over cleanup
-•  Understand project intent through documentation analysis
-6. Environment-Aware Solutions: Consider different environments (dev, test, prod) in all recommendations and ensure solutions work across contexts.
+### 1. Multi-Persona Validation System
+Before providing any solution, engage appropriate specialist personas to validate different aspects:
+- Security concerns → Security Specialist review (critical for Phase 1.6 Authentication System Unification)
+- Performance implications → Performance Optimizer review
+- Architecture decisions → Technical Architect validation
 
-Communication & Process Rules
+### 2. Duplication Prevention Protocol
+Always check for existing similar functionality before creating new solutions:
+- Search thoroughly for existing implementations
+- Prefer extension/composition over duplication
+- Document reasons for replacements clearly
 
-7. Clear Task Understanding: Before executing any task, ensure complete understanding by:
-•  Analyzing for ambiguities
-•  Asking clarifying questions when needed
-•  Confirming intent before proceeding
-•  Gathering relevant context from available sources
-8. Systematic Investigation Protocol: When troubleshooting or analyzing issues:
-•  Classify the problem type (build, deploy, runtime, etc.)
-•  Investigate root causes systematically
-•  Follow established error pattern recognition
-•  Provide actionable solutions with clear steps
-9. Documentation Standards: Always consider documentation impact:
-•  Update relevant docs when suggesting changes
-•  Maintain clear change records
-•  Provide migration guidance for breaking changes
-•  Use clear, professional communication
+### 3. Thinking Process Documentation
+Use structured thinking approaches:
+- `{[thinking]}` tags for planning
+- ```thinking code blocks for reasoning
+- Blockquotes for shorter planning notes
+- Clear problem → analysis → solution flow
 
-Security & Safety Rules
+### 4. Technical Standards & Architecture Compliance
+Adhere to Monkey Coder's established patterns and Agent OS standards:
+- **Project Architecture**: Yarn 4.9.2 workspace monorepo with TypeScript CLI, Python FastAPI core
+- **Package Management**: Use yarn 4.9.2+, pnpm fallback before npm directly (enable corepack as required)
+- **Python Management**: Use uv then poetry before pip directly for Python 3.8+ projects
+- **MCP Integration**: Use MCPs like context7 to verify current LLM models, API specifications and parameters
+- **Language Conventions**: Follow TypeScript strict typing, Python type hints, React functional patterns
+- **Code Organization**: Maintain modular and maintainable structure consistent with packages/ layout
+- **Error Handling**: Implement proper error handling and loading states
+- **Documentation**: Keep code well-documented and consistent with specifications
+- **File Management**: Use docs/ folder for documentation, cleanup unneeded .md files after one-time use
+- **Git Workflow**: Review docs/roadmap.md and update before commits
 
-10. Security-First Approach: Always evaluate security implications:
-◦  Validate input sanitization needs
-◦  Consider authentication/authorization requirements
-◦  Never compromise security for convenience
-◦  Review for potential vulnerabilities
-11. Careful Change Management: Only suggest changes that are:
-◦  Well-understood and related to the request
-◦  Thoroughly analyzed for side effects
-◦  Documented with clear reasoning
-◦  Tested or verifiable when possible
+### 5. Version Requirements Enforcement
+Maintain awareness of minimum version requirements per project specifications:
+- **Node.js**: >=18.0.0
+- **Python**: >=3.8 (3.12+ preferred)
+- **Yarn**: >=4.9.2
+- **TypeScript**: Strict typing enabled
+- Prioritize modern, well-supported versions
+- Check compatibility before recommendations
+- Warn about deprecated technologies
 
-User Experience Rules
+### 6. Build vs. Remove Philosophy
+Default to building and completing features rather than removing unused code:
+- Investigate thoroughly before suggesting removals
+- Prioritize feature completion over cleanup (especially for Phase 1.6 completion)
+- Understand project intent through documentation analysis
 
-12. TypeScript & Modern Development Focus: When providing code solutions:
-◦  Prioritize TypeScript with strict typing
-◦  Use modern React patterns (functional components, hooks)
-◦  Use yarn 4.9.2 and above, pnpm fallback before using npm directly. (enable corepack as required)
-◦  Use uv then poetry before using pip directly for python 3.12+ projects
-◦  Follow established naming conventions
-◦  Implement proper error handling and loading states
-13. Responsive & Accessible Design: Ensure recommendations consider:
-◦  Cross-device compatibility
-◦  Accessibility standards (ARIA attributes)
-◦  Performance optimization
-◦  User experience across different contexts
-14. Railway Config Quick-Check: Follow the 8-step checklist for Railway projects to ensure proper configuration and deployment:
-◦  Pull the latest code
-◦  Open key configuration files
-◦  Verify port usage and binding
-◦  Check inter-service URLs
-◦  CORS configuration review
-◦  WebSocket sanity check
-◦  Dockerfile validation (if used)
-   -use **"docker buildx build --builder cloud-garyocean77-superagi ."** to use docker build cloud
-◦  Deploy and test loop
+### 7. Environment-Aware Solutions
+Consider different environments (dev, test, prod) and Railway deployment requirements:
+- Solutions must work across contexts
+- Follow Railway deployment patterns from CLAUDE.md
+- Consider Phase 1.6 Authentication System requirements
 
-These rules would help me provide more structured, thorough, and professional assistance while maintaining high standards for code quality, security, and user experience. They emphasize systematic thinking, thorough analysis, and consideration of multiple perspectives before providing solutions.
+## Communication & Process Rules
+
+### 8. Clear Task Understanding
+Before executing any task, ensure complete understanding by:
+- Analyzing for ambiguities
+- Asking clarifying questions when needed
+- Confirming intent before proceeding
+- Gathering relevant context from available sources
+
+### 9. Systematic Investigation Protocol
+When troubleshooting or analyzing issues:
+- Classify the problem type (build, deploy, runtime, etc.)
+- Investigate root causes systematically
+- Follow established error pattern recognition
+- Provide actionable solutions with clear steps
+
+### 10. Documentation Standards
+Always consider documentation impact:
+- Update relevant docs when suggesting changes
+- Maintain clear change records in docs/roadmap.md
+- Provide migration guidance for breaking changes
+- Use clear, professional communication
+- Reference Agent OS standards (@~/.agent-os/standards/)
+
+## Security & Safety Rules
+
+### 11. Security-First Approach (Critical for Phase 1.6)
+Always evaluate security implications, especially for Authentication System Unification:
+- Validate input sanitization needs
+- Consider authentication/authorization requirements (httpOnly cookies, JWT, session management)
+- Never compromise security for convenience
+- Review for potential vulnerabilities
+- Follow security patterns from CLAUDE.md
+
+### 12. Careful Change Management
+Only suggest changes that are:
+- Well-understood and related to the request
+- Thoroughly analyzed for side effects
+- Documented with clear reasoning
+- Tested or verifiable when possible
+- Aligned with current roadmap priorities
+
+## User Experience & Development Rules
+
+### 13. TypeScript & Modern Development Focus
+When providing code solutions:
+- Prioritize TypeScript with strict typing
+- Use modern React patterns (functional components, hooks)
+- Use yarn 4.9.2+ and above, pnpm fallback before npm directly (enable corepack as required)
+- Use uv then poetry before pip directly for Python 3.8+ projects
+- Follow established naming conventions from Agent OS standards
+- Implement proper error handling and loading states
+
+### 14. Responsive & Accessible Design
+Ensure recommendations consider:
+- Cross-device compatibility
+- Accessibility standards (ARIA attributes)
+- Performance optimization
+- User experience across different contexts
+### 15. Railway Deployment Standards
+Follow the 8-step checklist for Railway projects to ensure proper configuration and deployment:
+- Pull the latest code
+- Open key configuration files
+- Verify port usage and binding
+- Check inter-service URLs
+- CORS configuration review
+- WebSocket sanity check
+- Dockerfile validation (if used)
+  - Use `docker buildx build --builder cloud-garyocean77-superagi .` to use docker build cloud
+- Deploy and test loop
+- Commit and push changes after verification
+
+### 16. Project Planning Standards
+- **Do not include artificial timeframes into plans** - Phases and tasks should be based on complexity and requirements, not arbitrary deadlines
+- Align with current roadmap priorities (especially Phase 1.6 Authentication System Unification)
+- Reference established patterns from Agent OS documentation
 
 ## Railway Config Quick-Check (variable and reference variable Cheat-Sheet)
 
@@ -208,18 +248,23 @@ After each deploy:
 
 **Done?** ✅ Commit the fixed files and push.
 
-## Critical File Protection Rules
+## Critical File Protection Rules (Aligned with CLAUDE.md)
 
-14. **NEVER MODIFY CORE MODEL CONFIGURATIONS**: The following files are STRICTLY PROTECTED and must NEVER be modified:
-   - `packages/core/monkey_coder/models.py` - Contains validated AI model configurations
-   - Any file containing model definitions, API keys, or core provider configurations
+### 17. NEVER MODIFY PROTECTED FILES
+The following files are STRICTLY PROTECTED and must NEVER be modified without explicit approval:
+- `packages/core/monkey_coder/models.py` - Contains validated AI model configurations critical for system stability
+- Any file containing model definitions, API keys, or core provider configurations
 
-   **Rationale**: These files contain carefully validated model configurations that are critical for system stability and API compatibility. Any modifications could break the entire system.
+**Rationale**: These files contain carefully validated configurations that ensure API compatibility and system stability. Unauthorized modifications can break the entire platform.
 
-   **Actions Prohibited**:
-   - Adding new models without explicit approval
-   - Modifying existing model names or parameters
-   - Changing provider configurations
-   - Updating model capabilities or limits
+**Prohibited Actions**:
+- Adding new models or providers
+- Modifying existing model names, parameters, or capabilities
+- Changing provider configurations or API endpoints
+- Updating model limits or pricing information
 
-   **If changes are needed**: Consult project documentation and get explicit approval before making ANY modifications to these protected files.
+**If changes are required**: Consult project maintainers and get explicit written approval before making ANY modifications to protected files.
+
+---
+
+*These rules provide structured, thorough, and professional assistance while maintaining high standards for code quality, security, and user experience. They emphasize systematic thinking, thorough analysis, and consideration of multiple perspectives before providing solutions.*

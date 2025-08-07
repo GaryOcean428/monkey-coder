@@ -163,7 +163,11 @@
 
 ## Security & Monitoring
 - **Error Tracking:** Sentry integration across all components
-- **Authentication:** JWT-based authentication system with complete endpoint coverage
+- **Authentication:** CRITICAL - Authentication System Unification in Progress (Phase 1.6)
+  - **Current Issue:** 3 separate authentication modules creating security risks and maintenance burden
+  - **Modules Being Consolidated:** security_enhanced.py, enhanced_cookie_auth.py, cookie_auth.py
+  - **Target:** Unified authentication module with httpOnly cookies, consistent security model
+  - **Timeline:** 4 weeks development effort (P0 - BLOCKS PRODUCT COMPLETION)
 - **API Security:** FastAPI security middleware with rate limiting
 - **Environment Management:** Centralized secure environment variable handling with validation
 - **Health Monitoring:** /health and /healthz endpoints with component status
@@ -171,6 +175,7 @@
 - **System Metrics:** Prometheus endpoint for infrastructure monitoring
 - **Production Logging:** Railway-optimized structured logging
 - **Capabilities Endpoint:** /v1/capabilities for comprehensive system status and feature documentation
+- **Security Hardening:** In-progress implementation of httpOnly cookies, CSRF protection, and unified session management
 
 ## Enhanced Features (Phase 1 Completion)
 - **Single-Word Input Support:** Users can enter commands like "build", "test", "debug"
