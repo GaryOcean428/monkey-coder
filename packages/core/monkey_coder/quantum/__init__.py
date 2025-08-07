@@ -1,87 +1,65 @@
 """
-Quantum Routing Engine - Phase 2 Implementation
+Quantum Routing Engine
 
-This module implements the advanced quantum routing capabilities for the Monkey Coder
+This module implements the quantum routing capabilities for the Monkey Coder
 platform, providing intelligent AI model selection using Deep Q-Network (DQN)
-algorithms, multi-strategy parallel execution, comprehensive performance metrics,
-and Redis-based caching for optimal routing decisions.
+algorithms and multi-strategy parallel execution patterns.
 
-Phase 2 Features:
-- Enhanced DQN Agent with neural network implementation
-- Quantum Routing Manager with multi-strategy execution
-- Comprehensive performance metrics and analytics
-- Real-time monitoring and alerting
-- Redis-based intelligent caching system
-
-Built on proven multi-agent patterns and adapted for the
+Built on proven patterns from the monkey1 project and adapted for the
 Monkey Coder platform's specific routing requirements.
 """
 
-# Core quantum execution components
-from .manager import (
-    QuantumManager,
-    TaskVariation,
-    CollapseStrategy,
-    QuantumResult,
-    quantum_task
+from .dqn_agent import DQNRoutingAgent, RoutingAction, RoutingState
+from .experience_buffer import Experience, ExperienceBuffer, BufferFullError, BufferEmptyError
+from .neural_networks import (
+    QNetworkArchitecture,
+    DQNNetworkManager,
+    create_dqn_networks,
 )
-
-# Phase 2: Enhanced DQN components
-from .dqn_agent import (
-    DQNRoutingAgent,
-    RoutingAction,
-    RoutingState
+from .training_pipeline import (
+    QuantumDQNTrainer,
+    TrainingScenario,
+    TrainingPhase,
+    QuantumTrainingResult,
+    TrainingScenarioGenerator,
+    create_quantum_dqn_trainer,
 )
-
-from .neural_network import (
-    DQNNetwork,
-    NumpyDQNModel,
-    create_dqn_network
-)
-
-# Phase 2: Quantum Routing Manager
-from .quantum_routing_manager import (
-    QuantumRoutingManager,
-    RoutingStrategy,
-    QuantumRoutingResult
-)
-
-# Phase 2: Performance Metrics System
-from .performance_metrics import (
-    PerformanceMetricsCollector,
-    MetricType,
-    MetricDataPoint,
-    PerformanceAlert
+from .state_encoder import (
+    AdvancedStateEncoder,
+    TaskContextProfile,
+    ProviderPerformanceHistory,
+    UserPreferences,
+    ResourceConstraints,
+    ContextComplexity,
+    TimeWindow,
+    create_state_encoder,
 )
 
 __all__ = [
-    # Core quantum execution
-    "QuantumManager",
-    "TaskVariation",
-    "CollapseStrategy",
-    "QuantumResult",
-    "quantum_task",
-
-    # DQN components
     "DQNRoutingAgent",
-    "RoutingAction",
+    "RoutingAction", 
     "RoutingState",
-
-    # Neural network components
-    "DQNNetwork",
-    "NumpyDQNModel",
-    "create_dqn_network",
-
-    # Quantum routing manager
-    "QuantumRoutingManager",
-    "RoutingStrategy",
-    "QuantumRoutingResult",
-
-    # Performance metrics
-    "PerformanceMetricsCollector",
-    "MetricType",
-    "MetricDataPoint",
-    "PerformanceAlert",
+    "Experience",
+    "ExperienceBuffer",
+    "BufferFullError",
+    "BufferEmptyError",
+    "QNetworkArchitecture",
+    "DQNNetworkManager",
+    "create_dqn_networks",
+    "QuantumDQNTrainer",
+    "TrainingScenario",
+    "TrainingPhase",
+    "QuantumTrainingResult", 
+    "TrainingScenarioGenerator",
+    "create_quantum_dqn_trainer",
+    "AdvancedStateEncoder",
+    "TaskContextProfile",
+    "ProviderPerformanceHistory",
+    "UserPreferences", 
+    "ResourceConstraints",
+    "ContextComplexity",
+    "TimeWindow",
+    "create_state_encoder",
 ]
 
-__version__ = "2.0.0"  # Phase 2 implementation
+__version__ = "1.0.0"

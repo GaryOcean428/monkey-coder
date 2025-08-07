@@ -1,431 +1,457 @@
 """
-Quantum Router Integration
+DQN Router Integration with Existing AdvancedRouter
 
-This module integrates the Phase 2 Quantum Routing Manager with the existing
-routing infrastructure, providing a seamless upgrade path and backward compatibility.
+This module bridges the existing Gary8D-inspired AdvancedRouter with the new 
+AdvancedStateEncoder for quantum routing capabilities. It maintains backward 
+compatibility while adding sophisticated state encoding for DQN training.
 """
 
 import logging
-import asyncio
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
+from dataclasses import dataclass
 
-from ..models import ExecuteRequest, PersonaType
-from ..core.routing import AdvancedRouter, RoutingDecision
-from .quantum_routing_manager import (
-    QuantumRoutingManager,
-    QuantumRoutingResult,
-    RoutingStrategy
+from ..core.routing import AdvancedRouter, RoutingDecision, ComplexityLevel, ContextType
+from ..models import ExecuteRequest, ProviderType, TaskType
+from .state_encoder import (
+    AdvancedStateEncoder,
+    TaskContextProfile,
+    ProviderPerformanceHistory,
+    UserPreferences,
+    ResourceConstraints,
+    ContextComplexity,
+    create_state_encoder
 )
-from .performance_metrics import PerformanceMetricsCollector, MetricType
+from .dqn_agent import DQNRoutingAgent, RoutingState, RoutingAction
 
 logger = logging.getLogger(__name__)
 
 
-class QuantumRouterIntegration:
-    """
-    Integration layer between the quantum routing system and existing infrastructure.
+@dataclass
+class EnhancedRoutingDecision:
+    """Extended routing decision with DQN state information."""
+    
+    original_decision: RoutingDecision
+    state_vector: Any  # np.ndarray
+    state_dimensions: int
+    encoding_metadata: Dict[str, Any]
 
-    Provides:
-    - Seamless fallback to classic routing
-    - Performance comparison between routing methods
-    - Gradual migration capabilities
-    - Comprehensive analytics
-    """
 
+class DQNRouterBridge:
+    """
+    Bridge between AdvancedRouter and DQN routing capabilities.
+    
+    This class enhances the existing router with:
+    - 112-dimensional state encoding
+    - DQN-compatible state representation
+    - Training data collection
+    - Backward compatibility
+    """
+    
     def __init__(
         self,
-        enable_quantum: bool = True,
-        quantum_timeout: float = 30.0,
-        fallback_on_failure: bool = True,
-        performance_comparison: bool = True
+        use_advanced_encoding: bool = True,
+        encoding_strategy: str = "comprehensive",
+        collect_training_data: bool = False
     ):
         """
-        Initialize the quantum router integration.
-
+        Initialize the DQN router bridge.
+        
         Args:
-            enable_quantum: Whether to enable quantum routing
-            quantum_timeout: Timeout for quantum routing operations
-            fallback_on_failure: Whether to fallback to classic routing on quantum failure
-            performance_comparison: Whether to compare quantum vs classic performance
+            use_advanced_encoding: Whether to use 112-dimensional encoding
+            encoding_strategy: Strategy for state encoder ("minimal", "standard", "comprehensive")
+            collect_training_data: Whether to collect data for DQN training
         """
-        self.enable_quantum = enable_quantum
-        self.quantum_timeout = quantum_timeout
-        self.fallback_on_failure = fallback_on_failure
-        self.performance_comparison = performance_comparison
-
-        # Initialize components
-        self.classic_router = AdvancedRouter()
-
-        if self.enable_quantum:
-            self.quantum_manager = QuantumRoutingManager(
-                max_threads=6,
-                default_timeout=quantum_timeout
-            )
+        self.use_advanced_encoding = use_advanced_encoding
+        self.collect_training_data = collect_training_data
+        
+        # Initialize existing router
+        self.advanced_router = AdvancedRouter()
+        
+        # Initialize state encoder if using advanced encoding
+        if use_advanced_encoding:
+            self.state_encoder = create_state_encoder(encoding_strategy)
+            logger.info(f"Initialized DQN router bridge with {encoding_strategy} encoding")
         else:
-            self.quantum_manager = None
-
-        # Performance tracking
-        self.metrics_collector = PerformanceMetricsCollector(enable_real_time_monitoring=False)
-
-        # Routing statistics
-        self.routing_stats = {
-            "quantum_requests": 0,
-            "classic_requests": 0,
-            "quantum_failures": 0,
-            "fallback_usage": 0,
-            "performance_improvements": []
-        }
-
-        logger.info("Initialized Quantum Router Integration")
-
-    async def start_monitoring(self):
-        """Start the performance monitoring task."""
-        await self.metrics_collector.start_monitoring()
-        logger.info("Started performance monitoring")
-
-    async def route_request(
-        self,
-        request: ExecuteRequest,
-        force_method: Optional[str] = None  # "quantum", "classic", or None for auto
-    ) -> RoutingDecision:
+            self.state_encoder = None
+            logger.info("Initialized DQN router bridge with basic encoding")
+        
+        # Training data collection
+        self.training_data = []
+        self.performance_history = {}  # Provider performance tracking
+        
+    def route_request(self, request: ExecuteRequest) -> EnhancedRoutingDecision:
         """
-        Route request using integrated quantum/classic routing.
-
+        Route request with enhanced state encoding capabilities.
+        
         Args:
             request: The execution request to route
-            force_method: Force specific routing method for testing
-
+            
         Returns:
-            Routing decision from quantum or classic router
+            Enhanced routing decision with state information
         """
-        routing_method = self._determine_routing_method(request, force_method)
-
-        if routing_method == "quantum" and self.quantum_manager:
-            return await self._route_with_quantum(request)
-        else:
-            return await self._route_with_classic(request)
-
-    async def _route_with_quantum(self, request: ExecuteRequest) -> RoutingDecision:
-        """Route request using quantum routing manager."""
-
-        start_time = asyncio.get_event_loop().time()
-
-        try:
-            # Execute quantum routing
-            if self.quantum_manager is None:
-                raise RuntimeError("Quantum manager is not initialized")
-
-            quantum_result = await asyncio.wait_for(
-                self.quantum_manager.route_with_quantum_strategies(
-                    request=request,
-                    strategies=[
-                        RoutingStrategy.TASK_OPTIMIZED,
-                        RoutingStrategy.PERFORMANCE,
-                        RoutingStrategy.BALANCED
-                    ]
-                ),
-                timeout=self.quantum_timeout
+        # Get traditional routing decision first
+        original_decision = self.advanced_router.route_request(request)
+        
+        if not self.use_advanced_encoding:
+            # Fallback to basic state representation
+            state_vector = self._create_basic_state_vector(request, original_decision)
+            return EnhancedRoutingDecision(
+                original_decision=original_decision,
+                state_vector=state_vector,
+                state_dimensions=len(state_vector),
+                encoding_metadata={"encoding_type": "basic"}
             )
-
-            execution_time = asyncio.get_event_loop().time() - start_time
-
-            # Record quantum routing metrics
-            self.metrics_collector.record_routing_decision(
-                provider=quantum_result.provider.value,
-                model=quantum_result.model,
-                execution_time=execution_time,
-                success=True,
-                confidence_score=quantum_result.confidence,
-                strategy_used=quantum_result.strategy_used
+        
+        # Create advanced state representation
+        state_vector, encoding_metadata = self._create_advanced_state_vector(
+            request, original_decision
+        )
+        
+        # Collect training data if enabled
+        if self.collect_training_data:
+            self._collect_training_sample(
+                request, original_decision, state_vector, encoding_metadata
             )
-
-            self.routing_stats["quantum_requests"] += 1
-
-            # Performance comparison if enabled
-            if self.performance_comparison:
-                await self._compare_routing_performance(request, quantum_result, execution_time)
-
-            # Create a RoutingDecision from the quantum result
-            routing_decision = RoutingDecision(
-                provider=quantum_result.provider,
-                model=quantum_result.model,
-                persona=PersonaType.DEVELOPER,  # Default persona
-                complexity_score=0.5,  # Default complexity
-                context_score=0.5,  # Default context score
-                capability_score=quantum_result.confidence,
-                confidence=quantum_result.confidence,
-                reasoning=f"Quantum routing using {quantum_result.strategy_used} strategy",
-                metadata={
-                    "quantum_strategy": quantum_result.strategy_used,
-                    "execution_time": execution_time,
-                    "thread_results": [
-                        {
-                            "strategy": tr.strategy.value,
-                            "provider": tr.provider.value,
-                            "model": tr.model,
-                            "confidence": tr.confidence,
-                            "execution_time": tr.execution_time,
-                            "success": tr.success
-                        }
-                        for tr in quantum_result.thread_results
-                    ]
-                }
-            )
-
-            logger.info(f"Quantum routing successful: {quantum_result.provider.value}/{quantum_result.model}")
-            return routing_decision
-
-        except Exception as e:
-            execution_time = asyncio.get_event_loop().time() - start_time
-
-            logger.warning(f"Quantum routing failed: {e}")
-            self.routing_stats["quantum_failures"] += 1
-
-            # Record failure metrics
-            self.metrics_collector.record_metric(
-                MetricType.ROUTING_DECISION,
-                0.0,  # Failed routing
-                metadata={
-                    "method": "quantum",
-                    "error": str(e),
-                    "execution_time": execution_time
-                }
-            )
-
-            # Fallback to classic routing if enabled
-            if self.fallback_on_failure:
-                logger.info("Falling back to classic routing")
-                self.routing_stats["fallback_usage"] += 1
-                return await self._route_with_classic(request)
-            else:
-                raise
-
-    async def _route_with_classic(self, request: ExecuteRequest) -> RoutingDecision:
-        """Route request using classic advanced router."""
-
-        start_time = asyncio.get_event_loop().time()
-
-        try:
-            # Execute classic routing (run in thread pool since it's synchronous)
-            loop = asyncio.get_event_loop()
-            decision = await loop.run_in_executor(
-                None,
-                self.classic_router.route_request,
-                request
-            )
-
-            execution_time = asyncio.get_event_loop().time() - start_time
-
-            # Record classic routing metrics
-            self.metrics_collector.record_routing_decision(
-                provider=decision.provider.value,
-                model=decision.model,
-                execution_time=execution_time,
-                success=True,
-                confidence_score=decision.confidence,
-                strategy_used="classic"
-            )
-
-            self.routing_stats["classic_requests"] += 1
-
-            logger.debug(f"Classic routing successful: {decision.provider.value}/{decision.model}")
-            return decision
-
-        except Exception as e:
-            execution_time = asyncio.get_event_loop().time() - start_time
-
-            logger.error(f"Classic routing failed: {e}")
-
-            # Record failure metrics
-            self.metrics_collector.record_metric(
-                MetricType.ROUTING_DECISION,
-                0.0,  # Failed routing
-                metadata={
-                    "method": "classic",
-                    "error": str(e),
-                    "execution_time": execution_time
-                }
-            )
-
-            raise
-
-    async def _compare_routing_performance(
-        self,
-        request: ExecuteRequest,
-        quantum_result: QuantumRoutingResult,
-        quantum_time: float
-    ):
-        """Compare quantum vs classic routing performance."""
-
-        try:
-            # Get classic routing decision for comparison
-            classic_start = asyncio.get_event_loop().time()
-            classic_decision = await self._route_with_classic(request)
-            classic_time = asyncio.get_event_loop().time() - classic_start
-
-            # Calculate performance improvement
-            time_improvement = (classic_time - quantum_time) / classic_time if classic_time > 0 else 0
-            confidence_improvement = quantum_result.confidence - classic_decision.confidence
-
-            # Store performance comparison
-            comparison = {
-                "quantum_time": quantum_time,
-                "classic_time": classic_time,
-                "time_improvement": time_improvement,
-                "confidence_improvement": confidence_improvement,
-                "quantum_provider": quantum_result.provider.value,
-                "classic_provider": classic_decision.provider.value,
-                "quantum_model": quantum_result.model,
-                "classic_model": classic_decision.model
-            }
-
-            self.routing_stats["performance_improvements"].append(comparison)
-
-            # Keep only last 100 comparisons
-            if len(self.routing_stats["performance_improvements"]) > 100:
-                self.routing_stats["performance_improvements"] = self.routing_stats["performance_improvements"][-100:]
-
-            logger.debug(f"Performance comparison: quantum={quantum_time:.3f}s, classic={classic_time:.3f}s")
-
-        except Exception as e:
-            logger.warning(f"Performance comparison failed: {e}")
-
-    def _determine_routing_method(
-        self,
-        request: ExecuteRequest,
-        force_method: Optional[str] = None
-    ) -> str:
-        """Determine which routing method to use."""
-
-        if force_method:
-            return force_method
-
-        if not self.enable_quantum or not self.quantum_manager:
-            return "classic"
-
-        # Use quantum routing by default when enabled
-        return "quantum"
-
-    async def get_routing_analytics(self) -> Dict[str, Any]:
-        """Get comprehensive routing analytics."""
-
-        # Basic routing statistics
-        total_requests = self.routing_stats["quantum_requests"] + self.routing_stats["classic_requests"]
-        quantum_success_rate = 1.0 - (self.routing_stats["quantum_failures"] / max(self.routing_stats["quantum_requests"], 1))
-
-        analytics = {
-            "routing_statistics": {
-                "total_requests": total_requests,
-                "quantum_requests": self.routing_stats["quantum_requests"],
-                "classic_requests": self.routing_stats["classic_requests"],
-                "quantum_success_rate": quantum_success_rate,
-                "fallback_usage": self.routing_stats["fallback_usage"],
-                "quantum_enabled": self.enable_quantum
+        
+        return EnhancedRoutingDecision(
+            original_decision=original_decision,
+            state_vector=state_vector,
+            state_dimensions=self.state_encoder.state_size,
+            encoding_metadata=encoding_metadata
+        )
+    
+    def _create_advanced_state_vector(
+        self, 
+        request: ExecuteRequest, 
+        decision: RoutingDecision
+    ) -> Tuple[Any, Dict[str, Any]]:
+        """Create advanced 112-dimensional state vector."""
+        
+        # Convert AdvancedRouter analysis to AdvancedStateEncoder format
+        task_context = self._convert_to_task_context_profile(request, decision)
+        provider_history = self._get_provider_performance_history()
+        user_preferences = self._extract_user_preferences(request)
+        resource_constraints = self._extract_resource_constraints(request)
+        provider_availability = self._get_provider_availability()
+        
+        # Generate state vector using advanced encoder
+        state_vector = self.state_encoder.encode_state(
+            task_context=task_context,
+            provider_history=provider_history,
+            user_preferences=user_preferences,
+            resource_constraints=resource_constraints,
+            provider_availability=provider_availability
+        )
+        
+        encoding_metadata = {
+            "encoding_type": "advanced",
+            "dimensions": self.state_encoder.state_size,
+            "complexity_category": task_context.complexity_category.value,
+            "task_type": task_context.task_type.value,
+            "temporal_features_enabled": self.state_encoder.enable_temporal_features,
+            "personalization_enabled": self.state_encoder.enable_user_personalization,
+            "dynamic_weighting_enabled": self.state_encoder.enable_dynamic_weighting
+        }
+        
+        return state_vector, encoding_metadata
+    
+    def _create_basic_state_vector(
+        self, 
+        request: ExecuteRequest, 
+        decision: RoutingDecision
+    ) -> Any:
+        """Create basic state vector compatible with original DQN implementation."""
+        # Create basic RoutingState for backward compatibility
+        routing_state = RoutingState(
+            task_complexity=decision.complexity_score,
+            context_type=self._map_context_to_string(request),
+            provider_availability=self._get_basic_provider_availability(),
+            historical_performance=self._get_basic_historical_performance(),
+            resource_constraints={
+                "cost_weight": 0.33,
+                "time_weight": 0.33,
+                "quality_weight": 0.34
             },
-            "performance_metrics": self.metrics_collector.get_real_time_dashboard_data(),
-            "configuration": {
-                "quantum_timeout": self.quantum_timeout,
-                "fallback_on_failure": self.fallback_on_failure,
-                "performance_comparison": self.performance_comparison
-            }
+            user_preferences={"preference_strength": 0.5}
+        )
+        
+        return routing_state.to_vector()
+    
+    def _convert_to_task_context_profile(
+        self, 
+        request: ExecuteRequest, 
+        decision: RoutingDecision
+    ) -> TaskContextProfile:
+        """Convert ExecuteRequest and RoutingDecision to TaskContextProfile."""
+        
+        # Map complexity level to category
+        complexity_mapping = {
+            ComplexityLevel.TRIVIAL: ContextComplexity.SIMPLE,
+            ComplexityLevel.SIMPLE: ContextComplexity.SIMPLE,
+            ComplexityLevel.MODERATE: ContextComplexity.MODERATE,
+            ComplexityLevel.COMPLEX: ContextComplexity.COMPLEX,
+            ComplexityLevel.CRITICAL: ContextComplexity.CRITICAL
         }
-
-        # Add quantum manager analytics if available
-        if self.quantum_manager:
-            analytics["quantum_analytics"] = await self.quantum_manager.get_routing_analytics()
-
-        # Add performance improvements summary
-        if self.routing_stats["performance_improvements"]:
-            improvements = self.routing_stats["performance_improvements"]
-            avg_time_improvement = sum(c["time_improvement"] for c in improvements) / len(improvements)
-            avg_confidence_improvement = sum(c["confidence_improvement"] for c in improvements) / len(improvements)
-
-            analytics["performance_comparison"] = {
-                "average_time_improvement": avg_time_improvement,
-                "average_confidence_improvement": avg_confidence_improvement,
-                "comparison_count": len(improvements),
-                "latest_comparisons": improvements[-10:]  # Last 10 comparisons
-            }
-
-        return analytics
-
-    async def optimize_routing(self):
-        """Optimize routing parameters based on collected metrics."""
-
-        if self.quantum_manager:
-            await self.quantum_manager.optimize_routing_parameters()
-            logger.info("Optimized quantum routing parameters")
-
-    async def export_performance_data(self) -> Dict[str, Any]:
-        """Export comprehensive performance data for analysis."""
-
-        export_data = {
-            "routing_analytics": await self.get_routing_analytics(),
-            "metrics_export": self.metrics_collector.export_metrics(),
-            "routing_statistics": self.routing_stats.copy()
+        
+        # Extract complexity level from metadata or classify from score
+        complexity_level = decision.metadata.get("complexity_level")
+        if isinstance(complexity_level, str):
+            complexity_level = ComplexityLevel(complexity_level)
+        else:
+            # Fallback: classify from score
+            if decision.complexity_score >= 0.8:
+                complexity_level = ComplexityLevel.CRITICAL
+            elif decision.complexity_score >= 0.6:
+                complexity_level = ComplexityLevel.COMPLEX
+            elif decision.complexity_score >= 0.4:
+                complexity_level = ComplexityLevel.MODERATE
+            elif decision.complexity_score >= 0.2:
+                complexity_level = ComplexityLevel.SIMPLE
+            else:
+                complexity_level = ComplexityLevel.TRIVIAL
+        
+        complexity_category = complexity_mapping[complexity_level]
+        
+        # Extract domain requirements from prompt analysis
+        domain_requirements = self.state_encoder._extract_domain_requirements(
+            request.prompt, request.task_type
+        )
+        
+        # Determine context flags
+        is_production = getattr(request.context, 'is_production', False)
+        requires_reasoning = self.state_encoder._requires_reasoning(
+            request.prompt, request.task_type
+        )
+        requires_creativity = self.state_encoder._requires_creativity(
+            request.prompt, request.task_type
+        )
+        
+        return TaskContextProfile(
+            task_type=request.task_type,
+            estimated_complexity=decision.complexity_score,
+            complexity_category=complexity_category,
+            domain_requirements=domain_requirements,
+            quality_threshold=0.8,  # Could be extracted from request context
+            latency_requirement=getattr(request.context, 'timeout', 30.0),
+            cost_sensitivity=0.5,   # Could be user-configurable
+            is_production=is_production,
+            requires_reasoning=requires_reasoning,
+            requires_creativity=requires_creativity
+        )
+    
+    def _get_provider_performance_history(self) -> Dict[ProviderType, ProviderPerformanceHistory]:
+        """Get provider performance history for all providers."""
+        history = {}
+        
+        for provider in ProviderType:
+            if provider.value in self.performance_history:
+                # Use tracked performance data
+                perf_data = self.performance_history[provider.value]
+                history[provider] = ProviderPerformanceHistory(
+                    recent_success_rate=perf_data.get("success_rate", 0.85),
+                    recent_avg_latency=perf_data.get("avg_latency", 2.0),
+                    recent_avg_quality=perf_data.get("avg_quality", 0.8),
+                    long_term_reputation=perf_data.get("reputation", 0.85),
+                    total_interactions=perf_data.get("interactions", 100)
+                )
+            else:
+                # Use default performance metrics
+                history[provider] = ProviderPerformanceHistory()
+        
+        return history
+    
+    def _extract_user_preferences(self, request: ExecuteRequest) -> UserPreferences:
+        """Extract user preferences from request."""
+        preferences = UserPreferences()
+        
+        # Check for preferred providers in request
+        preferred_providers = getattr(request, 'preferred_providers', [])
+        for provider in preferred_providers:
+            if isinstance(provider, ProviderType):
+                preferences.provider_preference_scores[provider] = 0.8
+        
+        # Extract other preferences from context if available
+        context = request.context
+        if hasattr(context, 'quality_threshold'):
+            # Infer quality vs speed preference from quality threshold
+            if context.quality_threshold > 0.8:
+                preferences.quality_vs_speed_preference = 0.8  # Quality priority
+            else:
+                preferences.quality_vs_speed_preference = 0.3  # Speed priority
+        
+        return preferences
+    
+    def _extract_resource_constraints(self, request: ExecuteRequest) -> ResourceConstraints:
+        """Extract resource constraints from request."""
+        context = request.context
+        
+        return ResourceConstraints(
+            max_latency_seconds=getattr(context, 'timeout', None),
+            min_quality_threshold=getattr(context, 'quality_threshold', None),
+            is_premium_user=getattr(context, 'is_premium_user', False),
+            billing_tier=getattr(context, 'billing_tier', "standard")
+        )
+    
+    def _get_provider_availability(self) -> Dict[ProviderType, bool]:
+        """Get current provider availability."""
+        # In real implementation, this would check actual provider status
+        # For now, assume all providers are available
+        return {provider: True for provider in ProviderType}
+    
+    def _get_basic_provider_availability(self) -> Dict[str, bool]:
+        """Get basic provider availability for backward compatibility."""
+        return {provider.value: True for provider in ProviderType}
+    
+    def _get_basic_historical_performance(self) -> Dict[str, float]:
+        """Get basic historical performance for backward compatibility."""
+        performance = {}
+        for provider in ProviderType:
+            if provider.value in self.performance_history:
+                performance[provider.value] = self.performance_history[provider.value].get("reputation", 0.8)
+            else:
+                performance[provider.value] = 0.8  # Default performance
+        return performance
+    
+    def _map_context_to_string(self, request: ExecuteRequest) -> str:
+        """Map TaskType to context string for backward compatibility."""
+        mapping = {
+            TaskType.CODE_GENERATION: "code_generation",
+            TaskType.CODE_ANALYSIS: "analysis", 
+            TaskType.DEBUGGING: "debugging",
+            TaskType.DOCUMENTATION: "documentation",
+            TaskType.TESTING: "testing",
+            TaskType.REFACTORING: "refactoring"
         }
-
-        return export_data
-
-    async def save_models(self, filepath_prefix: str):
-        """Save trained routing models."""
-
-        if self.quantum_manager:
-            await self.quantum_manager.save_routing_model(f"{filepath_prefix}_quantum")
-            logger.info(f"Saved quantum routing model to {filepath_prefix}_quantum")
-
-    async def load_models(self, filepath_prefix: str) -> bool:
-        """Load trained routing models."""
-
-        if self.quantum_manager:
-            success = await self.quantum_manager.load_routing_model(f"{filepath_prefix}_quantum")
-            if success:
-                logger.info(f"Loaded quantum routing model from {filepath_prefix}_quantum")
-            return success
-
-        return False
-
-    def enable_quantum_routing(self):
-        """Enable quantum routing if currently disabled."""
-
-        if not self.quantum_manager:
-            self.quantum_manager = QuantumRoutingManager(
-                max_threads=6,
-                default_timeout=self.quantum_timeout
-            )
-
-        self.enable_quantum = True
-        logger.info("Enabled quantum routing")
-
-    def disable_quantum_routing(self):
-        """Disable quantum routing and use only classic routing."""
-
-        self.enable_quantum = False
-        logger.info("Disabled quantum routing - using classic routing only")
-
-    def get_health_status(self) -> Dict[str, Any]:
-        """Get health status of routing components."""
-
-        status = {
-            "quantum_enabled": self.enable_quantum,
-            "quantum_manager_healthy": self.quantum_manager is not None,
-            "classic_router_healthy": self.classic_router is not None,
-            "metrics_collector_healthy": self.metrics_collector is not None,
-            "recent_errors": []
+        return mapping.get(request.task_type, "general")
+    
+    def _collect_training_sample(
+        self,
+        request: ExecuteRequest,
+        decision: RoutingDecision, 
+        state_vector: Any,
+        encoding_metadata: Dict[str, Any]
+    ) -> None:
+        """Collect sample for DQN training."""
+        training_sample = {
+            "timestamp": decision.metadata.get("timestamp"),
+            "request_type": request.task_type.value,
+            "state_vector": state_vector.tolist() if hasattr(state_vector, 'tolist') else state_vector,
+            "selected_provider": decision.provider.value,
+            "selected_model": decision.model,
+            "selected_persona": decision.persona.value,
+            "confidence": decision.confidence,
+            "complexity_score": decision.complexity_score,
+            "context_score": decision.context_score,
+            "capability_score": decision.capability_score,
+            "encoding_metadata": encoding_metadata
         }
+        
+        self.training_data.append(training_sample)
+        
+        # Limit training data size to prevent memory issues
+        if len(self.training_data) > 1000:
+            self.training_data = self.training_data[-1000:]
+        
+        logger.debug(f"Collected training sample: {decision.provider.value}/{decision.model}")
+    
+    def update_provider_performance(
+        self, 
+        provider: ProviderType, 
+        performance_metrics: Dict[str, float]
+    ) -> None:
+        """Update provider performance tracking."""
+        provider_key = provider.value
+        
+        if provider_key not in self.performance_history:
+            self.performance_history[provider_key] = {}
+        
+        # Update with exponential moving average
+        alpha = 0.2  # Learning rate
+        current = self.performance_history[provider_key]
+        
+        for metric, value in performance_metrics.items():
+            if metric in current:
+                current[metric] = (1 - alpha) * current[metric] + alpha * value
+            else:
+                current[metric] = value
+        
+        # Track interaction count
+        current["interactions"] = current.get("interactions", 0) + 1
+        
+        logger.debug(f"Updated performance for {provider.value}: {performance_metrics}")
+    
+    def get_routing_statistics(self) -> Dict[str, Any]:
+        """Get routing and training statistics."""
+        return {
+            "total_routes": len(self.training_data),
+            "encoding_type": "advanced" if self.use_advanced_encoding else "basic",
+            "state_dimensions": self.state_encoder.state_size if self.state_encoder else 21,
+            "training_data_collected": len(self.training_data),
+            "provider_performance_tracked": len(self.performance_history),
+            "advanced_router_history": len(self.advanced_router.routing_history)
+        }
+    
+    def create_dqn_agent(
+        self, 
+        learning_rate: float = 0.001,
+        **kwargs
+    ) -> DQNRoutingAgent:
+        """Create DQN agent compatible with this router's state encoding."""
+        state_size = self.state_encoder.state_size if self.state_encoder else 21
+        action_size = 12  # Number of routing actions
+        
+        agent = DQNRoutingAgent(
+            state_size=state_size,
+            action_size=action_size,
+            learning_rate=learning_rate,
+            **kwargs
+        )
+        
+        # Initialize networks for training
+        agent.initialize_networks()
+        
+        logger.info(f"Created DQN agent with {state_size}D state space")
+        return agent
+    
+    def convert_decision_to_routing_action(self, decision: RoutingDecision) -> RoutingAction:
+        """Convert RoutingDecision to DQN RoutingAction."""
+        # Determine strategy based on decision characteristics
+        if decision.capability_score > 0.9:
+            strategy = "performance"
+        elif decision.complexity_score < 0.4:
+            strategy = "cost_efficient"
+        elif decision.confidence > 0.8:
+            strategy = "task_optimized"
+        else:
+            strategy = "balanced"
+        
+        return RoutingAction(
+            provider=decision.provider,
+            model=decision.model,
+            strategy=strategy
+        )
 
-        # Check for recent failures
-        if self.routing_stats["quantum_failures"] > 0:
-            failure_rate = self.routing_stats["quantum_failures"] / max(self.routing_stats["quantum_requests"], 1)
-            if failure_rate > 0.1:  # More than 10% failure rate
-                status["recent_errors"].append(f"High quantum routing failure rate: {failure_rate:.2%}")
 
-        # Check quantum manager health if available
-        if self.quantum_manager:
-            quantum_analytics = asyncio.run(self.quantum_manager.get_routing_analytics())
-            if quantum_analytics.get("cache_status", {}).get("enabled") and not quantum_analytics.get("cache_status", {}).get("connected"):
-                status["recent_errors"].append("Redis cache connection failed")
-
-        status["overall_health"] = "healthy" if not status["recent_errors"] else "degraded"
-
-        return status
+# Convenience function for easy integration
+def create_dqn_router_bridge(
+    encoding_strategy: str = "comprehensive",
+    collect_training_data: bool = False,
+    **kwargs
+) -> DQNRouterBridge:
+    """
+    Create DQN router bridge with standard configuration.
+    
+    Args:
+        encoding_strategy: State encoding strategy ("minimal", "standard", "comprehensive")
+        collect_training_data: Whether to collect training data
+        **kwargs: Additional arguments for DQNRouterBridge
+        
+    Returns:
+        Configured DQNRouterBridge instance
+    """
+    return DQNRouterBridge(
+        use_advanced_encoding=True,
+        encoding_strategy=encoding_strategy,
+        collect_training_data=collect_training_data,
+        **kwargs
+    )

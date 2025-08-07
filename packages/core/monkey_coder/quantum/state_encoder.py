@@ -1,532 +1,654 @@
-"""State Encoder for Quantum Routing.
+"""
+Advanced State Encoding for Quantum Routing DQN
 
-This module provides comprehensive state encoding for the DQN agent,
-including task complexity, context type, provider availability,
-historical performance, and user preferences.
+This module provides comprehensive state representation for the DQN routing agent,
+significantly enhancing the basic RoutingState with sophisticated encoding strategies
+for better learning and decision-making accuracy.
+
+Features:
+- Multi-dimensional task complexity encoding
+- Provider capability and availability modeling
+- Historical performance with temporal awareness
+- Dynamic context type classification
+- User preference learning and adaptation
+- Resource constraint optimization
 """
 
 import hashlib
-import logging
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from monkey_coder.models import ProviderType
-
-logger = logging.getLogger(__name__)
+from monkey_coder.models import ProviderType, TaskType
 
 
-class TaskType(Enum):
-    """Types of tasks for routing."""
-
-    CODE_GENERATION = "code_generation"
-    CODE_ANALYSIS = "code_analysis"
-    CODE_REVIEW = "code_review"
-    DOCUMENTATION = "documentation"
-    TESTING = "testing"
-    DEBUGGING = "debugging"
-    REFACTORING = "refactoring"
-    ARCHITECTURE = "architecture"
-    UNKNOWN = "unknown"
+class ContextComplexity(Enum):
+    """Context complexity categories for enhanced encoding."""
+    SIMPLE = "simple"           # Basic operations, single-step tasks
+    MODERATE = "moderate"       # Multi-step operations, some reasoning
+    COMPLEX = "complex"         # Advanced reasoning, multi-domain
+    CRITICAL = "critical"       # High-stakes, maximum quality requirements
 
 
-class ContextType(Enum):
-    """Types of context for routing."""
-
-    PYTHON = "python"
-    JAVASCRIPT = "javascript"
-    TYPESCRIPT = "typescript"
-    JAVA = "java"
-    CPP = "cpp"
-    GO = "go"
-    RUST = "rust"
-    GENERAL = "general"
-    UNKNOWN = "unknown"
+class TimeWindow(Enum):
+    """Time windows for historical performance analysis."""
+    RECENT = "recent"           # Last 24 hours
+    SHORT_TERM = "short_term"   # Last 7 days  
+    MEDIUM_TERM = "medium_term" # Last 30 days
+    LONG_TERM = "long_term"     # Last 90+ days
 
 
 @dataclass
-class RoutingState:
-    """Comprehensive state representation for routing decisions."""
+class TaskContextProfile:
+    """Detailed task context profile for enhanced routing decisions."""
+    
+    # Core task characteristics
+    task_type: TaskType
+    estimated_complexity: float  # 0.0-1.0
+    complexity_category: ContextComplexity
+    domain_requirements: Set[str]  # e.g., {"programming", "analysis", "creative"}
+    
+    # Quality and performance requirements
+    quality_threshold: float = 0.7  # Minimum acceptable quality
+    latency_requirement: float = 30.0  # Maximum acceptable latency (seconds)
+    cost_sensitivity: float = 0.5  # 0.0 = cost-insensitive, 1.0 = cost-critical
+    
+    # Contextual factors
+    is_production: bool = False
+    requires_reasoning: bool = False
+    requires_creativity: bool = False
+    requires_accuracy: bool = True
+    
+    # Temporal context
+    time_of_day: float = 0.5  # 0.0 = midnight, 0.5 = noon, 1.0 = midnight
+    day_of_week: int = 1  # 1-7, Monday-Sunday
+    timezone_offset: float = 0.0  # UTC offset in hours
 
-    task_complexity: float  # 0.0 to 1.0
-    context_type: str
-    provider_availability: Dict[str, bool]
-    historical_performance: Dict[str, float]
-    resource_constraints: Dict[str, Any]
-    user_preferences: Dict[str, Any]
-    task_type: Optional[str] = None
-    prompt_length: Optional[int] = None
-    estimated_tokens: Optional[int] = None
-    priority_level: Optional[float] = None  # 0.0 to 1.0
+
+@dataclass 
+class ProviderPerformanceHistory:
+    """Detailed provider performance history with temporal awareness."""
+    
+    # Recent performance metrics
+    recent_success_rate: float = 0.8
+    recent_avg_latency: float = 2.0
+    recent_avg_quality: float = 0.75
+    recent_cost_efficiency: float = 0.7
+    
+    # Short-term trends
+    short_term_success_rate: float = 0.8
+    short_term_avg_latency: float = 2.0
+    short_term_quality_trend: float = 0.0  # -1.0 to 1.0 (declining to improving)
+    
+    # Medium-term stability
+    medium_term_variance: float = 0.1  # Performance variance
+    medium_term_reliability: float = 0.9  # Consistency score
+    
+    # Long-term reputation  
+    long_term_reputation: float = 0.85  # Overall reputation score
+    total_interactions: int = 100  # Total number of interactions
+    
+    # Specialized performance
+    domain_expertise: Dict[str, float] = field(default_factory=dict)  # Domain-specific performance
+    complexity_performance: Dict[ContextComplexity, float] = field(default_factory=dict)
+    
+    def get_performance_vector(self) -> np.ndarray:
+        """Convert performance history to vector representation."""
+        return np.array([
+            self.recent_success_rate,
+            self.recent_avg_latency / 10.0,  # Normalize to ~0-1 range
+            self.recent_avg_quality,
+            self.recent_cost_efficiency,
+            self.short_term_success_rate,
+            self.short_term_avg_latency / 10.0,
+            (self.short_term_quality_trend + 1.0) / 2.0,  # Normalize to 0-1
+            self.medium_term_variance,
+            self.medium_term_reliability,
+            self.long_term_reputation,
+            min(self.total_interactions / 1000.0, 1.0),  # Normalize experience
+        ], dtype=np.float32)
 
 
-class StateEncoder:
-    """Encode routing states for DQN agent."""
-
-    # Feature dimensions
-    TASK_FEATURES = 5  # complexity, type, length, tokens, priority
-    CONTEXT_FEATURES = len(ContextType)
-    PROVIDER_FEATURES = len(ProviderType) * 2  # availability + performance
-    CONSTRAINT_FEATURES = 4  # memory, cpu, time, cost
-    PREFERENCE_FEATURES = 5  # speed, quality, cost, reliability, familiarity
-
-    TOTAL_FEATURES = (
-        TASK_FEATURES
-        + CONTEXT_FEATURES
-        + PROVIDER_FEATURES
-        + CONSTRAINT_FEATURES
-        + PREFERENCE_FEATURES
-    )
-
-    def __init__(self):
-        """Initialize state encoder."""
-        self.task_type_map = {t.value: i for i, t in enumerate(TaskType)}
-        self.context_type_map = {c.value: i for i, c in enumerate(ContextType)}
-        self.provider_map = {p.value: i for i, p in enumerate(ProviderType)}
-
-    def encode_state(self, state: RoutingState) -> np.ndarray:
-        """Encode routing state into feature vector.
-
-        Args:
-            state: Routing state to encode
-
-        Returns:
-            Encoded feature vector
-        """
-        features = []
-
-        # Task features
-        task_features = self._encode_task_features(state)
-        features.extend(task_features)
-
-        # Context features
-        context_features = self._encode_context_features(state)
-        features.extend(context_features)
-
-        # Provider features
-        provider_features = self._encode_provider_features(state)
-        features.extend(provider_features)
-
-        # Constraint features
-        constraint_features = self._encode_constraint_features(state)
-        features.extend(constraint_features)
-
-        # Preference features
-        preference_features = self._encode_preference_features(state)
-        features.extend(preference_features)
-
-        return np.array(features, dtype=np.float32)
-
-    def _encode_task_features(self, state: RoutingState) -> List[float]:
-        """Encode task-related features.
-
-        Args:
-            state: Routing state
-
-        Returns:
-            List of task features
-        """
-        features = []
-
-        # Task complexity (already normalized)
-        features.append(state.task_complexity)
-
-        # Task type (one-hot encoding compressed to single value)
-        if state.task_type:
-            task_idx = self.task_type_map.get(state.task_type, len(TaskType) - 1)
-            task_value = task_idx / len(TaskType)
-        else:
-            task_value = 0.5  # Default to middle value
-        features.append(task_value)
-
-        # Prompt length (normalized)
-        if state.prompt_length:
-            # Normalize to 0-1 range (assuming max 10000 chars)
-            length_norm = min(state.prompt_length / 10000.0, 1.0)
-        else:
-            length_norm = 0.1  # Default small value
-        features.append(length_norm)
-
-        # Estimated tokens (normalized)
-        if state.estimated_tokens:
-            # Normalize to 0-1 range (assuming max 8000 tokens)
-            tokens_norm = min(state.estimated_tokens / 8000.0, 1.0)
-        else:
-            tokens_norm = 0.1  # Default small value
-        features.append(tokens_norm)
-
-        # Priority level
-        priority = state.priority_level if state.priority_level else 0.5
-        features.append(priority)
-
-        return features
-
-    def _encode_context_features(self, state: RoutingState) -> List[float]:
-        """Encode context-related features.
-
-        Args:
-            state: Routing state
-
-        Returns:
-            List of context features (one-hot encoding)
-        """
-        features = [0.0] * len(ContextType)
-
-        if state.context_type:
-            ctx_idx = self.context_type_map.get(
-                state.context_type, len(ContextType) - 1
-            )
-            features[ctx_idx] = 1.0
-
-        return features
-
-    def _encode_provider_features(self, state: RoutingState) -> List[float]:
-        """Encode provider-related features.
-
-        Args:
-            state: Routing state
-
-        Returns:
-            List of provider features
-        """
-        features = []
-
-        # Provider availability
+@dataclass
+class UserPreferences:
+    """Enhanced user preferences with learning capabilities."""
+    
+    # Provider preferences (learned from usage patterns)
+    provider_preference_scores: Dict[ProviderType, float] = field(default_factory=dict)
+    
+    # Strategy preferences
+    preferred_strategies: Dict[str, float] = field(default_factory=lambda: {
+        "task_optimized": 0.25,
+        "cost_efficient": 0.25, 
+        "performance": 0.25,
+        "balanced": 0.25
+    })
+    
+    # Quality vs. speed trade-off preference
+    quality_vs_speed_preference: float = 0.5  # 0.0 = speed priority, 1.0 = quality priority
+    
+    # Cost sensitivity
+    cost_sensitivity: float = 0.5  # 0.0 = cost-insensitive, 1.0 = cost-critical
+    
+    # Risk tolerance
+    risk_tolerance: float = 0.5  # 0.0 = risk-averse, 1.0 = risk-tolerant
+    
+    # Personalization strength
+    personalization_strength: float = 0.3  # How much to weight user preferences
+    
+    def get_preference_vector(self) -> np.ndarray:
+        """Convert preferences to vector representation."""
+        # Provider preference scores
+        provider_scores = []
         for provider in ProviderType:
-            available = state.provider_availability.get(provider.value, False)
-            features.append(1.0 if available else 0.0)
-
-        # Provider historical performance
-        for provider in ProviderType:
-            performance = state.historical_performance.get(provider.value, 0.5)
-            features.append(performance)
-
-        return features
-
-    def _encode_constraint_features(self, state: RoutingState) -> List[float]:
-        """Encode resource constraint features.
-
-        Args:
-            state: Routing state
-
-        Returns:
-            List of constraint features
-        """
-        features = []
-
-        # Memory constraint (normalized)
-        memory = state.resource_constraints.get("memory_available", 1.0)
-        features.append(min(memory, 1.0))
-
-        # CPU constraint (normalized)
-        cpu = state.resource_constraints.get("cpu_available", 1.0)
-        features.append(min(cpu, 1.0))
-
-        # Time constraint (normalized, in seconds)
-        time_limit = state.resource_constraints.get("time_limit", 10.0)
-        time_norm = min(time_limit / 30.0, 1.0)  # Normalize to 30s max
-        features.append(time_norm)
-
-        # Cost constraint (normalized)
-        cost_limit = state.resource_constraints.get("cost_limit", 1.0)
-        features.append(min(cost_limit, 1.0))
-
-        return features
-
-    def _encode_preference_features(self, state: RoutingState) -> List[float]:
-        """Encode user preference features.
-
-        Args:
-            state: Routing state
-
-        Returns:
-            List of preference features
-        """
-        features = []
-
-        # Speed preference
-        speed = state.user_preferences.get("speed_priority", 0.5)
-        features.append(speed)
-
-        # Quality preference
-        quality = state.user_preferences.get("quality_priority", 0.5)
-        features.append(quality)
-
-        # Cost preference
-        cost = state.user_preferences.get("cost_priority", 0.5)
-        features.append(cost)
-
-        # Reliability preference
-        reliability = state.user_preferences.get("reliability_priority", 0.5)
-        features.append(reliability)
-
-        # Model familiarity
-        familiarity = state.user_preferences.get("model_familiarity", 0.5)
-        features.append(familiarity)
-
-        return features
-
-    def decode_action(self, action_idx: int) -> Dict[str, Any]:
-        """Decode action index to routing decision.
-
-        Args:
-            action_idx: Action index from DQN
-
-        Returns:
-            Routing decision dictionary
-        """
-        # Map action index to provider and model combination
-        providers = list(ProviderType)
-        models_per_provider = 10  # Approximate models per provider
-
-        provider_idx = action_idx // models_per_provider
-        model_idx = action_idx % models_per_provider
-
-        if provider_idx >= len(providers):
-            provider_idx = 0  # Default to first provider
-
-        provider = providers[provider_idx]
-
-        # Get available models for provider
-        available_models = self._get_provider_models(provider)
-        if model_idx >= len(available_models):
-            model_idx = 0
-
-        return {
-            "provider": provider.value,
-            "model": available_models[model_idx] if available_models else None,
-            "action_idx": action_idx,
-        }
-
-    def _get_provider_models(self, provider: ProviderType) -> List[str]:
-        """Get available models for a provider.
-
-        Args:
-            provider: Provider type
-
-        Returns:
-            List of model names
-        """
-        # This should be populated from actual model registry
-        model_map = {
-            ProviderType.OPENAI: [
-                "gpt-4.1",
-                "gpt-4.1-mini",
-                "o3",
-                "o3-mini",
-                "o1",
-                "o1-mini",
-            ],
-            ProviderType.ANTHROPIC: [
-                "claude-opus-4-20250514",
-                "claude-sonnet-4-20250514",
-                "claude-3-5-sonnet-20241022",
-                "claude-3-5-haiku-20241022",
-            ],
-            ProviderType.GOOGLE: [
-                "gemini-2.5-pro",
-                "gemini-2.5-flash",
-                "gemini-2.0-flash",
-            ],
-            ProviderType.GROQ: [
-                "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant",
-                "qwen/qwen3-32b",
-            ],
-        }
-
-        return model_map.get(provider, [])
-
-    def get_state_hash(self, state: RoutingState) -> str:
-        """Generate hash for state (for caching).
-
-        Args:
-            state: Routing state
-
-        Returns:
-            Hash string
-        """
-        # Create a deterministic string representation
-        state_str = (
-            f"{state.task_complexity:.2f}"
-            f"{state.context_type}"
-            f"{sorted(state.provider_availability.items())}"
-            f"{state.task_type}"
-            f"{state.prompt_length}"
-            f"{state.priority_level}"
-        )
-
-        # Generate hash
-        return hashlib.md5(state_str.encode()).hexdigest()
-
-    def create_state_from_request(
-        self, request: Dict[str, Any], system_state: Dict[str, Any]
-    ) -> RoutingState:
-        """Create routing state from request and system state.
-
-        Args:
-            request: User request dictionary
-            system_state: Current system state
-
-        Returns:
-            Routing state
-        """
-        # Extract task complexity
-        prompt = request.get("prompt", "")
-        task_complexity = self._estimate_complexity(prompt)
-
-        # Determine context type
-        context_type = self._detect_context_type(prompt, request.get("context", {}))
-
-        # Get provider availability
-        provider_availability = system_state.get("provider_availability", {})
-
-        # Get historical performance
-        historical_performance = system_state.get("historical_performance", {})
-
-        # Extract resource constraints
-        resource_constraints = {
-            "memory_available": system_state.get("memory_available", 1.0),
-            "cpu_available": system_state.get("cpu_available", 1.0),
-            "time_limit": request.get("timeout", 10.0),
-            "cost_limit": request.get("max_cost", 1.0),
-        }
-
-        # Extract user preferences
-        user_preferences = request.get(
-            "preferences",
-            {
-                "speed_priority": 0.5,
-                "quality_priority": 0.5,
-                "cost_priority": 0.5,
-                "reliability_priority": 0.5,
-                "model_familiarity": 0.5,
-            },
-        )
-
-        # Detect task type
-        task_type = self._detect_task_type(prompt)
-
-        return RoutingState(
-            task_complexity=task_complexity,
-            context_type=context_type,
-            provider_availability=provider_availability,
-            historical_performance=historical_performance,
-            resource_constraints=resource_constraints,
-            user_preferences=user_preferences,
-            task_type=task_type,
-            prompt_length=len(prompt),
-            estimated_tokens=len(prompt) // 4,  # Rough estimate
-            priority_level=request.get("priority", 0.5),
-        )
-
-    def _estimate_complexity(self, prompt: str) -> float:
-        """Estimate task complexity from prompt.
-
-        Args:
-            prompt: User prompt
-
-        Returns:
-            Complexity score (0.0 to 1.0)
-        """
-        # Simple heuristic based on prompt characteristics
-        complexity = 0.0
-
-        # Length factor
-        if len(prompt) > 1000:
-            complexity += 0.3
-        elif len(prompt) > 500:
-            complexity += 0.2
-        elif len(prompt) > 100:
-            complexity += 0.1
-
-        # Keyword indicators
-        complex_keywords = [
-            "architecture",
-            "optimize",
-            "refactor",
-            "analyze",
-            "design",
-            "implement",
-            "integrate",
-            "scale",
-            "performance",
-            "security",
+            provider_scores.append(self.provider_preference_scores.get(provider, 0.5))
+        
+        # Strategy preferences
+        strategy_scores = [
+            self.preferred_strategies["task_optimized"],
+            self.preferred_strategies["cost_efficient"], 
+            self.preferred_strategies["performance"],
+            self.preferred_strategies["balanced"]
         ]
+        
+        return np.array([
+            *provider_scores,  # 5 provider scores
+            *strategy_scores,  # 4 strategy scores
+            self.quality_vs_speed_preference,
+            self.cost_sensitivity,
+            self.risk_tolerance,
+            self.personalization_strength
+        ], dtype=np.float32)
 
-        for keyword in complex_keywords:
-            if keyword.lower() in prompt.lower():
-                complexity += 0.1
 
-        # Code presence
-        if "```" in prompt or "def " in prompt or "class " in prompt:
-            complexity += 0.2
+@dataclass
+class ResourceConstraints:
+    """Enhanced resource constraints with dynamic weighting."""
+    
+    # Hard constraints (must be satisfied)
+    max_cost_per_request: Optional[float] = None
+    max_latency_seconds: Optional[float] = None
+    min_quality_threshold: Optional[float] = None
+    
+    # Soft constraints (preferences with weights)
+    cost_weight: float = 0.33
+    latency_weight: float = 0.33
+    quality_weight: float = 0.34
+    
+    # Dynamic constraint adjustment
+    constraint_flexibility: float = 0.2  # How much constraints can be relaxed
+    
+    # Business context
+    is_premium_user: bool = False
+    has_priority_access: bool = False
+    billing_tier: str = "standard"  # "free", "standard", "premium", "enterprise"
+    
+    def get_constraint_vector(self) -> np.ndarray:
+        """Convert constraints to vector representation."""
+        return np.array([
+            self.max_cost_per_request / 10.0 if self.max_cost_per_request else 1.0,  # Normalized
+            self.max_latency_seconds / 60.0 if self.max_latency_seconds else 1.0,   # Normalized
+            self.min_quality_threshold if self.min_quality_threshold else 0.0,
+            self.cost_weight,
+            self.latency_weight,
+            self.quality_weight,
+            self.constraint_flexibility,
+            1.0 if self.is_premium_user else 0.0,
+            1.0 if self.has_priority_access else 0.0,
+            {"free": 0.0, "standard": 0.33, "premium": 0.66, "enterprise": 1.0}.get(self.billing_tier, 0.33)
+        ], dtype=np.float32)
 
-        return min(complexity, 1.0)
 
-    def _detect_context_type(self, prompt: str, context: Dict[str, Any]) -> str:
-        """Detect context type from prompt and context.
-
-        Args:
-            prompt: User prompt
-            context: Additional context
-
-        Returns:
-            Context type string
+class AdvancedStateEncoder:
+    """
+    Advanced state encoder for quantum routing DQN.
+    
+    This encoder creates comprehensive state representations that include:
+    - Multi-dimensional task analysis
+    - Temporal performance patterns  
+    - Dynamic provider capabilities
+    - User preference learning
+    - Contextual decision factors
+    """
+    
+    def __init__(
+        self,
+        enable_temporal_features: bool = True,
+        enable_user_personalization: bool = True,
+        enable_dynamic_weighting: bool = True,
+        context_window_size: int = 10
+    ):
         """
-        # Check explicit context
-        if "language" in context:
-            lang = context["language"].lower()
-            for ctx_type in ContextType:
-                if ctx_type.value in lang:
-                    return ctx_type.value
-
-        # Detect from prompt
-        prompt_lower = prompt.lower()
-        language_indicators = {
-            "python": ["python", "pip", "django", "flask", "pandas"],
-            "javascript": ["javascript", "js", "node", "npm", "react"],
-            "typescript": ["typescript", "ts", "angular", "tsx"],
-            "java": ["java", "spring", "maven", "gradle"],
-            "cpp": ["c++", "cpp", "cmake", "std::"],
-            "go": ["golang", "go ", "goroutine"],
-            "rust": ["rust", "cargo", "rustc"],
-        }
-
-        for lang, indicators in language_indicators.items():
-            for indicator in indicators:
-                if indicator in prompt_lower:
-                    return lang
-
-        return ContextType.GENERAL.value
-
-    def _detect_task_type(self, prompt: str) -> str:
-        """Detect task type from prompt.
-
+        Initialize the advanced state encoder.
+        
         Args:
-            prompt: User prompt
-
-        Returns:
-            Task type string
+            enable_temporal_features: Include temporal performance patterns
+            enable_user_personalization: Include user preference learning  
+            enable_dynamic_weighting: Adjust feature weights dynamically
+            context_window_size: Size of historical context window
         """
+        self.enable_temporal_features = enable_temporal_features
+        self.enable_user_personalization = enable_user_personalization
+        self.enable_dynamic_weighting = enable_dynamic_weighting
+        self.context_window_size = context_window_size
+        
+        # Feature dimension calculation
+        self.base_dimensions = 15      # Core task and complexity features
+        self.provider_dimensions = 60  # 5 providers × (1 availability + 11 performance metrics)
+        self.preference_dimensions = 13 # User preference vector
+        self.constraint_dimensions = 10 # Resource constraint vector
+        self.temporal_dimensions = 8 if enable_temporal_features else 0
+        self.context_dimensions = 6     # Contextual factors
+        
+        self.total_dimensions = (
+            self.base_dimensions +
+            self.provider_dimensions + 
+            self.preference_dimensions +
+            self.constraint_dimensions +
+            self.temporal_dimensions +
+            self.context_dimensions
+        )
+        
+    def encode_state(
+        self,
+        task_context: TaskContextProfile,
+        provider_history: Dict[ProviderType, ProviderPerformanceHistory],
+        user_preferences: UserPreferences,
+        resource_constraints: ResourceConstraints,
+        provider_availability: Dict[ProviderType, bool]
+    ) -> np.ndarray:
+        """
+        Encode complete state for DQN input.
+        
+        Args:
+            task_context: Task context and requirements
+            provider_history: Historical performance for all providers
+            user_preferences: User preferences and personalization
+            resource_constraints: Resource constraints and business context
+            provider_availability: Current provider availability
+            
+        Returns:
+            High-dimensional state vector for DQN
+        """
+        state_components = []
+        
+        # 1. Core task features (15 dimensions)
+        task_features = self._encode_task_context(task_context)
+        state_components.append(task_features)
+        
+        # 2. Provider performance features (55 dimensions: 5 providers × 11 metrics)
+        provider_features = self._encode_provider_history(provider_history, provider_availability)
+        state_components.append(provider_features)
+        
+        # 3. User preference features (13 dimensions)
+        if self.enable_user_personalization:
+            preference_features = user_preferences.get_preference_vector()
+            state_components.append(preference_features)
+        else:
+            # Use neutral preferences if personalization disabled
+            neutral_prefs = np.full(self.preference_dimensions, 0.5, dtype=np.float32)
+            state_components.append(neutral_prefs)
+        
+        # 4. Resource constraint features (10 dimensions)
+        constraint_features = resource_constraints.get_constraint_vector()
+        state_components.append(constraint_features)
+        
+        # 5. Temporal features (8 dimensions)
+        if self.enable_temporal_features:
+            temporal_features = self._encode_temporal_context(task_context)
+            state_components.append(temporal_features)
+        
+        # 6. Contextual features (6 dimensions)
+        context_features = self._encode_contextual_factors(task_context, provider_availability)
+        state_components.append(context_features)
+        
+        # Combine all features
+        complete_state = np.concatenate(state_components)
+        
+        # Apply dynamic weighting if enabled
+        if self.enable_dynamic_weighting:
+            complete_state = self._apply_dynamic_weighting(complete_state, task_context)
+        
+        # Ensure correct dimensionality
+        assert len(complete_state) == self.total_dimensions, \
+            f"State vector has {len(complete_state)} dimensions, expected {self.total_dimensions}"
+        
+        return complete_state
+    
+    def _encode_task_context(self, task_context: TaskContextProfile) -> np.ndarray:
+        """Encode task context into feature vector."""
+        features = []
+        
+        # Basic complexity
+        features.append(task_context.estimated_complexity)
+        
+        # Complexity category (one-hot)
+        complexity_categories = [ContextComplexity.SIMPLE, ContextComplexity.MODERATE, 
+                               ContextComplexity.COMPLEX, ContextComplexity.CRITICAL]
+        for category in complexity_categories:
+            features.append(1.0 if task_context.complexity_category == category else 0.0)
+        
+        # Task type (one-hot encoding for major types)
+        task_types = [TaskType.CODE_GENERATION, TaskType.CODE_ANALYSIS, 
+                     TaskType.DEBUGGING, TaskType.TESTING]
+        for task_type in task_types:
+            features.append(1.0 if task_context.task_type == task_type else 0.0)
+        
+        # Requirements
+        features.extend([
+            task_context.quality_threshold,
+            min(task_context.latency_requirement / 30.0, 1.0),  # Normalize to 30s max
+            task_context.cost_sensitivity,
+            1.0 if task_context.requires_reasoning else 0.0,
+            1.0 if task_context.requires_creativity else 0.0,
+            1.0 if task_context.is_production else 0.0
+        ])
+        
+        return np.array(features, dtype=np.float32)
+    
+    def _encode_provider_history(
+        self, 
+        provider_history: Dict[ProviderType, ProviderPerformanceHistory],
+        provider_availability: Dict[ProviderType, bool]
+    ) -> np.ndarray:
+        """Encode provider performance history."""
+        features = []
+        
+        for provider in ProviderType:
+            # Provider availability
+            is_available = provider_availability.get(provider, True)
+            features.append(1.0 if is_available else 0.0)
+            
+            # Performance history (11 dimensions from ProviderPerformanceHistory.get_performance_vector)
+            if provider in provider_history and is_available:
+                perf_vector = provider_history[provider].get_performance_vector()
+                features.extend(perf_vector)
+            else:
+                # Use neutral values for unavailable providers
+                features.extend([0.5] * 11)
+        
+        return np.array(features, dtype=np.float32)
+    
+    def _encode_temporal_context(self, task_context: TaskContextProfile) -> np.ndarray:
+        """Encode temporal context features."""
+        current_time = time.time()
+        current_hour = (current_time // 3600) % 24 / 24.0  # Normalize to 0-1
+        
+        return np.array([
+            task_context.time_of_day,
+            task_context.day_of_week / 7.0,  # Normalize to 0-1
+            task_context.timezone_offset / 12.0,  # Normalize to -1 to 1 range
+            current_hour,
+            np.sin(2 * np.pi * current_hour),  # Cyclical time encoding
+            np.cos(2 * np.pi * current_hour),
+            np.sin(2 * np.pi * task_context.day_of_week / 7.0),  # Cyclical day encoding
+            np.cos(2 * np.pi * task_context.day_of_week / 7.0)
+        ], dtype=np.float32)
+    
+    def _encode_contextual_factors(
+        self,
+        task_context: TaskContextProfile, 
+        provider_availability: Dict[ProviderType, bool]
+    ) -> np.ndarray:
+        """Encode additional contextual decision factors."""
+        available_providers = sum(1 for available in provider_availability.values() if available)
+        total_providers = len(provider_availability)
+        
+        return np.array([
+            available_providers / max(total_providers, 1),  # Provider availability ratio
+            len(task_context.domain_requirements) / 5.0,    # Domain complexity (normalize to 5 max)
+            1.0 if task_context.requires_accuracy else 0.0,
+            task_context.estimated_complexity ** 2,         # Non-linear complexity
+            min(task_context.latency_requirement / 120.0, 1.0),  # Extended latency normalization
+            1.0 if available_providers >= 3 else 0.5       # High availability indicator
+        ], dtype=np.float32)
+    
+    def _apply_dynamic_weighting(
+        self, 
+        state_vector: np.ndarray, 
+        task_context: TaskContextProfile
+    ) -> np.ndarray:
+        """Apply dynamic weighting based on task characteristics."""
+        # Create weighting factors based on task requirements
+        weights = np.ones_like(state_vector)
+        
+        # Boost provider performance features for production tasks
+        if task_context.is_production:
+            provider_start = self.base_dimensions
+            provider_end = provider_start + self.provider_dimensions
+            weights[provider_start:provider_end] *= 1.2
+        
+        # Boost quality features for high-accuracy tasks
+        if task_context.requires_accuracy and task_context.quality_threshold > 0.8:
+            # Emphasize quality-related provider metrics
+            for i in range(5):  # 5 providers
+                base_idx = self.base_dimensions + i * 11  # 11 metrics per provider
+                weights[base_idx + 2] *= 1.3  # Quality metric
+        
+        # Boost temporal features for time-sensitive tasks
+        if self.enable_temporal_features and task_context.latency_requirement < 10.0:
+            temporal_start = (self.base_dimensions + self.provider_dimensions + 
+                            self.preference_dimensions + self.constraint_dimensions)
+            temporal_end = temporal_start + self.temporal_dimensions
+            weights[temporal_start:temporal_end] *= 1.1
+        
+        return state_vector * weights
+    
+    def create_routing_state(
+        self,
+        task_type: TaskType,
+        prompt: str,
+        complexity: float,
+        context_requirements: Dict[str, Any],
+        provider_availability: Dict[ProviderType, bool],
+        user_id: Optional[str] = None
+    ) -> np.ndarray:
+        """
+        Convenience method to create routing state from basic parameters.
+        
+        This method provides a simple interface for creating states from
+        common routing parameters, using reasonable defaults for advanced features.
+        """
+        # Create task context profile
+        task_context = TaskContextProfile(
+            task_type=task_type,
+            estimated_complexity=complexity,
+            complexity_category=self._estimate_complexity_category(complexity),
+            domain_requirements=self._extract_domain_requirements(prompt, task_type),
+            quality_threshold=context_requirements.get("quality_threshold", 0.7),
+            latency_requirement=context_requirements.get("timeout", 30.0),
+            cost_sensitivity=context_requirements.get("cost_sensitivity", 0.5),
+            is_production=context_requirements.get("is_production", False),
+            requires_reasoning=self._requires_reasoning(prompt, task_type),
+            requires_creativity=self._requires_creativity(prompt, task_type),
+            time_of_day=time.time() % 86400 / 86400,  # Current time of day
+            day_of_week=int(time.time() // 86400) % 7 + 1
+        )
+        
+        # Create default provider performance history
+        provider_history = {}
+        for provider in ProviderType:
+            provider_history[provider] = ProviderPerformanceHistory()
+        
+        # Create default user preferences  
+        user_preferences = UserPreferences()
+        
+        # Create default resource constraints
+        resource_constraints = ResourceConstraints(
+            max_latency_seconds=context_requirements.get("timeout"),
+            min_quality_threshold=context_requirements.get("quality_threshold"),
+        )
+        
+        return self.encode_state(
+            task_context=task_context,
+            provider_history=provider_history,
+            user_preferences=user_preferences,
+            resource_constraints=resource_constraints,
+            provider_availability=provider_availability
+        )
+    
+    def _estimate_complexity_category(self, complexity: float) -> ContextComplexity:
+        """Estimate complexity category from numerical complexity."""
+        if complexity < 0.25:
+            return ContextComplexity.SIMPLE
+        elif complexity < 0.5:
+            return ContextComplexity.MODERATE
+        elif complexity < 0.8:
+            return ContextComplexity.COMPLEX
+        else:
+            return ContextComplexity.CRITICAL
+    
+    def _extract_domain_requirements(self, prompt: str, task_type: TaskType) -> Set[str]:
+        """Extract domain requirements from prompt and task type."""
+        domains = set()
+        
+        # Add domain based on task type
+        if task_type == TaskType.CODE_GENERATION:
+            domains.add("programming")
+        elif task_type == TaskType.CODE_ANALYSIS:
+            domains.add("analysis")
+        elif task_type == TaskType.DEBUGGING:
+            domains.add("debugging")
+        elif task_type == TaskType.TESTING:
+            domains.add("testing")
+        
+        # Simple keyword-based domain detection
         prompt_lower = prompt.lower()
+        if any(word in prompt_lower for word in ["creative", "story", "design"]):
+            domains.add("creative")
+        if any(word in prompt_lower for word in ["analyze", "research", "study"]):
+            domains.add("analysis")
+        if any(word in prompt_lower for word in ["math", "calculate", "compute"]):
+            domains.add("mathematical")
+        if any(word in prompt_lower for word in ["logic", "reason", "deduce"]):
+            domains.add("reasoning")
+        
+        return domains
+    
+    def _requires_reasoning(self, prompt: str, task_type: TaskType) -> bool:
+        """Determine if task requires complex reasoning."""
+        reasoning_keywords = ["analyze", "explain", "why", "how", "reason", "logic", "deduce", "infer"]
+        
+        # Check for reasoning keywords in prompt first
+        has_reasoning_keywords = any(keyword in prompt.lower() for keyword in reasoning_keywords)
+        
+        # For CODE_ANALYSIS, only require reasoning if prompt actually involves analysis
+        if task_type == TaskType.CODE_ANALYSIS:
+            return has_reasoning_keywords
+        elif task_type == TaskType.DEBUGGING:
+            return True  # Debugging inherently requires reasoning
+        else:
+            return has_reasoning_keywords
+    
+    def _requires_creativity(self, prompt: str, task_type: TaskType) -> bool:
+        """Determine if task requires creativity."""
+        creativity_keywords = ["creative", "design", "innovative", "brainstorm", "generate ideas"]
+        return any(keyword in prompt.lower() for keyword in creativity_keywords)
+    
+    @property 
+    def state_size(self) -> int:
+        """Get the total state vector size."""
+        return self.total_dimensions
+    
+    def get_feature_names(self) -> List[str]:
+        """Get human-readable feature names for debugging and analysis."""
+        names = []
+        
+        # Base task features
+        names.extend([
+            "task_complexity", 
+            "complexity_simple", "complexity_moderate", "complexity_complex", "complexity_critical",
+            "type_code_gen", "type_analysis", "type_debug", "type_testing",
+            "quality_threshold", "latency_requirement", "cost_sensitivity",
+            "requires_reasoning", "requires_creativity", "is_production"
+        ])
+        
+        # Provider features (12 features per provider: 1 availability + 11 performance metrics)
+        for provider in ProviderType:
+            names.extend([
+                f"{provider.value}_available",
+                f"{provider.value}_recent_success", f"{provider.value}_recent_latency", 
+                f"{provider.value}_recent_quality", f"{provider.value}_recent_cost",
+                f"{provider.value}_short_success", f"{provider.value}_short_latency",
+                f"{provider.value}_quality_trend", f"{provider.value}_variance",
+                f"{provider.value}_reliability", f"{provider.value}_reputation",
+                f"{provider.value}_experience"
+            ])
+        
+        # User preference features
+        for provider in ProviderType:
+            names.append(f"pref_{provider.value}")
+        names.extend([
+            "pref_task_optimized", "pref_cost_efficient", "pref_performance", "pref_balanced",
+            "quality_vs_speed", "user_cost_sensitivity", "risk_tolerance", "personalization_strength"
+        ])
+        
+        # Resource constraint features  
+        names.extend([
+            "max_cost_constraint", "max_latency_constraint", "min_quality_constraint",
+            "cost_weight", "latency_weight", "quality_weight", "constraint_flexibility",
+            "is_premium_user", "has_priority", "billing_tier"
+        ])
+        
+        # Temporal features
+        if self.enable_temporal_features:
+            names.extend([
+                "time_of_day", "day_of_week", "timezone_offset", "current_hour",
+                "hour_sin", "hour_cos", "day_sin", "day_cos"
+            ])
+        
+        # Contextual features
+        names.extend([
+            "provider_availability_ratio", "domain_complexity", "requires_accuracy",
+            "nonlinear_complexity", "extended_latency", "high_availability"
+        ])
+        
+        return names
 
-        task_indicators = {
-            TaskType.CODE_GENERATION: ["create", "generate", "write", "implement"],
-            TaskType.CODE_ANALYSIS: ["analyze", "review", "examine", "assess"],
-            TaskType.CODE_REVIEW: ["review", "check", "validate", "audit"],
-            TaskType.DOCUMENTATION: ["document", "explain", "describe", "comment"],
-            TaskType.TESTING: ["test", "unit test", "integration", "coverage"],
-            TaskType.DEBUGGING: ["debug", "fix", "error", "bug", "issue"],
-            TaskType.REFACTORING: ["refactor", "improve", "optimize", "clean"],
-            TaskType.ARCHITECTURE: ["architecture", "design", "structure", "pattern"],
-        }
 
-        for task_type, indicators in task_indicators.items():
-            for indicator in indicators:
-                if indicator in prompt_lower:
-                    return task_type.value
-
-        return TaskType.UNKNOWN.value
+# Convenience function for easy state encoder creation
+def create_state_encoder(
+    encoding_strategy: str = "comprehensive",
+    **kwargs
+) -> AdvancedStateEncoder:
+    """
+    Create state encoder with predefined strategy.
+    
+    Args:
+        encoding_strategy: "basic", "standard", "comprehensive", "minimal"
+        **kwargs: Additional arguments for AdvancedStateEncoder
+        
+    Returns:
+        Configured AdvancedStateEncoder instance
+    """
+    if encoding_strategy == "minimal":
+        return AdvancedStateEncoder(
+            enable_temporal_features=False,
+            enable_user_personalization=False,
+            enable_dynamic_weighting=False,
+            **kwargs
+        )
+    elif encoding_strategy == "basic":
+        return AdvancedStateEncoder(
+            enable_temporal_features=False,
+            enable_user_personalization=True,
+            enable_dynamic_weighting=False,
+            **kwargs
+        )
+    elif encoding_strategy == "standard":
+        return AdvancedStateEncoder(
+            enable_temporal_features=True,
+            enable_user_personalization=True,
+            enable_dynamic_weighting=False,
+            **kwargs
+        )
+    else:  # comprehensive
+        return AdvancedStateEncoder(
+            enable_temporal_features=True,
+            enable_user_personalization=True,
+            enable_dynamic_weighting=True,
+            **kwargs
+        )

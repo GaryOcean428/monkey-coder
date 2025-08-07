@@ -2,7 +2,7 @@
 Enhanced DQN Agent for Quantum Routing Engine
 
 This module implements a Deep Q-Network agent for intelligent AI model routing,
-building on proven multi-agent patterns and adapted for the
+building on proven patterns from the monkey1 project and adapted for the 
 Monkey Coder platform's quantum routing requirements.
 """
 
@@ -11,12 +11,7 @@ import logging
 import random
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # Type hints for neural network
-    from typing import Any as TypingAny
-    NeuralNetworkType = TypingAny
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -28,14 +23,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RoutingState:
     """Represents the state for routing decisions in the DQN."""
-
+    
     task_complexity: float  # 0.0-1.0 scale
     context_type: str  # e.g., "code_generation", "analysis", "debugging"
     provider_availability: Dict[str, bool]  # Available providers
     historical_performance: Dict[str, float]  # Provider performance history
     resource_constraints: Dict[str, Any]  # Cost, time, quality constraints
     user_preferences: Dict[str, Any]  # User-specific preferences
-
+    
     def to_vector(self) -> np.ndarray:
         """Convert state to numerical vector for neural network input."""
         # Create a fixed-size vector representation
@@ -53,37 +48,37 @@ class RoutingState:
             1.0 if self.context_type == "reasoning" else 0.0,
             1.0 if self.context_type == "general" else 0.0,
         ]
-
+        
         # Provider availability (assuming 5 main providers)
         providers = ["openai", "anthropic", "google", "groq", "grok"]
         for provider in providers:
             vector.append(1.0 if self.provider_availability.get(provider, False) else 0.0)
-
+        
         # Historical performance (average of all providers, 0-1 scale)
-        avg_performance = float(np.mean(list(self.historical_performance.values())) if self.historical_performance else 0.5)
+        avg_performance = np.mean(list(self.historical_performance.values())) if self.historical_performance else 0.5
         vector.append(avg_performance)
-
+        
         # Resource constraints (simplified to 3 values: cost_weight, time_weight, quality_weight)
         vector.extend([
             self.resource_constraints.get("cost_weight", 0.33),
             self.resource_constraints.get("time_weight", 0.33),
             self.resource_constraints.get("quality_weight", 0.33),
         ])
-
+        
         # User preferences (simplified to preference strength 0-1)
         vector.append(self.user_preferences.get("preference_strength", 0.5))
-
+        
         return np.array(vector, dtype=np.float32)
 
 
 @dataclass
 class RoutingAction:
     """Represents a routing action (provider + model selection)."""
-
+    
     provider: ProviderType
     model: str
     strategy: str  # "task_optimized", "cost_efficient", "performance", "balanced"
-
+    
     @classmethod
     def from_action_index(cls, action_index: int) -> "RoutingAction":
         """Convert action index to routing action."""
@@ -107,14 +102,14 @@ class RoutingAction:
             # Grok actions
             (ProviderType.GROK, "grok-2-latest", "performance"),
         ]
-
+        
         if action_index >= len(actions):
             # Default fallback action
             action_index = 0
-
+            
         provider, model, strategy = actions[action_index]
         return cls(provider=provider, model=model, strategy=strategy)
-
+    
     def to_action_index(self) -> int:
         """Convert routing action to action index."""
         # This is the reverse mapping - simplified for initial implementation
@@ -132,18 +127,18 @@ class RoutingAction:
             (ProviderType.GROQ, "llama-3.2-11b-text-preview", "balanced"): 10,
             (ProviderType.GROK, "grok-2-latest", "performance"): 11,
         }
-
+        
         return action_map.get((self.provider, self.model, self.strategy), 0)
 
 
 class DQNRoutingAgent:
     """
     Enhanced Deep Q-Network agent for intelligent AI model routing.
-
+    
     Built on proven patterns from monkey1's DQN implementation and adapted
     for the Monkey Coder platform's quantum routing engine.
     """
-
+    
     def __init__(
         self,
         state_size: int = 21,  # Size of state vector from RoutingState.to_vector()
@@ -159,7 +154,7 @@ class DQNRoutingAgent:
     ):
         """
         Initialize the DQN routing agent.
-
+        
         Args:
             state_size: Dimension of the state space
             action_size: Number of possible actions
@@ -181,26 +176,46 @@ class DQNRoutingAgent:
         self.exploration_min = exploration_min
         self.batch_size = batch_size
         self.target_update_frequency = target_update_frequency
-
+        
         # Experience replay buffer (following monkey1 pattern)
         self.memory = deque(maxlen=memory_size)
-
+        
         # Training step counter for target network updates
         self.training_step = 0
-
+        
         # Performance tracking
         self.training_history = []
         self.routing_performance = {}  # Track performance by provider/model
-
-        # Initialize Q-network and target Q-network as None (will be lazily initialized)
+        
+        # Initialize Q-network and target Q-network using neural network manager
+        from .neural_networks import DQNNetworkManager
+        self.network_manager = DQNNetworkManager(
+            state_size=state_size,
+            action_size=action_size,
+            architecture="standard",  # Can be made configurable
+            learning_rate=learning_rate
+        )
+        
+        # Create networks (will be None until explicitly created)
         self.q_network = None
         self.target_q_network = None
-
-        # Initialize networks
-        self._initialize_networks()
-
-        logger.info(f"Initialized DQN routing agent: state_size={state_size}, action_size={action_size}")
-
+        
+        logger.info(f"Initialized DQN routing agent with state_size={state_size}, action_size={action_size}")
+    
+    def initialize_networks(self) -> None:
+        """Initialize the neural networks for training."""
+        try:
+            self.q_network, self.target_q_network = self.network_manager.create_networks()
+            logger.info("Successfully initialized DQN neural networks")
+        except ImportError as e:
+            logger.warning(f"TensorFlow not available, neural networks disabled: {e}")
+            self.q_network = None
+            self.target_q_network = None
+        except Exception as e:
+            logger.error(f"Failed to initialize neural networks: {e}")
+            self.q_network = None
+            self.target_q_network = None
+    
     def remember(
         self,
         state: RoutingState,
@@ -211,7 +226,7 @@ class DQNRoutingAgent:
     ) -> None:
         """
         Store experience in replay buffer.
-
+        
         Args:
             state: Current routing state
             action: Action taken
@@ -227,16 +242,16 @@ class DQNRoutingAgent:
             done
         )
         self.memory.append(experience)
-
+        
         logger.debug(f"Stored experience: reward={reward}, action={action.provider}:{action.model}")
-
+    
     def act(self, state: RoutingState) -> RoutingAction:
         """
         Choose an action based on the current state using epsilon-greedy policy.
-
+        
         Args:
             state: Current routing state
-
+            
         Returns:
             Selected routing action
         """
@@ -248,43 +263,18 @@ class DQNRoutingAgent:
         else:
             # Exploit: choose best action based on Q-values
             if self.q_network is None:
-                # Initialize network if not already done
-                self._initialize_networks()
-
-            state_vector = state.to_vector().reshape(1, -1)
-            if self.q_network is not None:
-                q_values = self.q_network.predict(state_vector, verbose=0)
-                action_index = int(np.argmax(q_values[0]))
-                logger.debug(f"Exploitation: selected action {action_index} with Q-value {q_values[0][action_index]:.3f}")
-            else:
-                # Fallback to random action if network is not initialized
+                # Fallback to random action if network not initialized
                 action_index = random.randrange(self.action_size)
-                logger.debug("Network not initialized, using random action")
-
+                logger.warning("Q-network not initialized, using random action")
+            else:
+                # This will be implemented when neural network is ready (T2.1.3)
+                state_vector = state.to_vector().reshape(1, -1)
+                q_values = self.q_network.predict(state_vector, verbose=0)
+                action_index = np.argmax(q_values[0])
+                logger.debug(f"Exploitation: selected action {action_index} with Q-value {q_values[0][action_index]:.3f}")
+        
         return RoutingAction.from_action_index(action_index)
-
-    def _initialize_networks(self) -> None:
-        """Initialize neural networks lazily."""
-        if self.q_network is None:
-            from .neural_network import create_dqn_network
-
-            self.q_network = create_dqn_network(
-                state_size=self.state_size,
-                action_size=self.action_size,
-                learning_rate=self.learning_rate
-            )
-
-            self.target_q_network = create_dqn_network(
-                state_size=self.state_size,
-                action_size=self.action_size,
-                learning_rate=self.learning_rate
-            )
-
-            # Initialize target network with same weights as main network
-            self.update_target_network()
-
-            logger.info("Initialized neural networks for DQN agent")
-
+    
     def calculate_reward(
         self,
         action: RoutingAction,
@@ -293,122 +283,105 @@ class DQNRoutingAgent:
     ) -> float:
         """
         Calculate reward for a routing decision based on performance metrics.
-
+        
         Args:
             action: The routing action taken
             routing_result: Result of the routing decision
             execution_metrics: Performance metrics from execution
-
+            
         Returns:
             Reward value (higher is better)
         """
         reward = 0.0
-
+        
         # Base reward for successful routing
         if routing_result.get("success", False):
             reward += 1.0
         else:
             reward -= 0.5
-
+        
         # Performance-based rewards
         response_time = execution_metrics.get("response_time", 5.0)  # seconds
         if response_time < 1.0:
             reward += 0.3  # Fast response bonus
         elif response_time > 10.0:
             reward -= 0.3  # Slow response penalty
-
+        
         # Quality-based rewards
         quality_score = execution_metrics.get("quality_score", 0.5)  # 0-1 scale
         reward += (quality_score - 0.5) * 0.5  # Bonus/penalty for quality
-
+        
         # Cost efficiency rewards
         cost_efficiency = execution_metrics.get("cost_efficiency", 0.5)  # 0-1 scale
         if action.strategy == "cost_efficient":
             reward += cost_efficiency * 0.2
-
+        
         # Strategy alignment rewards
         if action.strategy == "performance" and quality_score > 0.8:
             reward += 0.2
         elif action.strategy == "balanced" and 0.6 <= quality_score <= 0.8:
             reward += 0.1
-
+        
         # Provider-specific adjustments based on historical performance
         provider_key = f"{action.provider}:{action.model}"
         historical_performance = self.routing_performance.get(provider_key, 0.5)
         reward += (historical_performance - 0.5) * 0.1  # Small adjustment based on history
-
+        
         logger.debug(f"Calculated reward {reward:.3f} for {provider_key} (strategy: {action.strategy})")
         return reward
-
-    def replay(self, force_network_init: bool = True) -> Optional[float]:
+    
+    def replay(self) -> Optional[float]:
         """
         Train the DQN using experience replay.
-
-        Args:
-            force_network_init: Whether to initialize networks if not already done.
-                              Set to False for testing purposes.
-
+        
         Returns:
             Average loss from training batch, or None if not enough experiences
         """
         if len(self.memory) < self.batch_size:
             return None
-
-        # Initialize networks if not already done and forced
-        if self.q_network is None and force_network_init:
-            self._initialize_networks()
-
-        # If network is still not initialized, return None
-        if self.q_network is None:
+        
+        if self.q_network is None or self.target_q_network is None:
+            logger.warning("Neural networks not initialized, skipping replay")
             return None
-
+        
         # Sample random minibatch from experience buffer
         minibatch = random.sample(self.memory, self.batch_size)
-
+        
         total_loss = 0.0
-
+        
         for state, action, reward, next_state, done in minibatch:
             # Calculate target Q-value
             target = reward
-            if not done and self.target_q_network is not None:
+            if not done:
                 # Use target network for stable learning (Double DQN approach)
                 next_q_values = self.target_q_network.predict(
                     next_state.reshape(1, -1), verbose=0
                 )
                 target += self.discount_factor * np.amax(next_q_values[0])
-
+            
             # Get current Q-values
-            if self.q_network is not None:
-                current_q_values = self.q_network.predict(state.reshape(1, -1), verbose=0)
-                current_q_values[0][action] = target
-
-                # Train the network
-                history = self.q_network.fit(
-                    state.reshape(1, -1),
-                    current_q_values,
-                    epochs=1,
-                    verbose=0
-                )
-            else:
-                # Skip training if network is not initialized
-                continue
-            # Handle both TensorFlow History object and numpy fallback dict
-            if hasattr(history, 'history'):
-                total_loss += history.history.get('loss', [0.0])[0]
-            else:
-                # Numpy fallback returns dict directly
-                total_loss += history.get('loss', [0.0])[0]
-
+            current_q_values = self.q_network.predict(state.reshape(1, -1), verbose=0)
+            current_q_values[0][action] = target
+            
+            # Train the network
+            history = self.q_network.fit(
+                state.reshape(1, -1),
+                current_q_values,
+                epochs=1,
+                verbose=0
+            )
+            total_loss += history.history.get('loss', [0.0])[0]
+        
         # Decay exploration rate
         if self.exploration_rate > self.exploration_min:
             self.exploration_rate *= self.exploration_decay
-
+        
         # Update target network periodically
         self.training_step += 1
         if self.training_step % self.target_update_frequency == 0:
             self.update_target_network()
             logger.debug(f"Updated target network at training step {self.training_step}")
-
+        
         avg_loss = total_loss / self.batch_size
         self.training_history.append({
             "step": self.training_step,
@@ -416,19 +389,17 @@ class DQNRoutingAgent:
             "exploration_rate": self.exploration_rate,
             "memory_size": len(self.memory)
         })
-
+        
         logger.debug(f"Training step {self.training_step}: avg_loss={avg_loss:.4f}, exploration_rate={self.exploration_rate:.3f}")
         return avg_loss
-
+    
     def update_target_network(self) -> None:
         """Update target Q-network with weights from main Q-network."""
-        # Copy weights from main network to target network
-        if self.q_network is not None and self.target_q_network is not None:
-            self.target_q_network.set_weights(self.q_network.get_weights())
-            logger.debug("Updated target network weights")
+        if self.network_manager is not None:
+            self.network_manager.update_target_network()
         else:
-            logger.warning("Cannot update target network: networks not initialized")
-
+            logger.warning("Network manager not available for target network update")
+    
     def update_routing_performance(
         self,
         action: RoutingAction,
@@ -436,13 +407,13 @@ class DQNRoutingAgent:
     ) -> None:
         """
         Update historical performance tracking for routing decisions.
-
+        
         Args:
             action: The routing action taken
             performance_score: Performance score (0-1 scale)
         """
         provider_key = f"{action.provider}:{action.model}"
-
+        
         # Update running average of performance
         if provider_key in self.routing_performance:
             current_avg = self.routing_performance[provider_key]
@@ -450,34 +421,38 @@ class DQNRoutingAgent:
             self.routing_performance[provider_key] = 0.8 * current_avg + 0.2 * performance_score
         else:
             self.routing_performance[provider_key] = performance_score
-
+        
         logger.debug(f"Updated performance for {provider_key}: {self.routing_performance[provider_key]:.3f}")
-
+    
     def get_performance_metrics(self) -> Dict[str, Any]:
         """
         Get current performance metrics and statistics.
-
+        
         Returns:
             Dictionary containing performance metrics
         """
         return {
             "exploration_rate": self.exploration_rate,
             "training_steps": self.training_step,
-            "memory_utilization": len(self.memory) / (self.memory.maxlen if self.memory.maxlen else 1),
+            "memory_utilization": len(self.memory) / self.memory.maxlen,
             "routing_performance": dict(self.routing_performance),
             "recent_training_loss": self.training_history[-10:] if self.training_history else [],
             "action_space_size": self.action_size,
             "state_space_size": self.state_size,
         }
-
+    
     def save_model(self, filepath: str) -> None:
         """
         Save the trained model to disk.
-
+        
         Args:
             filepath: Path to save the model
-        """
+        """        
         try:
+            # Save neural network weights (if available)
+            if self.q_network is not None:
+                self.q_network.save_weights(f"{filepath}_weights.h5")
+            
             # Save agent configuration and performance data
             config_data = {
                 "state_size": self.state_size,
@@ -492,35 +467,23 @@ class DQNRoutingAgent:
                 "training_step": self.training_step,
                 "routing_performance": self.routing_performance,
                 "training_history": self.training_history[-100:],  # Keep last 100 entries
-                "has_network": self.q_network is not None,  # Flag to indicate if network was saved
             }
-
+            
             with open(f"{filepath}_config.json", "w") as f:
                 json.dump(config_data, f, indent=2, default=str)
-
-            # Save neural network weights only if network is initialized
-            if self.q_network is not None:
-                if hasattr(self.q_network, 'save_weights'):
-                    self.q_network.save_weights(f"{filepath}_weights.h5")
-                elif hasattr(self.q_network, 'get_weights'):
-                    # For numpy fallback, save weights as numpy array
-                    import pickle
-                    weights = self.q_network.get_weights()
-                    with open(f"{filepath}_weights.pkl", "wb") as f:
-                        pickle.dump(weights, f)
-
+            
             logger.info(f"Saved DQN model to {filepath}")
-
+            
         except Exception as e:
             logger.error(f"Failed to save model: {e}")
-
+    
     def load_model(self, filepath: str) -> bool:
         """
         Load a trained model from disk.
-
+        
         Args:
             filepath: Path to load the model from
-
+            
         Returns:
             True if successful, False otherwise
         """
@@ -528,125 +491,21 @@ class DQNRoutingAgent:
             # Load configuration first
             with open(f"{filepath}_config.json", "r") as f:
                 config_data = json.load(f)
-
+            
             # Update agent configuration
             self.exploration_rate = config_data.get("exploration_rate", self.exploration_rate)
             self.training_step = config_data.get("training_step", 0)
             self.routing_performance = config_data.get("routing_performance", {})
             self.training_history = config_data.get("training_history", [])
-
-            # Only load neural network weights if they were saved
-            has_network = config_data.get("has_network", False)
-            if has_network:
-                # Initialize networks if not already done
-                if self.q_network is None:
-                    self._initialize_networks()
-
-                # Load neural network weights
-                if self.q_network is not None:
-                    if hasattr(self.q_network, 'load_weights'):
-                        # Try TensorFlow format first
-                        try:
-                            self.q_network.load_weights(f"{filepath}_weights.h5")
-                        except (OSError, ImportError, ValueError):
-                            # Try numpy fallback format
-                            import pickle
-                            with open(f"{filepath}_weights.pkl", "rb") as f:
-                                weights = pickle.load(f)
-                            self.q_network.set_weights(weights)
-                    elif hasattr(self.q_network, 'set_weights'):
-                        # Numpy fallback
-                        import pickle
-                        with open(f"{filepath}_weights.pkl", "rb") as f:
-                            weights = pickle.load(f)
-                        self.q_network.set_weights(weights)
-
+            
+            # Load neural network weights (when network is implemented)
+            if self.q_network is not None:
+                self.q_network.load_weights(f"{filepath}_weights.h5")
                 self.update_target_network()
-
+            
             logger.info(f"Loaded DQN model from {filepath}")
             return True
-
+            
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
-            return False
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        """
-        Get the state dictionary for saving the model state.
-
-        Returns:
-            Dictionary containing the model state
-        """
-        state_dict = {
-            "state_size": self.state_size,
-            "action_size": self.action_size,
-            "learning_rate": self.learning_rate,
-            "discount_factor": self.discount_factor,
-            "exploration_rate": self.exploration_rate,
-            "exploration_decay": self.exploration_decay,
-            "exploration_min": self.exploration_min,
-            "batch_size": self.batch_size,
-            "target_update_frequency": self.target_update_frequency,
-            "training_step": self.training_step,
-            "routing_performance": self.routing_performance,
-            "training_history": self.training_history[-100:],  # Keep last 100 entries
-            "memory_size": len(self.memory),
-            "has_network": self.q_network is not None,
-        }
-
-        # Add network weights if available
-        if self.q_network is not None:
-            try:
-                if hasattr(self.q_network, 'get_weights'):
-                    weights = self.q_network.get_weights()
-                    # Convert numpy arrays to lists for JSON serialization
-                    state_dict["network_weights"] = [w.tolist() if hasattr(w, 'tolist') else w for w in weights]
-            except Exception as e:
-                logger.warning(f"Could not extract network weights: {e}")
-
-        return state_dict
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> bool:
-        """
-        Load the model state from a state dictionary.
-
-        Args:
-            state_dict: Dictionary containing the model state
-
-        Returns:
-            True if successful, False otherwise
-        """
-        try:
-            # Load configuration
-            self.exploration_rate = state_dict.get("exploration_rate", self.exploration_rate)
-            self.training_step = state_dict.get("training_step", 0)
-            self.routing_performance = state_dict.get("routing_performance", {})
-            self.training_history = state_dict.get("training_history", [])
-
-            # Load network weights if available and network was saved
-            has_network = state_dict.get("has_network", False)
-            if has_network and "network_weights" in state_dict:
-                # Initialize networks if not already done
-                if self.q_network is None:
-                    self._initialize_networks()
-
-                # Load weights
-                if self.q_network is not None:
-                    try:
-                        weights = state_dict["network_weights"]
-                        # Convert lists back to numpy arrays if needed
-                        import numpy as np
-                        processed_weights = [np.array(w) if isinstance(w, list) else w for w in weights]
-                        self.q_network.set_weights(processed_weights)
-                        self.update_target_network()
-                        logger.info("Successfully loaded network weights from state dict")
-                    except Exception as e:
-                        logger.error(f"Failed to load network weights: {e}")
-                        return False
-
-            logger.info("Successfully loaded state dictionary")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to load state dictionary: {e}")
             return False
