@@ -36,26 +36,28 @@ from ..models import (
     UsageResponse,
     TaskStatus,
     ExecutionError,
+    ProviderType,
 )
 from ..security import (
     get_api_key,
     verify_permissions,
-    get_current_user,
-    create_access_token,
-    create_refresh_token,
-    hash_password,
     JWTUser,
     UserRole,
     get_user_permissions,
+    create_access_token,
+    create_refresh_token,
+    hash_password,
 )
-from ..auth.cookie_auth import (
-    get_current_user_from_cookie,
-    login_with_cookies,
-    refresh_with_cookies,
-    logout_with_cookies,
-    get_user_status_from_cookie,
-    cookie_auth_manager,
-    CookieAuthResponse,
+from ..auth.unified_auth import (
+    unified_auth,
+    get_current_user,
+    get_optional_user,
+    require_csrf_token,
+    LoginRequest as UnifiedLoginRequest,
+    RefreshRequest as UnifiedRefreshRequest,
+    AuthResult,
+    AuthMethod,
+    SessionType,
 )
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, User, get_user_store
@@ -415,81 +417,72 @@ async def prometheus_metrics():
     return Response(content=metrics_data, media_type="text/plain")
 
 
-# Authentication Endpoints
-@app.post("/v1/auth/login", response_model=AuthResponse)
-@app.post(
-    "/api/auth/login", response_model=AuthResponse
-)  # Frontend compatibility alias
-async def login(request: LoginRequest) -> AuthResponse:
+# Unified Authentication Endpoints
+@app.post("/v1/auth/login")
+@app.post("/api/auth/login")  # Frontend compatibility alias  
+async def login(request: UnifiedLoginRequest, http_request: Request) -> Response:
     """
-    User login endpoint.
+    Unified user login endpoint supporting both web (cookies) and CLI (tokens).
+
+    This endpoint automatically detects the client type and provides appropriate
+    authentication method:
+    - Web clients: httpOnly cookies with CSRF protection
+    - CLI clients: JWT tokens in response body
+    - API clients: API key support
 
     Args:
-        request: Login credentials (email and password)
+        request: Login credentials and client type
+        http_request: FastAPI request object for session creation
 
     Returns:
-        JWT tokens and user information
+        Unified authentication response with cookies or tokens
     """
     try:
-        # Authenticate user against the user store
-        user_store = get_user_store()
-        user = await user_store.authenticate_user(request.email, request.password)
-
-        if not user:
+        # Authenticate with unified auth system
+        auth_result = await unified_auth.authenticate_with_password(
+            email=request.email,
+            password=request.password,
+            request=http_request,
+            session_type=request.client_type,
+            remember_me=request.remember_me
+        )
+        
+        if not auth_result.success:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
+                detail=auth_result.message,
             )
-
-        # Convert database user roles to UserRole enums
-        user_roles = []
-        for role_str in user.roles:
-            try:
-                user_roles.append(UserRole(role_str))
-            except ValueError:
-                # Handle any invalid roles gracefully
-                logger.warning(f"Invalid role '{role_str}' for user {user.email}")
-
-                # Create JWT user from authenticated user
-                jwt_user = JWTUser(
-                    user_id=str(user.id) if user.id else "unknown_user",
-                    username=user.username,
-                    email=user.email,
-                    roles=user_roles,
-                    permissions=get_user_permissions(user_roles),
-                    mfa_verified=True,
-                    expires_at=datetime.utcnow() + timedelta(hours=24)
-                )
-
-        # Create tokens
-        access_token = create_access_token(jwt_user)
-        refresh_token = create_refresh_token(jwt_user.user_id)
-
-        # Set credits and subscription tier based on user type
-        credits = (
-            10000 if user.is_developer else 100
-        )  # Developer account gets more credits
-        subscription_tier = "developer" if user.is_developer else "free"
-
-        return AuthResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            user={
-                "id": jwt_user.user_id,
-                "email": jwt_user.email,
-                "name": jwt_user.username,
-                "credits": credits,
-                "subscription_tier": subscription_tier,
-                "is_developer": user.is_developer,
-                "roles": [role.value for role in user_roles],
+        
+        # Prepare response data
+        response_data = {
+            "success": True,
+            "message": auth_result.message,
+            "user": {
+                "id": auth_result.user.user_id,
+                "email": auth_result.user.email, 
+                "name": auth_result.user.username,
+                "credits": auth_result.metadata.get("credits", 100),
+                "subscription_tier": auth_result.metadata.get("subscription_tier", "free"),
+                "is_developer": auth_result.metadata.get("is_developer", False),
+                "roles": [role.value for role in auth_result.user.roles],
             },
-        )
+        }
+        
+        # For CLI clients, include tokens in response
+        if auth_result.method == AuthMethod.BEARER_TOKEN:
+            response_data.update({
+                "access_token": auth_result.access_token,
+                "refresh_token": auth_result.refresh_token,
+            })
+        
+        # Create unified response with appropriate cookies/headers
+        return unified_auth.create_auth_response(auth_result, response_data)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Login failed: {str(e)}")
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        logger.error(f"Unified login failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 @app.post("/v1/auth/signup", response_model=AuthResponse)
@@ -622,293 +615,103 @@ async def get_user_status(
 
 
 @app.post("/v1/auth/logout")
-async def logout(current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+async def logout(http_request: Request, current_user: JWTUser = Depends(get_current_user)) -> Response:
     """
-    User logout endpoint.
+    Unified logout endpoint supporting both cookies and tokens.
+
+    This endpoint handles logout for all client types:
+    - Web clients: Clears httpOnly cookies and invalidates sessions
+    - CLI/API clients: Provides confirmation (tokens are stateless)
+    - Maintains security by properly cleaning up sessions
 
     Args:
+        http_request: FastAPI request object for session cleanup
         current_user: Current authenticated user
 
     Returns:
-        Logout confirmation
+        Unified logout response with appropriate cleanup
     """
     try:
-        # In production, you would invalidate the token in a blacklist
-        logger.info(f"User {current_user.email} logged out")
-        return {"message": "Successfully logged out"}
+        # Perform logout with unified auth system
+        await unified_auth.logout(http_request)
+        
+        # Create logout response with cleared cookies
+        return unified_auth.create_logout_response()
 
     except Exception as e:
-        logger.error(f"Logout failed: {str(e)}")
+        logger.error(f"Unified logout failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
-@app.post("/v1/auth/refresh", response_model=AuthResponse)
-async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
+@app.post("/v1/auth/refresh")
+async def refresh_token(request: UnifiedRefreshRequest, http_request: Request) -> Response:
     """
-    Refresh JWT access token using refresh token.
+    Unified token refresh endpoint supporting both cookies and explicit tokens.
+
+    This endpoint automatically detects the refresh method:
+    - Web clients: Uses refresh token from httpOnly cookies
+    - CLI clients: Uses refresh token from request body
+    - Maintains session continuity and security
 
     Args:
-        request: Refresh token request
+        request: Refresh token request (optional for cookie-based refresh)
+        http_request: FastAPI request object for cookie access
 
     Returns:
-        New JWT tokens
+        Unified authentication response with refreshed tokens
     """
     try:
-        from ..security import verify_token
-
-        # Verify refresh token
-        payload = verify_token(request.refresh_token)
-
-        if payload.get("type") != "refresh":
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-        # Create new user object (in production, fetch from database)
-        mock_user = JWTUser(
-            user_id=str(user_id) if user_id else "refreshed_user",
-            username="demo_user",
-            email="demo@example.com",
-            roles=[UserRole.DEVELOPER],
-            permissions=get_user_permissions([UserRole.DEVELOPER]),
-            mfa_verified=True,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+        # Refresh authentication with unified auth system
+        auth_result = await unified_auth.refresh_authentication(
+            request=http_request,
+            refresh_token=request.refresh_token
         )
-
-        # Create new tokens
-        access_token = create_access_token(mock_user)
-        new_refresh_token = create_refresh_token(mock_user.user_id)
-
-        return AuthResponse(
-            access_token=access_token,
-            refresh_token=new_refresh_token,
-            user={
-                "id": mock_user.user_id,
-                "email": mock_user.email,
-                "name": mock_user.username,
-                "credits": 10000,
+        
+        if not auth_result.success:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=auth_result.message,
+            )
+        
+        # Prepare response data  
+        response_data = {
+            "success": True,
+            "message": auth_result.message,
+            "user": {
+                "id": auth_result.user.user_id,
+                "email": auth_result.user.email,
+                "name": auth_result.user.username,
+                "credits": 10000,  # TODO: Get from user metadata
                 "subscription_tier": "developer",
             },
-        )
+        }
+        
+        # For CLI clients, include tokens in response
+        if auth_result.method == AuthMethod.BEARER_TOKEN:
+            response_data.update({
+                "access_token": auth_result.access_token,
+                "refresh_token": auth_result.refresh_token,
+            })
+        
+        # Create unified response with appropriate cookies/headers
+        return unified_auth.create_auth_response(auth_result, response_data)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Token refresh failed: {str(e)}")
+        logger.error(f"Unified token refresh failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Failed to refresh token")
 
 
-# Cookie-based Authentication Endpoints (Enhanced Security)
-
-@app.post("/v1/auth/login/cookie", response_model=CookieAuthResponse)
-async def login_with_cookie_endpoint(request: LoginRequest) -> Response:
-    """
-    Enhanced user login endpoint with httpOnly cookies.
-
-    This endpoint provides secure authentication using httpOnly cookies
-    to prevent XSS attacks while maintaining backward compatibility.
-
-    Args:
-        request: Login credentials (email and password)
-
-    Returns:
-        CookieAuthResponse with user information and session details
-    """
-    try:
-        # Authenticate user and get response
-        auth_response = await login_with_cookies(request.email, request.password)
-
-        # Create response with cookies
-        response = JSONResponse(
-            content=auth_response.model_dump(),
-            status_code=200,
-        )
-
-        # Set httpOnly cookies with tokens
-        if auth_response.success:
-            # Create new tokens for cookie storage
-            user_store = get_user_store()
-            user = await user_store.authenticate_user(request.email, request.password)
-
-            if user:
-                # Convert database user roles to UserRole enums
-                user_roles = []
-                for role_str in user.roles:
-                    try:
-                        user_roles.append(UserRole(role_str))
-                    except ValueError:
-                        logger.warning(f"Invalid role '{role_str}' for user {user.email}")
-
-                # Create JWT user from authenticated user
-                jwt_user = JWTUser(
-                    user_id=str(user.id) if user.id else "unknown_user",
-                    username=user.username,
-                    email=user.email,
-                    roles=user_roles,
-                    permissions=get_user_permissions(user_roles),
-                    mfa_verified=True,
-                    expires_at=datetime.utcnow() + timedelta(hours=24)
-                )
-
-                # Create tokens
-                access_token = create_access_token(jwt_user)
-                refresh_token = create_refresh_token(jwt_user.user_id)
-
-                # Set httpOnly cookies
-                cookie_auth_manager.set_auth_cookies(response, access_token, refresh_token)
-
-                # Log successful authentication
-                logger.info(f"User {request.email} authenticated successfully with httpOnly cookies")
-
-                # Set security headers
-                response.headers["X-Content-Type-Options"] = "nosniff"
-                response.headers["X-Frame-Options"] = "DENY"
-                response.headers["X-XSS-Protection"] = "1; mode=block"
-
-        return response
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Cookie login endpoint failed: {str(e)}")
-        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
-@app.post("/v1/auth/refresh/cookie", response_model=CookieAuthResponse)
-async def refresh_with_cookie_endpoint(request: Request) -> Response:
-    """
-    Refresh access token using httpOnly cookies.
-
-    This endpoint securely refreshes the access token using the refresh token
-    stored in httpOnly cookies, preventing token exposure to JavaScript.
-
-    Args:
-        request: FastAPI request object containing cookies
-
-    Returns:
-        CookieAuthResponse with new tokens and user information
-    """
-    try:
-        # Get refresh token from cookie
-        refresh_token = cookie_auth_manager.get_refresh_token_from_cookie(request)
-        if not refresh_token:
-            raise HTTPException(
-                status_code=401, detail="No refresh token found in cookies"
-            )
-
-        # Refresh tokens
-        auth_response = await refresh_with_cookies(refresh_token)
-
-        # Create response with new cookies
-        response = JSONResponse(
-            content=auth_response.model_dump(),
-            status_code=200,
-        )
-
-        # Set new httpOnly cookies
-        if auth_response.success:
-            # Create new user object for token generation
-            mock_user = JWTUser(
-                user_id="refreshed_user",
-                username="refreshed_user",
-                email="refreshed@example.com",
-                roles=[UserRole.DEVELOPER],
-                permissions=get_user_permissions([UserRole.DEVELOPER]),
-                mfa_verified=True,
-                expires_at=datetime.utcnow() + timedelta(hours=24)
-            )
-
-            # Create new tokens
-            access_token = create_access_token(mock_user)
-            new_refresh_token = create_refresh_token(mock_user.user_id)
-
-            # Set new httpOnly cookies
-            cookie_auth_manager.set_auth_cookies(response, access_token, new_refresh_token)
-
-        return response
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Cookie refresh endpoint failed: {str(e)}")
-        raise HTTPException(status_code=401, detail="Failed to refresh token")
 
 
-@app.post("/v1/auth/logout/cookie")
-async def logout_with_cookie_endpoint(request: Request) -> Response:
-    """
-    Secure logout endpoint that clears httpOnly cookies.
-
-    This endpoint clears all authentication cookies to securely
-    log out the user and prevent session hijacking.
-
-    Args:
-        request: FastAPI request object
-
-    Returns:
-        Logout confirmation message
-    """
-    try:
-        # Perform logout logic
-        logout_result = await logout_with_cookies()
-
-        # Create response and clear cookies
-        response = JSONResponse(content=logout_result, status_code=200)
-        cookie_auth_manager.clear_auth_cookies(response)
-
-        return response
-
-    except Exception as e:
-        logger.error(f"Cookie logout endpoint failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Logout failed")
 
 
-@app.get("/v1/auth/status/cookie", response_model=CookieAuthResponse)
-async def get_user_status_with_cookie(request: Request) -> CookieAuthResponse:
-    """
-    Get user authentication status using httpOnly cookies.
-
-    This endpoint checks the user's authentication status using
-    secure httpOnly cookies without exposing tokens to JavaScript.
-
-    Args:
-        request: FastAPI request object containing cookies
-
-    Returns:
-        CookieAuthResponse with user status information
-    """
-    try:
-        return await get_user_status_from_cookie(request)
-
-    except Exception as e:
-        logger.error(f"Cookie status endpoint failed: {str(e)}")
-        return CookieAuthResponse(
-            success=False, message="Status check failed", user=None
-        )
 
 
-# Enhanced authentication dependency that supports both cookies and headers
-async def get_current_user_enhanced(request: Request) -> JWTUser:
-    """
-    Enhanced authentication dependency supporting both cookies and headers.
 
-    This function provides unified authentication that:
-    1. First attempts cookie-based authentication (more secure)
-    2. Falls back to Authorization header (backward compatibility)
-    3. Handles API keys seamlessly
-
-    Args:
-        request: FastAPI request object
-
-    Returns:
-        Current authenticated user
-
-    Raises:
-        HTTPException: If authentication fails
-    """
-    return await get_current_user_from_cookie(request)
 
 
 @app.post("/v1/execute", response_model=ExecuteResponse)
@@ -918,13 +721,14 @@ async def execute_task(
     api_key: str = Depends(get_api_key),
 ) -> ExecuteResponse:
     """
-    Main task execution endpoint with routing & quantum execution.
+    Main task execution endpoint with quantum routing & execution.
 
     This endpoint:
-    1. Routes tasks through persona slash-command & routing system
-    2. Orchestrates execution via multi-agent orchestration system
-    3. Executes tasks using quantum-inspired execution engine
-    4. Tracks usage and billing metrics
+    1. Routes tasks through quantum routing system for optimal provider/model selection
+    2. Routes through persona slash-command & routing system
+    3. Orchestrates execution via multi-agent orchestration system
+    4. Executes tasks using quantum-inspired execution engine
+    5. Tracks usage and billing metrics
 
     Args:
         request: Task execution request
@@ -944,6 +748,25 @@ async def execute_task(
         # Start metrics collection
         execution_id = app.state.metrics_collector.start_execution(request)
 
+        # Route through quantum router for optimal provider/model selection
+        quantum_routing_result = await app.state.quantum_router.route_request(request)
+
+        # Log quantum routing decision (with safe handling for mock objects)
+        try:
+            provider = getattr(quantum_routing_result, 'provider', 'unknown')
+            model = getattr(quantum_routing_result, 'model', 'unknown')
+            confidence = getattr(quantum_routing_result, 'confidence', 0.0)
+            logger.info(f"Quantum routing selected: {provider} {model} with confidence {confidence:.3f}")
+        except Exception:
+            logger.info("Quantum routing completed (details unavailable)")
+
+        # Update request with quantum routing decision
+        if quantum_routing_result.provider and quantum_routing_result.model:
+            # Override provider and model preferences based on quantum routing decision
+            if quantum_routing_result.provider not in request.preferred_providers:
+                request.preferred_providers.append(ProviderType(quantum_routing_result.provider))
+            request.model_preferences[ProviderType(quantum_routing_result.provider)] = quantum_routing_result.model
+
         # Route through persona system
         persona_context = await app.state.persona_router.route_request(request)
 
@@ -957,7 +780,7 @@ async def execute_task(
             orchestration_result, parallel_futures=True
         )
 
-        # Prepare response
+        # Prepare response with quantum routing information
         response = ExecuteResponse(
             execution_id=execution_id,
             task_id=request.task_id,
@@ -966,7 +789,17 @@ async def execute_task(
             usage=execution_result.usage,
             execution_time=execution_result.execution_time,
             completed_at=datetime.utcnow(),
-            error=None  # Optional field for failed executions
+            error=None,  # Optional field for failed executions
+            quantum_execution={
+                "quantum_routing": {
+                    "provider": quantum_routing_result.provider,
+                    "model": quantum_routing_result.model,
+                    "confidence": quantum_routing_result.confidence,
+                    "strategy": quantum_routing_result.strategy,
+                    "execution_time": quantum_routing_result.execution_time,
+                    "fallback_used": quantum_routing_result.fallback_used
+                }
+            }
         )
 
         # Track billing in background

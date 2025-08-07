@@ -31,6 +31,7 @@ class TestMainErrorHandling:
         state.persona_router = AsyncMock()
         state.quantum_executor = AsyncMock()
         state.billing_tracker = AsyncMock()
+        state.quantum_router = AsyncMock()
         return state
 
     @pytest.mark.asyncio
@@ -39,6 +40,21 @@ class TestMainErrorHandling:
 
         # Override app state for testing
         with patch.object(app, 'state', mock_app_state):
+
+            # Create a proper mock quantum routing result
+            from monkey_coder.quantum.router_integration import QuantumRoutingResult
+            from monkey_coder.models import ProviderType
+
+            mock_quantum_result = MagicMock(spec=QuantumRoutingResult)
+            mock_quantum_result.provider = ProviderType.OPENAI
+            mock_quantum_result.model = "gpt-4.1"
+            mock_quantum_result.confidence = 0.95
+            mock_quantum_result.strategy = "test_strategy"
+            mock_quantum_result.execution_time = 0.1
+            mock_quantum_result.fallback_used = False
+
+            # Mock quantum router to return proper result
+            mock_app_state.quantum_router.route_request.return_value = mock_quantum_result
 
             # Mock the dependencies to raise an exception
             mock_app_state.persona_router.route_request.side_effect = Exception("Test error")

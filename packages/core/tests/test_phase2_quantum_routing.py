@@ -340,7 +340,7 @@ class TestPerformanceMetricsCollector:
 
         self.collector.record_provider_performance(
             provider="anthropic",
-            model="claude-3-opus",
+            model="claude-opus-4-20250514",
             response_time=3.0,
             success=True,
             quality_score=0.85,

@@ -320,21 +320,21 @@ class QuantumRoutingManager:
         if state.task_complexity > 0.8:
             return {
                 "provider": ProviderType.OPENAI,
-                "model": "gpt-4",
+                "model": "gpt-4.1",
                 "confidence": 0.9,
                 "metadata": {"reason": "high_complexity_task"},
             }
         elif state.context_type in ["python", "javascript"]:
             return {
                 "provider": ProviderType.ANTHROPIC,
-                "model": "claude-3-sonnet-20240229",
+                "model": "claude-sonnet-4-20250514",
                 "confidence": 0.85,
                 "metadata": {"reason": "code_specialized"},
             }
         else:
             return {
                 "provider": ProviderType.OPENAI,
-                "model": "gpt-4o-mini",
+                "model": "gpt-4.1-mini",
                 "confidence": 0.7,
                 "metadata": {"reason": "general_task"},
             }
@@ -347,14 +347,14 @@ class QuantumRoutingManager:
         if estimated_tokens and estimated_tokens < 1000:
             return {
                 "provider": ProviderType.OPENAI,
-                "model": "gpt-4o-mini",
+                "model": "gpt-4.1-mini",
                 "confidence": 0.8,
                 "metadata": {"reason": "low_token_count"},
             }
         else:
             return {
                 "provider": ProviderType.ANTHROPIC,
-                "model": "claude-3-haiku-20240307",
+                "model": "claude-3-5-haiku-20241022",
                 "confidence": 0.75,
                 "metadata": {"reason": "cost_optimized"},
             }
@@ -365,7 +365,7 @@ class QuantumRoutingManager:
         """Route based on performance."""
         return {
             "provider": ProviderType.OPENAI,
-            "model": "gpt-4",
+            "model": "gpt-4.1",
             "confidence": 0.95,
             "metadata": {"reason": "maximum_performance"},
         }
@@ -377,14 +377,14 @@ class QuantumRoutingManager:
         if state.task_complexity > 0.6:
             return {
                 "provider": ProviderType.OPENAI,
-                "model": "gpt-4o",
+                "model": "gpt-4.1",
                 "confidence": 0.85,
                 "metadata": {"reason": "balanced_high_complexity"},
             }
         else:
             return {
                 "provider": ProviderType.ANTHROPIC,
-                "model": "claude-3-sonnet-20240229",
+                "model": "claude-sonnet-4-20250514",
                 "confidence": 0.8,
                 "metadata": {"reason": "balanced_standard"},
             }
@@ -418,11 +418,11 @@ class QuantumRoutingManager:
 
         providers = [ProviderType.OPENAI, ProviderType.ANTHROPIC]
         models = {
-            ProviderType.OPENAI: ["gpt-4", "gpt-4o", "gpt-4o-mini"],
+            ProviderType.OPENAI: ["gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"],
             ProviderType.ANTHROPIC: [
-                "claude-3-opus-20240229",
-                "claude-3-sonnet-20240229",
-                "claude-3-haiku-20240307",
+                "claude-opus-4-20250514",
+                "claude-sonnet-4-20250514",
+                "claude-3-5-haiku-20241022",
             ],
         }
 
@@ -456,7 +456,7 @@ class QuantumRoutingManager:
             # Fallback result
             return QuantumRoutingResult(
                 provider=ProviderType.OPENAI,
-                model="gpt-4o-mini",
+                model="gpt-4.1-mini",
                 confidence=0.1,
                 strategy_used="fallback",
                 execution_time=total_time,
@@ -573,15 +573,15 @@ class QuantumRoutingManager:
         """Map DQN action to provider and model."""
         # Simple mapping for demo
         action_map = {
-            0: (ProviderType.OPENAI, "gpt-4"),
-            1: (ProviderType.OPENAI, "gpt-4o"),
-            2: (ProviderType.OPENAI, "gpt-4o-mini"),
-            3: (ProviderType.ANTHROPIC, "claude-3-opus-20240229"),
-            4: (ProviderType.ANTHROPIC, "claude-3-sonnet-20240229"),
-            5: (ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),
+            0: (ProviderType.OPENAI, "gpt-4.1"),
+            1: (ProviderType.OPENAI, "gpt-4.1-mini"),
+            2: (ProviderType.OPENAI, "gpt-4.1-nano"),
+            3: (ProviderType.ANTHROPIC, "claude-opus-4-20250514"),
+            4: (ProviderType.ANTHROPIC, "claude-sonnet-4-20250514"),
+            5: (ProviderType.ANTHROPIC, "claude-3-5-haiku-20241022"),
         }
 
-        return action_map.get(action, (ProviderType.OPENAI, "gpt-4o-mini"))
+        return action_map.get(action, (ProviderType.OPENAI, "gpt-4.1-mini"))
 
     def _update_performance_history(self, result: QuantumRoutingResult):
         """Update performance tracking."""
