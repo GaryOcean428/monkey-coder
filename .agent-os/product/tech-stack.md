@@ -19,7 +19,7 @@
 ## JavaScript Framework
 - **Frontend Framework:** Next.js 14+ with React 18+
 - **CLI Framework:** TypeScript with Commander.js and Chalk for CLI interface
-- **Package Manager:** Yarn 4.9.2 (Workspaces)
+- **Package Manager:** yarn 4.9.2 (Workspaces)
 - **Module System:** ESM with TypeScript
 
 ## Import Strategy
@@ -75,10 +75,10 @@
 - **Monitoring:** Sentry for error tracking and performance monitoring
 
 ## Code Repository URL
-- **Repository:** https://github.com/GaryOcean428/monkey-coder
+- **Repository:** <https://github.com/GaryOcean428/monkey-coder>
 - **License:** MIT License
 - **Version Control:** Git with conventional commits
-- **Package Management:** Yarn workspaces for monorepo structure
+- **Package Management:** yarn workspaces for monorepo structure
 
 ## AI & ML Infrastructure
 - **Model Providers:** OpenAI, Anthropic, Google GenAI, Groq

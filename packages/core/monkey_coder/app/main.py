@@ -51,13 +51,10 @@ from ..security import (
 from ..auth.unified_auth import (
     unified_auth,
     get_current_user,
-    get_optional_user,
-    require_csrf_token,
     LoginRequest as UnifiedLoginRequest,
     RefreshRequest as UnifiedRefreshRequest,
     AuthResult,
     AuthMethod,
-    SessionType,
 )
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, User, get_user_store
@@ -420,7 +417,7 @@ async def prometheus_metrics():
 
 # Unified Authentication Endpoints
 @app.post("/v1/auth/login")
-@app.post("/api/auth/login")  # Frontend compatibility alias  
+@app.post("/api/auth/login")  # Frontend compatibility alias
 async def login(request: UnifiedLoginRequest, http_request: Request) -> Response:
     """
     Unified user login endpoint supporting both web (cookies) and CLI (tokens).
@@ -447,35 +444,36 @@ async def login(request: UnifiedLoginRequest, http_request: Request) -> Response
             session_type=request.client_type,
             remember_me=request.remember_me
         )
-        
+
         if not auth_result.success:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=auth_result.message,
             )
-        
+
         # Prepare response data
+        user_data = auth_result.user
         response_data = {
             "success": True,
             "message": auth_result.message,
             "user": {
-                "id": auth_result.user.user_id,
-                "email": auth_result.user.email, 
-                "name": auth_result.user.username,
+                "id": user_data.user_id if user_data else "unknown",
+                "email": user_data.email if user_data else "unknown",
+                "name": user_data.username if user_data else "unknown",
                 "credits": auth_result.metadata.get("credits", 100),
                 "subscription_tier": auth_result.metadata.get("subscription_tier", "free"),
                 "is_developer": auth_result.metadata.get("is_developer", False),
-                "roles": [role.value for role in auth_result.user.roles],
+                "roles": [role.value for role in user_data.roles] if user_data else [],
             },
         }
-        
+
         # For CLI clients, include tokens in response
         if auth_result.method == AuthMethod.BEARER_TOKEN:
             response_data.update({
                 "access_token": auth_result.access_token,
                 "refresh_token": auth_result.refresh_token,
             })
-        
+
         # Create unified response with appropriate cookies/headers
         return unified_auth.create_auth_response(auth_result, response_data)
 
@@ -511,7 +509,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User with this email already exists",
             )
-        
+
         # Check if username already exists
         existing_username = await User.get_by_username(request.username)
         if existing_username:
@@ -643,7 +641,7 @@ async def logout(http_request: Request, current_user: JWTUser = Depends(get_curr
     try:
         # Perform logout with unified auth system
         await unified_auth.logout(http_request)
-        
+
         # Create logout response with cleared cookies
         return unified_auth.create_logout_response()
 
@@ -675,33 +673,34 @@ async def refresh_token(request: UnifiedRefreshRequest, http_request: Request) -
             request=http_request,
             refresh_token=request.refresh_token
         )
-        
+
         if not auth_result.success:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=auth_result.message,
             )
-        
-        # Prepare response data  
+
+        # Prepare response data
+        user_data = auth_result.user
         response_data = {
             "success": True,
             "message": auth_result.message,
             "user": {
-                "id": auth_result.user.user_id,
-                "email": auth_result.user.email,
-                "name": auth_result.user.username,
+                "id": user_data.user_id if user_data else "unknown",
+                "email": user_data.email if user_data else "unknown",
+                "name": user_data.username if user_data else "unknown",
                 "credits": 10000,  # TODO: Get from user metadata
                 "subscription_tier": "developer",
             },
         }
-        
+
         # For CLI clients, include tokens in response
         if auth_result.method == AuthMethod.BEARER_TOKEN:
             response_data.update({
                 "access_token": auth_result.access_token,
                 "refresh_token": auth_result.refresh_token,
             })
-        
+
         # Create unified response with appropriate cookies/headers
         return unified_auth.create_auth_response(auth_result, response_data)
 

@@ -673,7 +673,6 @@ openrouter:
         - cost_optimization
 ```
 
-
 ## Model Selection Strategy
 
 ### Task-Based Selection
@@ -803,7 +802,6 @@ cost_tiers:
 - **Unified API**: Single interface for multiple providers
 - **Automatic Fallback**: Built-in redundancy
 - **Usage Analytics**: Cross-provider insights
-
 
 ## Integration Guidelines
 
