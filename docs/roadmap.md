@@ -121,11 +121,14 @@ ModelValidator.BLOCKED_MODELS = {
 - ✅ Provider performance tracking with exponential moving averages
 - ✅ Backward compatibility maintenance
 
-**Naming Convention Updates (Completed):**
+**Naming Convention Updates (In Progress):**
 - ✅ Created comprehensive NAMING_MANIFEST.md
 - ✅ Established AdvancedRouter as correct name (replacing Gary8D references)
 - ✅ Defined PersonaRouter as correct name (replacing SuperClaude references)  
 - ✅ Updated persona_config as correct field name (replacing superclause_config)
+- ✅ Updated core models.py with PersonaConfig and OrchestrationConfig classes
+- ✅ Added backward compatibility aliases for smooth migration
+- 🚧 **In Progress**: Updating remaining test files and references throughout codebase
 - ✅ Migration strategy for updating all references throughout codebase
 
 ### Phase 5: MCP Integration (Completed)
