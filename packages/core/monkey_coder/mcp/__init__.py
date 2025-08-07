@@ -5,7 +5,7 @@ Provides tools and resources from external servers
 
 from .client import MCPClient, MCPTool, MCPResource
 from .server_manager import MCPServerManager, MCPServerConfig
-from .registry import MCPRegistry
+from .registry import MCPServerRegistry
 
 __all__ = [
     "MCPClient",
@@ -13,5 +13,5 @@ __all__ = [
     "MCPResource",
     "MCPServerManager",
     "MCPServerConfig",
-    "MCPRegistry",
+    "MCPServerRegistry",
 ]

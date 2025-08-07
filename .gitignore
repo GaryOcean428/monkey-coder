@@ -173,6 +173,10 @@ pnpm-lock.yaml
 # Node.js dependencies
 node_modules/
 
+# Next.js build outputs
+.next/
+out/
+
 # Yarn Berry
 .yarn/*
 !.yarn/patches

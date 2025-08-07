@@ -187,12 +187,34 @@ class DQNRoutingAgent:
         self.training_history = []
         self.routing_performance = {}  # Track performance by provider/model
         
-        # Initialize Q-network and target Q-network
-        # Note: Actual neural network implementation will be added in T2.1.3
-        self.q_network = None  # Will be initialized when neural network is implemented
-        self.target_q_network = None  # Will be initialized when neural network is implemented
+        # Initialize Q-network and target Q-network using neural network manager
+        from .neural_networks import DQNNetworkManager
+        self.network_manager = DQNNetworkManager(
+            state_size=state_size,
+            action_size=action_size,
+            architecture="standard",  # Can be made configurable
+            learning_rate=learning_rate
+        )
+        
+        # Create networks (will be None until explicitly created)
+        self.q_network = None
+        self.target_q_network = None
         
         logger.info(f"Initialized DQN routing agent with state_size={state_size}, action_size={action_size}")
+    
+    def initialize_networks(self) -> None:
+        """Initialize the neural networks for training."""
+        try:
+            self.q_network, self.target_q_network = self.network_manager.create_networks()
+            logger.info("Successfully initialized DQN neural networks")
+        except ImportError as e:
+            logger.warning(f"TensorFlow not available, neural networks disabled: {e}")
+            self.q_network = None
+            self.target_q_network = None
+        except Exception as e:
+            logger.error(f"Failed to initialize neural networks: {e}")
+            self.q_network = None
+            self.target_q_network = None
     
     def remember(
         self,
@@ -373,12 +395,10 @@ class DQNRoutingAgent:
     
     def update_target_network(self) -> None:
         """Update target Q-network with weights from main Q-network."""
-        if self.q_network is None or self.target_q_network is None:
-            return
-        
-        # Copy weights from main network to target network
-        self.target_q_network.set_weights(self.q_network.get_weights())
-        logger.debug("Updated target network weights")
+        if self.network_manager is not None:
+            self.network_manager.update_target_network()
+        else:
+            logger.warning("Network manager not available for target network update")
     
     def update_routing_performance(
         self,

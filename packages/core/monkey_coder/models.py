@@ -396,7 +396,7 @@ class ValidationError(Exception):
 # Full documentation at https://ai1docs.abacusai.app/
 # Add to top of MODEL_REGISTRY section
 DEFAULT_MODELS = {
-    ProviderType.ANTHROPIC: "claude-sonnet-4-20250514",  # Default as per user spec
+    ProviderType.ANTHROPIC: "claude-opus-4-1-20250805",  # Most capable model as default
     # Defaults for other providers
     ProviderType.OPENAI: "gpt-4.1",
     ProviderType.GOOGLE: "gemini-2.5-pro",
@@ -409,15 +409,14 @@ MODEL_REGISTRY = {
         # GPT-4.1 Family (Flagship models - always use these instead of gpt-4o)
         "gpt-4.1",
         "gpt-4.1-mini",
-        "gpt-4.1-nano",
-        # Reasoning models
+        "gpt-4.1-vision",
+        # Reasoning models (o1/o3/o4 series)
         "o1",
         "o1-mini",
         "o3",
+        "o3-mini",
         "o3-pro",
         "o4-mini",
-        "o3-deep-research",
-        "o4-mini-deep-research",
         # Search models
         "gpt-4o-search-preview",
         "gpt-4o-mini-search-preview",
@@ -429,6 +428,8 @@ MODEL_REGISTRY = {
         # "chatgpt-4o-latest",  # Use gpt-4.1 instead
     ],
     ProviderType.ANTHROPIC: [
+        # Claude 4.1 (Most capable)
+        "claude-opus-4-1-20250805",
         # Claude 4 Family
         "claude-opus-4-20250514",
         "claude-sonnet-4-20250514",
@@ -436,6 +437,7 @@ MODEL_REGISTRY = {
         "claude-3-7-sonnet-20250219",
         # Claude 3.5
         "claude-3-5-sonnet-20241022",
+        "claude-3-5-sonnet-20240620",
         "claude-3-5-haiku-20241022",
     ],
     ProviderType.GOOGLE: [
@@ -522,11 +524,11 @@ def get_available_models(
 
 class HealthResponse(BaseModel):
     """Health check response model for Railway deployment."""
-    
+
     status: str = Field(..., description="Overall service health status")
     version: str = Field(..., description="Application version")
     timestamp: str = Field(..., description="Health check timestamp (ISO format)")
     components: Dict[str, str] = Field(
-        default_factory=dict, 
+        default_factory=dict,
         description="Status of individual components"
     )
