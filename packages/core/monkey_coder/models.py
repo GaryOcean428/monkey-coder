@@ -83,8 +83,8 @@ class ExecutionContext(BaseModel):
         return v
 
 
-class SuperClaudeConfig(BaseModel):
-    """Configuration for SuperClaude slash-command & persona router."""
+class PersonaConfig(BaseModel):
+    """Configuration for persona routing system."""
 
     persona: PersonaType = Field(..., description="Persona type for task execution")
     slash_commands: List[str] = Field(
@@ -97,6 +97,10 @@ class SuperClaudeConfig(BaseModel):
     custom_instructions: Optional[str] = Field(
         None, description="Custom persona instructions"
     )
+
+
+# Backward compatibility alias
+SuperClaudeConfig = PersonaConfig
 
 
 class Monkey1Config(BaseModel):
@@ -145,6 +149,10 @@ class OrchestrationConfig(BaseModel):
         return v
 
 
+# Backward compatibility alias
+Gary8DConfig = OrchestrationConfig
+
+
 class ExecuteRequest(BaseModel):
     """Request model for task execution."""
 
@@ -157,8 +165,8 @@ class ExecuteRequest(BaseModel):
 
     # Configuration sections
     context: ExecutionContext = Field(..., description="Execution context")
-    superclause_config: SuperClaudeConfig = Field(
-        ..., description="SuperClaude configuration"
+    persona_config: PersonaConfig = Field(
+        ..., description="Persona configuration"
     )
     monkey1_config: Monkey1Config = Field(
         default_factory=Monkey1Config, description="Monkey1 configuration"
