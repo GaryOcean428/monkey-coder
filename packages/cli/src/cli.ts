@@ -131,7 +131,7 @@ async function buildExecuteRequest(
       max_tokens: 4096,
       temperature: options.temperature || config.getDefaultTemperature(),
     },
-    superclause_config: {
+    persona_config: {
       persona: validatePersona(options.persona || config.getDefaultPersona()),
       slash_commands: [],
       context_window: 32768,
@@ -262,7 +262,7 @@ program
       );
 
       // Override persona for analysis
-      request.superclause_config.persona = validatePersona(options.persona) || 'reviewer';
+      request.persona_config.persona = validatePersona(options.persona) || 'reviewer';
 
       if (options.stream) {
         const spinner = ora('Starting code analysis...').start();
@@ -347,8 +347,8 @@ program
       );
 
       // Override persona for building
-      request.superclause_config.persona = 'architect';
-      request.superclause_config.custom_instructions =
+      request.persona_config.persona = 'architect';
+      request.persona_config.custom_instructions =
         'Focus on building robust, scalable, and maintainable code architecture.';
 
       if (options.stream) {
@@ -446,7 +446,7 @@ program
       );
 
       // Override persona for testing
-      request.superclause_config.persona = 'tester';
+      request.persona_config.persona = 'tester';
 
       if (options.stream) {
         const spinner = ora('Generating tests...').start();
