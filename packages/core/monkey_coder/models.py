@@ -121,8 +121,8 @@ class Monkey1Config(BaseModel):
         return v
 
 
-class Gary8DConfig(BaseModel):
-    """Configuration for Gary8D functional-quantum executor."""
+class OrchestrationConfig(BaseModel):
+    """Configuration for orchestration and quantum execution."""
 
     parallel_futures: bool = Field(
         default=True, description="Enable parallel execution"
@@ -163,8 +163,8 @@ class ExecuteRequest(BaseModel):
     monkey1_config: Monkey1Config = Field(
         default_factory=Monkey1Config, description="Monkey1 configuration"
     )
-    gary8d_config: Gary8DConfig = Field(
-        default_factory=Gary8DConfig, description="Gary8D configuration"
+    orchestration_config: OrchestrationConfig = Field(
+        default_factory=OrchestrationConfig, description="Orchestration configuration"
     )
 
     # Provider preferences
@@ -239,8 +239,8 @@ class ExecuteResponse(BaseModel):
     monkey1_orchestration: Dict[str, Any] = Field(
         default_factory=dict, description="Monkey1 orchestration info"
     )
-    gary8d_execution: Dict[str, Any] = Field(
-        default_factory=dict, description="Gary8D execution info"
+    orchestration_execution: Dict[str, Any] = Field(
+        default_factory=dict, description="Orchestration execution info"
     )
 
 
