@@ -26,7 +26,7 @@ class TaskType(str, Enum):
 
 
 class PersonaType(str, Enum):
-    """SuperClaude persona types."""
+    """Persona types for routing system."""
     DEVELOPER = "developer"
     ARCHITECT = "architect"
     REVIEWER = "reviewer"
@@ -74,13 +74,17 @@ class ExecutionContext:
 
 
 @dataclass
-class SuperClaudeConfig:
-    """Configuration for SuperClaude slash-command & persona router."""
+class PersonaConfig:
+    """Configuration for persona routing system."""
     persona: PersonaType
     slash_commands: List[str] = field(default_factory=list)
     context_window: int = 32768
     use_markdown_spec: bool = True
     custom_instructions: Optional[str] = None
+
+
+# Backward compatibility alias
+SuperClaudeConfig = PersonaConfig
 
 
 @dataclass
@@ -98,8 +102,8 @@ class Monkey1Config:
 
 
 @dataclass
-class Gary8DConfig:
-    """Configuration for Gary8D functional-quantum executor."""
+class OrchestrationConfig:
+    """Configuration for orchestration and quantum execution."""
     parallel_futures: bool = True
     collapse_strategy: str = "weighted_average"
     quantum_coherence: float = 0.8
@@ -109,6 +113,10 @@ class Gary8DConfig:
     def __post_init__(self):
         if not (0.0 <= self.quantum_coherence <= 1.0):
             raise ValueError("Quantum coherence must be between 0.0 and 1.0")
+
+
+# Backward compatibility alias
+Gary8DConfig = OrchestrationConfig
 
 
 @dataclass
@@ -125,11 +133,11 @@ class ExecuteRequest:
     task_type: TaskType
     prompt: str
     context: ExecutionContext
-    superclause_config: SuperClaudeConfig
+    persona_config: PersonaConfig
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     files: Optional[List[FileData]] = None
     monkey1_config: Optional[Monkey1Config] = None
-    gary8d_config: Optional[Gary8DConfig] = None
+    orchestration_config: Optional[OrchestrationConfig] = None
     preferred_providers: Optional[List[ProviderType]] = None
     model_preferences: Optional[Dict[ProviderType, str]] = None
 
@@ -172,9 +180,9 @@ class ExecuteResponse:
     completed_at: Optional[str] = None
     usage: Optional[UsageMetrics] = None
     execution_time: Optional[float] = None
-    superclause_routing: Dict[str, Any] = field(default_factory=dict)
+    persona_routing: Dict[str, Any] = field(default_factory=dict)
     monkey1_orchestration: Dict[str, Any] = field(default_factory=dict)
-    gary8d_execution: Dict[str, Any] = field(default_factory=dict)
+    orchestration_execution: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

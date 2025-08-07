@@ -9,9 +9,9 @@ from typing import List, Optional, Dict
 from .types import (
     ExecuteRequest,
     ExecutionContext,
-    SuperClaudeConfig,
+    PersonaConfig,
     Monkey1Config,
-    Gary8DConfig,
+    OrchestrationConfig,
     TaskType,
     PersonaType,
     ProviderType,
@@ -33,19 +33,19 @@ def create_execute_request(
         task_type: Type of task to execute
         prompt: Task prompt or description
         context: Execution context
-        persona: SuperClaude persona type
+        persona: Persona type for routing
         **kwargs: Additional ExecuteRequest fields
     
     Returns:
         ExecuteRequest object
     """
-    superclause_config = SuperClaudeConfig(persona=persona)
+    persona_config = PersonaConfig(persona=persona)
     
     return ExecuteRequest(
         task_type=task_type,
         prompt=prompt,
         context=context,
-        superclause_config=superclause_config,
+        persona_config=persona_config,
         **kwargs
     )
 
@@ -313,9 +313,9 @@ def create_quantum_config(
     quantum_coherence: float = 0.8,
     execution_branches: int = 3,
     uncertainty_threshold: float = 0.1
-) -> Gary8DConfig:
+) -> OrchestrationConfig:
     """
-    Create a quantum execution configuration.
+    Create an orchestration configuration.
     
     Args:
         parallel_futures: Enable parallel execution
@@ -325,9 +325,9 @@ def create_quantum_config(
         uncertainty_threshold: Threshold for uncertainty handling
     
     Returns:
-        Gary8DConfig object
+        OrchestrationConfig object
     """
-    return Gary8DConfig(
+    return OrchestrationConfig(
         parallel_futures=parallel_futures,
         collapse_strategy=collapse_strategy,
         quantum_coherence=quantum_coherence,

@@ -16,15 +16,18 @@ from .types import (
     ProviderType,
     TaskStatus,
     ExecutionContext,
-    SuperClaudeConfig,
+    PersonaConfig,
     Monkey1Config,
-    Gary8DConfig,
+    OrchestrationConfig,
     ExecuteRequest,
     ExecuteResponse,
     StreamEvent,
     UsageRequest,
     HealthResponse,
     MonkeyCoderClientConfig,
+    # Backward compatibility aliases
+    SuperClaudeConfig,
+    Gary8DConfig,
 )
 from .helpers import (
     create_execute_request,
@@ -41,9 +44,9 @@ __all__ = [
     "ProviderType",
     "TaskStatus",
     "ExecutionContext",
-    "SuperClaudeConfig",
+    "PersonaConfig",
     "Monkey1Config",
-    "Gary8DConfig",
+    "OrchestrationConfig",
     "ExecuteRequest",
     "ExecuteResponse",
     "StreamEvent",
@@ -53,4 +56,7 @@ __all__ = [
     "create_execute_request",
     "create_code_generation_request",
     "create_code_review_request",
+    # Backward compatibility aliases
+    "SuperClaudeConfig",
+    "Gary8DConfig",
 ]
