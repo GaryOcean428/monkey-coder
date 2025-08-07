@@ -46,13 +46,16 @@ export interface ExecutionContext {
   temperature?: number;
 }
 
-export interface SuperClaudeConfig {
+export interface PersonaConfig {
   persona: PersonaType;
   slash_commands?: string[];
   context_window?: number;
   use_markdown_spec?: boolean;
   custom_instructions?: string;
 }
+
+// Backward compatibility alias
+export interface SuperClaudeConfig extends PersonaConfig {}
 
 export interface Monkey1Config {
   agent_count?: number;
@@ -62,13 +65,16 @@ export interface Monkey1Config {
   max_iterations?: number;
 }
 
-export interface Gary8DConfig {
+export interface OrchestrationConfig {
   parallel_futures?: boolean;
   collapse_strategy?: string;
   quantum_coherence?: number;
   execution_branches?: number;
   uncertainty_threshold?: number;
 }
+
+// Backward compatibility alias
+export interface Gary8DConfig extends OrchestrationConfig {}
 
 // Request/Response interfaces
 export interface ExecuteRequest {
@@ -81,9 +87,9 @@ export interface ExecuteRequest {
     type?: string;
   }>;
   context: ExecutionContext;
-  superclause_config: SuperClaudeConfig;
+  persona_config: PersonaConfig;
   monkey1_config?: Monkey1Config;
-  gary8d_config?: Gary8DConfig;
+  orchestration_config?: OrchestrationConfig;
   preferred_providers?: ProviderType[];
   model_preferences?: Record<ProviderType, string>;
 }
@@ -115,9 +121,9 @@ export interface ExecuteResponse {
   completed_at?: string;
   usage?: UsageMetrics;
   execution_time?: number;
-  superclause_routing: Record<string, any>;
+  persona_routing: Record<string, any>;
   monkey1_orchestration: Record<string, any>;
-  gary8d_execution: Record<string, any>;
+  orchestration_execution: Record<string, any>;
 }
 
 export interface StreamEvent {
@@ -492,9 +498,9 @@ export const createExecuteRequest = (
   task_type: taskType,
   prompt,
   context,
-  superclause_config: {
+  persona_config: {
     persona,
-    ...options.superclause_config
+    ...options.persona_config
   },
   ...options
 });
