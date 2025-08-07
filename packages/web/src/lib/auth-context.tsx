@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (data: {
+    username: string;
     name: string;
     email: string;
     password: string;
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleSignup = async (data: {
+    username: string;
     name: string;
     email: string;
     password: string;
