@@ -66,19 +66,18 @@ class TestDQNRouterBridge:
     @pytest.fixture
     def sample_request(self):
         """Create sample execution request."""
-        from monkey_coder.models import ExecutionContext, SuperClaudeConfig
+        from monkey_coder.models import ExecutionContext, PersonaConfig
         
         context = ExecutionContext(user_id="test-user-123", session_id="test-session-456")
-        superclause_config = SuperClaudeConfig(
+        persona_config = PersonaConfig(
             persona=PersonaType.DEVELOPER
         )
         
         return ExecuteRequest(
             prompt="Create a REST API with authentication",
             task_type=TaskType.CODE_GENERATION,
-            persona_config=None,
             context=context,
-            superclause_config=superclause_config
+            persona_config=persona_config
         )
     
     @pytest.fixture
@@ -431,19 +430,18 @@ class TestDQNRouterBridge:
     
     def test_missing_data_handling(self, bridge_advanced):
         """Test handling of missing data in requests."""
-        from monkey_coder.models import ExecutionContext, SuperClaudeConfig
+        from monkey_coder.models import ExecutionContext, PersonaConfig
         
         context = ExecutionContext(user_id="test-user-minimal", session_id="test-session-minimal")
-        superclause_config = SuperClaudeConfig(
+        persona_config = PersonaConfig(
             persona=PersonaType.DEVELOPER
         )
         
         minimal_request = ExecuteRequest(
             prompt="test",
             task_type=TaskType.CUSTOM,
-            persona_config=None,
             context=context,
-            superclause_config=superclause_config
+            persona_config=persona_config
         )
         
         # Should not raise exception
@@ -517,19 +515,18 @@ class TestIntegrationWorkflows:
     
     def test_complete_routing_workflow(self, bridge):
         """Test complete routing workflow from request to training data."""
-        from monkey_coder.models import ExecutionContext, SuperClaudeConfig
+        from monkey_coder.models import ExecutionContext, PersonaConfig
         
         context = ExecutionContext(user_id="test-user-workflow", session_id="test-session-workflow")
-        superclause_config = SuperClaudeConfig(
+        persona_config = PersonaConfig(
             persona=PersonaType.ARCHITECT
         )
         
         request = ExecuteRequest(
             prompt="Build a microservice architecture with authentication and rate limiting",
             task_type=TaskType.CODE_GENERATION,
-            persona_config=None,
             context=context,
-            superclause_config=superclause_config
+            persona_config=persona_config
         )
         
         # Route the request
@@ -570,20 +567,20 @@ class TestIntegrationWorkflows:
     
     def test_multiple_requests_performance_tracking(self, bridge):
         """Test performance tracking across multiple requests."""
-        from monkey_coder.models import ExecutionContext, SuperClaudeConfig
+        from monkey_coder.models import ExecutionContext, PersonaConfig
         
         context1 = ExecutionContext(user_id="test-user-multi1", session_id="test-session-multi1")
-        superclause_config1 = SuperClaudeConfig(
+        persona_config1 = PersonaConfig(
             persona=PersonaType.DEVELOPER
         )
         
         context2 = ExecutionContext(user_id="test-user-multi2", session_id="test-session-multi2")
-        superclause_config2 = SuperClaudeConfig(
+        persona_config2 = PersonaConfig(
             persona=PersonaType.SECURITY_ANALYST  # Using available persona type instead of ANALYZER
         )
         
         context3 = ExecutionContext(user_id="test-user-multi3", session_id="test-session-multi3")
-        superclause_config3 = SuperClaudeConfig(
+        persona_config3 = PersonaConfig(
             persona=PersonaType.REVIEWER
         )
         
@@ -591,23 +588,20 @@ class TestIntegrationWorkflows:
             ExecuteRequest(
                 prompt="Create a simple function",
                 task_type=TaskType.CODE_GENERATION,
-                persona_config=None,
                 context=context1,
-                superclause_config=superclause_config1
+                persona_config=persona_config1
             ),
             ExecuteRequest(
                 prompt="Debug this error",
                 task_type=TaskType.DEBUGGING,
-                persona_config=None,
                 context=context2,
-                superclause_config=superclause_config2
+                persona_config=persona_config2
             ),
             ExecuteRequest(
                 prompt="Analyze code quality",
                 task_type=TaskType.CODE_ANALYSIS,
-                persona_config=None,
                 context=context3,
-                superclause_config=superclause_config3
+                persona_config=persona_config3
             )
         ]
         
@@ -645,7 +639,7 @@ class TestIntegrationWorkflows:
     
     def test_integration_with_different_complexities(self, bridge):
         """Test integration with requests of varying complexity."""
-        from monkey_coder.models import ExecutionContext, SuperClaudeConfig
+        from monkey_coder.models import ExecutionContext, PersonaConfig
         
         complexity_prompts = [
             ("Hello world", TaskType.CODE_GENERATION),  # Simple
@@ -659,16 +653,15 @@ class TestIntegrationWorkflows:
             
             # Use different persona types for variety
             persona_types = [PersonaType.DEVELOPER, PersonaType.ARCHITECT, PersonaType.PERFORMANCE_EXPERT]
-            superclause_config = SuperClaudeConfig(
+            persona_config = PersonaConfig(
                 persona=persona_types[i]
             )
             
             request = ExecuteRequest(
                 prompt=prompt,
                 task_type=task_type,
-                persona_config=None,
                 context=context,
-                superclause_config=superclause_config
+                persona_config=persona_config
             )
             
             enhanced_decision = bridge.route_request(request)

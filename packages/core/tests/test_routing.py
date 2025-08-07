@@ -33,7 +33,7 @@ from monkey_coder.models import (
     PersonaType,
     ProviderType,
     ExecutionContext,
-    SuperClaudeConfig,
+    PersonaConfig,
 )
 
 
@@ -44,7 +44,7 @@ class TestAdvancedRouter:
         """Setup test fixtures."""
         self.router = AdvancedRouter()
         self.context = ExecutionContext(user_id="test_user")
-        self.superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+        self.persona_config = PersonaConfig(persona=PersonaType.DEVELOPER)
         
     def create_request(self, prompt: str, task_type: TaskType = TaskType.CODE_GENERATION, files=None):
         """Helper to create test requests."""
@@ -52,7 +52,7 @@ class TestAdvancedRouter:
             prompt=prompt,
             task_type=task_type,
             context=self.context,
-            superclause_config=self.superclause_config,
+            persona_config=self.persona_config,
             files=files or []
         )
     
@@ -165,7 +165,7 @@ class TestAdvancedRouter:
     def test_persona_selection_from_config(self):
         """Test persona selection from explicit config."""
         request = self.create_request("Write code", TaskType.CODE_GENERATION)
-        request.superclause_config.persona = PersonaType.ARCHITECT
+        request.persona_config.persona = PersonaType.ARCHITECT
         
         persona = self.router._select_persona(request, None, ContextType.CODE_GENERATION)
         
@@ -356,19 +356,19 @@ class TestRouterIntegration:
     def test_routing_scenarios(self, prompt, expected_persona, expected_context):
         """Test various routing scenarios with expected outcomes."""
         context = ExecutionContext(user_id="test_user")
-        superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+        persona_config = PersonaConfig(persona=PersonaType.DEVELOPER)
         
         request = ExecuteRequest(
             prompt=prompt,
             task_type=TaskType.CUSTOM,
             context=context,
-            superclause_config=superclause_config,
+            persona_config=persona_config,
         )
         
         decision = self.router.route_request(request)
         
         # Check persona selection (unless overridden by config)
-        if not hasattr(request, 'superclause_config') or not request.superclause_config:
+        if not hasattr(request, 'persona_config') or not request.persona_config:
             assert decision.persona == expected_persona
         
         # Check context extraction
@@ -388,13 +388,13 @@ class TestRouterIntegration:
         for prompt, expected_persona in test_cases:
             context = ExecutionContext(user_id="test_user")
             # Don't set explicit persona so slash commands can override
-            superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+            persona_config = PersonaConfig(persona=PersonaType.DEVELOPER)
             
             request = ExecuteRequest(
                 prompt=prompt,
                 task_type=TaskType.CUSTOM,
                 context=context,
-                superclause_config=SuperClaudeConfig(persona=PersonaType.DEVELOPER),  # Will be overridden by slash commands
+                persona_config=PersonaConfig(persona=PersonaType.DEVELOPER),  # Will be overridden by slash commands
             )
             
             decision = self.router.route_request(request)
@@ -403,13 +403,13 @@ class TestRouterIntegration:
     def test_routing_consistency(self):
         """Test that routing is consistent for identical requests."""
         context = ExecutionContext(user_id="test_user")
-        superclause_config = SuperClaudeConfig(persona=PersonaType.DEVELOPER)
+        persona_config = PersonaConfig(persona=PersonaType.DEVELOPER)
         
         request = ExecuteRequest(
             prompt="Write a sorting algorithm",
             task_type=TaskType.CODE_GENERATION,
             context=context,
-            superclause_config=superclause_config,
+            persona_config=persona_config,
         )
         
         decision1 = self.router.route_request(request)
