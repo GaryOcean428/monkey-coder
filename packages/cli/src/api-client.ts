@@ -3,7 +3,6 @@
  * Handles REST API calls and Server-Sent Events streaming
  */
 
-import axios, { AxiosInstance } from 'axios';
 import { createParser } from 'eventsource-parser';
 import fs from 'fs-extra';
 import path from 'path';
@@ -21,67 +20,78 @@ function getPackageVersion(): string {
 }
 
 export class MonkeyCoderAPIClient {
-  private client: AxiosInstance;
   private baseUrl: string;
   private apiKey: string;
 
-  constructor(baseUrl: string = process.env.MONKEY_CODER_API_URL || 'https://monkey-coder.up.railway.app', apiKey: string = '') {
+  constructor(baseUrl: string = process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000', apiKey: string = '') {
     this.baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
     this.apiKey = apiKey;
-    
-    this.client = axios.create({
-      baseURL: this.baseUrl,
-      timeout: 300000, // 5 minutes default timeout
-      headers: {
-        'Content-Type': 'application/json',
-        // Dynamic User-Agent with current package version
-        'User-Agent': `monkey-coder-cli/${getPackageVersion()}`,
-        'X-Client-Version': getPackageVersion(),
-      },
-    });
+  }
 
-    // Add auth interceptor if API key is provided
+  private async makeRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'monkey-coder-cli/1.0.0',
+      ...options.headers as Record<string, string>,
+    };
+
     if (this.apiKey) {
-      this.client.interceptors.request.use((config) => {
-        config.headers.Authorization = `Bearer ${this.apiKey}`;
-        return config;
-      });
+      headers.Authorization = `Bearer ${this.apiKey}`;
     }
 
-    // Add error handling interceptor
-    this.client.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response) {
-          // Server responded with error status
-          const status = error.response.status;
-          const message = error.response.data?.detail || error.response.data?.message || error.message;
-          throw new Error(`API Error (${status}): ${message}`);
-        } else if (error.request) {
-          // Request made but no response received
-          throw new Error('No response from server. Please check if the service is running.');
-        } else {
-          // Something else happened
-          throw new Error(`Request error: ${error.message}`);
-        }
-      },
-    );
+    console.log('DEBUG: Request headers:', JSON.stringify(headers, null, 2));
+    console.log('DEBUG: Request options:', JSON.stringify({
+      ...options,
+      headers,
+    }, null, 2));
+
+    const response = await fetch(`${this.baseUrl}${url}`, {
+      ...options,
+      headers,
+    });
+
+    console.log('DEBUG: Response status:', response.status);
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+    console.log('DEBUG: Response headers:', JSON.stringify(responseHeaders, null, 2));
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+        console.log('DEBUG: Error response data:', JSON.stringify(errorData, null, 2));
+      } catch (e) {
+        console.log('DEBUG: Could not parse error response as JSON');
+        errorData = {};
+      }
+      const message = errorData.detail || errorData.message || `HTTP ${response.status}`;
+      throw new Error(`API Error (${response.status}): ${message}`);
+    }
+
+    return response;
   }
 
   /**
    * Health check endpoint
    */
   async healthCheck(): Promise<{ status: string; version: string; components: Record<string, string> }> {
-    const response = await this.client.get('/health');
-    return response.data;
+    const response = await this.makeRequest('/health');
+    return response.json();
   }
 
   /**
    * Execute a task (non-streaming)
    */
   async execute(request: ExecuteRequest): Promise<ExecuteResponse> {
-    const response = await this.client.post('/v1/execute', request);
-    return response.data;
+    console.log('DEBUG: Sending request:', JSON.stringify(request, null, 2));
+    const response = await this.makeRequest('/v1/execute', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+    return response.json();
   }
 
   /**
@@ -100,7 +110,7 @@ export class MonkeyCoderAPIClient {
         onEvent: (event) => {
           try {
             const data = JSON.parse(event.data || '{}');
-            
+
             // Handle different event types
             switch (data.type) {
               case 'start':
@@ -109,21 +119,21 @@ export class MonkeyCoderAPIClient {
                   data: data.data,
                 });
                 break;
-              
+
               case 'progress':
                 onEvent({
                   type: 'progress',
                   progress: data.progress,
                 });
                 break;
-              
+
               case 'result':
                 onEvent({
                   type: 'result',
                   data: data.data,
                 });
                 break;
-              
+
               case 'error':
                 onEvent({
                   type: 'error',
@@ -131,7 +141,7 @@ export class MonkeyCoderAPIClient {
                 });
                 reject(new Error(data.error.message));
                 return;
-              
+
               case 'complete':
                 finalResponse = data.data;
                 onEvent({
@@ -150,40 +160,56 @@ export class MonkeyCoderAPIClient {
       });
 
       // Make streaming request
-      this.client
-        .post('/v1/execute/stream', request, {
-          responseType: 'stream',
-          headers: {
-            Accept: 'text/event-stream',
-            'Cache-Control': 'no-cache',
-          },
-        })
+      fetch(`${this.baseUrl}/v1/execute/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify(request),
+      })
         .then((response) => {
-          response.data.on('data', (chunk: Buffer) => {
-            buffer += chunk.toString();
-            // Process complete lines
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep incomplete line in buffer
-            
-            for (const line of lines) {
-              parser.feed(line + '\n');
-            }
-          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
 
-          response.data.on('end', () => {
-            // Process any remaining data in buffer
-            if (buffer.trim()) {
-              parser.feed(buffer + '\n');
-            }
-            
-            if (!finalResponse) {
-              reject(new Error('Stream ended without completion event'));
-            }
-          });
+          if (!response.body) {
+            throw new Error('No response body');
+          }
 
-          response.data.on('error', (error: Error) => {
-            reject(error);
-          });
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+
+          function readStream(): Promise<void> {
+            return reader.read().then(({ done, value }) => {
+              if (done) {
+                // Process any remaining data in buffer
+                if (buffer.trim()) {
+                  parser.feed(buffer + '\n');
+                }
+
+                if (!finalResponse) {
+                  reject(new Error('Stream ended without completion event'));
+                }
+                return;
+              }
+
+              buffer += decoder.decode(value, { stream: true });
+              // Process complete lines
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+              for (const line of lines) {
+                parser.feed(line + '\n');
+              }
+
+              return readStream();
+            });
+          }
+
+          return readStream();
         })
         .catch((error) => {
           reject(error);
@@ -199,8 +225,9 @@ export class MonkeyCoderAPIClient {
     endDate?: string;
     granularity?: string;
   }): Promise<any> {
-    const response = await this.client.get('/v1/billing/usage', { params });
-    return response.data;
+    const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+    const response = await this.makeRequest(`/v1/billing/usage${queryString}`);
+    return response.json();
   }
 
   /**
@@ -208,7 +235,6 @@ export class MonkeyCoderAPIClient {
    */
   setApiKey(apiKey: string): void {
     this.apiKey = apiKey;
-    this.client.defaults.headers.Authorization = `Bearer ${apiKey}`;
   }
 
   /**
@@ -216,46 +242,56 @@ export class MonkeyCoderAPIClient {
    */
   setBaseUrl(baseUrl: string): void {
     this.baseUrl = baseUrl.replace(/\/$/, '');
-    this.client.defaults.baseURL = this.baseUrl;
   }
 
   /**
    * Authenticate user with email and password
    */
   async authenticate(credentials: { email: string; password: string }): Promise<any> {
-    const response = await this.client.post('/v1/auth/login', credentials);
-    return response.data;
+    const response = await this.makeRequest('/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    return response.json();
   }
 
   /**
    * Logout current user
    */
   async logout(): Promise<void> {
-    await this.client.post('/v1/auth/logout');
+    await this.makeRequest('/v1/auth/logout', {
+      method: 'POST',
+    });
   }
 
   /**
    * Get current user status
    */
   async getUserStatus(): Promise<any> {
-    const response = await this.client.get('/v1/auth/status');
-    return response.data;
+    const response = await this.makeRequest('/v1/auth/status');
+    return response.json();
   }
 
   /**
    * Refresh authentication token
    */
   async refreshToken(refreshToken: string): Promise<any> {
-    const response = await this.client.post('/v1/auth/refresh', { refresh_token: refreshToken });
-    return response.data;
+    const response = await this.makeRequest('/v1/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    return response.json();
   }
 
   /**
    * Create billing portal session
    */
   async createBillingPortalSession(data: { return_url: string }): Promise<any> {
-    const response = await this.client.post('/v1/billing/portal', data);
-    return response.data;
+    const response = await this.makeRequest('/v1/billing/portal', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
   }
 
   /**
@@ -267,30 +303,56 @@ export class MonkeyCoderAPIClient {
     success_url: string;
     cancel_url: string;
   }): Promise<any> {
-    const response = await this.client.post('/v1/billing/payment', data);
-    return response.data;
+    const response = await this.makeRequest('/v1/billing/payment', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
   }
 
   /**
    * Generic HTTP methods for MCP endpoints
    */
   async get(url: string, config?: any): Promise<any> {
-    return this.client.get(url, config);
+    const response = await this.makeRequest(url, {
+      method: 'GET',
+      ...config,
+    });
+    return response.json();
   }
 
   async post(url: string, data?: any, config?: any): Promise<any> {
-    return this.client.post(url, data, config);
+    const response = await this.makeRequest(url, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+      ...config,
+    });
+    return response.json();
   }
 
   async put(url: string, data?: any, config?: any): Promise<any> {
-    return this.client.put(url, data, config);
+    const response = await this.makeRequest(url, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+      ...config,
+    });
+    return response.json();
   }
 
   async delete(url: string, config?: any): Promise<any> {
-    return this.client.delete(url, config);
+    const response = await this.makeRequest(url, {
+      method: 'DELETE',
+      ...config,
+    });
+    return response.json();
   }
 
   async patch(url: string, data?: any, config?: any): Promise<any> {
-    return this.client.patch(url, data, config);
+    const response = await this.makeRequest(url, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+      ...config,
+    });
+    return response.json();
   }
 }

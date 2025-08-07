@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 
 const signupSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be less than 20 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -45,6 +46,7 @@ export default function SignupPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          username: data.username,
           name: data.name,
           email: data.email,
           password: data.password,
@@ -146,6 +148,19 @@ export default function SignupPage() {
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="garyocean"
+                {...register('username')}
+                className="mt-1"
+              />
+              {errors.username && (
+                <p className="text-sm text-destructive mt-1">{errors.username.message}</p>
+              )}
+            </div>
+
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input

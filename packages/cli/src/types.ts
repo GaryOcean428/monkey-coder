@@ -29,7 +29,7 @@ export interface ExecuteRequest {
     max_tokens?: number;
     temperature?: number;
   };
-  superclause_config: {
+  persona_config: {
     persona:
       | 'developer'
       | 'architect'

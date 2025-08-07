@@ -338,6 +338,7 @@ class RefreshTokenRequest(BaseModel):
 class SignupRequest(BaseModel):
     """Signup request model."""
 
+    username: str = Field(..., description="Username")
     name: str = Field(..., description="User full name")
     email: str = Field(..., description="User email address")
     password: str = Field(..., description="User password")
@@ -503,12 +504,20 @@ async def signup(request: SignupRequest) -> AuthResponse:
         # Get user store
         user_store = get_user_store()
 
-        # Check if user already exists - need to use async method
+        # Check if user already exists by email
         existing_user = await User.get_by_email(request.email.lower())
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User with this email already exists",
+            )
+        
+        # Check if username already exists
+        existing_username = await User.get_by_username(request.username)
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
             )
 
         # Hash password before storing
@@ -522,7 +531,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
             is_developer = True
 
         new_user = await user_store.create_user(
-            username=request.name,
+            username=request.username,
             email=request.email,
             password_hash=password_hash,  # Pass hashed password
             full_name=request.name,

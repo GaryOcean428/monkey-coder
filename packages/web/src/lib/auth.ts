@@ -7,6 +7,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  username?: string;
   credits: number;
   subscription_tier: string;
   is_developer: boolean;
@@ -47,6 +48,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
  * Register new user
  */
 export async function signup(data: {
+  username: string;
   name: string;
   email: string;
   password: string;

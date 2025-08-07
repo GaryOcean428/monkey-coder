@@ -30,16 +30,16 @@ export class ConfigManager {
   constructor() {
     // Use XDG config directory or fallback to ~/.config
     const xdgConfigHome = process.env.XDG_CONFIG_HOME;
-    this.configDir = xdgConfigHome 
+    this.configDir = xdgConfigHome
       ? path.join(xdgConfigHome, 'monkey-coder')
       : path.join(os.homedir(), '.config', 'monkey-coder');
-    
+
     this.configPath = path.join(this.configDir, 'config.json');
     this.config = {};
-    
+
     // Initialize encryption key from machine-specific data
     this.initializeEncryption();
-    
+
     // Load config synchronously to ensure it's available immediately
     this.loadConfigSync();
   }
@@ -61,17 +61,17 @@ export class ConfigManager {
     if (!this.encryptionKey) {
       throw new Error('Encryption not initialized');
     }
-    
+
     const algorithm = 'aes-256-gcm';
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(algorithm, this.encryptionKey, iv);
-    
+
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     // Get the auth tag for GCM mode
     const authTag = cipher.getAuthTag();
-    
+
     // Include IV and auth tag in the encrypted string for decryption
     return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
   }
@@ -83,27 +83,27 @@ export class ConfigManager {
     if (!this.encryptionKey) {
       throw new Error('Encryption not initialized');
     }
-    
+
     try {
       const algorithm = 'aes-256-gcm';
       const parts = encryptedText.split(':');
       if (parts.length !== 3) {
         throw new Error('Invalid encrypted data format');
       }
-      
+
       const ivHex = parts[0]!;
       const authTagHex = parts[1]!;
       const encrypted = parts[2]!;
-      
+
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
       const decipher = crypto.createDecipheriv(algorithm, this.encryptionKey, iv);
-      
+
       decipher.setAuthTag(authTag);
-      
+
       const decryptedBuffer = decipher.update(encrypted, 'hex');
       const finalBuffer = decipher.final();
-      
+
       return Buffer.concat([decryptedBuffer, finalBuffer]).toString('utf8');
     } catch (error) {
       // If decryption fails, return empty string (corrupted data)
@@ -149,7 +149,7 @@ export class ConfigManager {
    */
   private decryptConfig(secureConfig: SecureConfigFile): ConfigFile {
     const config: ConfigFile = { ...secureConfig } as ConfigFile;
-    
+
     // Decrypt sensitive fields if they exist
     if (secureConfig._encrypted && secureConfig._salt) {
       for (const field of SENSITIVE_FIELDS) {
@@ -164,11 +164,11 @@ export class ConfigManager {
         }
       }
     }
-    
+
     // Remove encryption metadata from the returned config
     delete (config as any)._encrypted;
     delete (config as any)._salt;
-    
+
     return config;
   }
 
@@ -178,11 +178,11 @@ export class ConfigManager {
   private encryptConfig(config: ConfigFile): SecureConfigFile {
     const secureConfig: SecureConfigFile = { ...config };
     const salt = crypto.randomBytes(16).toString('hex');
-    
+
     // Remove and encrypt sensitive fields
     const encrypted: { [K in SensitiveField]?: string } = {};
     let hasSensitiveData = false;
-    
+
     for (const field of SENSITIVE_FIELDS) {
       if (config[field] && config[field].trim() !== '') {
         encrypted[field] = this.encrypt(config[field], salt);
@@ -190,13 +190,13 @@ export class ConfigManager {
         hasSensitiveData = true;
       }
     }
-    
+
     // Only add encryption metadata if we actually encrypted something
     if (hasSensitiveData) {
       secureConfig._encrypted = encrypted;
       secureConfig._salt = salt;
     }
-    
+
     return secureConfig;
   }
 
@@ -206,14 +206,14 @@ export class ConfigManager {
   async saveConfig(): Promise<void> {
     try {
       await fs.ensureDir(this.configDir);
-      
+
       // Encrypt sensitive fields before saving
       const secureConfig = this.encryptConfig(this.config);
       const configJson = JSON.stringify(secureConfig, null, 2);
-      
+
       // Write config file
       await fs.writeFile(this.configPath, configJson, 'utf-8');
-      
+
       // Set restrictive permissions (readable only by owner)
       try {
         await fs.chmod(this.configPath, 0o600);
@@ -221,7 +221,7 @@ export class ConfigManager {
         // chmod might fail on some systems (e.g., Windows), but that's okay
         console.warn('Warning: Could not set restrictive file permissions on config file');
       }
-      
+
       // Also set permissions on config directory
       try {
         await fs.chmod(this.configDir, 0o700);
@@ -258,7 +258,7 @@ export class ConfigManager {
    * Get base URL from config or environment
    */
   getBaseUrl(): string {
-    return process.env.MONKEY_CODER_API_URL || this.config.baseUrl || 'https://monkey-coder.up.railway.app';
+    return process.env.MONKEY_CODER_BASE_URL || this.config.baseUrl || 'http://localhost:8000';
   }
 
   /**
