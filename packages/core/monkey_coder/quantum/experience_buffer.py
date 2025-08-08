@@ -1,214 +1,400 @@
 """
-Experience Replay Buffer for DQN Agent.
+Experience Replay Buffer for DQN Agent
 
-This module implements a thread-safe, FIFO-managed experience replay buffer for storing
-and sampling experiences during reinforcement learning training. The buffer supports
-configurable capacity with automatic cleanup and efficient random sampling.
-
-Based on the Monkey Coder Phase 2 quantum routing requirements.
+This module implements a configurable memory buffer for experience replay,
+supporting FIFO management and automatic cleanup as specified in T2.1.2.
 """
 
 import random
-import threading
+import logging
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Deque, List, Union
-
+from typing import List, Tuple, Optional, Any
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Experience:
-    """
-    Represents a single experience tuple for reinforcement learning.
+    """Represents a single experience tuple for DQN training."""
     
-    An experience contains the state transition information needed for Q-learning:
-    - Current state before action
-    - Action taken in that state
-    - Reward received after action
-    - Next state after action
-    - Terminal flag indicating if episode ended
-    """
     state: np.ndarray
-    action: Union[int, np.ndarray]
+    action: int
     reward: float
     next_state: np.ndarray
     done: bool
+    timestamp: float
+    
+    def __post_init__(self):
+        """Validate experience data after initialization."""
+        if not isinstance(self.state, np.ndarray):
+            raise ValueError("State must be a numpy array")
+        if not isinstance(self.next_state, np.ndarray):
+            raise ValueError("Next state must be a numpy array")
+        if self.state.shape != self.next_state.shape:
+            raise ValueError("State and next_state must have the same shape")
 
 
-class BufferFullError(Exception):
-    """Raised when attempting to add to a full buffer with strict capacity."""
-    pass
-
-
-class BufferEmptyError(Exception):
-    """Raised when attempting to sample from an empty buffer."""
-    pass
-
-
-class ExperienceBuffer:
+class ExperienceReplayBuffer:
     """
-    Thread-safe experience replay buffer with FIFO management.
+    Configurable memory buffer for experience replay with FIFO management.
     
-    Implements a circular buffer for storing experiences with efficient random sampling
-    for DQN training. Supports configurable capacity with automatic old experience
-    removal when full.
-    
-    Key Features:
-    - FIFO management with automatic cleanup
-    - Thread-safe operations for concurrent access
-    - Efficient random sampling without replacement
-    - Configurable buffer size with memory optimization
-    - Performance optimized for high-throughput scenarios
-    
-    Example:
-        >>> buffer = ExperienceBuffer(max_size=1000)
-        >>> experience = Experience(
-        ...     state=np.array([1, 2, 3]),
-        ...     action=0,
-        ...     reward=1.0,
-        ...     next_state=np.array([2, 3, 4]),
-        ...     done=False
-        ... )
-        >>> buffer.add_experience(experience)
-        >>> batch = buffer.sample_batch(batch_size=32)
+    Supports automatic cleanup and efficient sampling for DQN training.
     """
     
-    def __init__(self, max_size: int = 2000):
+    def __init__(self, 
+                 capacity: int = 2000,
+                 min_size: int = 100,
+                 cleanup_threshold: float = 0.9):
         """
-        Initialize experience replay buffer.
+        Initialize the experience replay buffer.
         
         Args:
-            max_size: Maximum number of experiences to store (default: 2000)
-                     When exceeded, oldest experiences are automatically removed
-        
-        Raises:
-            ValueError: If max_size is not a positive integer
+            capacity: Maximum number of experiences to store (default: 2000)
+            min_size: Minimum experiences before sampling is allowed
+            cleanup_threshold: Trigger cleanup when buffer is this full (0.0-1.0)
         """
-        if max_size <= 0:
-            raise ValueError("Buffer max_size must be a positive integer")
+        if capacity <= 0:
+            raise ValueError("Capacity must be positive")
+        if min_size < 0 or min_size > capacity:
+            raise ValueError("min_size must be between 0 and capacity")
+        if not 0.0 <= cleanup_threshold <= 1.0:
+            raise ValueError("cleanup_threshold must be between 0.0 and 1.0")
+            
+        self.capacity = capacity
+        self.min_size = min_size
+        self.cleanup_threshold = cleanup_threshold
         
-        self.max_size = max_size
-        self._buffer: Deque[Experience] = deque(maxlen=max_size)
-        self._lock = threading.RLock()  # Reentrant lock for nested operations
+        # Use deque for efficient FIFO operations
+        self._buffer: deque = deque(maxlen=capacity)
         
-    def add_experience(self, experience: Experience) -> None:
+        # Statistics
+        self._total_added = 0
+        self._total_sampled = 0
+        self._cleanup_count = 0
+        
+        logger.info(f"Initialized ExperienceReplayBuffer with capacity={capacity}")
+    
+    def add(self, experience: Experience) -> None:
         """
         Add a new experience to the buffer.
         
-        Thread-safe operation that adds experience to the buffer. If buffer is at
-        capacity, the oldest experience is automatically removed (FIFO).
-        
         Args:
-            experience: Experience tuple containing (state, action, reward, next_state, done)
-        
-        Raises:
-            TypeError: If experience is not an Experience instance
+            experience: Experience tuple to add
         """
         if not isinstance(experience, Experience):
-            raise TypeError("experience must be an Experience instance")
+            raise TypeError("experience must be an Experience object")
         
-        with self._lock:
-            self._buffer.append(experience)
+        # Add to buffer (automatically removes oldest if at capacity)
+        self._buffer.append(experience)
+        self._total_added += 1
+        
+        # Trigger cleanup if necessary
+        if len(self._buffer) >= self.capacity * self.cleanup_threshold:
+            self._maybe_cleanup()
     
-    def sample_batch(self, batch_size: int) -> List[Experience]:
+    def sample(self, batch_size: int) -> List[Experience]:
         """
-        Sample a random batch of experiences from the buffer.
-        
-        Thread-safe operation that returns a list of randomly selected experiences
-        without replacement. Useful for training neural networks with varied data.
+        Sample a random batch of experiences.
         
         Args:
             batch_size: Number of experiences to sample
             
         Returns:
-            List of randomly selected Experience objects
+            List of randomly sampled experiences
             
         Raises:
-            BufferEmptyError: If buffer is empty
-            ValueError: If batch_size exceeds buffer size or is not positive
+            ValueError: If batch_size is invalid or insufficient experiences
         """
         if batch_size <= 0:
-            raise ValueError("Batch size must be positive")
+            raise ValueError("batch_size must be positive")
         
-        with self._lock:
-            if self.is_empty():
-                raise BufferEmptyError("Cannot sample from empty buffer")
+        if len(self._buffer) < self.min_size:
+            raise ValueError(f"Insufficient experiences: {len(self._buffer)} < {self.min_size}")
+        
+        if batch_size > len(self._buffer):
+            raise ValueError(f"batch_size ({batch_size}) > buffer size ({len(self._buffer)})")
+        
+        # Random sampling without replacement
+        batch = random.sample(list(self._buffer), batch_size)
+        self._total_sampled += batch_size
+        
+        return batch
+    
+    def sample_recent(self, batch_size: int, recent_fraction: float = 0.1) -> List[Experience]:
+        """
+        Sample experiences with bias toward recent experiences.
+        
+        Args:
+            batch_size: Number of experiences to sample
+            recent_fraction: Fraction of samples to take from recent experiences
             
-            if batch_size > len(self._buffer):
-                raise ValueError(
-                    f"Batch size {batch_size} exceeds buffer size {len(self._buffer)}"
-                )
+        Returns:
+            List of sampled experiences with recent bias
+        """
+        if not 0.0 <= recent_fraction <= 1.0:
+            raise ValueError("recent_fraction must be between 0.0 and 1.0")
+        
+        if len(self._buffer) < self.min_size:
+            raise ValueError(f"Insufficient experiences: {len(self._buffer)} < {self.min_size}")
+        
+        # Calculate split
+        recent_count = int(batch_size * recent_fraction)
+        random_count = batch_size - recent_count
+        
+        # Get recent experiences (last 20% of buffer)
+        recent_start = max(0, len(self._buffer) - int(len(self._buffer) * 0.2))
+        recent_experiences = list(self._buffer)[recent_start:]
+        
+        # Sample components
+        batch = []
+        
+        if recent_count > 0 and recent_experiences:
+            batch.extend(random.sample(recent_experiences, 
+                                     min(recent_count, len(recent_experiences))))
+        
+        if random_count > 0:
+            remaining_needed = batch_size - len(batch)
+            if remaining_needed > 0:
+                batch.extend(random.sample(list(self._buffer), remaining_needed))
+        
+        self._total_sampled += len(batch)
+        return batch
+    
+    def get_batch_arrays(self, batch: List[Experience]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Convert a batch of experiences to numpy arrays for training.
+        
+        Args:
+            batch: List of Experience objects
             
-            # Use random.sample for efficient sampling without replacement
-            return random.sample(list(self._buffer), batch_size)
+        Returns:
+            Tuple of (states, actions, rewards, next_states, dones) as numpy arrays
+        """
+        if not batch:
+            raise ValueError("Batch cannot be empty")
+        
+        states = np.array([exp.state for exp in batch])
+        actions = np.array([exp.action for exp in batch])
+        rewards = np.array([exp.reward for exp in batch])
+        next_states = np.array([exp.next_state for exp in batch])
+        dones = np.array([exp.done for exp in batch])
+        
+        return states, actions, rewards, next_states, dones
     
     def clear(self) -> None:
-        """
-        Clear all experiences from the buffer.
-        
-        Thread-safe operation that removes all stored experiences and resets
-        the buffer to empty state.
-        """
-        with self._lock:
-            self._buffer.clear()
+        """Clear all experiences from the buffer."""
+        self._buffer.clear()
+        logger.info("Experience buffer cleared")
     
-    def size(self) -> int:
+    def _maybe_cleanup(self) -> None:
         """
-        Get current number of experiences in buffer.
+        Perform automatic cleanup if needed.
         
-        Returns:
-            Current buffer size (number of stored experiences)
+        Removes oldest experiences to free up space and maintain performance.
         """
-        with self._lock:
-            return len(self._buffer)
-    
-    def is_empty(self) -> bool:
-        """
-        Check if buffer is empty.
-        
-        Returns:
-            True if buffer contains no experiences, False otherwise
-        """
-        with self._lock:
-            return len(self._buffer) == 0
-    
-    def is_full(self) -> bool:
-        """
-        Check if buffer is at capacity.
-        
-        Returns:
-            True if buffer is at maximum capacity, False otherwise
-        """
-        with self._lock:
-            return len(self._buffer) == self.max_size
+        # Only cleanup if we exceed the threshold, not when we're exactly at it
+        if len(self._buffer) > self.capacity * self.cleanup_threshold:
+            # Remove oldest 10% of experiences
+            cleanup_count = max(1, int(self.capacity * 0.1))
+            
+            for _ in range(cleanup_count):
+                if self._buffer:
+                    self._buffer.popleft()
+            
+            self._cleanup_count += 1
+            logger.debug(f"Cleaned up {cleanup_count} old experiences")
     
     def get_statistics(self) -> dict:
         """
-        Get buffer usage statistics.
+        Get buffer statistics and performance metrics.
         
         Returns:
-            Dictionary containing buffer statistics:
-            - size: Current number of experiences
-            - max_size: Maximum buffer capacity
-            - utilization: Percentage of buffer used (0.0-1.0)
-            - is_empty: Whether buffer is empty
-            - is_full: Whether buffer is at capacity
+            Dictionary with buffer statistics
         """
-        with self._lock:
-            current_size = len(self._buffer)
-            return {
-                "size": current_size,
-                "max_size": self.max_size,
-                "utilization": current_size / self.max_size if self.max_size > 0 else 0.0,
-                "is_empty": current_size == 0,
-                "is_full": current_size == self.max_size,
+        return {
+            'size': len(self._buffer),
+            'capacity': self.capacity,
+            'utilization': len(self._buffer) / self.capacity,
+            'total_added': self._total_added,
+            'total_sampled': self._total_sampled,
+            'cleanup_count': self._cleanup_count,
+            'min_size': self.min_size,
+            'ready_for_sampling': len(self._buffer) >= self.min_size
+        }
+    
+    def save_buffer(self, filepath: str) -> bool:
+        """
+        Save buffer contents to file.
+        
+        Args:
+            filepath: Path to save buffer data
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import pickle
+            
+            buffer_data = {
+                'experiences': list(self._buffer),
+                'capacity': self.capacity,
+                'min_size': self.min_size,
+                'cleanup_threshold': self.cleanup_threshold,
+                'stats': self.get_statistics()
             }
+            
+            with open(filepath, 'wb') as f:
+                pickle.dump(buffer_data, f)
+                
+            logger.info(f"Buffer saved to {filepath}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to save buffer: {e}")
+            return False
+    
+    def load_buffer(self, filepath: str) -> bool:
+        """
+        Load buffer contents from file.
+        
+        Args:
+            filepath: Path to load buffer data from
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import pickle
+            
+            with open(filepath, 'rb') as f:
+                buffer_data = pickle.load(f)
+            
+            # Restore configuration
+            self.capacity = buffer_data.get('capacity', self.capacity)
+            self.min_size = buffer_data.get('min_size', self.min_size)
+            self.cleanup_threshold = buffer_data.get('cleanup_threshold', self.cleanup_threshold)
+            
+            # Restore experiences
+            self._buffer = deque(buffer_data['experiences'], maxlen=self.capacity)
+            
+            # Update statistics
+            old_stats = buffer_data.get('stats', {})
+            self._total_added = old_stats.get('total_added', len(self._buffer))
+            self._total_sampled = old_stats.get('total_sampled', 0)
+            self._cleanup_count = old_stats.get('cleanup_count', 0)
+            
+            logger.info(f"Buffer loaded from {filepath} with {len(self._buffer)} experiences")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to load buffer: {e}")
+            return False
     
     def __len__(self) -> int:
-        """Return current buffer size."""
-        return self.size()
+        """Return the current number of experiences in the buffer."""
+        return len(self._buffer)
     
     def __repr__(self) -> str:
-        """Return string representation of buffer."""
-        return f"ExperienceBuffer(size={self.size()}, max_size={self.max_size})"
+        """Return string representation of the buffer."""
+        return (f"ExperienceReplayBuffer(size={len(self._buffer)}, "
+                f"capacity={self.capacity}, utilization={len(self._buffer)/self.capacity:.1%})")
+
+
+class PrioritizedExperienceBuffer(ExperienceReplayBuffer):
+    """
+    Extension of ExperienceReplayBuffer with prioritized sampling.
+    
+    Implements importance sampling based on TD error for more efficient learning.
+    """
+    
+    def __init__(self, 
+                 capacity: int = 2000,
+                 min_size: int = 100,
+                 cleanup_threshold: float = 0.9,
+                 alpha: float = 0.6,
+                 beta: float = 0.4,
+                 beta_increment: float = 0.001):
+        """
+        Initialize prioritized experience replay buffer.
+        
+        Args:
+            alpha: Prioritization exponent (0 = uniform, 1 = full prioritization)
+            beta: Importance sampling exponent (0 = no correction, 1 = full correction)
+            beta_increment: Amount to increment beta per sample
+        """
+        super().__init__(capacity, min_size, cleanup_threshold)
+        
+        self.alpha = alpha
+        self.beta = beta
+        self.beta_increment = beta_increment
+        self.max_beta = 1.0
+        
+        # Priority storage (parallel to buffer)
+        self._priorities: deque = deque(maxlen=capacity)
+        self._max_priority = 1.0
+    
+    def add(self, experience: Experience, priority: Optional[float] = None) -> None:
+        """
+        Add experience with priority.
+        
+        Args:
+            experience: Experience to add
+            priority: Priority value (defaults to max priority)
+        """
+        if priority is None:
+            priority = self._max_priority
+        
+        super().add(experience)
+        self._priorities.append(priority)
+        
+        if priority > self._max_priority:
+            self._max_priority = priority
+    
+    def sample(self, batch_size: int) -> Tuple[List[Experience], np.ndarray, np.ndarray]:
+        """
+        Sample experiences using prioritized sampling.
+        
+        Returns:
+            Tuple of (experiences, indices, importance_weights)
+        """
+        if len(self._buffer) < self.min_size:
+            raise ValueError(f"Insufficient experiences: {len(self._buffer)} < {self.min_size}")
+        
+        # Calculate sampling probabilities
+        priorities = np.array(self._priorities)
+        probabilities = priorities ** self.alpha
+        probabilities /= probabilities.sum()
+        
+        # Sample indices
+        indices = np.random.choice(len(self._buffer), batch_size, p=probabilities)
+        
+        # Get experiences
+        experiences = [self._buffer[i] for i in indices]
+        
+        # Calculate importance weights
+        total_samples = len(self._buffer)
+        weights = (total_samples * probabilities[indices]) ** (-self.beta)
+        weights /= weights.max()  # Normalize by max weight
+        
+        # Update beta
+        self.beta = min(self.max_beta, self.beta + self.beta_increment)
+        
+        self._total_sampled += batch_size
+        
+        return experiences, indices, weights
+    
+    def update_priorities(self, indices: np.ndarray, priorities: np.ndarray) -> None:
+        """
+        Update priorities for sampled experiences.
+        
+        Args:
+            indices: Indices of experiences to update
+            priorities: New priority values
+        """
+        for idx, priority in zip(indices, priorities):
+            if 0 <= idx < len(self._priorities):
+                self._priorities[idx] = priority
+                if priority > self._max_priority:
+                    self._max_priority = priority

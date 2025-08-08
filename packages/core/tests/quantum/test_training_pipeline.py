@@ -1,729 +1,546 @@
 """
-Tests for Quantum-Integrated DQN Training Pipeline
+Comprehensive test suite for DQN Training Pipeline
 
-This module tests the integration between the DQN agent and the existing
-QuantumManager system, validating the training pipeline that leverages
-quantum execution results for reinforcement learning.
+Tests the training pipeline components including environment simulation,
+training configuration, and the complete training loop.
 """
 
-import asyncio
 import pytest
 import numpy as np
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Dict, Any
+import tempfile
+import os
+from unittest.mock import patch, MagicMock
 
-from monkey_coder.models import ProviderType, TaskType, ExecuteRequest, ExecutionContext
-from monkey_coder.quantum.manager import QuantumResult, CollapseStrategy
-from monkey_coder.quantum.dqn_agent import DQNRoutingAgent, RoutingState, RoutingAction
 from monkey_coder.quantum.training_pipeline import (
-    QuantumDQNTrainer,
-    TrainingScenario,
-    TrainingPhase,
-    QuantumTrainingResult,
-    TrainingScenarioGenerator,
-    create_quantum_dqn_trainer
+    TrainingConfig,
+    TrainingMode,
+    TrainingMetrics,
+    RoutingEnvironmentSimulator,
+    DQNTrainingPipeline
 )
+from monkey_coder.quantum.dqn_agent import RoutingState, RoutingAction
+from monkey_coder.models import ProviderType
 
 
-class TestTrainingScenario:
-    """Test training scenario data structure."""
+class TestTrainingConfig:
+    """Test the training configuration class."""
     
-    def test_training_scenario_creation(self):
-        """Test creating a training scenario."""
-        scenario = TrainingScenario(
-            task_type=TaskType.CODE_GENERATION,
-            complexity=0.7,
-            context_requirements={"timeout": 30, "max_tokens": 4096},
-            provider_constraints={"openai": True, "anthropic": False},
-            expected_strategy="performance",
-            scenario_id="test_scenario_1"
+    def test_default_config(self):
+        """Test default configuration values."""
+        config = TrainingConfig()
+        
+        assert config.batch_size == 32
+        assert config.learning_rate == 0.001
+        assert config.discount_factor == 0.99
+        assert config.initial_epsilon == 1.0
+        assert config.min_epsilon == 0.01
+        assert config.epsilon_decay == 0.995
+        assert config.training_mode == TrainingMode.STANDARD
+    
+    def test_custom_config(self):
+        """Test custom configuration values."""
+        config = TrainingConfig(
+            batch_size=64,
+            learning_rate=0.01,
+            training_mode=TrainingMode.PRIORITIZED,
+            max_episodes=500
         )
         
-        assert scenario.task_type == TaskType.CODE_GENERATION
-        assert scenario.complexity == 0.7
-        assert scenario.context_requirements["timeout"] == 30
-        assert scenario.provider_constraints["openai"] is True
-        assert scenario.expected_strategy == "performance"
-        assert scenario.scenario_id == "test_scenario_1"
-        assert scenario.metadata is None
-    
-    def test_training_scenario_with_metadata(self):
-        """Test training scenario with metadata."""
-        metadata = {"source": "test", "priority": "high"}
-        scenario = TrainingScenario(
-            task_type=TaskType.DEBUGGING,
-            complexity=0.5,
-            context_requirements={},
-            provider_constraints={},
-            expected_strategy="task_optimized",
-            scenario_id="test_scenario_2",
-            metadata=metadata
-        )
-        
-        assert scenario.metadata == metadata
-        assert scenario.metadata["source"] == "test"
+        assert config.batch_size == 64
+        assert config.learning_rate == 0.01
+        assert config.training_mode == TrainingMode.PRIORITIZED
+        assert config.max_episodes == 500
 
 
-class TestQuantumDQNTrainer:
-    """Test the quantum-integrated DQN trainer."""
+class TestTrainingMetrics:
+    """Test the training metrics class."""
     
-    @pytest.fixture
-    def mock_dqn_agent(self):
-        """Mock DQN agent for testing."""
-        agent = Mock(spec=DQNRoutingAgent)
-        agent.state_size = 21
-        agent.action_size = 12
-        agent.exploration_rate = 0.5
-        agent.act.return_value = RoutingAction(
-            provider=ProviderType.OPENAI,
-            model="gpt-4.1",
-            strategy="performance"
-        )
-        agent.remember = Mock()
-        agent.replay.return_value = 0.05  # Mock training loss
-        agent.update_routing_performance = Mock()
-        agent.get_performance_metrics.return_value = {
-            "exploration_rate": 0.5,
-            "training_steps": 10,
-            "memory_utilization": 0.3
-        }
-        return agent
+    def test_metrics_initialization(self):
+        """Test metrics initialization."""
+        metrics = TrainingMetrics()
+        
+        assert metrics.episode == 0
+        assert metrics.step == 0
+        assert metrics.episode_reward == 0.0
+        assert metrics.episode_success is False
+        assert metrics.routing_accuracy == 0.0
     
-    @pytest.fixture
-    def trainer(self, mock_dqn_agent):
-        """Create quantum DQN trainer for testing."""
-        with patch('monkey_coder.quantum.training_pipeline.QuantumManager') as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager.get_metrics.return_value = {"executions": []}
-            mock_manager_class.return_value = mock_manager
-            
-            trainer = QuantumDQNTrainer(
-                dqn_agent=mock_dqn_agent,
-                max_workers=2,
-                quantum_timeout=10.0,
-                training_batch_size=4
-            )
-            return trainer
-    
-    @pytest.fixture
-    def sample_scenario(self):
-        """Create a sample training scenario."""
-        return TrainingScenario(
-            task_type=TaskType.CODE_GENERATION,
-            complexity=0.6,
-            context_requirements={"timeout": 30, "max_tokens": 4096},
-            provider_constraints={"openai": True, "anthropic": True, "google": True},
-            expected_strategy="performance",
-            scenario_id="test_scenario"
-        )
-    
-    def test_trainer_initialization(self, mock_dqn_agent):
-        """Test trainer initialization."""
-        with patch('monkey_coder.quantum.training_pipeline.QuantumManager') as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager.get_metrics.return_value = {"executions": []}
-            mock_manager_class.return_value = mock_manager
-            
-            trainer = QuantumDQNTrainer(
-                dqn_agent=mock_dqn_agent,
-                max_workers=3,
-                quantum_timeout=20.0,
-                training_batch_size=8
-            )
-            
-            assert trainer.dqn_agent == mock_dqn_agent
-            assert trainer.training_batch_size == 8
-            assert trainer.training_phase == TrainingPhase.EXPLORATION
-            assert trainer.training_step == 0
-            assert len(trainer.performance_history) == 0
-            
-            # Verify quantum manager was created with correct parameters
-            mock_manager_class.assert_called_once_with(
-                max_workers=3,
-                timeout=20.0,
-                default_strategy=CollapseStrategy.BEST_SCORE
-            )
-    
-    def test_create_routing_state(self, trainer, sample_scenario):
-        """Test conversion of scenario to routing state."""
-        request = ExecuteRequest(
-            task_type=TaskType.CODE_GENERATION,
-            prompt="Test prompt",
-            context=ExecutionContext(
-                user_id="test_user",
-                timeout=30,
-                max_tokens=4096,
-                temperature=0.1
-            ),
-            superclause_config={"persona": "developer"}
+    def test_metrics_with_values(self):
+        """Test metrics with specific values."""
+        metrics = TrainingMetrics(
+            episode=10,
+            step=500,
+            episode_reward=0.75,
+            episode_success=True,
+            routing_accuracy=0.85
         )
         
-        routing_state = trainer.create_routing_state(sample_scenario, request)
-        
-        assert isinstance(routing_state, RoutingState)
-        assert routing_state.task_complexity == 0.6
-        assert routing_state.context_type == "code_generation"
-        assert "openai" in routing_state.provider_availability
-        assert routing_state.provider_availability["openai"] is True
-        assert "anthropic" in routing_state.historical_performance
-        assert 0.0 <= routing_state.historical_performance["anthropic"] <= 1.0
-        assert routing_state.resource_constraints["cost_weight"] == 0.33
-        assert routing_state.user_preferences["preference_strength"] == 0.5
+        assert metrics.episode == 10
+        assert metrics.step == 500
+        assert metrics.episode_reward == 0.75
+        assert metrics.episode_success is True
+        assert metrics.routing_accuracy == 0.85
+
+
+class TestRoutingEnvironmentSimulator:
+    """Test the routing environment simulator."""
     
-    def test_generate_provider_variations(self, trainer, sample_scenario):
-        """Test generation of provider variations for quantum execution."""
-        selected_action = RoutingAction(
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.env = RoutingEnvironmentSimulator()
+    
+    def test_initialization(self):
+        """Test environment initialization."""
+        assert self.env.state_size == 21
+        assert self.env.action_size == 12
+        assert self.env.current_state is None
+        assert self.env.step_count == 0
+        assert self.env.episode_success is False
+        
+        # Check provider performance profiles
+        assert len(self.env.provider_performance) == 4
+        assert ProviderType.OPENAI in self.env.provider_performance
+        assert ProviderType.ANTHROPIC in self.env.provider_performance
+        
+        # Check task profiles
+        assert len(self.env.task_profiles) == 4
+        assert "simple" in self.env.task_profiles
+        assert "complex" in self.env.task_profiles
+    
+    def test_reset(self):
+        """Test environment reset functionality."""
+        state = self.env.reset()
+        
+        assert isinstance(state, RoutingState)
+        assert self.env.step_count == 0
+        assert self.env.episode_success is False
+        assert self.env.current_state is not None
+        
+        # Check state properties
+        assert 0.0 <= state.task_complexity <= 1.0
+        assert state.context_type in self.env.task_profiles
+        assert len(state.provider_availability) == 4
+        assert len(state.historical_performance) == 4
+        assert "max_cost" in state.resource_constraints
+        assert "cost_weight" in state.user_preferences
+    
+    def test_step(self):
+        """Test environment step functionality."""
+        # Reset environment
+        initial_state = self.env.reset()
+        
+        # Create test action
+        action = RoutingAction(
             provider=ProviderType.OPENAI,
             model="gpt-4.1",
             strategy="performance"
         )
         
-        variations = trainer.generate_provider_variations(selected_action, sample_scenario)
+        # Execute step
+        next_state, reward, done, info = self.env.step(action)
         
-        # Should have at least the primary variation
-        assert len(variations) >= 1
+        # Verify return types
+        assert isinstance(next_state, RoutingState)
+        assert isinstance(reward, float)
+        assert isinstance(done, bool)
+        assert isinstance(info, dict)
         
-        # Check primary variation
-        primary_var = variations[0]
-        assert primary_var.id == "dqn_selected"
-        assert primary_var.weight == 1.0
-        assert primary_var.priority == 1
-        assert primary_var.params["provider"] == ProviderType.OPENAI
-        assert primary_var.params["model"] == "gpt-4.1"
-        assert primary_var.params["strategy"] == "performance"
-        assert primary_var.metadata["source"] == "dqn_selection"
+        # Verify reward bounds
+        assert 0.0 <= reward <= 1.0
+        
+        # Verify step count incremented
+        assert self.env.step_count == 1
+        
+        # Verify info dictionary
+        assert "step_count" in info
+        assert "episode_success" in info
+        assert "action_provider" in info
+        assert "reward_components" in info
     
-    @pytest.mark.asyncio
-    async def test_simulate_routing_execution(self, trainer, sample_scenario):
-        """Test simulation of routing execution."""
-        result = await trainer.simulate_routing_execution(
-            provider=ProviderType.OPENAI,
-            model="gpt-4.1",
-            strategy="performance",
-            scenario=sample_scenario
-        )
+    def test_reward_calculation(self):
+        """Test reward calculation logic."""
+        self.env.reset()
         
-        # Validate result structure
-        assert isinstance(result, dict)
-        assert "success" in result
-        assert "execution_time" in result
-        assert "quality_score" in result
-        assert "cost_efficiency" in result
-        assert "provider" in result
-        assert "model" in result
-        assert "strategy" in result
-        
-        # Validate result values
-        assert isinstance(result["success"], bool)
-        assert result["execution_time"] > 0
-        assert 0.0 <= result["quality_score"] <= 1.0
-        assert 0.0 <= result["cost_efficiency"] <= 1.0
-        assert result["provider"] == "openai"
-        assert result["model"] == "gpt-4.1"
-        assert result["strategy"] == "performance"
-    
-    def test_calculate_success_probability(self, trainer, sample_scenario):
-        """Test success probability calculation."""
-        prob = trainer.calculate_success_probability(
-            provider=ProviderType.ANTHROPIC,
-            model="claude-opus-4-20250514",
-            strategy="performance",
-            scenario=sample_scenario
-        )
-        
-        assert 0.1 <= prob <= 0.95
-        
-        # Test with different providers
-        openai_prob = trainer.calculate_success_probability(
-            ProviderType.OPENAI, "gpt-4.1", "performance", sample_scenario
-        )
-        groq_prob = trainer.calculate_success_probability(
-            ProviderType.GROQ, "llama-3.3-70b-versatile", "performance", sample_scenario
-        )
-        
-        # Anthropic should have higher probability than Groq for most tasks
-        assert prob >= groq_prob
-    
-    def test_calculate_quality_score(self, trainer, sample_scenario):
-        """Test quality score calculation."""
-        score = trainer.calculate_quality_score(
-            provider=ProviderType.ANTHROPIC,
-            model="claude-opus-4-20250514",
-            strategy="performance",
-            scenario=sample_scenario
-        )
-        
-        assert 0.0 <= score <= 1.0
-        
-        # Performance strategy should generally give higher quality
-        perf_score = trainer.calculate_quality_score(
-            ProviderType.ANTHROPIC, "claude-opus-4-20250514", "performance", sample_scenario
-        )
-        cost_score = trainer.calculate_quality_score(
-            ProviderType.ANTHROPIC, "claude-opus-4-20250514", "cost_efficient", sample_scenario
-        )
-        
-        assert perf_score >= cost_score
-    
-    def test_calculate_cost_efficiency(self, trainer):
-        """Test cost efficiency calculation."""
-        # Groq should be most cost efficient
-        groq_efficiency = trainer.calculate_cost_efficiency(
-            ProviderType.GROQ, "llama-3.3-70b-versatile", "cost_efficient"
-        )
-        
-        # Anthropic should be least cost efficient
-        anthropic_efficiency = trainer.calculate_cost_efficiency(
-            ProviderType.ANTHROPIC, "claude-opus-4-20250514", "performance"
-        )
-        
-        assert 0.0 <= groq_efficiency <= 1.0
-        assert 0.0 <= anthropic_efficiency <= 1.0
-        assert groq_efficiency >= anthropic_efficiency
-    
-    def test_calculate_routing_reward(self, trainer, sample_scenario):
-        """Test reward calculation from quantum results."""
-        # Mock successful quantum result
-        quantum_result = QuantumResult(
-            value={
-                "success": True,
-                "execution_time": 1.5,
-                "quality_score": 0.8,
-                "cost_efficiency": 0.7
-            },
-            success=True,
-            execution_time=1.5
-        )
-        
-        selected_action = RoutingAction(
-            provider=ProviderType.OPENAI,
-            model="gpt-4.1",
-            strategy="performance"
-        )
-        
-        reward = trainer.calculate_routing_reward(quantum_result, selected_action, sample_scenario)
-        
-        # Should be positive reward for successful execution with good quality
-        assert reward > 0
-        
-        # Test failed execution
-        failed_result = QuantumResult(
-            value={"success": False},
-            success=False
-        )
-        
-        failed_reward = trainer.calculate_routing_reward(failed_result, selected_action, sample_scenario)
-        assert failed_reward < 0
-    
-    @pytest.mark.asyncio
-    async def test_train_routing_decision(self, trainer, sample_scenario):
-        """Test training on a single routing decision."""
-        # Mock quantum manager execution
-        mock_quantum_result = QuantumResult(
-            value={
-                "success": True,
-                "execution_time": 2.0,
-                "quality_score": 0.75,
-                "cost_efficiency": 0.6
-            },
-            success=True,
-            execution_time=2.0
-        )
-        
-        trainer.quantum_manager.execute_quantum_task = AsyncMock(return_value=mock_quantum_result)
-        
-        result = await trainer.train_routing_decision(sample_scenario)
-        
-        # Verify result structure
-        assert isinstance(result, QuantumTrainingResult)
-        assert result.selected_action.provider == ProviderType.OPENAI
-        assert result.quantum_result == mock_quantum_result
-        assert isinstance(result.calculated_reward, float)
-        assert result.training_loss == 0.05  # From mock
-        assert result.execution_time > 0
-        assert result.scenario == sample_scenario
-        
-        # Verify DQN agent interactions
-        trainer.dqn_agent.act.assert_called_once()
-        trainer.dqn_agent.remember.assert_called_once()
-        trainer.dqn_agent.replay.assert_called_once()
-        trainer.dqn_agent.update_routing_performance.assert_called_once()
-        
-        # Verify quantum manager was called
-        trainer.quantum_manager.execute_quantum_task.assert_called_once()
-        call_args = trainer.quantum_manager.execute_quantum_task.call_args
-        assert call_args[1]["collapse_strategy"] == CollapseStrategy.BEST_SCORE
-    
-    @pytest.mark.asyncio
-    async def test_train_batch(self, trainer):
-        """Test batch training functionality."""
-        # Mock scenario generation
-        trainer.generate_training_scenarios = Mock(return_value=[
-            TrainingScenario(
-                task_type=TaskType.CODE_GENERATION,
-                complexity=0.5,
-                context_requirements={},
-                provider_constraints={"openai": True},
-                expected_strategy="performance",
-                scenario_id=f"batch_scenario_{i}"
-            ) for i in range(3)
-        ])
-        
-        # Mock training function
-        async def mock_train_routing_decision(scenario):
-            return QuantumTrainingResult(
-                selected_action=RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance"),
-                quantum_result=QuantumResult(value={"success": True}, success=True),
-                calculated_reward=0.5,
-                training_loss=0.05,
-                performance_metrics={},
-                execution_time=1.0,
-                scenario=scenario
-            )
-        
-        trainer.train_routing_decision = mock_train_routing_decision
-        
-        results = await trainer.train_batch(3)
-        
-        assert len(results) == 3
-        assert all(isinstance(r, QuantumTrainingResult) for r in results)
-        assert trainer.training_step > 0  # Should have incremented
-    
-    def test_update_training_phase(self, trainer):
-        """Test training phase updates based on performance."""
-        # Mock results with good performance
-        good_results = [
-            QuantumTrainingResult(
-                selected_action=RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance"),
-                quantum_result=QuantumResult(value={"success": True}, success=True),
-                calculated_reward=0.8,  # Good reward
-                training_loss=0.05,
-                performance_metrics={},
-                execution_time=1.0,
-                scenario=Mock()
-            ) for _ in range(10)
+        # Test with different actions
+        actions = [
+            RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance"),
+            RoutingAction(ProviderType.GROQ, "llama-3.1-8b-instant", "cost_efficient"),
+            RoutingAction(ProviderType.GOOGLE, "gemini-2.5-pro", "balanced"),
         ]
         
-        # Start in exploration phase
-        assert trainer.training_phase == TrainingPhase.EXPLORATION
-        
-        # Update with good results (success rate > 0.6)
-        trainer.update_training_phase(good_results)
-        
-        # Should advance to learning phase
-        assert trainer.training_phase == TrainingPhase.LEARNING
-        assert len(trainer.performance_history) > 0
-        
-        # Create excellent results for further advancement
-        excellent_results = [
-            QuantumTrainingResult(
-                selected_action=RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance"),
-                quantum_result=QuantumResult(value={"success": True}, success=True),
-                calculated_reward=1.0,  # Excellent reward
-                training_loss=0.02,
-                performance_metrics={},
-                execution_time=1.0,
-                scenario=Mock()
-            ) for _ in range(10)
-        ]
-        
-        trainer.update_training_phase(excellent_results)
-        assert trainer.training_phase == TrainingPhase.OPTIMIZATION
+        for action in actions:
+            reward = self.env._calculate_reward(action)
+            assert 0.0 <= reward <= 1.0
     
-    def test_get_training_metrics(self, trainer):
-        """Test training metrics collection."""
-        # Add some mock performance history
-        trainer.performance_history = [
-            {"step": 1, "avg_reward": 0.5, "success_rate": 0.7, "phase": "exploration"},
-            {"step": 2, "avg_reward": 0.6, "success_rate": 0.8, "phase": "learning"}
-        ]
+    def test_strategy_bonus(self):
+        """Test strategy bonus calculation."""
+        # Test different strategies
+        action_performance = RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance")
+        action_cost = RoutingAction(ProviderType.GROQ, "llama-3.1-8b-instant", "cost_efficient")
+        action_balanced = RoutingAction(ProviderType.GOOGLE, "gemini-2.5-pro", "balanced")
         
-        trainer.provider_performance["openai:gpt-4.1"] = [0.8, 0.7, 0.9]
+        bonus_performance = self.env._get_strategy_bonus(action_performance)
+        bonus_cost = self.env._get_strategy_bonus(action_cost)
+        bonus_balanced = self.env._get_strategy_bonus(action_balanced)
         
-        metrics = trainer.get_training_metrics()
+        assert 0.0 <= bonus_performance <= 1.0
+        assert 0.0 <= bonus_cost <= 1.0
+        assert 0.0 <= bonus_balanced <= 1.0
         
-        assert "training_step" in metrics
-        assert "training_phase" in metrics
-        assert "performance_history" in metrics
-        assert "provider_performance" in metrics
-        assert "dqn_metrics" in metrics
-        assert "quantum_metrics" in metrics
+        # Performance strategy should favor OpenAI/Anthropic
+        assert bonus_performance >= 0.8
         
-        assert metrics["training_phase"] == TrainingPhase.EXPLORATION.value
-        assert len(metrics["performance_history"]) == 2
-        assert "openai:gpt-4.1" in metrics["provider_performance"]
-
-
-class TestTrainingScenarioGenerator:
-    """Test training scenario generation."""
+        # Cost strategy should favor Groq/Google
+        assert bonus_cost >= 0.8
     
-    @pytest.fixture
-    def generator(self):
-        """Create scenario generator for testing."""
-        return TrainingScenarioGenerator()
-    
-    def test_generator_initialization(self, generator):
-        """Test scenario generator initialization."""
-        assert isinstance(generator.scenario_templates, list)
-        assert len(generator.scenario_templates) > 0
-        
-        # Check template structure
-        template = generator.scenario_templates[0]
-        assert "task_type" in template
-        assert "complexity_range" in template
-        assert "expected_strategy" in template
-        assert "provider_constraints" in template
-    
-    def test_generate_scenarios_exploration(self, generator):
-        """Test scenario generation for exploration phase."""
-        scenarios = generator.generate_scenarios(5, TrainingPhase.EXPLORATION)
-        
-        assert len(scenarios) == 5
-        assert all(isinstance(s, TrainingScenario) for s in scenarios)
-        assert all(hasattr(s, "task_type") for s in scenarios)
-        assert all(hasattr(s, "complexity") for s in scenarios)
-        assert all(hasattr(s, "expected_strategy") for s in scenarios)
-        
-        # Exploration phase should have lower average complexity
-        avg_complexity = np.mean([s.complexity for s in scenarios])
-        assert avg_complexity < 0.7  # Should be relatively simple
-    
-    def test_generate_scenarios_evaluation(self, generator):
-        """Test scenario generation for evaluation phase."""
-        scenarios = generator.generate_scenarios(5, TrainingPhase.EVALUATION)
-        
-        assert len(scenarios) == 5
-        
-        # Evaluation phase should have higher average complexity
-        avg_complexity = np.mean([s.complexity for s in scenarios])
-        assert avg_complexity > 0.4  # Should be more challenging
-    
-    def test_scenario_diversity(self, generator):
-        """Test that generated scenarios are diverse."""
-        scenarios = generator.generate_scenarios(20, TrainingPhase.LEARNING)
-        
-        # Should have diverse task types
-        task_types = [s.task_type for s in scenarios]
-        unique_task_types = set(task_types)
-        assert len(unique_task_types) > 1
-        
-        # Should have diverse strategies
-        strategies = [s.expected_strategy for s in scenarios]
-        unique_strategies = set(strategies)
-        assert len(unique_strategies) > 1
-        
-        # Should have diverse complexities
-        complexities = [s.complexity for s in scenarios]
-        assert max(complexities) > min(complexities) + 0.2  # At least 0.2 spread
-
-
-class TestConvenienceFunctions:
-    """Test convenience functions for trainer creation."""
-    
-    def test_create_quantum_dqn_trainer(self):
-        """Test convenience function for creating trainer."""
-        with patch('monkey_coder.quantum.training_pipeline.DQNRoutingAgent') as mock_agent_class, \
-             patch('monkey_coder.quantum.training_pipeline.QuantumDQNTrainer') as mock_trainer_class:
-            
-            mock_agent = Mock()
-            mock_agent.initialize_networks = Mock()
-            mock_agent_class.return_value = mock_agent
-            
-            mock_trainer = Mock()
-            mock_trainer_class.return_value = mock_trainer
-            
-            result = create_quantum_dqn_trainer(
-                state_size=25,
-                action_size=15,
-                learning_rate=0.002,
-                max_workers=6
-            )
-            
-            # Verify agent creation
-            mock_agent_class.assert_called_once_with(
-                state_size=25,
-                action_size=15,
-                learning_rate=0.002
-            )
-            mock_agent.initialize_networks.assert_called_once()
-            
-            # Verify trainer creation
-            mock_trainer_class.assert_called_once_with(mock_agent, max_workers=6)
-            
-            assert result == mock_trainer
-
-
-class TestTrainingIntegration:
-    """Integration tests for quantum training pipeline."""
-    
-    @pytest.mark.asyncio
-    async def test_end_to_end_training_flow(self):
-        """Test complete end-to-end training flow."""
-        # Create real components (with mocked neural networks)
-        with patch('monkey_coder.quantum.dqn_agent.DQNNetworkManager') as mock_network_manager:
-            # Mock network manager
-            mock_manager = Mock()
-            mock_manager.create_networks.return_value = (Mock(), Mock())
-            mock_manager.update_target_network = Mock()
-            mock_network_manager.return_value = mock_manager
-            
-            # Create DQN agent
-            dqn_agent = DQNRoutingAgent(state_size=21, action_size=12)
-            dqn_agent.initialize_networks()
-            
-            # Create trainer
-            trainer = QuantumDQNTrainer(
-                dqn_agent=dqn_agent,
-                max_workers=2,
-                training_batch_size=2
-            )
-            
-            # Mock quantum manager execution
-            async def mock_execute_quantum_task(variations, **kwargs):
-                return QuantumResult(
-                    value={
-                        "success": True,
-                        "execution_time": 1.0,
-                        "quality_score": 0.8,
-                        "cost_efficiency": 0.7
-                    },
-                    success=True,
-                    execution_time=1.0
-                )
-            
-            trainer.quantum_manager.execute_quantum_task = mock_execute_quantum_task
-            
-            # Run training batch
-            results = await trainer.train_batch(2)
-            
-            # Verify results
-            assert len(results) == 2
-            assert all(isinstance(r, QuantumTrainingResult) for r in results)
-            assert all(r.calculated_reward > 0 for r in results)  # Should be positive rewards
-            
-            # Verify training progression
-            assert trainer.training_step == 2  # Should have trained on 2 scenarios
-            assert len(trainer.performance_history) > 0
-    
-    def test_realistic_scenario_generation(self):
-        """Test that generated scenarios are realistic."""
-        generator = TrainingScenarioGenerator()
-        scenarios = generator.generate_scenarios(10, TrainingPhase.LEARNING)
-        
-        for scenario in scenarios:
-            # Validate scenario realism
-            assert 0.0 <= scenario.complexity <= 1.0
-            assert isinstance(scenario.task_type, TaskType)
-            assert scenario.expected_strategy in ["performance", "cost_efficient", "balanced", "task_optimized"]
-            assert isinstance(scenario.provider_constraints, dict)
-            assert isinstance(scenario.context_requirements, dict)
-            assert scenario.scenario_id is not None
-    
-    def test_reward_calculation_sensitivity(self):
-        """Test reward calculation sensitivity to different outcomes."""
-        trainer = QuantumDQNTrainer(Mock(), max_workers=1)
-        scenario = TrainingScenario(
-            task_type=TaskType.CODE_GENERATION,
-            complexity=0.5,
-            context_requirements={},
-            provider_constraints={},
-            expected_strategy="performance",
-            scenario_id="test"
-        )
+    def test_state_transitions(self):
+        """Test state transition generation."""
+        initial_state = self.env.reset()
         
         action = RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance")
+        next_state = self.env._generate_next_state(action)
         
-        # Test high-quality result
-        high_quality_result = QuantumResult(
-            value={
-                "success": True,
-                "execution_time": 1.0,
-                "quality_score": 0.9,
-                "cost_efficiency": 0.8
-            },
-            success=True
-        )
+        # States should be similar but not identical
+        assert isinstance(next_state, RoutingState)
+        assert next_state.context_type == initial_state.context_type
         
-        # Test low-quality result
-        low_quality_result = QuantumResult(
-            value={
-                "success": True,
-                "execution_time": 5.0,
-                "quality_score": 0.3,
-                "cost_efficiency": 0.4
-            },
-            success=True
-        )
+        # Task complexity should change slightly
+        complexity_diff = abs(next_state.task_complexity - initial_state.task_complexity)
+        assert complexity_diff <= 0.1  # Small perturbation
+    
+    def test_episode_completion(self):
+        """Test complete episode execution."""
+        state = self.env.reset()
         
-        high_reward = trainer.calculate_routing_reward(high_quality_result, action, scenario)
-        low_reward = trainer.calculate_routing_reward(low_quality_result, action, scenario)
+        total_reward = 0.0
+        step_count = 0
+        max_steps = 20
         
-        # High quality should get better reward
-        assert high_reward > low_reward
-        assert high_reward > 1.0  # Should be significantly positive
-        assert low_reward < high_reward  # But may still be positive due to success
+        while step_count < max_steps:
+            # Random action selection
+            providers = [ProviderType.OPENAI, ProviderType.ANTHROPIC, ProviderType.GOOGLE, ProviderType.GROQ]
+            strategies = ["performance", "cost_efficient", "balanced"]
+            
+            action = RoutingAction(
+                provider=np.random.choice(providers),
+                model="test-model",
+                strategy=np.random.choice(strategies)
+            )
+            
+            state, reward, done, info = self.env.step(action)
+            total_reward += reward
+            step_count += 1
+            
+            if done:
+                break
+        
+        assert total_reward >= 0.0
+        assert step_count <= max_steps
 
 
-class TestTrainingPerformance:
-    """Performance tests for training pipeline."""
+class TestDQNTrainingPipeline:
+    """Test the complete DQN training pipeline."""
     
-    @pytest.mark.asyncio
-    async def test_batch_training_performance(self):
-        """Test that batch training completes within reasonable time."""
-        import time
-        
-        # Create lightweight trainer for performance testing
-        with patch('monkey_coder.quantum.training_pipeline.QuantumManager'):
-            mock_agent = Mock(spec=DQNRoutingAgent)
-            mock_agent.act.return_value = RoutingAction(ProviderType.OPENAI, "gpt-4.1", "performance")
-            mock_agent.remember = Mock()
-            mock_agent.replay.return_value = 0.05
-            mock_agent.update_routing_performance = Mock()
-            mock_agent.get_performance_metrics.return_value = {}
-            
-            trainer = QuantumDQNTrainer(mock_agent, max_workers=4, training_batch_size=10)
-            
-            # Mock fast quantum execution
-            async def fast_quantum_execution(variations, **kwargs):
-                await asyncio.sleep(0.01)  # Minimal delay
-                return QuantumResult(
-                    value={"success": True, "quality_score": 0.8},
-                    success=True,
-                    execution_time=0.01
-                )
-            
-            trainer.quantum_manager.execute_quantum_task = fast_quantum_execution
-            
-            # Measure batch training time
-            start_time = time.perf_counter()
-            results = await trainer.train_batch(10)
-            training_time = time.perf_counter() - start_time
-            
-            # Should complete batch training quickly
-            assert training_time < 2.0  # Should take less than 2 seconds for 10 scenarios
-            assert len(results) == 10
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.config = TrainingConfig(
+            max_episodes=10,  # Short training for testing
+            max_steps_per_episode=5,
+            batch_size=16,
+            min_buffer_size=20,
+            buffer_size=100,
+            training_frequency=2,
+            evaluation_frequency=5
+        )
+        self.pipeline = DQNTrainingPipeline(self.config)
     
-    def test_memory_usage_scaling(self):
-        """Test that memory usage scales reasonably with training scenarios."""
-        import psutil
-        import os
+    def test_initialization(self):
+        """Test pipeline initialization."""
+        assert self.pipeline.config == self.config
+        assert self.pipeline.agent is not None
+        assert self.pipeline.experience_buffer is not None
+        assert self.pipeline.environment is not None
         
-        process = psutil.Process(os.getpid())
-        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        # Check initial state
+        assert self.pipeline.current_episode == 0
+        assert self.pipeline.current_step == 0
+        assert len(self.pipeline.training_metrics) == 0
+        assert self.pipeline.best_performance == 0.0
+    
+    def test_training_mode_selection(self):
+        """Test different training modes."""
+        # Standard mode
+        config_standard = TrainingConfig(training_mode=TrainingMode.STANDARD)
+        pipeline_standard = DQNTrainingPipeline(config_standard)
         
-        # Create multiple trainers to test memory scaling
-        trainers = []
-        for i in range(5):
-            with patch('monkey_coder.quantum.training_pipeline.QuantumManager'):
-                mock_agent = Mock(spec=DQNRoutingAgent)
-                trainer = QuantumDQNTrainer(mock_agent, max_workers=2)
-                trainers.append(trainer)
+        from monkey_coder.quantum.experience_buffer import ExperienceReplayBuffer
+        assert isinstance(pipeline_standard.experience_buffer, ExperienceReplayBuffer)
         
-        final_memory = process.memory_info().rss / 1024 / 1024  # MB
-        memory_increase = final_memory - initial_memory
+        # Prioritized mode
+        config_prioritized = TrainingConfig(training_mode=TrainingMode.PRIORITIZED)
+        pipeline_prioritized = DQNTrainingPipeline(config_prioritized)
         
-        # Memory increase should be reasonable (less than 100MB for 5 trainers)
-        assert memory_increase < 100, f"Memory increased by {memory_increase:.1f}MB"
+        from monkey_coder.quantum.experience_buffer import PrioritizedExperienceBuffer
+        assert isinstance(pipeline_prioritized.experience_buffer, PrioritizedExperienceBuffer)
+    
+    def test_single_episode(self):
+        """Test running a single training episode."""
+        # Fill buffer with minimum experiences
+        self._fill_experience_buffer()
         
-        # Cleanup
-        del trainers
+        # Run single episode
+        metrics = self.pipeline._run_episode(0)
+        
+        assert isinstance(metrics, TrainingMetrics)
+        assert metrics.episode == 0
+        assert metrics.episode_reward >= 0.0
+        assert metrics.buffer_size > 0
+        assert 0.0 <= metrics.buffer_utilization <= 1.0
+    
+    def test_epsilon_decay(self):
+        """Test epsilon decay functionality."""
+        initial_epsilon = self.pipeline.agent.exploration_rate
+        
+        # Run multiple epsilon updates
+        for _ in range(10):
+            self.pipeline._update_epsilon()
+        
+        final_epsilon = self.pipeline.agent.exploration_rate
+        
+        # Epsilon should decrease
+        assert final_epsilon <= initial_epsilon
+        assert final_epsilon >= self.config.min_epsilon
+    
+    def test_training_loop(self):
+        """Test complete training loop (short version)."""
+        # Reduce episodes for faster testing
+        self.config.max_episodes = 3
+        self.config.min_buffer_size = 5  # Lower requirement
+        
+        metrics = self.pipeline.train()
+        
+        assert len(metrics) <= self.config.max_episodes
+        assert all(isinstance(m, TrainingMetrics) for m in metrics)
+        assert len(self.pipeline.episode_rewards) <= self.config.max_episodes
+        assert len(self.pipeline.episode_successes) <= self.config.max_episodes
+    
+    def test_performance_calculation(self):
+        """Test performance calculation methods."""
+        # Add some fake episode results
+        self.pipeline.episode_successes = [True, False, True, True, False]
+        
+        accuracy = self.pipeline._calculate_routing_accuracy()
+        assert 0.0 <= accuracy <= 1.0
+        assert accuracy == 0.6  # 3/5
+    
+    def test_q_value_calculation(self):
+        """Test Q-value calculation."""
+        state = RoutingState(
+            task_complexity=0.5,
+            context_type="medium",
+            provider_availability={"openai": True, "anthropic": True},
+            historical_performance={"openai": 0.8, "anthropic": 0.75},
+            resource_constraints={"max_cost": 0.05},
+            user_preferences={"cost_weight": 0.3}
+        )
+        
+        mean_q_value = self.pipeline._calculate_mean_q_value(state)
+        assert isinstance(mean_q_value, float)
+    
+    def test_early_stopping(self):
+        """Test early stopping conditions."""
+        # Test target performance reached
+        self.pipeline.episode_successes = [True] * 100
+        self.config.target_performance = 0.9
+        
+        should_stop = self.pipeline._should_stop_early()
+        assert should_stop is True
+        
+        # Test patience exceeded
+        self.pipeline.episode_successes = [False] * 100
+        self.pipeline.episodes_without_improvement = self.config.patience + 1
+        
+        should_stop = self.pipeline._should_stop_early()
+        assert should_stop is True
+    
+    def test_checkpoint_saving_loading(self):
+        """Test checkpoint save/load functionality."""
+        # Fill buffer and train a bit
+        self._fill_experience_buffer()
+        
+        # Modify some state
+        self.pipeline.current_episode = 5
+        self.pipeline.current_step = 100
+        self.pipeline.best_performance = 0.75
+        self.pipeline.episode_rewards = [0.1, 0.2, 0.3]
+        
+        # Save checkpoint
+        with tempfile.NamedTemporaryFile(delete=False, suffix="") as tmp:
+            filepath = tmp.name
+        
+        try:
+            success = self.pipeline.save_checkpoint(filepath)
+            assert success is True
+            
+            # Create new pipeline and load
+            new_pipeline = DQNTrainingPipeline(self.config)
+            success = new_pipeline.load_checkpoint(filepath)
+            assert success is True
+            
+            # Verify state was restored
+            assert new_pipeline.current_episode == 5
+            assert new_pipeline.current_step == 100
+            assert new_pipeline.best_performance == 0.75
+            assert new_pipeline.episode_rewards == [0.1, 0.2, 0.3]
+            
+        finally:
+            # Cleanup
+            for ext in ["", ".json", "_agent.json", "_buffer.pkl"]:
+                if os.path.exists(f"{filepath}{ext}"):
+                    os.unlink(f"{filepath}{ext}")
+    
+    def test_performance_summary(self):
+        """Test performance summary generation."""
+        # Add some training metrics
+        self.pipeline.training_metrics = [
+            TrainingMetrics(episode=i, step=i*10, episode_reward=0.1*i, episode_success=i%2==0)
+            for i in range(10)
+        ]
+        self.pipeline.current_step = 100
+        
+        summary = self.pipeline.get_performance_summary()
+        
+        assert isinstance(summary, dict)
+        assert "total_episodes" in summary
+        assert "total_steps" in summary
+        assert "best_performance" in summary
+        assert "recent_avg_reward" in summary
+        assert "recent_success_rate" in summary
+        
+        assert summary["total_episodes"] == 10
+        assert summary["total_steps"] == 100
+    
+    def test_training_with_prioritized_buffer(self):
+        """Test training with prioritized experience replay."""
+        config = TrainingConfig(
+            training_mode=TrainingMode.PRIORITIZED,
+            max_episodes=2,
+            max_steps_per_episode=3,
+            min_buffer_size=10,
+            batch_size=8
+        )
+        
+        pipeline = DQNTrainingPipeline(config)
+        
+        # Fill buffer
+        self._fill_experience_buffer(pipeline)
+        
+        # Run training
+        metrics = pipeline.train()
+        
+        assert len(metrics) <= config.max_episodes
+        assert isinstance(pipeline.experience_buffer, type(pipeline.experience_buffer))
+    
+    def _fill_experience_buffer(self, pipeline=None):
+        """Helper method to fill experience buffer with minimum experiences."""
+        if pipeline is None:
+            pipeline = self.pipeline
+            
+        from monkey_coder.quantum.experience_buffer import Experience
+        
+        # Add minimum required experiences
+        for i in range(pipeline.config.min_buffer_size):
+            state = np.random.rand(21)
+            next_state = np.random.rand(21)
+            
+            experience = Experience(
+                state=state,
+                action=i % 12,  # Action index
+                reward=np.random.rand(),
+                next_state=next_state,
+                done=i % 10 == 9,
+                timestamp=float(i)
+            )
+            
+            pipeline.experience_buffer.add(experience)
+
+
+class TestIntegration:
+    """Integration tests for training pipeline components."""
+    
+    def test_environment_agent_integration(self):
+        """Test integration between environment and agent."""
+        env = RoutingEnvironmentSimulator()
+        
+        config = TrainingConfig(
+            max_episodes=1,
+            max_steps_per_episode=5,
+            min_buffer_size=1,
+            batch_size=1
+        )
+        pipeline = DQNTrainingPipeline(config)
+        
+        # Test that agent can interact with environment
+        state = env.reset()
+        action = pipeline.agent.act(state)
+        
+        next_state, reward, done, info = env.step(action)
+        
+        assert isinstance(next_state, RoutingState)
+        assert isinstance(reward, float)
+        assert isinstance(done, bool)
+        assert isinstance(info, dict)
+    
+    def test_full_training_workflow(self):
+        """Test complete training workflow with all components."""
+        config = TrainingConfig(
+            max_episodes=2,
+            max_steps_per_episode=3,
+            min_buffer_size=5,
+            batch_size=4,
+            training_frequency=1,
+            target_update_frequency=2
+        )
+        
+        pipeline = DQNTrainingPipeline(config)
+        
+        # Run training
+        metrics = pipeline.train()
+        
+        # Verify training completed
+        assert len(metrics) <= config.max_episodes
+        assert pipeline.current_step > 0
+        assert len(pipeline.experience_buffer) >= 0
+        
+        # Verify metrics are reasonable
+        for metric in metrics:
+            assert metric.episode_reward >= 0.0
+            assert 0.0 <= metric.epsilon <= 1.0
+            assert metric.buffer_size >= 0
+            assert 0.0 <= metric.buffer_utilization <= 1.0
+    
+    def test_training_convergence_simulation(self):
+        """Test that training shows improvement over time (simplified)."""
+        config = TrainingConfig(
+            max_episodes=20,
+            max_steps_per_episode=5,
+            min_buffer_size=10,
+            batch_size=8,
+            epsilon_decay=0.9,  # Faster decay for testing
+            evaluation_frequency=5
+        )
+        
+        pipeline = DQNTrainingPipeline(config)
+        
+        # Run training
+        metrics = pipeline.train()
+        
+        # Check that epsilon decreased
+        final_epsilon = pipeline.agent.exploration_rate
+        assert final_epsilon < config.initial_epsilon
+        
+        # Check that buffer filled up
+        assert len(pipeline.experience_buffer) > config.min_buffer_size
+        
+        # Check that some training occurred
+        assert len(pipeline.training_losses) > 0

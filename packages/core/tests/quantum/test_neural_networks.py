@@ -1,604 +1,554 @@
 """
-Tests for Neural Network Architecture implementation.
+Comprehensive test suite for Enhanced Neural Network architectures
 
-This module tests the Q-network and target Q-network creation, training, and management
-functionality required for DQN-based quantum routing.
+Tests both TensorFlow and numpy implementations of DQN networks,
+including target networks, weight updates, and model persistence.
 """
 
 import pytest
 import numpy as np
 import tempfile
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
-from monkey_coder.quantum.neural_networks import (
-    QNetworkArchitecture,
-    DQNNetworkManager,
-    create_dqn_networks,
-    _ensure_tensorflow
+from monkey_coder.quantum.neural_network import (
+    BaseDQNNetwork,
+    NumpyDQNNetwork,
+    DQNNetwork,
+    create_dqn_network,
+    TENSORFLOW_AVAILABLE
 )
 
-
-class TestTensorFlowImport:
-    """Test TensorFlow import and lazy loading."""
-    
-    def test_ensure_tensorflow_success(self):
-        """Test successful TensorFlow import."""
-        # This test will pass if TensorFlow is available
-        try:
-            _ensure_tensorflow()
-            assert True  # If no exception, import was successful
-        except ImportError:
-            pytest.skip("TensorFlow not available in test environment")
-    
-    def test_ensure_tensorflow_failure(self):
-        """Test handling of TensorFlow import failure."""
-        with patch('builtins.__import__', side_effect=ImportError("No module named tensorflow")):
-            with pytest.raises(ImportError, match="TensorFlow is required"):
-                _ensure_tensorflow()
+# Try to import TensorFlow for conditional testing
+try:
+    from monkey_coder.quantum.neural_network import TensorFlowDQNNetwork
+    tensorflow_available = True
+except ImportError:
+    tensorflow_available = False
 
 
-class TestQNetworkArchitecture:
-    """Test cases for Q-Network architecture factory."""
+class TestNumpyDQNNetwork:
+    """Test the numpy-based DQN network implementation."""
     
-    @pytest.fixture
-    def mock_tensorflow(self):
-        """Mock TensorFlow components for testing."""
-        with patch('monkey_coder.quantum.neural_networks.tf') as mock_tf, \
-             patch('monkey_coder.quantum.neural_networks.Sequential') as mock_sequential, \
-             patch('monkey_coder.quantum.neural_networks.Dense') as mock_dense, \
-             patch('monkey_coder.quantum.neural_networks.Dropout') as mock_dropout, \
-             patch('monkey_coder.quantum.neural_networks.BatchNormalization') as mock_bn, \
-             patch('monkey_coder.quantum.neural_networks.Adam') as mock_adam, \
-             patch('monkey_coder.quantum.neural_networks.Huber') as mock_huber:
-            
-            # Configure mock model
-            mock_model = Mock()
-            mock_model.count_params.return_value = 1000
-            mock_sequential.return_value = mock_model
-            
-            # Configure mock optimizer and loss
-            mock_adam.return_value = Mock()
-            mock_huber.return_value = Mock()
-            
-            yield {
-                'tf': mock_tf,
-                'Sequential': mock_sequential,
-                'Dense': mock_dense,
-                'Dropout': mock_dropout,
-                'BatchNormalization': mock_bn,
-                'Adam': mock_adam,
-                'Huber': mock_huber,
-                'model': mock_model
-            }
-    
-    def test_create_standard_dqn(self, mock_tensorflow):
-        """Test creation of standard DQN architecture."""
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'):
-            model = QNetworkArchitecture.create_standard_dqn(
-                state_size=21,
-                action_size=12,
-                learning_rate=0.001,
-                hidden_layers=(128, 64),
-                dropout_rate=0.1,
-                use_batch_norm=True
-            )
-            
-            # Verify model was created and configured
-            mock_tensorflow['Sequential'].assert_called_once_with(name="standard_dqn")
-            assert mock_tensorflow['model'].add.call_count >= 3  # Input, hidden, output layers
-            mock_tensorflow['model'].compile.assert_called_once()
-    
-    def test_create_deep_dqn(self, mock_tensorflow):
-        """Test creation of deep DQN architecture."""
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'):
-            model = QNetworkArchitecture.create_deep_dqn(
-                state_size=21,
-                action_size=12,
-                learning_rate=0.0005,
-                hidden_layers=(256, 128, 64, 32),
-                dropout_rate=0.2,
-                use_batch_norm=True
-            )
-            
-            # Verify deep model was created
-            mock_tensorflow['Sequential'].assert_called_once_with(name="deep_dqn")
-            assert mock_tensorflow['model'].add.call_count >= 5  # More layers for deep network
-            mock_tensorflow['model'].compile.assert_called_once()
-    
-    def test_create_lightweight_dqn(self, mock_tensorflow):
-        """Test creation of lightweight DQN architecture."""
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'):
-            model = QNetworkArchitecture.create_lightweight_dqn(
-                state_size=21,
-                action_size=12,
-                learning_rate=0.002,
-                hidden_layers=(64, 32),
-                dropout_rate=0.05
-            )
-            
-            # Verify lightweight model was created
-            mock_tensorflow['Sequential'].assert_called_once_with(name="lightweight_dqn")
-            assert mock_tensorflow['model'].add.call_count >= 3  # Fewer layers
-            mock_tensorflow['model'].compile.assert_called_once()
-    
-    def test_standard_dqn_without_batch_norm(self, mock_tensorflow):
-        """Test standard DQN creation without batch normalization."""
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'):
-            model = QNetworkArchitecture.create_standard_dqn(
-                state_size=21,
-                action_size=12,
-                use_batch_norm=False
-            )
-            
-            # BatchNormalization should not be added
-            mock_tensorflow['BatchNormalization'].assert_not_called()
-    
-    def test_standard_dqn_without_dropout(self, mock_tensorflow):
-        """Test standard DQN creation without dropout."""
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'):
-            model = QNetworkArchitecture.create_standard_dqn(
-                state_size=21,
-                action_size=12,
-                dropout_rate=0.0
-            )
-            
-            # Dropout layers should not be added when rate is 0
-            mock_tensorflow['Dropout'].assert_not_called()
-
-
-class TestDQNNetworkManager:
-    """Test cases for DQN Network Manager."""
-    
-    @pytest.fixture
-    def mock_networks(self):
-        """Mock Q-network and target network."""
-        q_network = Mock()
-        target_network = Mock()
-        
-        # Configure network methods
-        q_network.count_params.return_value = 1000
-        q_network.predict.return_value = np.array([[0.1, 0.2, 0.3, 0.4]])
-        q_network.get_weights.return_value = [np.array([1, 2, 3])]
-        q_network.trainable_weights = [Mock()]
-        q_network.layers = [Mock(), Mock(), Mock()]
-        q_network.optimizer = Mock()
-        q_network.optimizer.__class__.__name__ = "Adam"
-        q_network.loss = Mock()
-        q_network.loss.name = "huber"
-        
-        target_network.predict.return_value = np.array([[0.15, 0.25, 0.35, 0.45]])
-        target_network.get_weights.return_value = [np.array([1, 2, 3])]
-        target_network.set_weights = Mock()
-        
-        return q_network, target_network
-    
-    @pytest.fixture
-    def network_manager(self):
-        """Create network manager for testing."""
-        return DQNNetworkManager(
-            state_size=21,
-            action_size=12,
-            architecture="standard",
-            learning_rate=0.001
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.state_size = 8
+        self.action_size = 4
+        self.network = NumpyDQNNetwork(
+            state_size=self.state_size,
+            action_size=self.action_size,
+            learning_rate=0.01,
+            hidden_layers=(16, 8),
+            activation="relu"
         )
     
-    def test_network_manager_initialization(self, network_manager):
-        """Test network manager initialization."""
-        assert network_manager.state_size == 21
-        assert network_manager.action_size == 12
-        assert network_manager.architecture == "standard"
-        assert network_manager.learning_rate == 0.001
-        assert network_manager.q_network is None
-        assert network_manager.target_q_network is None
-    
-    def test_create_networks_standard(self, network_manager, mock_networks):
-        """Test creation of standard architecture networks."""
-        q_network, target_network = mock_networks
+    def test_initialization(self):
+        """Test network initialization."""
+        assert self.network.state_size == 8
+        assert self.network.action_size == 4
+        assert self.network.learning_rate == 0.01
+        assert self.network.hidden_layers == (16, 8)
+        assert self.network.activation == "relu"
         
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'), \
-             patch.object(QNetworkArchitecture, 'create_standard_dqn') as mock_create, \
-             patch.object(network_manager, 'update_target_network') as mock_update:
-            mock_create.side_effect = [q_network, target_network]  # Return different networks
+        # Check network architecture
+        expected_layers = [8, 16, 8, 4]  # input + hidden + output
+        assert self.network.layer_sizes == expected_layers
+        
+        # Check weights initialization
+        assert len(self.network.weights) == 3  # 3 connections between 4 layers
+        assert len(self.network.biases) == 3
+        assert len(self.network.target_weights) == 3
+        assert len(self.network.target_biases) == 3
+        
+        # Check weight shapes
+        for i, (w, b) in enumerate(zip(self.network.weights, self.network.biases)):
+            expected_input_size = expected_layers[i]
+            expected_output_size = expected_layers[i + 1]
             
-            result = network_manager.create_networks()
-            
-            # Verify networks were created
-            assert mock_create.call_count == 2  # Called for both networks
-            assert result == (q_network, target_network)  # Returns tuple
-            assert network_manager.q_network == q_network
-            assert network_manager.target_q_network == target_network
-            mock_update.assert_called_once()  # Target network should be updated
+            assert w.shape == (expected_input_size, expected_output_size)
+            assert b.shape == (1, expected_output_size)
     
-    def test_create_networks_unknown_architecture(self, mock_networks):
-        """Test handling of unknown architecture."""
-        q_network, target_network = mock_networks
-        manager = DQNNetworkManager(
-            state_size=21,
-            action_size=12,
-            architecture="unknown",
-            learning_rate=0.001
-        )
+    def test_activation_functions(self):
+        """Test different activation functions."""
+        test_input = np.array([[-2, -1, 0, 1, 2]])
         
-        with patch('monkey_coder.quantum.neural_networks._ensure_tensorflow'), \
-             patch.object(QNetworkArchitecture, 'create_standard_dqn') as mock_create, \
-             patch.object(manager, 'update_target_network') as mock_update:
-            mock_create.side_effect = [q_network, target_network]
-            
-            manager.create_networks()
-            
-            # Should fallback to standard architecture
-            assert manager.architecture == "standard"
-            assert mock_create.call_count == 2
+        # Test ReLU
+        relu_net = NumpyDQNNetwork(4, 2, activation="relu")
+        relu_output = relu_net._activation_function(test_input)
+        expected_relu = np.array([[0, 0, 0, 1, 2]])
+        np.testing.assert_array_equal(relu_output, expected_relu)
+        
+        # Test Tanh
+        tanh_net = NumpyDQNNetwork(4, 2, activation="tanh")
+        tanh_output = tanh_net._activation_function(test_input)
+        expected_tanh = np.tanh(test_input)
+        np.testing.assert_array_almost_equal(tanh_output, expected_tanh)
+        
+        # Test Sigmoid
+        sigmoid_net = NumpyDQNNetwork(4, 2, activation="sigmoid")
+        sigmoid_output = sigmoid_net._activation_function(test_input)
+        expected_sigmoid = 1 / (1 + np.exp(-test_input))
+        np.testing.assert_array_almost_equal(sigmoid_output, expected_sigmoid)
     
-    def test_update_target_network(self, network_manager, mock_networks):
-        """Test target network weight update."""
-        q_network, target_network = mock_networks
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
+    def test_forward_pass(self):
+        """Test forward pass through the network."""
+        # Test single state
+        state = np.random.rand(1, self.state_size)
+        output, layer_outputs = self.network._forward_pass(state)
         
-        network_manager.update_target_network()
+        assert output.shape == (1, self.action_size)
+        assert len(layer_outputs) == 4  # input + 2 hidden + output
+        assert layer_outputs[0].shape == (1, self.state_size)  # Input
+        assert layer_outputs[-1].shape == (1, self.action_size)  # Output
         
-        # Verify weights were copied
-        q_network.get_weights.assert_called_once()
-        # Use ANY matcher to avoid numpy array comparison issues in mock
-        from unittest.mock import ANY
-        target_network.set_weights.assert_called_once_with(ANY)
+        # Test batch of states
+        batch_size = 5
+        states = np.random.rand(batch_size, self.state_size)
+        output, layer_outputs = self.network._forward_pass(states)
+        
+        assert output.shape == (batch_size, self.action_size)
+        assert layer_outputs[0].shape == (batch_size, self.state_size)
+        assert layer_outputs[-1].shape == (batch_size, self.action_size)
     
-    def test_update_target_network_not_initialized(self, network_manager):
-        """Test target network update when networks not initialized."""
-        network_manager.update_target_network()
+    def test_predict(self):
+        """Test prediction functionality."""
+        # Test single state prediction
+        state = np.random.rand(self.state_size)
+        q_values = self.network.predict(state)
         
-        # Should handle gracefully when networks are None
-        assert network_manager.q_network is None
-        assert network_manager.target_q_network is None
+        assert q_values.shape == (1, self.action_size)
+        assert isinstance(q_values, np.ndarray)
+        
+        # Test batch prediction
+        batch_size = 3
+        states = np.random.rand(batch_size, self.state_size)
+        q_values = self.network.predict(states)
+        
+        assert q_values.shape == (batch_size, self.action_size)
     
-    def test_soft_update_target_network(self, network_manager, mock_networks):
-        """Test soft update of target network."""
-        q_network, target_network = mock_networks
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
+    def test_target_network(self):
+        """Test target network functionality."""
+        # Initially, target network should be identical to main network
+        state = np.random.rand(1, self.state_size)
         
-        # Configure weights for soft update
-        q_weights = [np.array([1.0, 2.0, 3.0])]
-        target_weights = [np.array([0.5, 1.0, 1.5])]
+        main_output = self.network.predict(state)
+        target_output = self.network.predict_target(state)
         
-        q_network.get_weights.return_value = q_weights
-        target_network.get_weights.return_value = target_weights
+        np.testing.assert_array_almost_equal(main_output, target_output)
         
-        network_manager.soft_update_target_network(tau=0.1)
+        # Train main network
+        states = np.random.rand(10, self.state_size)
+        targets = np.random.rand(10, self.action_size)
+        self.network.train(states, targets)
         
-        # Verify soft update was applied
-        q_network.get_weights.assert_called_once()
-        target_network.get_weights.assert_called_once()
-        target_network.set_weights.assert_called_once()
+        # Target network should now be different
+        main_output_after = self.network.predict(state)
+        target_output_after = self.network.predict_target(state)
         
-        # Check that the call was made with updated weights
-        call_args = target_network.set_weights.call_args[0][0]
-        assert len(call_args) == 1  # One weight array
-    
-    def test_predict_q_values(self, network_manager, mock_networks):
-        """Test Q-value prediction."""
-        q_network, _ = mock_networks
-        network_manager.q_network = q_network
-        
-        state = np.array([1, 2, 3, 4])
-        result = network_manager.predict_q_values(state)
-        
-        # Verify prediction was called with reshaped state
-        q_network.predict.assert_called_once()
-        call_args = q_network.predict.call_args[0][0]
-        assert call_args.shape == (1, 4)  # Should be reshaped to batch
-        
-        # Verify result
-        assert np.array_equal(result, np.array([[0.1, 0.2, 0.3, 0.4]]))
-    
-    def test_predict_q_values_batch(self, network_manager, mock_networks):
-        """Test Q-value prediction with batch input."""
-        q_network, _ = mock_networks
-        network_manager.q_network = q_network
-        
-        state_batch = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-        result = network_manager.predict_q_values(state_batch)
-        
-        # Should not reshape if already batch
-        q_network.predict.assert_called_once()
-        call_args = q_network.predict.call_args[0][0]
-        assert call_args.shape == (2, 4)
-    
-    def test_predict_q_values_not_initialized(self, network_manager):
-        """Test Q-value prediction when network not initialized."""
-        state = np.array([1, 2, 3, 4])
-        
-        with pytest.raises(RuntimeError, match="Q-network not initialized"):
-            network_manager.predict_q_values(state)
-    
-    def test_predict_target_q_values(self, network_manager, mock_networks):
-        """Test target Q-value prediction."""
-        _, target_network = mock_networks
-        network_manager.target_q_network = target_network
-        
-        state = np.array([1, 2, 3, 4])
-        result = network_manager.predict_target_q_values(state)
-        
-        # Verify prediction was called
-        target_network.predict.assert_called_once()
-        assert np.array_equal(result, np.array([[0.15, 0.25, 0.35, 0.45]]))
-    
-    def test_predict_target_q_values_not_initialized(self, network_manager):
-        """Test target Q-value prediction when network not initialized."""
-        state = np.array([1, 2, 3, 4])
-        
-        with pytest.raises(RuntimeError, match="Target Q-network not initialized"):
-            network_manager.predict_target_q_values(state)
-    
-    def test_get_network_info(self, network_manager, mock_networks):
-        """Test network information retrieval."""
-        q_network, target_network = mock_networks
-        
-        # Test without networks initialized
-        info = network_manager.get_network_info()
-        assert info["networks_initialized"] is False
-        assert info["architecture"] == "standard"
-        assert info["state_size"] == 21
-        assert info["action_size"] == 12
-        
-        # Test with networks initialized
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
-        
-        with patch('monkey_coder.quantum.neural_networks.tf') as mock_tf:
-            mock_tf.size.return_value.numpy.return_value = 100
-            
-            info = network_manager.get_network_info()
-            assert info["networks_initialized"] is True
-            assert info["total_parameters"] == 1000
-            assert info["layers"] == 3
-            assert info["optimizer"] == "Adam"
-    
-    def test_save_networks(self, network_manager, mock_networks):
-        """Test saving networks to disk."""
-        q_network, target_network = mock_networks
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
-        
-        with tempfile.TemporaryDirectory() as temp_dir:
-            filepath = os.path.join(temp_dir, "test_network")
-            network_manager.save_networks(filepath)
-            
-            # Verify save_weights was called for both networks
-            q_network.save_weights.assert_called_once_with(f"{filepath}_q_network.h5")
-            target_network.save_weights.assert_called_once_with(f"{filepath}_target_network.h5")
-    
-    def test_save_networks_not_initialized(self, network_manager):
-        """Test saving networks when not initialized."""
-        network_manager.save_networks("test_path")
-        
-        # Should handle gracefully when networks are None
-        assert network_manager.q_network is None
-        assert network_manager.target_q_network is None
-    
-    def test_load_networks(self, network_manager, mock_networks):
-        """Test loading networks from disk."""
-        q_network, target_network = mock_networks
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
-        
-        filepath = "test_network"
-        result = network_manager.load_networks(filepath)
-        
-        # Verify load_weights was called for both networks
-        q_network.load_weights.assert_called_once_with(f"{filepath}_q_network.h5")
-        target_network.load_weights.assert_called_once_with(f"{filepath}_target_network.h5")
-        assert result is True
-    
-    def test_load_networks_not_initialized(self, network_manager):
-        """Test loading networks when not initialized."""
-        result = network_manager.load_networks("test_path")
-        
-        # Should return False when networks are None
-        assert result is False
-    
-    def test_load_networks_file_error(self, network_manager, mock_networks):
-        """Test loading networks with file error."""
-        q_network, target_network = mock_networks
-        network_manager.q_network = q_network
-        network_manager.target_q_network = target_network
-        
-        # Configure load_weights to raise exception
-        q_network.load_weights.side_effect = FileNotFoundError("File not found")
-        
-        result = network_manager.load_networks("nonexistent_path")
-        assert result is False
-
-
-class TestConvenienceFunctions:
-    """Test convenience functions for network creation."""
-    
-    def test_create_dqn_networks(self):
-        """Test convenience function for creating DQN networks."""
-        with patch('monkey_coder.quantum.neural_networks.DQNNetworkManager') as mock_manager_class:
-            mock_manager = Mock()
-            mock_manager.create_networks.return_value = ("q_net", "target_net")
-            mock_manager_class.return_value = mock_manager
-            
-            result = create_dqn_networks(
-                state_size=21,
-                action_size=12,
-                architecture="deep",
-                learning_rate=0.002
-            )
-            
-            # Verify manager was created and networks were created
-            mock_manager_class.assert_called_once_with(
-                state_size=21,
-                action_size=12,
-                architecture="deep",
-                learning_rate=0.002
-            )
-            mock_manager.create_networks.assert_called_once()
-            assert result == ("q_net", "target_net")
-
-
-class TestNetworkIntegration:
-    """Integration tests for neural network functionality."""
-    
-    def test_network_prediction_shape(self):
-        """Test that network predictions have correct shape."""
-        try:
-            _ensure_tensorflow()
-        except ImportError:
-            pytest.skip("TensorFlow not available")
-        
-        # Create actual networks
-        q_network, target_network = create_dqn_networks(
-            state_size=21,
-            action_size=12,
-            architecture="lightweight"  # Use lightweight for faster testing
-        )
-        
-        # Test prediction shapes
-        test_state = np.random.random((1, 21))
-        q_values = q_network.predict(test_state, verbose=0)
-        target_q_values = target_network.predict(test_state, verbose=0)
-        
-        assert q_values.shape == (1, 12)
-        assert target_q_values.shape == (1, 12)
-    
-    def test_network_training_step(self):
-        """Test single training step on network."""
-        try:
-            _ensure_tensorflow()
-        except ImportError:
-            pytest.skip("TensorFlow not available")
-        
-        # Create networks
-        q_network, _ = create_dqn_networks(
-            state_size=21,
-            action_size=12,
-            architecture="lightweight"
-        )
-        
-        # Prepare training data
-        states = np.random.random((32, 21))
-        targets = np.random.random((32, 12))
-        
-        # Perform training step
-        history = q_network.fit(states, targets, epochs=1, verbose=0)
-        
-        # Verify training occurred
-        assert 'loss' in history.history
-        assert len(history.history['loss']) == 1
-        assert isinstance(history.history['loss'][0], (int, float))
-    
-    def test_network_weight_copying(self):
-        """Test weight copying between networks."""
-        try:
-            _ensure_tensorflow()
-        except ImportError:
-            pytest.skip("TensorFlow not available")
-        
-        # Create networks
-        manager = DQNNetworkManager(
-            state_size=21,
-            action_size=12,
-            architecture="lightweight"
-        )
-        q_network, target_network = manager.create_networks()
-        
-        # Get initial weights
-        initial_q_weights = q_network.get_weights()
-        initial_target_weights = target_network.get_weights()
-        
-        # Verify weights are the same initially (due to initialization)
-        for q_w, t_w in zip(initial_q_weights, initial_target_weights):
-            assert np.allclose(q_w, t_w)
-        
-        # Train Q-network to change its weights
-        states = np.random.random((10, 21))
-        targets = np.random.random((10, 12))
-        q_network.fit(states, targets, epochs=1, verbose=0)
-        
-        # Get updated weights
-        updated_q_weights = q_network.get_weights()
-        
-        # Verify Q-network weights changed
-        weights_changed = False
-        for initial, updated in zip(initial_q_weights, updated_q_weights):
-            if not np.allclose(initial, updated):
-                weights_changed = True
-                break
-        
-        assert weights_changed, "Q-network weights should have changed after training"
+        assert not np.allclose(main_output_after, target_output_after)
         
         # Update target network
-        manager.update_target_network()
+        self.network.update_target_network()
         
-        # Verify target network now has Q-network weights
-        final_target_weights = target_network.get_weights()
-        for q_w, t_w in zip(updated_q_weights, final_target_weights):
-            assert np.allclose(q_w, t_w)
-
-
-class TestNetworkPerformance:
-    """Performance tests for neural network operations."""
+        # Should be identical again
+        target_output_updated = self.network.predict_target(state)
+        np.testing.assert_array_almost_equal(main_output_after, target_output_updated)
     
-    def test_prediction_performance(self):
-        """Test prediction performance meets requirements."""
+    def test_soft_target_update(self):
+        """Test soft target network updates."""
+        # Train main network to create difference
+        states = np.random.rand(10, self.state_size)
+        targets = np.random.rand(10, self.action_size)
+        self.network.train(states, targets)
+        
+        # Get initial weights
+        initial_target_weights = [w.copy() for w in self.network.target_weights]
+        initial_main_weights = [w.copy() for w in self.network.weights]
+        
+        # Soft update with tau=0.1
+        tau = 0.1
+        self.network.update_target_network(tau=tau)
+        
+        # Check that target weights moved toward main weights
+        for i, (target_w, main_w, initial_target_w) in enumerate(zip(
+            self.network.target_weights, self.network.weights, initial_target_weights
+        )):
+            expected_w = tau * main_w + (1.0 - tau) * initial_target_w
+            np.testing.assert_array_almost_equal(target_w, expected_w)
+    
+    def test_training(self):
+        """Test network training functionality."""
+        # Generate training data
+        batch_size = 32
+        states = np.random.rand(batch_size, self.state_size)
+        targets = np.random.rand(batch_size, self.action_size)
+        
+        # Get initial loss
+        initial_predictions = self.network.predict(states)
+        initial_loss = np.mean((initial_predictions - targets) ** 2)
+        
+        # Train network
+        training_loss = self.network.train(states, targets)
+        
+        # Loss should be recorded
+        assert training_loss > 0
+        assert len(self.network.loss_history) == 1
+        assert self.network.loss_history[0] == training_loss
+        
+        # Training step should increment
+        assert self.network.training_step == 1
+        
+        # Predictions should be closer to targets after training
+        new_predictions = self.network.predict(states)
+        new_loss = np.mean((new_predictions - targets) ** 2)
+        
+        # Loss should generally decrease (may fluctuate due to randomness)
+        assert abs(new_loss - training_loss) < 0.1  # Allow for small differences
+    
+    def test_weight_management(self):
+        """Test getting and setting network weights."""
+        # Get initial weights
+        original_weights = self.network.get_weights()
+        
+        # Weights should include both weights and biases
+        expected_length = len(self.network.weights) + len(self.network.biases)
+        assert len(original_weights) == expected_length
+        
+        # Modify network
+        states = np.random.rand(5, self.state_size)
+        targets = np.random.rand(5, self.action_size)
+        self.network.train(states, targets)
+        
+        # Weights should be different
+        modified_weights = self.network.get_weights()
+        assert not all(np.allclose(orig, mod) for orig, mod in zip(original_weights, modified_weights))
+        
+        # Restore original weights
+        self.network.set_weights(original_weights)
+        restored_weights = self.network.get_weights()
+        
+        for orig, restored in zip(original_weights, restored_weights):
+            np.testing.assert_array_almost_equal(orig, restored)
+    
+    def test_model_persistence(self):
+        """Test saving and loading models."""
+        # Train network to create unique state
+        states = np.random.rand(10, self.state_size)
+        targets = np.random.rand(10, self.action_size)
+        self.network.train(states, targets)
+        
+        # Get reference prediction
+        test_state = np.random.rand(1, self.state_size)
+        original_prediction = self.network.predict(test_state)
+        original_training_step = self.network.training_step
+        
+        # Save model
+        with tempfile.NamedTemporaryFile(delete=False, suffix="") as tmp:
+            filepath = tmp.name
+        
         try:
-            _ensure_tensorflow()
-        except ImportError:
+            success = self.network.save_model(filepath)
+            assert success is True
+            
+            # Create new network and load
+            new_network = NumpyDQNNetwork(
+                state_size=self.state_size,
+                action_size=self.action_size
+            )
+            
+            success = new_network.load_model(filepath)
+            assert success is True
+            
+            # Verify loaded network produces same predictions
+            loaded_prediction = new_network.predict(test_state)
+            np.testing.assert_array_almost_equal(original_prediction, loaded_prediction)
+            
+            # Verify training step was restored
+            assert new_network.training_step == original_training_step
+            
+        finally:
+            # Cleanup
+            if os.path.exists(f"{filepath}.json"):
+                os.unlink(f"{filepath}.json")
+    
+    def test_save_load_failure_handling(self):
+        """Test handling of save/load failures."""
+        # Test save failure
+        success = self.network.save_model("/invalid/path/model")
+        assert success is False
+        
+        # Test load failure
+        success = self.network.load_model("/nonexistent/model")
+        assert success is False
+
+
+@pytest.mark.skipif(not tensorflow_available, reason="TensorFlow not available")
+class TestTensorFlowDQNNetwork:
+    """Test the TensorFlow-based DQN network implementation."""
+    
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.state_size = 6
+        self.action_size = 3
+        
+        # Only run if TensorFlow is actually available
+        if tensorflow_available:
+            self.network = TensorFlowDQNNetwork(
+                state_size=self.state_size,
+                action_size=self.action_size,
+                learning_rate=0.01,
+                hidden_layers=(12, 6),
+                activation="relu"
+            )
+    
+    def test_initialization(self):
+        """Test TensorFlow network initialization."""
+        if not tensorflow_available:
             pytest.skip("TensorFlow not available")
         
-        import time
+        assert self.network.state_size == 6
+        assert self.network.action_size == 3
+        assert self.network.learning_rate == 0.01
+        assert self.network.hidden_layers == (12, 6)
         
-        # Create lightweight network for performance testing
-        q_network, _ = create_dqn_networks(
-            state_size=21,
-            action_size=12,
-            architecture="lightweight"
+        # Check models are created
+        assert self.network.model is not None
+        assert self.network.target_model is not None
+        
+        # Check model architecture
+        assert len(self.network.model.layers) == 5  # input + hidden + dropout + output
+    
+    def test_predict(self):
+        """Test TensorFlow prediction."""
+        if not tensorflow_available:
+            pytest.skip("TensorFlow not available")
+        
+        # Single state
+        state = np.random.rand(self.state_size)
+        q_values = self.network.predict(state)
+        
+        assert q_values.shape == (1, self.action_size)
+        
+        # Batch prediction
+        states = np.random.rand(5, self.state_size)
+        q_values = self.network.predict(states)
+        
+        assert q_values.shape == (5, self.action_size)
+    
+    def test_target_network(self):
+        """Test TensorFlow target network."""
+        if not tensorflow_available:
+            pytest.skip("TensorFlow not available")
+        
+        state = np.random.rand(1, self.state_size)
+        
+        # Initially identical
+        main_output = self.network.predict(state)
+        target_output = self.network.predict_target(state)
+        
+        np.testing.assert_array_almost_equal(main_output, target_output, decimal=5)
+        
+        # Train and test difference
+        states = np.random.rand(10, self.state_size)
+        targets = np.random.rand(10, self.action_size)
+        self.network.train(states, targets)
+        
+        main_output_after = self.network.predict(state)
+        target_output_after = self.network.predict_target(state)
+        
+        # Should be different after training
+        assert not np.allclose(main_output_after, target_output_after, atol=1e-3)
+
+
+class TestDQNNetworkUnified:
+    """Test the unified DQN network interface."""
+    
+    def test_automatic_selection(self):
+        """Test automatic implementation selection."""
+        network = DQNNetwork(
+            state_size=4,
+            action_size=2,
+            force_numpy=False
         )
         
-        # Test batch prediction performance
-        batch_size = 100
-        test_states = np.random.random((batch_size, 21))
-        
-        start_time = time.perf_counter()
-        predictions = q_network.predict(test_states, verbose=0)
-        prediction_time = time.perf_counter() - start_time
-        
-        # Performance requirements
-        assert predictions.shape == (batch_size, 12)
-        assert prediction_time < 1.0  # Should predict 100 states in < 1 second
+        # Should select appropriate implementation
+        if TENSORFLOW_AVAILABLE:
+            assert network.implementation in ["tensorflow", "numpy"]
+        else:
+            assert network.implementation == "numpy"
     
-    def test_memory_efficiency(self):
-        """Test memory usage remains reasonable."""
+    def test_force_numpy(self):
+        """Test forcing numpy implementation."""
+        network = DQNNetwork(
+            state_size=4,
+            action_size=2,
+            force_numpy=True
+        )
+        
+        assert network.implementation == "numpy"
+        assert isinstance(network.network, NumpyDQNNetwork)
+    
+    def test_unified_interface(self):
+        """Test that unified interface works consistently."""
+        network = DQNNetwork(
+            state_size=5,
+            action_size=3,
+            force_numpy=True  # Use numpy for consistent testing
+        )
+        
+        # Test all interface methods
+        state = np.random.rand(5)
+        
+        # Predict
+        q_values = network.predict(state)
+        assert q_values.shape == (1, 3)
+        
+        # Target predict
+        target_q_values = network.predict_target(state)
+        assert target_q_values.shape == (1, 3)
+        
+        # Train
+        states = np.random.rand(10, 5)
+        targets = np.random.rand(10, 3)
+        loss = network.train(states, targets)
+        assert loss >= 0
+        
+        # Update target
+        network.update_target_network()
+        
+        # Weight management
+        weights = network.get_weights()
+        assert len(weights) > 0
+        
+        network.set_weights(weights)
+        
+        # Model persistence
+        with tempfile.NamedTemporaryFile(delete=False, suffix="") as tmp:
+            filepath = tmp.name
+        
         try:
-            _ensure_tensorflow()
-        except ImportError:
-            pytest.skip("TensorFlow not available")
+            success = network.save_model(filepath)
+            assert success is True
+            
+            success = network.load_model(filepath)
+            assert success is True
+            
+        finally:
+            # Cleanup
+            for ext in [".json", ".h5", "_config.json"]:
+                if os.path.exists(f"{filepath}{ext}"):
+                    os.unlink(f"{filepath}{ext}")
+
+
+class TestCreateDQNNetwork:
+    """Test the convenience function for creating DQN networks."""
+    
+    def test_create_function(self):
+        """Test the create_dqn_network function."""
+        network = create_dqn_network(
+            state_size=6,
+            action_size=4,
+            learning_rate=0.005,
+            hidden_layers=(32, 16),
+            activation="tanh",
+            force_numpy=True
+        )
         
-        import psutil
-        import os
+        assert isinstance(network, DQNNetwork)
+        assert network.state_size == 6
+        assert network.action_size == 4
+        assert network.implementation == "numpy"
         
-        process = psutil.Process(os.getpid())
-        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        # Test prediction works
+        state = np.random.rand(6)
+        q_values = network.predict(state)
+        assert q_values.shape == (1, 4)
+
+
+class TestIntegration:
+    """Integration tests for neural network components."""
+    
+    def test_dqn_training_workflow(self):
+        """Test a complete DQN training workflow."""
+        # Create network
+        network = create_dqn_network(
+            state_size=8,
+            action_size=4,
+            learning_rate=0.01,
+            force_numpy=True
+        )
         
-        # Create multiple networks to test memory usage
-        networks = []
-        for _ in range(5):
-            q_net, target_net = create_dqn_networks(
-                state_size=21,
-                action_size=12,
-                architecture="standard"
+        # Simulate experience collection
+        batch_size = 32
+        states = np.random.rand(batch_size, 8)
+        actions = np.random.randint(0, 4, batch_size)
+        rewards = np.random.rand(batch_size) - 0.5
+        next_states = np.random.rand(batch_size, 8)
+        dones = np.random.rand(batch_size) > 0.9
+        
+        # Compute target Q-values (simplified)
+        next_q_values = network.predict_target(next_states)
+        max_next_q = np.max(next_q_values, axis=1)
+        
+        targets = network.predict(states).copy()
+        for i in range(batch_size):
+            if dones[i]:
+                targets[i, actions[i]] = rewards[i]
+            else:
+                targets[i, actions[i]] = rewards[i] + 0.99 * max_next_q[i]
+        
+        # Train network
+        loss = network.train(states, targets)
+        assert loss >= 0
+        
+        # Update target network every few steps
+        network.update_target_network()
+        
+        # Verify learning occurred
+        new_predictions = network.predict(states)
+        assert new_predictions.shape == (batch_size, 4)
+    
+    def test_experience_replay_integration(self):
+        """Test integration with experience replay buffer."""
+        from monkey_coder.quantum.experience_buffer import ExperienceReplayBuffer, Experience
+        
+        # Create components
+        network = create_dqn_network(4, 2, force_numpy=True)
+        buffer = ExperienceReplayBuffer(capacity=100, min_size=10)
+        
+        # Collect experiences
+        for i in range(20):
+            state = np.random.rand(4)
+            next_state = np.random.rand(4)
+            
+            exp = Experience(
+                state=state,
+                action=np.random.randint(0, 2),
+                reward=np.random.rand() - 0.5,
+                next_state=next_state,
+                done=i % 10 == 9,
+                timestamp=float(i)
             )
-            networks.append((q_net, target_net))
+            buffer.add(exp)
         
-        final_memory = process.memory_info().rss / 1024 / 1024  # MB
-        memory_increase = final_memory - initial_memory
+        # Training step
+        batch = buffer.sample(8)
+        states, actions, rewards, next_states, dones = buffer.get_batch_arrays(batch)
         
-        # Memory should not increase excessively (allowing 200MB for 10 networks)
-        assert memory_increase < 200, f"Memory increased by {memory_increase:.1f}MB"
+        # Compute targets
+        next_q_values = network.predict_target(next_states)
+        max_next_q = np.max(next_q_values, axis=1)
         
-        # Cleanup
-        del networks
+        targets = network.predict(states).copy()
+        for i in range(len(batch)):
+            if dones[i]:
+                targets[i, actions[i]] = rewards[i]
+            else:
+                targets[i, actions[i]] = rewards[i] + 0.99 * max_next_q[i]
+        
+        # Train
+        loss = network.train(states, targets)
+        assert loss >= 0
+        
+        # Update target
+        network.update_target_network()

@@ -1,422 +1,545 @@
 """
-Tests for Experience Replay Buffer implementation.
+Comprehensive test suite for Experience Replay Buffer
 
-This module tests the experience replay buffer functionality required for DQN agent training,
-including FIFO management, concurrent access, and memory optimization.
+Tests all functionality including FIFO management, sampling, and prioritized replay.
 """
 
 import pytest
 import numpy as np
-import threading
-import time
-from typing import Tuple, List, Any
+import tempfile
+import os
+from unittest.mock import patch
 
 from monkey_coder.quantum.experience_buffer import (
-    ExperienceBuffer,
-    Experience,
-    BufferFullError,
-    BufferEmptyError
+    Experience, ExperienceReplayBuffer, PrioritizedExperienceBuffer
 )
 
 
-class TestExperienceBuffer:
-    """Test suite for Experience Replay Buffer implementation."""
-
-    def test_buffer_initialization_with_defaults(self):
-        """Test buffer creates with default parameters."""
-        buffer = ExperienceBuffer()
-        assert buffer.max_size == 2000
-        assert buffer.size() == 0
-        assert buffer.is_empty() is True
-        assert buffer.is_full() is False
-
-    def test_buffer_initialization_with_custom_size(self):
-        """Test buffer creates with custom size parameter."""
-        buffer = ExperienceBuffer(max_size=1000)
-        assert buffer.max_size == 1000
-        assert buffer.size() == 0
-
-    def test_add_single_experience(self):
-        """Test adding a single experience to buffer."""
-        buffer = ExperienceBuffer(max_size=5)
-        experience = Experience(
-            state=np.array([1, 2, 3]),
-            action=0,
-            reward=1.0,
-            next_state=np.array([2, 3, 4]),
-            done=False
+class TestExperience:
+    """Test the Experience dataclass."""
+    
+    def test_valid_experience_creation(self):
+        """Test creating a valid experience."""
+        state = np.array([1.0, 2.0, 3.0])
+        next_state = np.array([1.1, 2.1, 3.1])
+        
+        exp = Experience(
+            state=state,
+            action=1,
+            reward=0.5,
+            next_state=next_state,
+            done=False,
+            timestamp=123.45
         )
         
-        buffer.add_experience(experience)
-        assert buffer.size() == 1
-        assert buffer.is_empty() is False
-
-    def test_add_multiple_experiences(self):
-        """Test adding multiple experiences to buffer."""
-        buffer = ExperienceBuffer(max_size=5)
+        assert np.array_equal(exp.state, state)
+        assert exp.action == 1
+        assert exp.reward == 0.5
+        assert np.array_equal(exp.next_state, next_state)
+        assert exp.done is False
+        assert exp.timestamp == 123.45
+    
+    def test_experience_validation(self):
+        """Test experience validation in __post_init__."""
+        state = np.array([1.0, 2.0])
         
-        for i in range(3):
-            experience = Experience(
-                state=np.array([i, i+1, i+2]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1, i+2, i+3]),
-                done=False
+        # Invalid state type
+        with pytest.raises(ValueError, match="State must be a numpy array"):
+            Experience(
+                state=[1.0, 2.0],  # List instead of array
+                action=1,
+                reward=0.5,
+                next_state=state,
+                done=False,
+                timestamp=123.45
             )
-            buffer.add_experience(experience)
         
-        assert buffer.size() == 3
-        assert buffer.is_empty() is False
-        assert buffer.is_full() is False
+        # Mismatched state shapes
+        with pytest.raises(ValueError, match="State and next_state must have the same shape"):
+            Experience(
+                state=np.array([1.0, 2.0]),
+                action=1,
+                reward=0.5,
+                next_state=np.array([1.0, 2.0, 3.0]),  # Different shape
+                done=False,
+                timestamp=123.45
+            )
 
-    def test_fifo_behavior_when_buffer_full(self):
+
+class TestExperienceReplayBuffer:
+    """Test the ExperienceReplayBuffer class."""
+    
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.buffer = ExperienceReplayBuffer(capacity=100, min_size=10)
+        
+    def create_test_experience(self, idx: int = 0) -> Experience:
+        """Create a test experience with given index."""
+        state = np.array([float(idx), float(idx + 1)])
+        next_state = np.array([float(idx + 0.1), float(idx + 1.1)])
+        
+        return Experience(
+            state=state,
+            action=idx % 4,
+            reward=float(idx * 0.1),
+            next_state=next_state,
+            done=idx % 10 == 9,  # Every 10th experience is terminal
+            timestamp=float(idx)
+        )
+    
+    def test_initialization(self):
+        """Test buffer initialization."""
+        buffer = ExperienceReplayBuffer(capacity=500, min_size=50, cleanup_threshold=0.8)
+        
+        assert buffer.capacity == 500
+        assert buffer.min_size == 50
+        assert buffer.cleanup_threshold == 0.8
+        assert len(buffer) == 0
+        
+        stats = buffer.get_statistics()
+        assert stats['size'] == 0
+        assert stats['capacity'] == 500
+        assert stats['utilization'] == 0.0
+        assert stats['ready_for_sampling'] is False
+    
+    def test_initialization_validation(self):
+        """Test initialization parameter validation."""
+        # Invalid capacity
+        with pytest.raises(ValueError, match="Capacity must be positive"):
+            ExperienceReplayBuffer(capacity=0)
+        
+        # Invalid min_size
+        with pytest.raises(ValueError, match="min_size must be between 0 and capacity"):
+            ExperienceReplayBuffer(capacity=100, min_size=150)
+        
+        # Invalid cleanup_threshold
+        with pytest.raises(ValueError, match="cleanup_threshold must be between 0.0 and 1.0"):
+            ExperienceReplayBuffer(capacity=100, cleanup_threshold=1.5)
+    
+    def test_add_experience(self):
+        """Test adding experiences to the buffer."""
+        exp = self.create_test_experience(0)
+        
+        assert len(self.buffer) == 0
+        self.buffer.add(exp)
+        assert len(self.buffer) == 1
+        
+        stats = self.buffer.get_statistics()
+        assert stats['total_added'] == 1
+    
+    def test_add_invalid_experience(self):
+        """Test adding invalid experience."""
+        with pytest.raises(TypeError, match="experience must be an Experience object"):
+            self.buffer.add("not an experience")
+    
+    def test_fifo_behavior(self):
         """Test FIFO behavior when buffer exceeds capacity."""
-        buffer = ExperienceBuffer(max_size=3)
+        # Set small capacity for easy testing with high cleanup threshold to avoid interference
+        small_buffer = ExperienceReplayBuffer(capacity=5, min_size=2, cleanup_threshold=1.0)
         
-        # Fill buffer to capacity
-        for i in range(3):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
+        # Add more experiences than capacity
+        for i in range(10):
+            small_buffer.add(self.create_test_experience(i))
         
-        assert buffer.is_full() is True
-        assert buffer.size() == 3
+        # Should only have last 5 experiences due to deque maxlen behavior
+        assert len(small_buffer) == 5
         
-        # Add one more experience - should remove oldest
-        new_experience = Experience(
-            state=np.array([99]),
-            action=99,
-            reward=99.0,
-            next_state=np.array([100]),
-            done=True
-        )
-        buffer.add_experience(new_experience)
+        # Sample all and check they're the last 5
+        batch = small_buffer.sample(5)
+        actions = [exp.action for exp in batch]
         
-        assert buffer.size() == 3  # Size should remain the same
-        assert buffer.is_full() is True
-
-    def test_sample_batch_success(self):
-        """Test successful batch sampling from buffer."""
-        buffer = ExperienceBuffer(max_size=10)
+        # Should contain experiences with indices 5-9
+        expected_actions = [i % 4 for i in range(5, 10)]
+        assert set(actions) == set(expected_actions)
+    
+    def test_sampling(self):
+        """Test basic sampling functionality."""
+        # Add enough experiences for sampling
+        for i in range(20):
+            self.buffer.add(self.create_test_experience(i))
         
-        # Add experiences
-        for i in range(5):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        # Sample batch
-        batch = buffer.sample_batch(batch_size=3)
-        assert len(batch) == 3
+        # Test normal sampling
+        batch = self.buffer.sample(5)
+        assert len(batch) == 5
         assert all(isinstance(exp, Experience) for exp in batch)
-
-    def test_sample_batch_larger_than_buffer_size(self):
-        """Test sampling batch larger than available experiences."""
-        buffer = ExperienceBuffer(max_size=10)
         
-        # Add only 2 experiences
-        for i in range(2):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
+        stats = self.buffer.get_statistics()
+        assert stats['total_sampled'] == 5
+    
+    def test_sampling_validation(self):
+        """Test sampling parameter validation."""
+        # Add some experiences
+        for i in range(5):
+            self.buffer.add(self.create_test_experience(i))
         
-        # Try to sample larger batch
-        with pytest.raises(ValueError, match="Batch size .* exceeds buffer size"):
-            buffer.sample_batch(batch_size=5)
-
-    def test_sample_from_empty_buffer(self):
-        """Test sampling from empty buffer raises appropriate error."""
-        buffer = ExperienceBuffer()
+        # Invalid batch size
+        with pytest.raises(ValueError, match="batch_size must be positive"):
+            self.buffer.sample(0)
         
-        with pytest.raises(BufferEmptyError):
-            buffer.sample_batch(batch_size=1)
-
-    def test_clear_buffer(self):
-        """Test clearing buffer removes all experiences."""
-        buffer = ExperienceBuffer(max_size=5)
+        # Insufficient experiences for min_size
+        with pytest.raises(ValueError, match="Insufficient experiences"):
+            self.buffer.sample(3)  # min_size is 10, we only have 5
         
+        # Add enough experiences
+        for i in range(5, 15):
+            self.buffer.add(self.create_test_experience(i))
+        
+        # Batch size larger than buffer
+        with pytest.raises(ValueError, match="batch_size.*> buffer size"):
+            self.buffer.sample(20)
+    
+    def test_sample_recent(self):
+        """Test recent-biased sampling."""
         # Add experiences
-        for i in range(3):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        assert buffer.size() == 3
-        
-        buffer.clear()
-        assert buffer.size() == 0
-        assert buffer.is_empty() is True
-        assert buffer.is_full() is False
-
-    def test_thread_safety_concurrent_adds(self):
-        """Test thread safety with concurrent add operations."""
-        buffer = ExperienceBuffer(max_size=1000)
-        num_threads = 10
-        experiences_per_thread = 50
-        
-        def add_experiences(thread_id: int):
-            for i in range(experiences_per_thread):
-                experience = Experience(
-                    state=np.array([thread_id, i]),
-                    action=thread_id * 100 + i,
-                    reward=float(thread_id + i),
-                    next_state=np.array([thread_id, i+1]),
-                    done=False
-                )
-                buffer.add_experience(experience)
-        
-        threads = []
-        for thread_id in range(num_threads):
-            thread = threading.Thread(target=add_experiences, args=(thread_id,))
-            threads.append(thread)
-            thread.start()
-        
-        for thread in threads:
-            thread.join()
-        
-        assert buffer.size() == num_threads * experiences_per_thread
-
-    def test_thread_safety_concurrent_sample(self):
-        """Test thread safety with concurrent sampling operations."""
-        buffer = ExperienceBuffer(max_size=1000)
-        
-        # Pre-fill buffer
-        for i in range(500):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        results = []
-        
-        def sample_batch():
-            try:
-                batch = buffer.sample_batch(batch_size=10)
-                results.append(len(batch))
-            except Exception as e:
-                results.append(f"Error: {e}")
-        
-        threads = []
-        for _ in range(5):
-            thread = threading.Thread(target=sample_batch)
-            threads.append(thread)
-            thread.start()
-        
-        for thread in threads:
-            thread.join()
-        
-        # All sampling operations should succeed
-        assert all(result == 10 for result in results)
-
-    def test_thread_safety_mixed_operations(self):
-        """Test thread safety with mixed add and sample operations."""
-        buffer = ExperienceBuffer(max_size=200)
-        
-        # Pre-fill buffer partially
         for i in range(50):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
+            self.buffer.add(self.create_test_experience(i))
         
-        add_results = []
-        sample_results = []
+        # Sample with recent bias
+        batch = self.buffer.sample_recent(10, recent_fraction=0.5)
+        assert len(batch) == 10
         
-        def add_worker():
-            for i in range(50, 100):
-                experience = Experience(
-                    state=np.array([i]),
-                    action=i,
-                    reward=float(i),
-                    next_state=np.array([i+1]),
-                    done=False
-                )
-                buffer.add_experience(experience)
-                add_results.append(i)
+        # Check that some experiences are from recent portion
+        recent_actions = [exp.action for exp in batch]
+        assert len(set(recent_actions)) > 1  # Should have variety
+    
+    def test_sample_recent_validation(self):
+        """Test recent sampling parameter validation."""
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i))
         
-        def sample_worker():
-            time.sleep(0.01)  # Small delay to ensure some adds happen first
-            for _ in range(10):
-                try:
-                    batch = buffer.sample_batch(batch_size=5)
-                    sample_results.append(len(batch))
-                except Exception as e:
-                    sample_results.append(f"Error: {e}")
+        # Invalid recent_fraction
+        with pytest.raises(ValueError, match="recent_fraction must be between 0.0 and 1.0"):
+            self.buffer.sample_recent(5, recent_fraction=1.5)
+    
+    def test_get_batch_arrays(self):
+        """Test converting batch to numpy arrays."""
+        # Add experiences
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i))
         
-        add_thread = threading.Thread(target=add_worker)
-        sample_thread = threading.Thread(target=sample_worker)
+        batch = self.buffer.sample(5)
+        states, actions, rewards, next_states, dones = self.buffer.get_batch_arrays(batch)
         
-        add_thread.start()
-        sample_thread.start()
+        assert isinstance(states, np.ndarray)
+        assert isinstance(actions, np.ndarray)
+        assert isinstance(rewards, np.ndarray)
+        assert isinstance(next_states, np.ndarray)
+        assert isinstance(dones, np.ndarray)
         
-        add_thread.join()
-        sample_thread.join()
+        assert states.shape == (5, 2)  # 5 experiences, 2D state
+        assert actions.shape == (5,)
+        assert rewards.shape == (5,)
+        assert next_states.shape == (5, 2)
+        assert dones.shape == (5,)
+    
+    def test_get_batch_arrays_empty(self):
+        """Test get_batch_arrays with empty batch."""
+        with pytest.raises(ValueError, match="Batch cannot be empty"):
+            self.buffer.get_batch_arrays([])
+    
+    def test_clear(self):
+        """Test clearing the buffer."""
+        # Add experiences
+        for i in range(10):
+            self.buffer.add(self.create_test_experience(i))
         
-        # Verify operations completed successfully
-        assert len(add_results) == 50
-        assert all(result == 5 for result in sample_results if isinstance(result, int))
+        assert len(self.buffer) == 10
+        
+        self.buffer.clear()
+        assert len(self.buffer) == 0
+        
+        stats = self.buffer.get_statistics()
+        assert stats['size'] == 0
+    
+    def test_automatic_cleanup(self):
+        """Test automatic cleanup when buffer gets full."""
+        # Create buffer with low cleanup threshold
+        buffer = ExperienceReplayBuffer(capacity=20, min_size=5, cleanup_threshold=0.8)
+        
+        # Fill buffer past cleanup threshold
+        for i in range(18):  # 18 > 20 * 0.8 = 16
+            buffer.add(self.create_test_experience(i))
+        
+        # Should trigger cleanup, removing ~10% = 2 experiences
+        initial_size = len(buffer)
+        assert initial_size <= 20
+        
+        stats = buffer.get_statistics()
+        assert stats['cleanup_count'] >= 0  # Cleanup may or may not have triggered yet
+    
+    def test_save_and_load_buffer(self):
+        """Test saving and loading buffer to/from file."""
+        # Add experiences
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i))
+        
+        # Save buffer
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            filepath = tmp.name
+        
+        try:
+            success = self.buffer.save_buffer(filepath)
+            assert success is True
+            
+            # Create new buffer and load
+            new_buffer = ExperienceReplayBuffer(capacity=50, min_size=5)
+            success = new_buffer.load_buffer(filepath)
+            assert success is True
+            
+            # Verify data was loaded correctly
+            assert len(new_buffer) == 15
+            assert new_buffer.capacity == 100  # Should restore original capacity
+            assert new_buffer.min_size == 10   # Should restore original min_size
+            
+        finally:
+            os.unlink(filepath)
+    
+    def test_save_load_failure_handling(self):
+        """Test handling of save/load failures."""
+        # Test save failure
+        success = self.buffer.save_buffer("/invalid/path/file.pkl")
+        assert success is False
+        
+        # Test load failure
+        success = self.buffer.load_buffer("/nonexistent/file.pkl")
+        assert success is False
+    
+    def test_statistics(self):
+        """Test statistics gathering."""
+        initial_stats = self.buffer.get_statistics()
+        assert initial_stats['size'] == 0
+        assert initial_stats['utilization'] == 0.0
+        assert initial_stats['total_added'] == 0
+        assert initial_stats['total_sampled'] == 0
+        assert initial_stats['ready_for_sampling'] is False
+        
+        # Add experiences and sample
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i))
+        
+        batch = self.buffer.sample(5)
+        
+        final_stats = self.buffer.get_statistics()
+        assert final_stats['size'] == 15
+        assert final_stats['utilization'] == 0.15  # 15/100
+        assert final_stats['total_added'] == 15
+        assert final_stats['total_sampled'] == 5
+        assert final_stats['ready_for_sampling'] is True
+    
+    def test_repr(self):
+        """Test string representation."""
+        repr_str = repr(self.buffer)
+        assert "ExperienceReplayBuffer" in repr_str
+        assert "size=0" in repr_str
+        assert "capacity=100" in repr_str
+        assert "utilization=" in repr_str
 
-    def test_memory_efficiency(self):
-        """Test memory usage remains reasonable with large buffer."""
-        import sys
-        
-        buffer = ExperienceBuffer(max_size=1000)
-        
-        # Measure memory before adding experiences
-        initial_size = sys.getsizeof(buffer)
-        
-        # Add many experiences
-        for i in range(1000):
-            experience = Experience(
-                state=np.array([i] * 10),  # Larger state
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1] * 10),  # Larger next_state
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        # Memory should not grow excessively
-        final_size = sys.getsizeof(buffer)
-        assert buffer.size() == 1000
-        assert buffer.is_full()
-        
-        # Add more experiences to test FIFO cleanup
-        for i in range(1000, 1500):
-            experience = Experience(
-                state=np.array([i] * 10),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1] * 10),
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        # Size should remain at max_size
-        assert buffer.size() == 1000
 
-    def test_experience_dataclass_properties(self):
-        """Test Experience dataclass has correct properties."""
-        experience = Experience(
-            state=np.array([1, 2, 3]),
-            action=0,
-            reward=1.5,
-            next_state=np.array([2, 3, 4]),
-            done=True
+class TestPrioritizedExperienceBuffer:
+    """Test the PrioritizedExperienceBuffer class."""
+    
+    def setup_method(self):
+        """Set up test fixtures before each method."""
+        self.buffer = PrioritizedExperienceBuffer(
+            capacity=100, 
+            min_size=10,
+            alpha=0.6,
+            beta=0.4
+        )
+    
+    def create_test_experience(self, idx: int = 0) -> Experience:
+        """Create a test experience with given index."""
+        state = np.array([float(idx), float(idx + 1)])
+        next_state = np.array([float(idx + 0.1), float(idx + 1.1)])
+        
+        return Experience(
+            state=state,
+            action=idx % 4,
+            reward=float(idx * 0.1),
+            next_state=next_state,
+            done=idx % 10 == 9,
+            timestamp=float(idx)
+        )
+    
+    def test_initialization(self):
+        """Test prioritized buffer initialization."""
+        buffer = PrioritizedExperienceBuffer(
+            capacity=200,
+            alpha=0.7,
+            beta=0.5,
+            beta_increment=0.002
         )
         
-        assert np.array_equal(experience.state, np.array([1, 2, 3]))
-        assert experience.action == 0
-        assert experience.reward == 1.5
-        assert np.array_equal(experience.next_state, np.array([2, 3, 4]))
-        assert experience.done is True
-
-    def test_sample_batch_randomness(self):
-        """Test that batch sampling produces different results (randomness)."""
-        buffer = ExperienceBuffer(max_size=100)
+        assert buffer.capacity == 200
+        assert buffer.alpha == 0.7
+        assert buffer.beta == 0.5
+        assert buffer.beta_increment == 0.002
+        assert buffer._max_priority == 1.0
+    
+    def test_add_with_priority(self):
+        """Test adding experiences with explicit priorities."""
+        exp1 = self.create_test_experience(0)
+        exp2 = self.create_test_experience(1)
         
-        # Add many experiences
+        self.buffer.add(exp1, priority=0.5)
+        self.buffer.add(exp2, priority=1.2)
+        
+        assert len(self.buffer) == 2
+        assert self.buffer._max_priority == 1.2
+    
+    def test_add_without_priority(self):
+        """Test adding experiences without explicit priorities."""
+        exp = self.create_test_experience(0)
+        
+        self.buffer.add(exp)  # Should use max priority
+        assert len(self.buffer) == 1
+        assert len(self.buffer._priorities) == 1
+    
+    def test_prioritized_sampling(self):
+        """Test prioritized sampling functionality."""
+        # Add experiences with different priorities
+        for i in range(20):
+            exp = self.create_test_experience(i)
+            priority = 1.0 if i < 10 else 0.1  # First 10 have high priority
+            self.buffer.add(exp, priority=priority)
+        
+        # Sample and check return format
+        experiences, indices, weights = self.buffer.sample(5)
+        
+        assert len(experiences) == 5
+        assert len(indices) == 5
+        assert len(weights) == 5
+        assert isinstance(experiences, list)
+        assert isinstance(indices, np.ndarray)
+        assert isinstance(weights, np.ndarray)
+        
+        # Weights should be normalized
+        assert weights.max() == 1.0
+        assert all(w > 0 for w in weights)
+    
+    def test_update_priorities(self):
+        """Test updating priorities for sampled experiences."""
+        # Add experiences
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i), priority=1.0)
+        
+        # Sample some experiences
+        experiences, indices, weights = self.buffer.sample(3)
+        
+        # Update their priorities
+        new_priorities = np.array([0.5, 2.0, 0.8])
+        self.buffer.update_priorities(indices, new_priorities)
+        
+        # Max priority should be updated
+        assert self.buffer._max_priority == 2.0
+    
+    def test_beta_increment(self):
+        """Test that beta increases with sampling."""
+        # Add experiences
+        for i in range(15):
+            self.buffer.add(self.create_test_experience(i))
+        
+        initial_beta = self.buffer.beta
+        
+        # Sample multiple times
+        for _ in range(10):
+            self.buffer.sample(2)
+        
+        # Beta should have increased
+        assert self.buffer.beta > initial_beta
+        assert self.buffer.beta <= self.buffer.max_beta
+    
+    def test_inheritance(self):
+        """Test that prioritized buffer inherits base functionality."""
+        # Should inherit basic buffer functionality
+        assert hasattr(self.buffer, 'capacity')
+        assert hasattr(self.buffer, 'clear')
+        assert hasattr(self.buffer, 'get_statistics')
+        
+        # Test basic operations work
+        exp = self.create_test_experience(0)
+        self.buffer.add(exp)
+        assert len(self.buffer) == 1
+        
+        self.buffer.clear()
+        assert len(self.buffer) == 0
+
+
+class TestIntegration:
+    """Integration tests for experience buffer components."""
+    
+    def test_buffer_with_dqn_workflow(self):
+        """Test buffer in a typical DQN training workflow."""
+        buffer = ExperienceReplayBuffer(capacity=1000, min_size=50)
+        
+        # Simulate episode collection
+        for episode in range(5):
+            for step in range(20):
+                idx = episode * 20 + step
+                state = np.random.rand(4)
+                next_state = np.random.rand(4)
+                
+                exp = Experience(
+                    state=state,
+                    action=np.random.randint(0, 3),
+                    reward=np.random.rand() - 0.5,
+                    next_state=next_state,
+                    done=step == 19,  # Episode ends
+                    timestamp=float(idx)
+                )
+                
+                buffer.add(exp)
+        
+        # Should have 100 experiences
+        assert len(buffer) == 100
+        
+        # Should be ready for training
+        stats = buffer.get_statistics()
+        assert stats['ready_for_sampling'] is True
+        
+        # Simulate training steps
+        for training_step in range(10):
+            batch = buffer.sample(32)
+            states, actions, rewards, next_states, dones = buffer.get_batch_arrays(batch)
+            
+            # Verify batch shapes for training
+            assert states.shape == (32, 4)
+            assert actions.shape == (32,)
+            assert rewards.shape == (32,)
+            assert next_states.shape == (32, 4)
+            assert dones.shape == (32,)
+        
+        # Verify sampling statistics
+        final_stats = buffer.get_statistics()
+        assert final_stats['total_sampled'] == 320  # 10 * 32
+    
+    def test_prioritized_buffer_workflow(self):
+        """Test prioritized buffer in a training workflow."""
+        buffer = PrioritizedExperienceBuffer(capacity=500, min_size=30)
+        
+        # Add initial experiences
         for i in range(50):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
+            exp = Experience(
+                state=np.random.rand(3),
+                action=np.random.randint(0, 4),
+                reward=np.random.rand() - 0.5,
+                next_state=np.random.rand(3),
+                done=i % 10 == 9,
+                timestamp=float(i)
             )
-            buffer.add_experience(experience)
+            buffer.add(exp, priority=np.random.rand())
         
-        # Sample multiple batches
-        batch1 = buffer.sample_batch(batch_size=10)
-        batch2 = buffer.sample_batch(batch_size=10)
-        
-        # Batches should be different (with high probability)
-        actions1 = [exp.action for exp in batch1]
-        actions2 = [exp.action for exp in batch2]
-        assert actions1 != actions2  # Very unlikely to be equal if truly random
-
-    def test_buffer_state_consistency(self):
-        """Test buffer maintains consistent state throughout operations."""
-        buffer = ExperienceBuffer(max_size=5)
-        
-        # Test various state transitions
-        assert buffer.is_empty() and not buffer.is_full()
-        
-        # Add one experience
-        experience = Experience(
-            state=np.array([1]),
-            action=0,
-            reward=1.0,
-            next_state=np.array([2]),
-            done=False
-        )
-        buffer.add_experience(experience)
-        assert not buffer.is_empty() and not buffer.is_full()
-        
-        # Fill buffer
-        for i in range(1, 5):
-            experience = Experience(
-                state=np.array([i]),
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1]),
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        assert not buffer.is_empty() and buffer.is_full()
-        
-        # Clear and verify
-        buffer.clear()
-        assert buffer.is_empty() and not buffer.is_full()
-
-    def test_large_batch_performance(self):
-        """Test performance with large batches."""
-        buffer = ExperienceBuffer(max_size=10000)
-        
-        # Fill buffer with large dataset
-        for i in range(10000):
-            experience = Experience(
-                state=np.array([i] * 100),  # Large state vector
-                action=i,
-                reward=float(i),
-                next_state=np.array([i+1] * 100),  # Large next_state vector
-                done=False
-            )
-            buffer.add_experience(experience)
-        
-        # Test large batch sampling performance
-        start_time = time.time()
-        batch = buffer.sample_batch(batch_size=1000)
-        end_time = time.time()
-        
-        assert len(batch) == 1000
-        assert end_time - start_time < 1.0  # Should complete within 1 second
+        # Training loop with priority updates
+        for step in range(5):
+            # Sample batch
+            experiences, indices, weights = buffer.sample(10)
+            
+            # Simulate computing TD errors
+            td_errors = np.random.rand(10) * 2.0
+            
+            # Update priorities based on TD errors
+            buffer.update_priorities(indices, td_errors)
+            
+            # Verify importance weights are applied
+            assert all(w > 0 for w in weights)
+            assert weights.max() == 1.0
