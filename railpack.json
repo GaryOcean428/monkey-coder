@@ -2,7 +2,11 @@
   "$schema": "https://schema.railpack.com",
   "providers": ["docker"],
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "buildArgs": {
+      "PYTHONPATH": "/app",
+      "PYTHONUNBUFFERED": "1"
+    }
   },
   "start": {
     "cmd": "python -m monkey_coder.app.main"
@@ -25,7 +29,9 @@
         "ENABLE_METRICS": "true",
         "ENABLE_SECURITY_HEADERS": "true",
         "CORS_ORIGINS": "*",
-        "TRUSTED_HOSTS": "*"
+        "TRUSTED_HOSTS": "*",
+        "PYTHONPATH": "/app",
+        "PYTHONUNBUFFERED": "1"
       }
     },
     "development": {
@@ -34,7 +40,9 @@
         "LOG_LEVEL": "DEBUG",
         "JSON_LOGS": "false",
         "PERFORMANCE_LOGS": "true",
-        "DEBUG": "true"
+        "DEBUG": "true",
+        "PYTHONPATH": "/app",
+        "PYTHONUNBUFFERED": "1"
       }
     }
   }

@@ -50,8 +50,7 @@ from .neural_network import (
 from .quantum_routing_manager import (
     QuantumRoutingManager,
     RoutingStrategy,
-    QuantumRoutingResult,
-    RoutingMetrics
+    QuantumRoutingResult
 )
 
 # Phase 2: Training Pipeline
@@ -68,6 +67,18 @@ from .performance_metrics import (
     MetricType,
     MetricDataPoint,
     PerformanceAlert
+)
+
+# Phase 2: State Encoding Components
+from .state_encoder import (
+    StateEncoder,
+    AdvancedStateEncoder,
+    TaskContextProfile,
+    ProviderPerformanceHistory,
+    UserPreferences,
+    ResourceConstraints,
+    ContextComplexity,
+    create_state_encoder
 )
 
 __all__ = [
@@ -104,13 +115,22 @@ __all__ = [
     "QuantumRoutingManager",
     "RoutingStrategy",
     "QuantumRoutingResult",
-    "RoutingMetrics",
     
     # Performance metrics
     "PerformanceMetricsCollector",
     "MetricType",
     "MetricDataPoint",
     "PerformanceAlert",
+    
+    # State encoding components
+    "StateEncoder",
+    "AdvancedStateEncoder",
+    "TaskContextProfile",
+    "ProviderPerformanceHistory",
+    "UserPreferences",
+    "ResourceConstraints",
+    "ContextComplexity",
+    "create_state_encoder",
 ]
 
 __version__ = "2.0.0"  # Phase 2 implementation
