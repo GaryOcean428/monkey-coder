@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@jest/globals';
 import { THEME_COLORS, validateHexColor, hexToRgb, getColor } from '../constants/colors';
 
 describe('Color Consistency Validation', () => {
@@ -9,7 +9,7 @@ describe('Color Consistency Validation', () => {
       expect(violet.name).toBe('Electric Purple');
       expect(violet.hex).toBe('#6c5ce7');
       expect(violet.description).toContain('CORRECTED from mislabeled "lime"');
-      
+
       // Test that RGB values match hex values
       expect(violet.rgb).toEqual([108, 92, 231]);
       expect(hexToRgb(violet.hex)).toEqual([108, 92, 231]);
@@ -44,11 +44,11 @@ describe('Color Consistency Validation', () => {
       function validateColorObject(obj: any, path = ''): void {
         for (const [key, value] of Object.entries(obj)) {
           const currentPath = path ? `${path}.${key}` : key;
-          
+
           if (value && typeof value === 'object') {
             if ('hex' in value) {
-              expect(validateHexColor(value.hex)).toBe(true);
-              expect(value.hex).toMatch(/^#[0-9a-f]{6}$/i);
+              expect(validateHexColor(value.hex as string)).toBe(true);
+              expect((value.hex as string)).toMatch(/^#[0-9a-f]{6}$/i);
             } else {
               validateColorObject(value, currentPath);
             }
@@ -64,7 +64,7 @@ describe('Color Consistency Validation', () => {
         for (const value of Object.values(obj)) {
           if (value && typeof value === 'object') {
             if ('hex' in value && 'rgb' in value) {
-              const calculatedRgb = hexToRgb(value.hex);
+              const calculatedRgb = hexToRgb(value.hex as string);
               expect(calculatedRgb).toEqual(value.rgb);
             } else {
               checkRgbConsistency(value);
@@ -124,7 +124,7 @@ describe('Color Consistency Validation', () => {
 
       const color = findColorByHex(THEME_COLORS);
       expect(color).toBeTruthy();
-      
+
       if (color) {
         const description = `${color.name} ${color.description || ''}`.toLowerCase();
         const hasExpectedTerm = expectedTerms.some(term => description.includes(term.toLowerCase()));
@@ -138,11 +138,11 @@ describe('Color Consistency Validation', () => {
       expect(THEME_COLORS.light.bg).toBeDefined();
       expect(THEME_COLORS.light.text).toBeDefined();
       expect(THEME_COLORS.light.border).toBeDefined();
-      
+
       ['primary', 'secondary', 'tertiary', 'chat'].forEach(key => {
         expect(THEME_COLORS.light.bg).toHaveProperty(key);
       });
-      
+
       ['primary', 'secondary', 'tertiary'].forEach(key => {
         expect(THEME_COLORS.light.text).toHaveProperty(key);
       });
@@ -153,15 +153,15 @@ describe('Color Consistency Validation', () => {
       expect(THEME_COLORS.dark.text).toBeDefined();
       expect(THEME_COLORS.dark.border).toBeDefined();
       expect(THEME_COLORS.dark.accent).toBeDefined();
-      
+
       ['primary', 'secondary', 'tertiary', 'chat'].forEach(key => {
         expect(THEME_COLORS.dark.bg).toHaveProperty(key);
       });
-      
+
       ['primary', 'secondary', 'tertiary'].forEach(key => {
         expect(THEME_COLORS.dark.text).toHaveProperty(key);
       });
-      
+
       ['primary', 'secondary', 'success', 'warning', 'danger'].forEach(key => {
         expect(THEME_COLORS.dark.accent).toHaveProperty(key);
       });
