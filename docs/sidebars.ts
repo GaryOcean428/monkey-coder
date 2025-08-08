@@ -15,6 +15,7 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     'quick-start',
+    'openai-response-examples',
     'quantum-tasks',
     'billing',
     'migration-guide',
