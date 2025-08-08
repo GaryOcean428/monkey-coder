@@ -652,3 +652,7 @@ def create_state_encoder(
             enable_dynamic_weighting=True,
             **kwargs
         )
+
+
+# Backward compatibility alias for existing imports
+StateEncoder = AdvancedStateEncoder

@@ -47,11 +47,10 @@ from ..security import (
     JWTUser,
     UserRole,
     Permission,
-    get_user_permissions,
-    get_user_store
+    get_user_permissions
 )
 from ..monitoring import MetricsCollector, BillingTracker
-from ..database import run_migrations
+from ..database import run_migrations, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from ..feedback_collector import FeedbackCollector
