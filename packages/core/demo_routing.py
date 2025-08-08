@@ -2,11 +2,11 @@
 """
 Demonstration script for the AdvancedRouter system.
 
-This script shows how the intelligent AdvancedRouter works with:
+This script shows how the AdvancedRouter works with:
 - Complexity analysis and scoring
 - Context-aware model selection
-- Persona-based routing integration
-- Command parsing and optimization
+- Persona routing integration
+- Slash-command parsing
 """
 
 import json
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         print("🎯 Key Features Demonstrated:")
         print("  • Complexity analysis and classification")
         print("  • Context-aware model selection")
-        print("  • Persona-based routing integration")
+        print("  • Persona routing integration")
         print("  • Slash-command parsing and routing")
         print("  • Cost-performance optimization")
         

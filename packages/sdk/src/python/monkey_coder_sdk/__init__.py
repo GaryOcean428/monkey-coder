@@ -17,14 +17,17 @@ from .types import (
     TaskStatus,
     ExecutionContext,
     PersonaConfig,
+    Monkey1Config,
     OrchestrationConfig,
-    QuantumConfig,
     ExecuteRequest,
     ExecuteResponse,
     StreamEvent,
     UsageRequest,
     HealthResponse,
     MonkeyCoderClientConfig,
+    # Backward compatibility aliases
+    SuperClaudeConfig,
+    Gary8DConfig,
 )
 from .helpers import (
     create_execute_request,
@@ -42,8 +45,8 @@ __all__ = [
     "TaskStatus",
     "ExecutionContext",
     "PersonaConfig",
-    "OrchestrationConfig", 
-    "QuantumConfig",
+    "Monkey1Config",
+    "OrchestrationConfig",
     "ExecuteRequest",
     "ExecuteResponse",
     "StreamEvent",
@@ -53,4 +56,7 @@ __all__ = [
     "create_execute_request",
     "create_code_generation_request",
     "create_code_review_request",
+    # Backward compatibility aliases
+    "SuperClaudeConfig",
+    "Gary8DConfig",
 ]

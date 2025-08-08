@@ -83,6 +83,10 @@ class PersonaConfig(BaseModel):
     use_markdown_spec: bool = True
     custom_instructions: Optional[str] = None
 
+# Backward compatibility alias
+class SuperClaudeConfig(PersonaConfig):
+    pass
+
 class ExecuteRequest(BaseModel):
     task_id: str
     task_type: str

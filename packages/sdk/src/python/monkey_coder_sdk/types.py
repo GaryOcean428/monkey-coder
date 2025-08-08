@@ -26,7 +26,7 @@ class TaskType(str, Enum):
 
 
 class PersonaType(str, Enum):
-    """Monkey Coder persona types."""
+    """Persona types for routing system."""
     DEVELOPER = "developer"
     ARCHITECT = "architect"
     REVIEWER = "reviewer"
@@ -75,7 +75,7 @@ class ExecutionContext:
 
 @dataclass
 class PersonaConfig:
-    """Configuration for Monkey Coder persona routing and specialization."""
+    """Configuration for persona routing system."""
     persona: PersonaType
     slash_commands: List[str] = field(default_factory=list)
     context_window: int = 32768
@@ -83,9 +83,13 @@ class PersonaConfig:
     custom_instructions: Optional[str] = None
 
 
+# Backward compatibility alias
+SuperClaudeConfig = PersonaConfig
+
+
 @dataclass
-class OrchestrationConfig:
-    """Configuration for multi-agent orchestration system."""
+class Monkey1Config:
+    """Configuration for monkey1 multi-agent orchestrator."""
     agent_count: int = 3
     coordination_strategy: str = "collaborative"
     consensus_threshold: float = 0.7
@@ -98,8 +102,8 @@ class OrchestrationConfig:
 
 
 @dataclass
-class QuantumConfig:
-    """Configuration for quantum execution system."""
+class OrchestrationConfig:
+    """Configuration for orchestration and quantum execution."""
     parallel_futures: bool = True
     collapse_strategy: str = "weighted_average"
     quantum_coherence: float = 0.8
@@ -109,6 +113,10 @@ class QuantumConfig:
     def __post_init__(self):
         if not (0.0 <= self.quantum_coherence <= 1.0):
             raise ValueError("Quantum coherence must be between 0.0 and 1.0")
+
+
+# Backward compatibility alias
+Gary8DConfig = OrchestrationConfig
 
 
 @dataclass
@@ -128,8 +136,8 @@ class ExecuteRequest:
     persona_config: PersonaConfig
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     files: Optional[List[FileData]] = None
+    monkey1_config: Optional[Monkey1Config] = None
     orchestration_config: Optional[OrchestrationConfig] = None
-    quantum_config: Optional[QuantumConfig] = None
     preferred_providers: Optional[List[ProviderType]] = None
     model_preferences: Optional[Dict[ProviderType, str]] = None
 
@@ -173,8 +181,8 @@ class ExecuteResponse:
     usage: Optional[UsageMetrics] = None
     execution_time: Optional[float] = None
     persona_routing: Dict[str, Any] = field(default_factory=dict)
-    orchestration_info: Dict[str, Any] = field(default_factory=dict)
-    quantum_execution: Dict[str, Any] = field(default_factory=dict)
+    monkey1_orchestration: Dict[str, Any] = field(default_factory=dict)
+    orchestration_execution: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

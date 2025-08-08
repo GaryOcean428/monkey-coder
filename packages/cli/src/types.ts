@@ -51,7 +51,7 @@ export interface ExecuteRequest {
     enable_reflection?: boolean;
     max_iterations?: number;
   };
-  gary8d_config?: {
+  orchestration_config?: {
     parallel_futures?: boolean;
     collapse_strategy?: string;
     quantum_coherence?: number;
@@ -86,9 +86,9 @@ export interface ExecuteResponse {
     execution_time: number;
   };
   execution_time?: number;
-  superclause_routing: Record<string, any>;
+  persona_routing: Record<string, any>;
   monkey1_orchestration: Record<string, any>;
-  gary8d_execution: Record<string, any>;
+  orchestration_execution: Record<string, any>;
 }
 
 export interface CommandOptions {

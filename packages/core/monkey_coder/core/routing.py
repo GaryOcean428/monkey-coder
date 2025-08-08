@@ -5,15 +5,16 @@ This module implements sophisticated routing logic with:
 - Complexity analysis and scoring
 - Context-aware model selection
 - Capability matching with provider models
-- Persona-based routing integration
-- Command parsing and optimization
+- Persona system integration
+- Slash-command parsing and routing
 """
 
 import re
 import logging
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone
+from datetime import datetime
 
 from ..models import (
     ExecuteRequest, 
@@ -22,9 +23,30 @@ from ..models import (
     TaskType,
     MODEL_REGISTRY
 )
-from .scoring import ScoringManager, ComplexityLevel, ContextType
 
 logger = logging.getLogger(__name__)
+
+
+class ComplexityLevel(str, Enum):
+    """Task complexity levels for routing decisions."""
+    TRIVIAL = "trivial"        # Simple queries, basic info retrieval
+    SIMPLE = "simple"          # Straightforward coding tasks
+    MODERATE = "moderate"      # Multi-step processes, standard algorithms
+    COMPLEX = "complex"        # Architecture decisions, complex logic
+    CRITICAL = "critical"      # Mission-critical, high-stakes tasks
+
+
+class ContextType(str, Enum):
+    """Context types for routing analysis."""
+    CODE_GENERATION = "code_generation"
+    CODE_REVIEW = "code_review" 
+    DEBUGGING = "debugging"
+    ARCHITECTURE = "architecture"
+    SECURITY = "security"
+    PERFORMANCE = "performance"
+    DOCUMENTATION = "documentation"
+    TESTING = "testing"
+    REFACTORING = "refactoring"
 
 
 @dataclass
@@ -55,13 +77,13 @@ class ModelCapabilities:
 
 class AdvancedRouter:
     """
-    Advanced Router with quantum-inspired decision making.
+    Advanced Router with intelligent decision making.
     
     Features:
     - Multi-dimensional complexity analysis
     - Context-aware persona selection
     - Dynamic capability scoring
-    - Intelligent command parsing and routing
+    - Slash-command integration
     - Cost-performance optimization
     """
     
@@ -71,9 +93,6 @@ class AdvancedRouter:
         self.persona_mappings = self._initialize_persona_mappings()
         self.slash_commands = self._initialize_slash_commands()
         self.routing_history = []
-        
-        # Initialize modular scoring system
-        self.scoring_manager = ScoringManager()
         
     def route_request(self, request: ExecuteRequest) -> RoutingDecision:
         """
@@ -130,7 +149,7 @@ class AdvancedRouter:
                 complexity_level, context_type, persona, provider, model
             ),
             metadata={
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.utcnow().isoformat(),
                 "slash_command": slash_command,
                 "context_type": context_type.value,
                 "complexity_level": complexity_level.value,
@@ -146,40 +165,155 @@ class AdvancedRouter:
     
     def _analyze_complexity(self, request: ExecuteRequest) -> float:
         """
-        Analyze request complexity using the modular scoring system.
+        Analyze request complexity using multiple signals.
         
         Returns complexity score from 0.0 (trivial) to 1.0 (critical)
         """
-        score, _ = self.scoring_manager.get_complexity_score(request)
-        return score
+        score = 0.0
+        prompt = request.prompt.lower()
+        
+        # Base score for any coding task
+        if any(indicator in prompt for indicator in ['function', 'class', 'method', 'code', 'implement', 'create']):
+            score += 0.2
+        
+        # Text length indicators - adjusted for better distribution
+        word_count = len(prompt.split())
+        if word_count > 100:
+            score += 0.3
+        elif word_count > 50:
+            score += 0.2
+        elif word_count > 20:
+            score += 0.1
+        elif word_count > 10:
+            score += 0.05
+            
+        # Technical complexity keywords - expanded and weighted
+        complex_keywords = [
+            'architecture', 'design pattern', 'scalability', 'performance',
+            'optimization', 'algorithm', 'data structure', 'system design',
+            'distributed', 'microservices', 'database', 'security', 'concurrent',
+            'async', 'threading', 'machine learning', 'ai', 'neural network',
+            'authentication', 'session', 'validation', 'comprehensive', 'pipeline',
+            'fault tolerance', 'auto-scaling', 'real-time', 'serving'
+        ]
+        
+        keyword_matches = sum(1 for kw in complex_keywords if kw in prompt)
+        # Adjusted weighting for better balance
+        score += min(keyword_matches * 0.08, 0.3)
+        
+        # Multi-step process indicators
+        step_indicators = ['step', 'phase', 'first', 'then', 'next', 'finally', 'multi-step', 'multi-phase']
+        step_count = sum(1 for ind in step_indicators if ind in prompt)
+        if step_count >= 2:
+            score += 0.2
+        elif step_count >= 1:
+            score += 0.1
+            
+        # File count complexity
+        if request.files and len(request.files) > 8:
+            score += 0.3
+        elif request.files and len(request.files) > 5:
+            score += 0.2
+        elif request.files and len(request.files) > 1:
+            score += 0.1
+        
+        # Specific complexity phrases
+        complex_phrases = [
+            'requiring deep technical expertise',
+            'with methods for',
+            'include detailed',
+            'comprehensive',
+            'e-commerce platform'
+        ]
+        phrase_matches = sum(1 for phrase in complex_phrases if phrase in prompt)
+        score += min(phrase_matches * 0.1, 0.2)
+            
+        return min(score, 1.0)
     
     def _classify_complexity(self, score: float) -> ComplexityLevel:
-        """Classify numeric complexity score into levels using the scoring manager."""
-        return self.scoring_manager.complexity_scorer.classify_complexity(score)
+        """Classify numeric complexity score into levels."""
+        if score >= 0.8:
+            return ComplexityLevel.CRITICAL
+        elif score >= 0.6:
+            return ComplexityLevel.COMPLEX
+        elif score >= 0.4:
+            return ComplexityLevel.MODERATE
+        elif score >= 0.2:
+            return ComplexityLevel.SIMPLE
+        else:
+            return ComplexityLevel.TRIVIAL
     
     def _extract_context_type(self, request: ExecuteRequest) -> ContextType:
-        """Extract primary context type from request using the modular scoring system."""
-        context_type, _ = self.scoring_manager.get_context_classification(request)
-        return context_type
-    
-    def get_scoring_breakdown(self, request: ExecuteRequest) -> Dict[str, Any]:
-        """
-        Get detailed scoring breakdown for transparency and debugging.
+        """Extract primary context type from request."""
+        prompt = request.prompt.lower()
         
-        Returns a dictionary with individual scoring contributions from each strategy.
-        """
-        complexity_score, complexity_level = self.scoring_manager.get_complexity_score(request)
-        context_type, context_confidence = self.scoring_manager.get_context_classification(request)
-        breakdown = self.scoring_manager.get_scoring_breakdown(request)
-        
-        return {
-            "complexity_score": complexity_score,
-            "complexity_level": complexity_level.value,
-            "context_type": context_type.value,
-            "context_confidence": context_confidence,
-            "strategy_scores": breakdown,
-            "total_strategies": len(breakdown)
+        # Task type mapping
+        task_context_map = {
+            TaskType.CODE_GENERATION: ContextType.CODE_GENERATION,
+            TaskType.CODE_REVIEW: ContextType.CODE_REVIEW,
+            TaskType.DEBUGGING: ContextType.DEBUGGING,
+            TaskType.DOCUMENTATION: ContextType.DOCUMENTATION,
+            TaskType.TESTING: ContextType.TESTING,
+            TaskType.REFACTORING: ContextType.REFACTORING,
         }
+        
+        if request.task_type in task_context_map:
+            return task_context_map[request.task_type]
+        
+        # Keyword-based detection with weighted scoring
+        context_keywords = {
+            ContextType.CODE_GENERATION: {
+                'primary': ['generate', 'create', 'write', 'implement', 'build', 'function', 'class'],
+                'secondary': ['code', 'develop', 'program', 'script']
+            },
+            ContextType.CODE_REVIEW: {
+                'primary': ['review', 'analyze', 'check', 'evaluate', 'assess', 'examine'],
+                'secondary': ['bugs', 'issues', 'quality']
+            },
+            ContextType.DEBUGGING: {
+                'primary': ['debug', 'fix', 'error', 'bug', 'issue', 'problem', 'traceback'],
+                'secondary': ['exception', 'crash', 'fault']
+            },
+            ContextType.ARCHITECTURE: {
+                'primary': ['architecture', 'design', 'structure', 'pattern', 'overall'],
+                'secondary': ['system', 'component', 'framework', 'blueprint']
+            },
+            ContextType.SECURITY: {
+                'primary': ['security', 'vulnerability', 'exploit', 'secure', 'auth', 'audit'],
+                'secondary': ['authentication', 'authorization', 'encryption', 'attack']
+            },
+            ContextType.PERFORMANCE: {
+                'primary': ['performance', 'optimize', 'speed', 'memory', 'efficient'],
+                'secondary': ['fast', 'slow', 'bottleneck', 'scalability']
+            },
+            ContextType.DOCUMENTATION: {
+                'primary': ['document', 'explain', 'describe', 'comment', 'api'],
+                'secondary': ['readme', 'guide', 'manual', 'specification']
+            },
+            ContextType.TESTING: {
+                'primary': ['test', 'unittest', 'spec', 'verify', 'validate', 'unit tests'],
+                'secondary': ['testing', 'assertion', 'mock', 'coverage']
+            },
+            ContextType.REFACTORING: {
+                'primary': ['refactor', 'improve', 'clean', 'restructure'],
+                'secondary': ['optimize', 'reorganize', 'simplify']
+            },
+        }
+        
+        best_match = ContextType.CODE_GENERATION
+        max_score = 0
+        
+        for context_type, keyword_groups in context_keywords.items():
+            # Weighted scoring: primary keywords = 2 points, secondary = 1 point
+            primary_score = sum(2 for kw in keyword_groups['primary'] if kw in prompt)
+            secondary_score = sum(1 for kw in keyword_groups['secondary'] if kw in prompt)
+            total_score = primary_score + secondary_score
+            
+            if total_score > max_score:
+                max_score = total_score
+                best_match = context_type
+                
+        return best_match
     
     def _score_context_match(self, request: ExecuteRequest, context_type: ContextType) -> float:
         """Score how well the request matches the identified context."""
@@ -238,7 +372,7 @@ class AdvancedRouter:
         
         # Explicit persona from request config (lower priority than specific contexts)
         if hasattr(request, 'persona_config') and request.persona_config:
-            if hasattr(request.persona_config, 'persona') and request.persona_config.persona:
+            if hasattr(request.persona_config, 'persona'):
                 return request.persona_config.persona
         
         # Fallback to context-based or default
@@ -421,51 +555,57 @@ class AdvancedRouter:
             specializations=["general", "coding", "fast", "vision"]
         )
         
-        # Anthropic models (using exact registry names)
-        capabilities[(ProviderType.ANTHROPIC, "claude-opus-4-20250514")] = ModelCapabilities(
+        # Anthropic models
+        capabilities[(ProviderType.ANTHROPIC, "claude-4-opus")] = ModelCapabilities(
             code_generation=0.96, reasoning=0.97, context_window=200000,
             latency_ms=3000, cost_per_token=0.015, reliability=0.95,
             specializations=["coding", "analysis", "long_context", "reasoning"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-sonnet-4-20250514")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-4-sonnet")] = ModelCapabilities(
             code_generation=0.92, reasoning=0.94, context_window=200000,
             latency_ms=2500, cost_per_token=0.003, reliability=0.93,
             specializations=["coding", "analysis", "long_context", "balanced"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3-7-sonnet-20250219")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.7-sonnet")] = ModelCapabilities(
             code_generation=0.90, reasoning=0.92, context_window=200000,
             latency_ms=2200, cost_per_token=0.0025, reliability=0.92,
             specializations=["coding", "analysis", "improved"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-sonnet-20241022")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-sonnet")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=200000,
             latency_ms=2000, cost_per_token=0.002, reliability=0.90,
             specializations=["coding", "stable", "reliable"]
         )
         
-        capabilities[(ProviderType.ANTHROPIC, "claude-3-5-haiku-20241022")] = ModelCapabilities(
+        capabilities[(ProviderType.ANTHROPIC, "claude-3.5-haiku")] = ModelCapabilities(
             code_generation=0.80, reasoning=0.82, context_window=200000,
             latency_ms=800, cost_per_token=0.0008, reliability=0.88,
             specializations=["fast", "efficient", "basic_coding"]
         )
         
-        # Google models (consistent naming with models/ prefix)
-        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-pro")] = ModelCapabilities(
+        # Google models
+        capabilities[(ProviderType.GOOGLE, "gemini-2.5-pro")] = ModelCapabilities(
             code_generation=0.93, reasoning=0.95, context_window=2000000,
             latency_ms=2500, cost_per_token=0.0025, reliability=0.92,
             specializations=["multimodal", "long_context", "reasoning"]
         )
         
-        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-flash")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "gemini-2.5-flash")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=1000000,
             latency_ms=1200, cost_per_token=0.001, reliability=0.87,
             specializations=["multimodal", "long_context", "fast"]
         )
         
-        capabilities[(ProviderType.GOOGLE, "models/gemini-2.0-flash")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "gemini-2.0-pro")] = ModelCapabilities(
+            code_generation=0.90, reasoning=0.92, context_window=1000000,
+            latency_ms=2200, cost_per_token=0.002, reliability=0.90,
+            specializations=["multimodal", "long_context", "stable"]
+        )
+        
+        capabilities[(ProviderType.GOOGLE, "gemini-2.0-flash")] = ModelCapabilities(
             code_generation=0.85, reasoning=0.87, context_window=1000000,
             latency_ms=1000, cost_per_token=0.0008, reliability=0.85,
             specializations=["multimodal", "fast", "efficient"]
@@ -478,14 +618,12 @@ class AdvancedRouter:
             specializations=["coding", "fast_hardware", "multilingual"]
         )
         
-        # Grok models (using exact registry names)
-        capabilities[(ProviderType.GROK, "grok-4-latest")] = ModelCapabilities(
+        # Grok models
+        capabilities[(ProviderType.GROK, "grok-4")] = ModelCapabilities(
             code_generation=0.93, reasoning=0.95, context_window=131072,
             latency_ms=2500, cost_per_token=0.003, reliability=0.92,
             specializations=["reasoning", "coding", "analysis"]
         )
-        
-
         
         capabilities[(ProviderType.GROK, "grok-3")] = ModelCapabilities(
             code_generation=0.88, reasoning=0.90, context_window=65536,
@@ -522,40 +660,6 @@ class AdvancedRouter:
             code_generation=0.90, reasoning=0.92, context_window=200000,
             latency_ms=1000, cost_per_token=0.0001, reliability=0.90,
             specializations=["long_context", "fast_hardware", "multilingual"]
-        )
-        
-        # Additional OpenAI models
-        capabilities[(ProviderType.OPENAI, "gpt-4.1-nano")] = ModelCapabilities(
-            code_generation=0.80, reasoning=0.85, context_window=131072,
-            latency_ms=800, cost_per_token=0.00008, reliability=0.88,
-            specializations=["general", "coding", "nano", "fast"]
-        )
-        
-        # OpenAI reasoning models
-        capabilities[(ProviderType.OPENAI, "o1")] = ModelCapabilities(
-            code_generation=0.92, reasoning=0.99, context_window=200000,
-            latency_ms=15000, cost_per_token=0.015, reliability=0.95,
-            specializations=["reasoning", "complex_problems", "deep_thinking"]
-        )
-        
-        capabilities[(ProviderType.OPENAI, "o1-mini")] = ModelCapabilities(
-            code_generation=0.88, reasoning=0.95, context_window=131072,
-            latency_ms=8000, cost_per_token=0.003, reliability=0.92,
-            specializations=["reasoning", "coding", "math", "fast_reasoning"]
-        )
-        
-        # Additional Google models
-        capabilities[(ProviderType.GOOGLE, "models/gemini-2.5-flash-lite")] = ModelCapabilities(
-            code_generation=0.82, reasoning=0.85, context_window=1000000,
-            latency_ms=800, cost_per_token=0.0005, reliability=0.83,
-            specializations=["multimodal", "lite", "efficient"]
-        )
-        
-        # Additional Grok models
-        capabilities[(ProviderType.GROK, "grok-3-mini")] = ModelCapabilities(
-            code_generation=0.82, reasoning=0.85, context_window=32768,
-            latency_ms=1500, cost_per_token=0.001, reliability=0.85,
-            specializations=["reasoning", "coding", "mini", "efficient"]
         )
         
         return capabilities
