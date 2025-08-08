@@ -142,6 +142,35 @@ ModelValidator.BLOCKED_MODELS = {
 
 ## Current Development 🚧
 
+### Post-Merge Update (2025-08-08)
+
+- Quantum Routing Engine branch merged into main; conflicts resolved.
+  - Preserved protected packages/core/monkey_coder/models.py from HEAD.
+  - Normalized .gitignore and removed committed Next.js build artifacts (.next/, out/).
+  - Integrated commits from copilot/fix-29 (DQN training pipeline, tests) and resolved overlaps in quantum modules.
+  - Consolidated branches: only main remains locally and on origin.
+- Workspace state
+  - Yarn 4.9.2 install successful across workspaces.
+  - ESLint v9 migration warnings for root/cli/sdk (missing eslint.config.js); web lints clean but suggests adding Next.js ESLint plugin.
+  - Tests: web workspace lacks Jest/Vitest test runner; CLI has one failing expectation in __tests__/install.test.ts regarding CI log message; Python core installs editable and test infra is present.
+
+#### Immediate Next Steps (prioritized)
+
+1) P0 Testing and CI gate
+   - Add test runner to web (Jest + @testing-library/react or Vitest) and provide "test" script.
+   - Fix CLI postinstall CI-mode path: either log "CI environment detected" when process.env.CI is set or update the test to assert the new output, while still verifying no network calls.
+   - Add GitHub Actions workflow to run lint/tests for all workspaces (yarn workspaces foreach -A) and pytest for packages/core; block merges on red.
+
+2) P0 ESLint v9 migration
+   - Add eslint.config.js to root, packages/cli, and packages/sdk (or pin ESLint v8 temporarily).
+   - In web, enable @next/eslint-plugin-next in config.
+
+3) P1 Quantum validation
+   - Run and stabilize quantum tests in packages/core/tests/quantum (experience_buffer, dqn_agent, training_pipeline) in CI; record baseline metrics.
+
+4) P1 DX hardening
+   - Ensure .gitignore includes .next/ and out/ in all relevant paths; add typecheck scripts in web/cli/sdk; ensure scripts don’t fail when a workspace has no tests.
+
 ### Phase 1.5: Technical Debt Resolution & Security Hardening (COMPLETED)
 
 **Goal:** Address critical technical debt, security vulnerabilities, and architectural improvements identified in comprehensive QA analysis
@@ -2213,6 +2242,13 @@ examples/
 
 ### Appendix D: Changelog
 
+**Version 1.0.7 (August 8, 2025):**
+- Quantum Routing Engine branch merged into main; conflicts resolved and protected models.py preserved
+- Removed committed Next.js build artifacts; normalized .gitignore
+- Integrated DQN training pipeline commits from copilot/fix-29
+- Branch cleanup: removed local/remote feature branches; main is single active branch
+- Docs: roadmap updated with post-merge status and next steps
+
 **Version 1.0.5 (June 8, 2025):**
 - Main Application Linting Fixes: Resolved all ruff linter errors in packages/core/monkey_coder/app/main.py
 - JWT Authentication Improvements: Fixed missing JWTUser import and create_access_token parameter structure
@@ -2242,7 +2278,7 @@ examples/
 
 ---
 
-Last Updated: 2024-08-07 (04:25 GMT-7)
-Version: 1.0.6
+Last Updated: 2025-08-08
+Version: 1.0.7
 Document Length: 1,350+ lines
 Contributors: Core Team, Community Contributors
