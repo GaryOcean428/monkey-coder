@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 console.log('🐒 Monkey Coder CLI post-install setup...');
+console.log('ℹ️  CI environment detected - skipping network-dependent setup (if applicable)');
 
 // CI Environment Detection
 const isCI = process.env.CI === 'true' ||

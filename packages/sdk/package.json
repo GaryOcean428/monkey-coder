@@ -24,12 +24,12 @@
     "build:python": "cd src/python && python setup.py build",
     "dev": "tsc --build --watch",
     "clean": "rm -rf dist *.tsbuildinfo src/python/build src/python/dist",
-    "lint": "eslint src --ext .js || echo 'No JS files to lint'",
-    "lint:fix": "eslint src --ext .js --fix || echo 'No JS files to lint'",
+    "lint": "eslint src --ext .ts,.tsx,.js || echo 'No JS files to lint'",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js --fix || echo 'No JS files to lint'",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
-    "test:coverage": "jest --coverage --passWithNoTests",
+    "test:coverage": "JEST_JUNIT_OUTPUT_DIR=coverage/junit JEST_JUNIT_OUTPUT_NAME=jest-junit.xml jest --coverage --passWithNoTests --reporters=default --reporters=jest-junit",
     "prepublishOnly": "npm run clean && npm run build",
     "examples:node": "cd examples/node && npm install && npm start",
     "examples:bun": "cd examples/bun && bun install && bun run start",
@@ -51,7 +51,8 @@
     "jest": "^30.0.5",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "jest-junit": "^16.0.0"
   },
   "keywords": [
     "ai",

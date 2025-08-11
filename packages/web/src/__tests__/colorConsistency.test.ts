@@ -1,6 +1,22 @@
 import { describe, it, expect } from '@jest/globals';
 import { THEME_COLORS, validateHexColor, hexToRgb, getColor } from '../constants/colors';
 
+// Type guards for test-time narrowing
+function hasHex(x: unknown): x is { hex: string } {
+  return !!x && typeof x === 'object' && 'hex' in x && typeof (x as any).hex === 'string';
+}
+
+function hasHexRgb(x: unknown): x is { hex: string; rgb: number[] } {
+  return (
+    !!x &&
+    typeof x === 'object' &&
+    'hex' in x &&
+    'rgb' in x &&
+    typeof (x as any).hex === 'string' &&
+    Array.isArray((x as any).rgb)
+  );
+}
+
 describe('Color Consistency Validation', () => {
   describe('Brand Colors', () => {
     it('should have accurate color names and descriptions', () => {
@@ -46,9 +62,9 @@ describe('Color Consistency Validation', () => {
           const currentPath = path ? `${path}.${key}` : key;
 
           if (value && typeof value === 'object') {
-            if ('hex' in value) {
-              expect(validateHexColor(value.hex as string)).toBe(true);
-              expect((value.hex as string)).toMatch(/^#[0-9a-f]{6}$/i);
+            if (hasHex(value)) {
+              expect(validateHexColor(value.hex)).toBe(true);
+              expect(value.hex).toMatch(/^#[0-9a-f]{6}$/i);
             } else {
               validateColorObject(value, currentPath);
             }
@@ -63,8 +79,8 @@ describe('Color Consistency Validation', () => {
       function checkRgbConsistency(obj: any): void {
         for (const value of Object.values(obj)) {
           if (value && typeof value === 'object') {
-            if ('hex' in value && 'rgb' in value) {
-              const calculatedRgb = hexToRgb(value.hex as string);
+            if (hasHexRgb(value)) {
+              const calculatedRgb = hexToRgb(value.hex);
               expect(calculatedRgb).toEqual(value.rgb);
             } else {
               checkRgbConsistency(value);
@@ -112,7 +128,7 @@ describe('Color Consistency Validation', () => {
       function findColorByHex(obj: any): any {
         for (const value of Object.values(obj)) {
           if (value && typeof value === 'object') {
-            if ('hex' in value && value.hex === hex) {
+            if (hasHex(value) && value.hex === hex) {
               return value;
             }
             const found = findColorByHex(value);

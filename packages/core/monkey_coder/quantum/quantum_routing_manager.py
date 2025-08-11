@@ -69,6 +69,16 @@ class QuantumRoutingResult:
     collapse_reasoning: str
 
 
+@dataclass
+class RoutingMetrics:
+    """Aggregated routing performance metrics (back-compat for imports)."""
+
+    success_rate: float = 0.0
+    avg_latency: float = 0.0
+    avg_confidence: float = 0.0
+    executions: int = 0
+
+
 class QuantumThread:
     """Individual quantum routing thread."""
 

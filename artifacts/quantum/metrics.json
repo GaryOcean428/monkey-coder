@@ -1,0 +1,119 @@
+{
+  "export_timestamp": 1754642694.645595,
+  "time_window": null,
+  "metrics": {
+    "execution_time": [
+      {
+        "timestamp": 1754642694.6452754,
+        "metric_type": "execution_time",
+        "value": 0.42,
+        "metadata": {
+          "provider": "openai",
+          "model": "gpt-4.1"
+        },
+        "tags": {}
+      },
+      {
+        "timestamp": 1754642694.6453018,
+        "metric_type": "execution_time",
+        "value": 0.38,
+        "metadata": {
+          "provider": "anthropic",
+          "model": "claude-3.5"
+        },
+        "tags": {}
+      }
+    ],
+    "quality_score": [
+      {
+        "timestamp": 1754642694.645315,
+        "metric_type": "quality_score",
+        "value": 0.88,
+        "metadata": {
+          "provider": "openai"
+        },
+        "tags": {}
+      },
+      {
+        "timestamp": 1754642694.6453226,
+        "metric_type": "quality_score",
+        "value": 0.84,
+        "metadata": {
+          "provider": "anthropic"
+        },
+        "tags": {}
+      }
+    ],
+    "cache_performance": [
+      {
+        "timestamp": 1754642694.6453273,
+        "metric_type": "cache_performance",
+        "value": 1.0,
+        "metadata": {
+          "response_time": 0.05
+        },
+        "tags": {}
+      },
+      {
+        "timestamp": 1754642694.645335,
+        "metric_type": "cache_performance",
+        "value": 0.0,
+        "metadata": {
+          "response_time": 0.15
+        },
+        "tags": {}
+      }
+    ],
+    "cost_efficiency": []
+  },
+  "summary": {
+    "overall_performance": {
+      "success_rate": 0.0,
+      "avg_response_time": 0.4,
+      "cache_hit_rate": 0.0,
+      "total_requests": 0
+    },
+    "provider_performance": {
+      "openai": {
+        "execution_time": {
+          "count": 1,
+          "mean": 0.42,
+          "latest": 0.42
+        },
+        "quality_score": {
+          "count": 1,
+          "mean": 0.88,
+          "latest": 0.88
+        },
+        "derived_metrics": {
+          "success_rate": 0.0,
+          "avg_response_time": 0.42,
+          "cost_efficiency": 0.0
+        }
+      },
+      "anthropic": {
+        "execution_time": {
+          "count": 1,
+          "mean": 0.38,
+          "latest": 0.38
+        },
+        "quality_score": {
+          "count": 1,
+          "mean": 0.84,
+          "latest": 0.84
+        },
+        "derived_metrics": {
+          "success_rate": 0.0,
+          "avg_response_time": 0.38,
+          "cost_efficiency": 0.0
+        }
+      }
+    },
+    "last_updated": 1754642694.6455936
+  },
+  "counters": {
+    "execution_time_count": 2,
+    "quality_score_count": 2,
+    "cache_performance_count": 2
+  }
+}

@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
@@ -37,10 +37,10 @@ from ..models import (
     ExecutionError,
 )
 from ..security import (
-    get_api_key, 
-    verify_permissions, 
-    get_current_user, 
-    create_access_token, 
+    get_api_key,
+    verify_permissions,
+    get_current_user,
+    create_access_token,
     create_refresh_token,
     verify_password,
     hash_password,
@@ -73,27 +73,27 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting Monkey Coder Core Orchestration Engine...")
-    
+
     # Initialize environment configuration
     try:
         config = get_config()
         app.state.config = config
-        
+
         # Log configuration summary
         config_summary = config.get_config_summary()
         logger.info(f"Environment configuration loaded: {config_summary}")
-        
+
         # Validate required configuration
         validation_result = config.validate_required_config()
         if validation_result["missing"]:
             logger.error(f"Missing required configuration: {validation_result['missing']}")
         if validation_result["warnings"]:
             logger.warning(f"Configuration warnings: {validation_result['warnings']}")
-            
+
     except Exception as e:
         logger.error(f"Failed to initialize environment configuration: {e}")
         # Continue startup with default configuration
-    
+
     # Run database migrations
     try:
         await run_migrations()
@@ -101,48 +101,48 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Database migrations failed: {e}")
         # Continue startup even if migrations fail (for development)
-    
+
     import traceback
     # Initialize core components with health checks
     try:
         app.state.orchestrator = MultiAgentOrchestrator()
         logger.info("✅ MultiAgentOrchestrator initialized successfully")
-        
+
         app.state.quantum_executor = QuantumExecutor()
         logger.info("✅ QuantumExecutor initialized successfully")
-        
+
         app.state.persona_router = PersonaRouter()
         logger.info("✅ PersonaRouter initialized successfully")
-        
+
         app.state.provider_registry = ProviderRegistry()
         logger.info("✅ ProviderRegistry initialized successfully")
-        
+
         app.state.metrics_collector = MetricsCollector()
         logger.info("✅ MetricsCollector initialized successfully")
-        
+
         app.state.billing_tracker = BillingTracker()
         logger.info("✅ BillingTracker initialized successfully")
-        
+
         app.state.feedback_collector = FeedbackCollector()
         logger.info("✅ FeedbackCollector initialized successfully")
-        
+
         app.state.api_key_manager = get_api_key_manager()
         logger.info("✅ APIKeyManager initialized successfully")
-        
+
         # Initialize providers with timeout
         await app.state.provider_registry.initialize_all()
         logger.info("✅ All providers initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"❌ Component initialization failed: {e}")
         traceback.print_exc()
         # Continue startup even if some components fail
         # This allows the health endpoint to report component status
-    
+
     logger.info("Orchestration engine started successfully")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Monkey Coder Core...")
     await app.state.provider_registry.cleanup_all()
@@ -195,12 +195,12 @@ app.add_middleware(SentryAsgiMiddleware)
 async def metrics_middleware(request: Request, call_next):
     """Middleware to collect HTTP request metrics for Prometheus and Railway."""
     start_time = time.time()
-    
+
     response = await call_next(request)
-    
+
     # Calculate request duration
     duration = time.time() - start_time
-    
+
     # Record metrics
     if hasattr(app.state, 'metrics_collector'):
         app.state.metrics_collector.record_http_request(
@@ -209,7 +209,7 @@ async def metrics_middleware(request: Request, call_next):
             status=response.status_code,
             duration=duration
         )
-    
+
     # Log performance data for Railway
     performance_logger.logger.info(
         "Request processed",
@@ -222,10 +222,10 @@ async def metrics_middleware(request: Request, call_next):
             'user_agent': request.headers.get('user-agent', 'unknown')
         }}
     )
-    
+
     # Add performance headers
     response.headers["X-Process-Time"] = f"{duration:.4f}"
-    
+
     return response
 
 
@@ -267,14 +267,14 @@ class RefreshTokenRequest(BaseModel):
 
 
 @app.get("/health", response_model=HealthResponse)
-@app.get("/healthz", response_model=HealthResponse) 
+@app.get("/healthz", response_model=HealthResponse)
 async def health_check():
     """
     Health check endpoint optimized for Railway deployment.
     """
     from datetime import datetime
     import psutil
-    
+
     # Get system metrics
     try:
         process = psutil.Process()
@@ -283,7 +283,7 @@ async def health_check():
     except Exception:
         memory_mb = 0
         cpu_percent = 0
-    
+
     # Check component health
     components = {
         "orchestrator": "active" if hasattr(app.state, 'orchestrator') else "inactive",
@@ -291,7 +291,7 @@ async def health_check():
         "persona_router": "active" if hasattr(app.state, 'persona_router') else "inactive",
         "provider_registry": "active" if hasattr(app.state, 'provider_registry') else "inactive",
     }
-    
+
     # Log health check for monitoring
     performance_logger.logger.info(
         "Health check performed",
@@ -303,7 +303,7 @@ async def health_check():
             'qwen_agent_available': 'qwen_agent' in globals()
         }}
     )
-    
+
     return HealthResponse(
         status="healthy",
         version="1.0.0",
@@ -316,7 +316,7 @@ async def health_check():
 async def prometheus_metrics():
     """
     Prometheus metrics endpoint.
-    
+
     Returns metrics in Prometheus text format for scraping.
     """
     if not hasattr(app.state, 'metrics_collector'):
@@ -324,52 +324,78 @@ async def prometheus_metrics():
             content="# Metrics collector not initialized\n",
             media_type="text/plain"
         )
-    
+
     metrics_data = app.state.metrics_collector.get_prometheus_metrics()
     return Response(content=metrics_data, media_type="text/plain")
 
 
 # Authentication Endpoints
 @app.post("/v1/auth/login", response_model=AuthResponse)
-async def login(request: LoginRequest) -> AuthResponse:
+async def login(request: LoginRequest, response: Response) -> AuthResponse:
     """
     User login endpoint.
-    
+
     Args:
         request: Login credentials (email and password)
-        
+
     Returns:
         JWT tokens and user information
     """
     try:
         # Authenticate user against the user store
         user_store = get_user_store()
-        user = user_store.authenticate_user(request.email, request.password)
-        
+        user = await user_store.authenticate_user(request.email, request.password)
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
-        
+
         # Create JWT user from authenticated user
+        roles_user_roles: List[UserRole] = []
+        for role_str in (user.roles or []):
+            try:
+                roles_user_roles.append(UserRole(role_str))
+            except Exception:
+                logger.warning(f"Unrecognized role '{role_str}' for user {user.email}")
+
         jwt_user = JWTUser(
-            user_id=user.user_id,
+            user_id=user.id or "unknown_user",
             username=user.username,
             email=user.email,
-            roles=user.roles,
-            permissions=get_user_permissions(user.roles),
+            roles=roles_user_roles,
+            permissions=get_user_permissions(roles_user_roles),
             mfa_verified=True  # MFA not implemented yet
         )
-        
+
         # Create tokens
         access_token = create_access_token(jwt_user)
         refresh_token = create_refresh_token(jwt_user.user_id)
-        
+
+        # Set httpOnly cookies (server-side session)
+        secure_cookie = os.getenv("ENVIRONMENT", "development") == "production"
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=secure_cookie,
+            samesite="lax",
+            max_age=15 * 60  # 15 minutes
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=secure_cookie,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60  # 30 days
+        )
+
         # Set credits and subscription tier based on user type
         credits = 10000 if user.is_developer else 100  # Developer account gets more credits
         subscription_tier = "developer" if user.is_developer else "free"
-        
+
         return AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -380,10 +406,10 @@ async def login(request: LoginRequest) -> AuthResponse:
                 "credits": credits,
                 "subscription_tier": subscription_tier,
                 "is_developer": user.is_developer,
-                "roles": [role.value for role in user.roles]
+                "roles": [r.value for r in roles_user_roles]
             }
         )
-        
+
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -393,10 +419,10 @@ async def login(request: LoginRequest) -> AuthResponse:
 async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> UserStatusResponse:
     """
     Get current user authentication status.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         User status and information
     """
@@ -411,57 +437,62 @@ async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> 
             },
             session_expires=current_user.expires_at.isoformat() if current_user.expires_at else None
         )
-        
+
     except Exception as e:
         logger.error(f"Status check failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get user status")
 
 
 @app.post("/v1/auth/logout")
-async def logout(current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+async def logout(response: Response, current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
     """
     User logout endpoint.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         Logout confirmation
     """
     try:
         # In production, you would invalidate the token in a blacklist
         logger.info(f"User {current_user.email} logged out")
+
+        # Clear cookies
+        response.set_cookie("access_token", value="", max_age=0)
+        response.set_cookie("refresh_token", value="", max_age=0)
+
         return {"message": "Successfully logged out"}
-        
+
     except Exception as e:
         logger.error(f"Logout failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
 @app.post("/v1/auth/refresh", response_model=AuthResponse)
-async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
+async def refresh_token(request: RefreshTokenRequest, response: Response) -> AuthResponse:
     """
     Refresh JWT access token using refresh token.
-    
+
     Args:
         request: Refresh token request
-        
+
     Returns:
         New JWT tokens
     """
     try:
         from ..security import verify_token
-        
+
         # Verify refresh token
         payload = verify_token(request.refresh_token)
-        
+
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid refresh token")
-        
+
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
-        
+
         # Create new user object (in production, fetch from database)
         mock_user = JWTUser(
             user_id=user_id,
@@ -471,11 +502,30 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
             permissions=get_user_permissions([UserRole.DEVELOPER]),
             mfa_verified=True
         )
-        
+
         # Create new tokens
         access_token = create_access_token(mock_user)
         new_refresh_token = create_refresh_token(mock_user.user_id)
-        
+
+        # Refresh httpOnly cookies
+        secure_cookie = os.getenv("ENVIRONMENT", "development") == "production"
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=secure_cookie,
+            samesite="lax",
+            max_age=15 * 60
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            secure=secure_cookie,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60
+        )
+
         return AuthResponse(
             access_token=access_token,
             refresh_token=new_refresh_token,
@@ -487,7 +537,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
                 "subscription_tier": "developer"
             }
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -503,73 +553,78 @@ async def execute_task(
 ) -> ExecuteResponse:
     """
     Main task execution endpoint with routing & quantum execution.
-    
+
     This endpoint:
     1. Routes tasks through SuperClaude slash-command & persona router
     2. Orchestrates execution via monkey1 multi-agent system
     3. Executes tasks using Gary8D functional-quantum executor
     4. Tracks usage and billing metrics
-    
+
     Args:
         request: Task execution request
         background_tasks: FastAPI background tasks
         api_key: API key for authentication
-        
+
     Returns:
         ExecuteResponse with task results and metadata
-        
+
     Raises:
         HTTPException: If task execution fails
     """
     try:
         # Verify permissions
         await verify_permissions(api_key, "execute")
-        
+
         # Start metrics collection
         execution_id = app.state.metrics_collector.start_execution(request)
-        
+
         # Route through persona system (SuperClaude integration)
         persona_context = await app.state.persona_router.route_request(request)
-        
+
         # Execute through multi-agent orchestrator (monkey1 integration)
         orchestration_result = await app.state.orchestrator.orchestrate(
             request, persona_context
         )
-        
+
         # Execute via quantum executor (Gary8D integration)
         execution_result = await app.state.quantum_executor.execute(
             orchestration_result, parallel_futures=True
         )
-        
+
         # Prepare response
         response = ExecuteResponse(
             execution_id=execution_id,
+            task_id=request.task_id,
             status=TaskStatus.COMPLETED,
-            result=execution_result.result,
-            metadata=execution_result.metadata,
-            usage=execution_result.usage,
-            execution_time=execution_result.execution_time,
+            result=execution_result.result if hasattr(execution_result, "result") else None,
+            error=None,
+            completed_at=None,
+            usage=getattr(execution_result, "usage", None),
+            execution_time=getattr(execution_result, "execution_time", None),
+            persona_routing={},
+            orchestration_info={},
+            quantum_execution={}
         )
-        
+
         # Track billing in background
         background_tasks.add_task(
             app.state.billing_tracker.track_usage,
             api_key,
             execution_result.usage
         )
-        
+
         # Complete metrics collection
         app.state.metrics_collector.complete_execution(execution_id, response)
-        
+
         return response
-        
+
     except Exception as e:
         logger.error(f"Task execution failed: {str(e)}")
-        
+
         # Track error metrics
         if 'execution_id' in locals():
             app.state.metrics_collector.record_error(execution_id, str(e))
-        
+
         # Return appropriate error response
         if isinstance(e, ExecutionError):
             raise HTTPException(status_code=400, detail=str(e))
@@ -584,27 +639,27 @@ async def get_usage_metrics(
 ) -> UsageResponse:
     """
     Billing and usage metrics endpoint.
-    
+
     Provides detailed usage statistics including:
     - Token consumption by provider
     - Execution counts and durations
     - Cost breakdowns
     - Rate limiting status
-    
+
     Args:
         request: Usage request parameters
         api_key: API key for authentication
-        
+
     Returns:
         UsageResponse with detailed usage metrics
-        
+
     Raises:
         HTTPException: If metrics retrieval fails
     """
     try:
         # Verify permissions
         await verify_permissions(api_key, "billing:read")
-        
+
         # Get usage data from billing tracker
         usage_data = await app.state.billing_tracker.get_usage(
             api_key=api_key,
@@ -612,7 +667,7 @@ async def get_usage_metrics(
             end_date=request.end_date,
             granularity=request.granularity,
         )
-        
+
         return UsageResponse(
             api_key_hash=usage_data.api_key_hash,
             period=usage_data.period,
@@ -623,7 +678,7 @@ async def get_usage_metrics(
             execution_stats=usage_data.execution_stats,
             rate_limit_status=usage_data.rate_limit_status,
         )
-        
+
     except Exception as e:
         logger.error(f"Usage metrics retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve usage metrics")
@@ -636,50 +691,50 @@ async def create_billing_portal_session(
 ) -> BillingPortalSession:
     """
     Create a Stripe billing portal session.
-    
+
     This endpoint creates a billing portal session that allows customers
     to manage their billing information, view invoices, and update payment methods.
-    
+
     Args:
         api_key: API key for authentication
         return_url: URL to redirect to after session ends
-        
+
     Returns:
         BillingPortalSession: Session information including URL
-        
+
     Raises:
         HTTPException: If session creation fails
     """
     from ..database.models import BillingCustomer
     import hashlib
-    
+
     try:
         # Verify permissions
         await verify_permissions(api_key, "billing:manage")
-        
+
         # Hash API key to find customer
         api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:16]
-        
+
         # Get billing customer
         billing_customer = await BillingCustomer.get_by_api_key_hash(api_key_hash)
         if not billing_customer:
             raise HTTPException(
-                status_code=404, 
+                status_code=404,
                 detail="No billing customer found. Please contact support to set up billing."
             )
-        
+
         # Create Stripe client and billing portal session
         stripe_client = StripeClient()
         session_url = stripe_client.create_billing_portal_session(
             customer_id=billing_customer.stripe_customer_id,
             return_url=return_url
         )
-        
+
         return BillingPortalSession(
             session_url=session_url,
             customer_id=billing_customer.stripe_customer_id
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -693,29 +748,29 @@ async def list_providers(
 ) -> Dict[str, Any]:
     """
     List available AI providers and their status.
-    
+
     Returns information about supported providers:
     - OpenAI (GPT models)
     - Anthropic (Claude models)
     - Google (Gemini models)
     - Qwen (Qwen Coder models)
-    
+
     Args:
         api_key: API key for authentication
-        
+
     Returns:
         Dictionary with provider information and status
     """
     try:
         await verify_permissions(api_key, "providers:read")
-        
+
         providers = app.state.provider_registry.get_all_providers()
         return {
             "providers": providers,
             "count": len(providers),
             "status": "active"
         }
-        
+
     except Exception as e:
         logger.error(f"Provider listing failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list providers")
@@ -728,24 +783,24 @@ async def list_models(
 ) -> Dict[str, Any]:
     """
     List available AI models by provider.
-    
+
     Args:
         provider: Optional provider filter (openai, anthropic, google, qwen)
         api_key: API key for authentication
-        
+
     Returns:
         Dictionary with model information by provider
     """
     try:
         await verify_permissions(api_key, "models:read")
-        
+
         models = await app.state.provider_registry.get_available_models(provider)
         return {
             "models": models,
             "provider_filter": provider,
             "count": sum(len(models[p]) for p in models),
         }
-        
+
     except Exception as e:
         logger.error(f"Model listing failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list models")
@@ -758,7 +813,7 @@ async def debug_routing(
 ) -> Dict[str, Any]:
     """
     Debug routing decisions for a given request.
-    
+
     This endpoint provides detailed information about how the AdvancedRouter
     would route a given request, including:
     - Selected model and provider
@@ -766,20 +821,20 @@ async def debug_routing(
     - Complexity, context, and capability scores
     - Reasoning behind the decision
     - Available alternatives
-    
+
     Args:
         request: The execution request to analyze
         api_key: API key for authentication
-        
+
     Returns:
         Detailed routing debug information
     """
     try:
         await verify_permissions(api_key, "router:debug")
-        
+
         # Get detailed routing debug information
         debug_info = app.state.persona_router.get_routing_debug_info(request)
-        
+
         return {
             "debug_info": debug_info,
             "request_summary": {
@@ -791,7 +846,7 @@ async def debug_routing(
             "personas_available": app.state.persona_router.get_available_personas(),
             "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Router debug failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate routing debug info")
@@ -803,37 +858,37 @@ async def get_system_capabilities(
 ) -> Dict[str, Any]:
     """
     Get comprehensive system capabilities information.
-    
+
     This endpoint provides detailed information about:
     - Environment configuration status
-    - Persona validation capabilities  
+    - Persona validation capabilities
     - Orchestration strategies and patterns
     - Available providers and models
     - System health and performance metrics
-    
+
     Args:
         api_key: API key for authentication
-        
+
     Returns:
         Comprehensive system capabilities information
     """
     try:
         await verify_permissions(api_key, "system:read")
-        
+
         # Get environment configuration summary
         config_summary = None
         if hasattr(app.state, 'config'):
             config_summary = app.state.config.get_config_summary()
-        
+
         # Get persona validation stats
         validation_stats = app.state.persona_router.get_validation_stats()
-        
+
         # Get orchestration capabilities
         orchestration_caps = app.state.orchestrator.get_orchestration_capabilities()
-        
+
         # Get provider information
         providers = app.state.provider_registry.get_all_providers()
-        
+
         return {
             "system_info": {
                 "version": "1.0.0",
@@ -841,37 +896,37 @@ async def get_system_capabilities(
                 "debug_mode": config_summary.get("debug") if config_summary else False,
                 "timestamp": datetime.utcnow().isoformat()
             },
-            
+
             "environment_configuration": {
-                "status": "configured" if config_summary else "default",  
+                "status": "configured" if config_summary else "default",
                 "summary": config_summary,
                 "validation_warnings": [] if config_summary else ["Using default configuration"]
             },
-            
+
             "persona_validation": {
                 "enhanced_validation": True,
                 "single_word_support": True,
                 "edge_case_handling": True,
                 "capabilities": validation_stats
             },
-            
+
             "orchestration": {
                 "enhanced_patterns": True,
                 "multi_strategy_support": True,
                 "intelligent_coordination": True,
                 "capabilities": orchestration_caps
             },
-            
+
             "providers": {
                 "total_providers": len(providers),
                 "active_providers": [p["name"] for p in providers if p.get("status") == "active"],
                 "provider_details": providers
             },
-            
+
             "features": [
                 "environment_configuration_management",
                 "persona_aware_routing_with_validation",
-                "single_word_input_enhancement", 
+                "single_word_input_enhancement",
                 "edge_case_prompt_handling",
                 "multi_strategy_orchestration",
                 "sequential_agent_coordination",
@@ -882,7 +937,7 @@ async def get_system_capabilities(
                 "comprehensive_error_handling",
                 "production_ready_deployment"
             ],
-            
+
             "recent_enhancements": [
                 {
                     "feature": "Environment Configuration",
@@ -906,7 +961,7 @@ async def get_system_capabilities(
                 }
             ]
         }
-        
+
     except Exception as e:
         logger.error(f"Capabilities retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve system capabilities")
@@ -943,28 +998,28 @@ async def create_api_key(
 ) -> APIKeyResponse:
     """
     Create a new API key.
-    
+
     This endpoint allows authenticated users to generate new API keys
     for programmatic access to the API.
-    
+
     Args:
         request: API key creation request
         current_user: Current authenticated user
-        
+
     Returns:
         APIKeyResponse: The created API key information including the actual key
-        
+
     Raises:
         HTTPException: If key creation fails
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if not any(role in getattr(current_user, "roles", []) for role in [UserRole.ADMIN, UserRole.DEVELOPER]):
             raise HTTPException(
                 status_code=403,
                 detail="Insufficient permissions to create API keys"
             )
-        
+
         # Create the API key
         key_data = app.state.api_key_manager.generate_api_key(
             name=request.name,
@@ -973,9 +1028,9 @@ async def create_api_key(
             expires_days=request.expires_days,
             metadata={"created_by": current_user.user_id}
         )
-        
+
         logger.info(f"Created API key '{request.name}' for user {current_user.user_id}")
-        
+
         return APIKeyResponse(
             key=key_data["key"],  # Only returned on creation
             key_id=key_data["key_id"],
@@ -988,7 +1043,7 @@ async def create_api_key(
             usage_count=0,
             permissions=key_data["permissions"]
         )
-        
+
     except Exception as e:
         logger.error(f"API key creation failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create API key")
@@ -998,13 +1053,13 @@ async def create_api_key(
 async def create_development_api_key() -> APIKeyResponse:
     """
     Create a development API key for testing (no authentication required).
-    
+
     This endpoint is for development and testing purposes only.
     It creates an API key without requiring authentication.
-    
+
     Returns:
         APIKeyResponse: The created development API key
-        
+
     Raises:
         HTTPException: If key creation fails
     """
@@ -1017,9 +1072,9 @@ async def create_development_api_key() -> APIKeyResponse:
             expires_days=30,    # 30 days expiration
             metadata={"type": "development", "created_via": "dev_endpoint"}
         )
-        
+
         logger.info(f"Created development API key: {key_data['key'][:15]}...")
-        
+
         return APIKeyResponse(
             key=key_data["key"],
             key_id=key_data["key_id"],
@@ -1032,7 +1087,7 @@ async def create_development_api_key() -> APIKeyResponse:
             usage_count=0,
             permissions=key_data["permissions"]
         )
-        
+
     except Exception as e:
         logger.error(f"Development API key creation failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create development API key")
@@ -1044,27 +1099,27 @@ async def list_api_keys(
 ) -> List[APIKeyResponse]:
     """
     List all API keys for the current user.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         List of API key information (without the actual keys)
-        
+
     Raises:
         HTTPException: If listing fails
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if not any(role in getattr(current_user, "roles", []) for role in [UserRole.ADMIN, UserRole.DEVELOPER]):
             raise HTTPException(
                 status_code=403,
                 detail="Insufficient permissions to list API keys"
             )
-        
+
         # Get all API keys
         keys = app.state.api_key_manager.list_api_keys()
-        
+
         # Convert to response format
         response_keys = []
         for key_data in keys:
@@ -1080,9 +1135,9 @@ async def list_api_keys(
                 usage_count=key_data["usage_count"],
                 permissions=key_data["permissions"]
             ))
-        
+
         return response_keys
-        
+
     except Exception as e:
         logger.error(f"API key listing failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list API keys")
@@ -1095,38 +1150,38 @@ async def revoke_api_key(
 ) -> Dict[str, str]:
     """
     Revoke an API key.
-    
+
     Args:
         key_id: The ID of the API key to revoke
         current_user: Current authenticated user
-        
+
     Returns:
         Success message
-        
+
     Raises:
         HTTPException: If revocation fails or key not found
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN, UserRole.DEVELOPER]:
+        if not any(role in getattr(current_user, "roles", []) for role in [UserRole.ADMIN, UserRole.DEVELOPER]):
             raise HTTPException(
                 status_code=403,
                 detail="Insufficient permissions to revoke API keys"
             )
-        
+
         # Revoke the key
         success = app.state.api_key_manager.revoke_api_key(key_id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=404,
                 detail="API key not found"
             )
-        
+
         logger.info(f"Revoked API key {key_id} by user {current_user.user_id}")
-        
+
         return {"message": "API key revoked successfully"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1140,31 +1195,31 @@ async def get_api_key_stats(
 ) -> Dict[str, Any]:
     """
     Get API key usage statistics.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         Dictionary containing API key statistics
-        
+
     Raises:
         HTTPException: If user lacks permissions
     """
     try:
         # Check permissions
-        if current_user.role not in [UserRole.ADMIN]:
+        if UserRole.ADMIN not in getattr(current_user, "roles", []):
             raise HTTPException(
                 status_code=403,
                 detail="Admin permissions required for API key statistics"
             )
-        
+
         stats = app.state.api_key_manager.get_stats()
-        
+
         return {
             "statistics": stats,
             "timestamp": datetime.utcnow().isoformat()
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1202,7 +1257,7 @@ async def http_exception_handler(request, exc: HTTPException):
 def create_app() -> FastAPI:
     """
     Application factory function.
-    
+
     Returns:
         Configured FastAPI application instance
     """
@@ -1230,7 +1285,7 @@ if static_dir:
     logger.info(f"✅ Static files served from: {static_dir}")
 else:
     logger.warning(f"❌ Static directory not found in any of: {[str(p) for p in static_dir_options]}. Frontend will not be served.")
-    
+
     # Add fallback route when static files are not available
     @app.get("/")
     async def frontend_fallback():
@@ -1252,7 +1307,7 @@ else:
                 <h1>🐒 Monkey Coder API</h1>
                 <p>FastAPI backend is running successfully!</p>
             </div>
-            
+
             <h2>API Documentation</h2>
             <ul>
                 <li><a href="/api/docs" class="api-link">Interactive API Documentation (Swagger)</a></li>
@@ -1260,7 +1315,7 @@ else:
                 <li><a href="/health" class="api-link">Health Check</a></li>
                 <li><a href="/metrics" class="api-link">Prometheus Metrics</a></li>
             </ul>
-            
+
             <h2>Available Endpoints</h2>
             <ul>
                 <li><code>POST /v1/auth/login</code> - User authentication</li>
@@ -1273,13 +1328,13 @@ else:
                 <li><code>GET /v1/models</code> - List available models</li>
                 <li><code>GET /v1/capabilities</code> - System capabilities and features</li>
             </ul>
-            
+
             <h2>🚀 Quick Start</h2>
             <p><strong>Get an API key for testing:</strong></p>
             <pre><code>curl -X POST https://your-domain.railway.app/v1/auth/keys/dev</code></pre>
             <p><strong>Then use it to test the API:</strong></p>
             <pre><code>curl -H "Authorization: Bearer mk-YOUR_KEY" https://your-domain.railway.app/v1/auth/status</code></pre>
-            
+
             <p><em>Frontend static files not found. API endpoints are fully functional.</em></p>
         </body>
         </html>
@@ -1290,7 +1345,7 @@ if __name__ == "__main__":
     # Development server
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
-    
+
     uvicorn.run(
         "monkey_coder.app.main:app",
         host=host,

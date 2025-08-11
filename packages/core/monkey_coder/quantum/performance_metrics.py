@@ -648,8 +648,16 @@ class PerformanceMetricsCollector:
                         if current_time - dp.timestamp <= time_window
                     ]
 
+                # Serialize dataclass with Enum fields to JSON-safe dicts
                 export_data["metrics"][metric_type.value] = [
-                    asdict(dp) for dp in datapoints
+                    {
+                        "timestamp": dp.timestamp,
+                        "metric_type": dp.metric_type.value,
+                        "value": dp.value,
+                        "metadata": dp.metadata,
+                        "tags": dp.tags,
+                    }
+                    for dp in datapoints
                 ]
 
         export_data["summary"] = self.aggregated_metrics
