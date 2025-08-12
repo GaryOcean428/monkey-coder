@@ -472,7 +472,7 @@ export default function GettingStartedPage() {
                   <pre className="text-sm">
                     <code>{`// email-validator.js
 function validateEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const regex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
   return regex.test(email);
 }`}</code>
                   </pre>

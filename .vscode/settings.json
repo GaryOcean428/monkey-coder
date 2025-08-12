@@ -91,5 +91,12 @@
     "chat.editor.wordWrap": "on",
     "chat.agent.maxRequests": 200,
     "java.format.onType.enabled": false,
-    "github.copilot.chat.agent.thinkingTool": true
+    "github.copilot.chat.agent.thinkingTool": true,
+    "chat.agent.showThinking": true,
+    "chat.agentSessionsViewLocation": "showChatsMenu",
+    "interactiveWindow.promptToSaveOnClose": true,
+    "interactiveWindow.executeWithShiftEnter": true,
+    "chat.checkpoints.showFileChanges": true,
+    "chat.renderRelatedFiles": true,
+    "chat.todoListTool.enabled": true
 }
