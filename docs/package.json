@@ -36,7 +36,11 @@
     "@docusaurus/types": "3.8.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "typescript": "~5.8.3"
+    "concurrently": "^9.1.2",
+    "http-server": "^14.1.1",
+    "linkinator": "^6.1.4",
+    "typescript": "~5.8.3",
+    "wait-on": "^7.2.0"
   },
   "browserslist": {
     "production": [
