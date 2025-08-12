@@ -16,7 +16,7 @@ export default [
   // JS rules
   js.configs.recommended,
   {
-    files: [ '**/*.config.js', 'jest.config.js', 'next.config.js', '**/*.config.cjs', 'jest.config.cjs', 'next.config.cjs' ],
+    files: ['**/*.config.js', '**/*.config.cjs', '**/*.config.mjs', 'jest.config.cjs', 'next.config.mjs'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
     rules: { 'no-undef': 'off' },
   },
@@ -32,7 +32,7 @@ export default [
   },
   // Allow require() and CommonJS in Node config files and mocks
   {
-    files: ['**/*.config.js', 'jest.config.js', 'next.config.js', '__mocks__/**/*.js'],
+    files: ['**/*.config.js', 'jest.config.cjs', 'next.config.mjs', '__mocks__/**/*.js'],
     languageOptions: { 
       ecmaVersion: 2022, 
       sourceType: 'script' // Use script mode for CommonJS files
