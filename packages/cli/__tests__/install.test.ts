@@ -117,6 +117,7 @@ describe('CLI Installation', () => {
     delete cleanEnv.GITLAB_CI;
     delete cleanEnv.JENKINS_URL;
     delete cleanEnv.BUILDKITE;
+cleanEnv.MONKEY_CODER_FORCE_POSTINSTALL = 'true';
     
     try {
       const postInstallPath = path.resolve('./scripts/postinstall.cjs');

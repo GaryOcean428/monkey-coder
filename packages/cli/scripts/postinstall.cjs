@@ -11,14 +11,17 @@ console.log('🐒 Monkey Coder CLI post-install setup...');
 console.log('ℹ️  CI environment detected - skipping network-dependent setup (if applicable)');
 
 // CI Environment Detection
-const isCI = process.env.CI === 'true' ||
+const forcePostInstall = process.env.MONKEY_CODER_FORCE_POSTINSTALL === 'true';
+const isCI = !forcePostInstall && (
+             process.env.CI === 'true' ||
              process.env.CONTINUOUS_INTEGRATION === 'true' ||
              process.env.GITHUB_ACTIONS === 'true' ||
              process.env.GITLAB_CI === 'true' ||
              process.env.JENKINS_URL ||
              process.env.BUILDKITE === 'true' ||
              // Treat Jest worker environment as CI for deterministic tests
-             !!process.env.JEST_WORKER_ID;
+             !!process.env.JEST_WORKER_ID
+);
 
 if (isCI) {
   console.log('ℹ️  CI environment detected - skipping network-dependent setup');
