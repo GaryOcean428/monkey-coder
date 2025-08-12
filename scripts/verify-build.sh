@@ -19,7 +19,7 @@ echo -e "${BLUE}📁 Checking critical files...${NC}"
 
 CRITICAL_FILES=(
     "packages/web/src/lib/utils.ts"
-    "packages/web/next.config.js" 
+    "packages/web/next.config.mjs" 
     "packages/web/tsconfig.json"
     "packages/web/package.json"
     "packages/core/setup.py"
@@ -57,7 +57,7 @@ fi
 
 # Check next.config.js webpack alias
 echo -e "${BLUE}📦 Verifying Next.js webpack configuration...${NC}"
-if grep -q "config.resolve.alias\['@'\]" packages/web/next.config.js; then
+if grep -q "config.resolve.alias\['@'\]" packages/web/next.config.mjs; then
     echo -e "${GREEN}✅ Webpack alias configured${NC}"
 else
     echo -e "${RED}❌ Webpack alias not configured${NC}"

@@ -8,9 +8,9 @@
     "export": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "NEXT_DISABLE_LOCKFILE_PATCHING=1 jest --passWithNoTests",
-    "test:watch": "NEXT_DISABLE_LOCKFILE_PATCHING=1 jest --watch --passWithNoTests",
-    "test:coverage": "NEXT_DISABLE_LOCKFILE_PATCHING=1 JEST_JUNIT_OUTPUT_DIR=coverage/junit JEST_JUNIT_OUTPUT_NAME=jest-junit.xml jest --coverage --passWithNoTests --reporters=default --reporters=jest-junit",
+    "test": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 jest --passWithNoTests",
+    "test:watch": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 jest --watch --passWithNoTests",
+    "test:coverage": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 JEST_JUNIT_OUTPUT_DIR=coverage/junit JEST_JUNIT_OUTPUT_NAME=jest-junit.xml jest --coverage --passWithNoTests --reporters=default --reporters=jest-junit",
     "type-check": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
