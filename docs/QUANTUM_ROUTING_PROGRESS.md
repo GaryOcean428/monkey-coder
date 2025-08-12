@@ -134,7 +134,7 @@
 ## 📚 References
 
 - [Quantum Routing SRD](.agent-os/specs/2025-01-29-quantum-routing-engine/SRD.md)
-- [Task Breakdown](.agent-os/specs/2025-01-29-quantum-routing-engine/tasks.md)
+- Task Breakdown (see internal docs and roadmap)
 - [Main Roadmap](docs/roadmap.md)
 
 ---
