@@ -70,7 +70,18 @@ export default function RootLayout({
           <AuthProvider>
             <div className="min-h-screen flex flex-col">
               <SiteHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1">
+                {children}
+                {/* Logo placement and styling */}
+                <div className="flex justify-center items-center my-8">
+                  <img
+                    src="/splash.png"
+                    alt="Monkey Coder Logo"
+                    className="max-w-xs w-full h-auto object-contain animate-pulse [text-shadow:0_0_5px_#00fff7,_0_0_10px_#00fff7,_0_0_15px_#00fff7,_0_0_20px_#00fff7]"
+                    style={{ maxWidth: '200px' }} // Example size, adjust as needed
+                  />
+                </div>
+              </main>
               <SiteFooter />
             </div>
             <Toaster
