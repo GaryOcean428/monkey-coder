@@ -1,5 +1,6 @@
 {
   "$schema": "https://schema.railpack.com",
+  "provider": "python",
   "buildAptPackages": ["python3", "python3-pip"],
   "packages": {
     "node": "22",
@@ -19,6 +20,17 @@
       "commands": [
         "cd packages/web && yarn build"
       ]
+    },
+    "python": {
+      "inputs": [
+        { "image": "python:3.11-slim" },
+        { "local": true, "include": ["requirements.txt"] }
+      ],
+      "commands": [
+        "python -m venv /opt/venv",
+        "/opt/venv/bin/pip install --no-cache-dir --upgrade pip",
+        "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt"
+      ]
     }
   },
   "deploy": {
@@ -27,9 +39,12 @@
     },
     "inputs": [
       "...",
+      { "step": "python", "include": ["/opt/venv"] },
       { "step": "build", "include": ["."] }
     ],
-    "startCommand": "sh -lc 'set -e; if ! command -v python3 >/dev/null 2>&1; then apt-get update; apt-get install -y python3 python3-pip; fi; python3 -m ensurepip --upgrade || true; if [ -f requirements.txt ]; then python3 -m pip install --no-cache-dir -r requirements.txt; fi; python3 run_server.py'"
+    "aptPackages": ["python3", "python3-pip", "python3-venv"],
+    "paths": ["/opt/venv/bin"],
+    "startCommand": "/opt/venv/bin/python run_server.py"
   },
   "healthcheck": {
     "path": "/health",
