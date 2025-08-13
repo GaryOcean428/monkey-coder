@@ -27,9 +27,9 @@
         { "local": true, "include": ["requirements.txt"] }
       ],
       "commands": [
-        "python -m venv /opt/venv",
-        "/opt/venv/bin/pip install --no-cache-dir --upgrade pip",
-        "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt"
+        "python -m venv /app/.venv",
+        "/app/.venv/bin/pip install --no-cache-dir --upgrade pip",
+        "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt"
       ]
     }
   },
@@ -39,12 +39,12 @@
     },
     "inputs": [
       "...",
-      { "step": "python", "include": ["/opt/venv"] },
+      { "step": "python", "include": [".venv"] },
       { "step": "build", "include": ["."] }
     ],
     "aptPackages": ["python3", "python3-pip", "python3-venv"],
-    "paths": ["/opt/venv/bin"],
-    "startCommand": "/opt/venv/bin/python run_server.py"
+    "paths": ["/app/.venv/bin"],
+    "startCommand": "/app/.venv/bin/python run_server.py"
   },
   "healthcheck": {
     "path": "/health",
