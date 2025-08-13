@@ -18,7 +18,8 @@
         { "step": "python" }
       ],
       "commands": [
-        "cd packages/web && yarn build"
+        "cd packages/web && yarn build",
+        "ln -sf /app/packages/core/monkey_coder /app/monkey_coder"
       ]
     },
     "python": {
