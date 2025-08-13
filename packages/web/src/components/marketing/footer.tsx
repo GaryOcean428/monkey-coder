@@ -49,7 +49,7 @@ export function Footer() {
                 alt="Monkey Coder Logo"
                 width={120}
                 height={32}
-                className="h-8 w-auto"
+                className="h-8 w-auto object-contain"
               />
             </div>
             <p className="text-sm leading-6 text-muted-foreground">

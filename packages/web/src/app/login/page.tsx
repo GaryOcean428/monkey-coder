@@ -70,7 +70,7 @@ export default function LoginPage() {
               alt="Monkey Coder Logo"
               width={150}
               height={40}
-              className="h-10"
+              className="h-10 w-auto object-contain"
             />
           </Link>
 

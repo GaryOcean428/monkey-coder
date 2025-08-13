@@ -93,7 +93,8 @@ export default function SignupPage() {
               alt="Splash Logo"
               width={120}
               height={32}
-              className="h-8 w-8"
+              className="h-8 w-auto object-contain"
+              priority
             />
           </Link>
 
