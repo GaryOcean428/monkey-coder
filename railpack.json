@@ -22,11 +22,14 @@
     }
   },
   "deploy": {
-    "startCommand": "python3 run_server.py",
-    "aptPackages": ["python3", "python3-pip"]
-  },
-  "start": {
-    "cmd": "python3 run_server.py"
+    "base": {
+      "image": "python:3.11-slim"
+    },
+    "inputs": [
+      "...",
+      { "step": "build", "include": ["."] }
+    ],
+    "startCommand": "python run_server.py"
   },
   "healthcheck": {
     "path": "/health",
