@@ -254,6 +254,7 @@ class AuthResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(..., description="JWT refresh token")
     user: Dict[str, Any] = Field(..., description="User information")
+    expires_at: Optional[str] = Field(None, description="Access token expiration timestamp")
 
 
 class UserStatusResponse(BaseModel):
