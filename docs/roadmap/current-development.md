@@ -20,6 +20,7 @@ After comprehensive review of the codebase and roadmap:
 1. **Real AI Provider Integration** (🔴 BLOCKER - 2 weeks)
    - OpenAI/Anthropic adapters return only mock responses
    - No actual API calls to AI providers implemented
+   - **Target Models:** gpt-5 (OpenAI), claude-sonnet-4-20250514 (Anthropic)
    - **Impact:** System cannot generate any real code
 
 2. **Streaming Response Implementation** (🔴 CRITICAL - 1 week)
@@ -43,13 +44,13 @@ After comprehensive review of the codebase and roadmap:
 ### Quick Start Implementation Path
 ```bash
 # Week 1: Unblock core functionality
-1. Implement OpenAI provider with real API calls (Day 1-3)
+1. Implement OpenAI provider with gpt-5 API calls (Day 1-3)
 2. Fix CLI-Backend auth flow (Day 4-5)
 3. Add basic file operations (Day 6-7)
 
-# Week 2: Make it usable
-4. Implement streaming (Day 8-10)
-5. Add context management (Day 11-14)
+# Week 2: Make it usable  
+4. Implement streaming with latest models (Day 8-10)
+5. Add context management with claude-sonnet-4-20250514 (Day 11-14)
 ```
 
 ---
