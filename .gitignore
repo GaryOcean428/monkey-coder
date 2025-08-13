@@ -270,3 +270,12 @@ npm-audit-report.json
 *.sqlite3
 config-backup.*
 # Dev container files should be committed
+
+# Disallow Docker artifacts (force Railpack detection)
+Dockerfile
+**/Dockerfile
+docker-compose.yml
+**/docker-compose*.yml
+docker/
+**/docker/
+scripts/test-docker-build.sh
