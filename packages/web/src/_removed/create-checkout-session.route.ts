@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-07-30.basil',
-});
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { productId, priceId, successUrl, cancelUrl } = body;
+
+    const secret = process.env.STRIPE_SECRET_KEY;
+    if (!secret) {
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+    }
+    const stripe = new Stripe(secret, {
+      apiVersion: '2025-07-30.basil',
+    });
 
     // TODO: Get the current user from the session
     // For now, we'll create a new customer or use an existing one
@@ -40,17 +43,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating checkout session:', error);
-
-    if (error instanceof Stripe.errors.StripeError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode || 500 }
-      );
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    return NextResponse.json(
-      { error: 'Failed to create checkout session' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
   }
 }

@@ -54,7 +54,9 @@ from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
+from .routes import stripe_checkout
 from ..feedback_collector import FeedbackCollector
+from ..database.models import User
 from ..config.env_config import get_config, EnvironmentConfig
 from ..auth import get_api_key_manager, APIKeyManager
 
@@ -163,6 +165,8 @@ app = FastAPI(
 
 # Load pricing data from file (if exists) on startup
 load_pricing_from_file()
+# Mount Stripe Checkout routes
+app.include_router(stripe_checkout.router, prefix="/v1/stripe", tags=["stripe"])
 
 # Initialize configuration for middleware setup
 middleware_config = get_config()
