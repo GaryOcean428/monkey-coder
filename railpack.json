@@ -1,5 +1,6 @@
 {
   "$schema": "https://schema.railpack.com",
+  "buildAptPackages": ["python3", "python3-pip"],
   "packages": {
     "node": "22",
     "python": "3.11"
@@ -11,8 +12,12 @@
       ]
     }
   },
+  "deploy": {
+    "startCommand": "python3 run_server.py",
+    "aptPackages": ["python3", "python3-pip"]
+  },
   "start": {
-    "cmd": "python run_server.py"
+    "cmd": "python3 run_server.py"
   },
   "healthcheck": {
     "path": "/health",
