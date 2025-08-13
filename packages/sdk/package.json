@@ -19,7 +19,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc --build && npm run build:python",
+    "build": "tsc --build && (command -v python >/dev/null 2>&1 && cd src/python && python setup.py build || echo 'Skipping SDK python build (python not found)')",
     "build:ts": "tsc --build",
     "build:python": "cd src/python && python setup.py build",
     "dev": "tsc --build --watch",
