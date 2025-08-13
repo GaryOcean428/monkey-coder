@@ -29,7 +29,7 @@
       "...",
       { "step": "build", "include": ["."] }
     ],
-    "startCommand": "python run_server.py"
+    "startCommand": "sh -lc 'pip install --no-cache-dir -r requirements.txt && python run_server.py'"
   },
   "healthcheck": {
     "path": "/health",
