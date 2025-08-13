@@ -65,7 +65,7 @@
         "ENABLE_SECURITY_HEADERS": "true",
         "CORS_ORIGINS": "*",
         "TRUSTED_HOSTS": "*",
-        "PYTHONPATH": "/app",
+        "PYTHONPATH": "/app/packages/core",
         "PYTHONUNBUFFERED": "1"
       }
     },
