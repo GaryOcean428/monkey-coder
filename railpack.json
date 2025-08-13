@@ -45,7 +45,7 @@
     ],
     "aptPackages": [],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'set -e; if [ ! -x /app/.venv/bin/python ]; then apt-get update; DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip; python3 -m venv /app/.venv; fi; if [ -f requirements.txt ]; then /app/.venv/bin/pip install --no-cache-dir -r requirements.txt || true; fi; exec /app/.venv/bin/python run_server.py'"
+    "startCommand": "sh -lc 'set -e; if [ ! -x /app/.venv/bin/python ]; then apt-get update; DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip; python3 -m venv /app/.venv; fi; if [ -f requirements.txt ]; then /app/.venv/bin/pip install --no-cache-dir -r requirements.txt || true; fi; ln -sf /app/packages/core/monkey_coder /app/monkey_coder; exec /app/.venv/bin/python run_server.py'"
   },
   "healthcheck": {
     "path": "/health",
