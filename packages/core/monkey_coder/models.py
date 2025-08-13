@@ -404,7 +404,7 @@ class ValidationError(Exception):
 DEFAULT_MODELS = {
     ProviderType.ANTHROPIC: "claude-sonnet-4-20250514",  # Default as per user spec
     # Defaults for other providers
-    ProviderType.OPENAI: "gpt-4.1",
+    ProviderType.OPENAI: "gpt-5",  # Latest GPT-5 model
     ProviderType.GOOGLE: "gemini-2.5-pro",
     ProviderType.GROK: "grok-4-latest",
     ProviderType.GROQ: "llama-3.3-70b-versatile",
@@ -412,7 +412,11 @@ DEFAULT_MODELS = {
 
 MODEL_REGISTRY = {
     ProviderType.OPENAI: [
-        # GPT-4.1 Family (Flagship models - always use these instead of gpt-4o)
+        # GPT-5 Family (Latest generation - best for coding and agentic tasks)
+        "gpt-5",
+        "gpt-5-mini",
+        "gpt-5-nano",
+        # GPT-4.1 Family (Previous flagship models)
         "gpt-4.1",
         "gpt-4.1-mini",
         "gpt-4.1-nano",
@@ -435,6 +439,8 @@ MODEL_REGISTRY = {
         # "chatgpt-4o-latest",  # Use gpt-4.1 instead
     ],
     ProviderType.ANTHROPIC: [
+        # Claude 4.1 Family (Latest and most capable)
+        "claude-opus-4-1-20250805",
         # Claude 4 Family
         "claude-opus-4-20250514",
         "claude-sonnet-4-20250514",
@@ -528,11 +534,11 @@ def get_available_models(
 
 class HealthResponse(BaseModel):
     """Health check response model for Railway deployment."""
-    
+
     status: str = Field(..., description="Overall service health status")
     version: str = Field(..., description="Application version")
     timestamp: str = Field(..., description="Health check timestamp (ISO format)")
     components: Dict[str, str] = Field(
-        default_factory=dict, 
+        default_factory=dict,
         description="Status of individual components"
     )

@@ -1,11 +1,27 @@
-[← Back to Roadmap Index](../roadmap.md)
+[← Back to Roadmap Index](./index.md)
 
 ##### Critical Issues (Priority 0 - Must Complete)
+
+- [x] **Web Package Testing** - Comprehensive test coverage for React components `S` ✅
+  - ✅ **Component Tests**: Added tests for Button, Input, Card components (66 tests)
+  - ✅ **Removed passWithNoTests**: Web package now has proper test coverage
+  - ✅ **CI Integration**: Tests run successfully in CI pipeline
+
+- [x] **CI/CD Coverage Gates** - Add test coverage thresholds and PR annotations `S` ✅
+  - ✅ **Coverage Thresholds**: Added 70% minimum coverage check in CI
+  - ✅ **PR Comments**: Added automated coverage reporting to PRs
+  - ✅ **JUnit Reports**: Upload test results as artifacts
+
+- [x] **ESLint v9 Migration** - Upgrade to ESLint v9 flat config format `S` ✅
+  - ✅ **Flat Config**: Created eslint.config.mjs with new flat config format
+  - ✅ **Fixed Errors**: Resolved @ts-ignore and Next.js document import issues
+  - ✅ **All Packages Pass**: Lint passes with no errors across all workspaces
 
 - [ ] **CLI Testing & Validation** - Comprehensive testing of CLI commands and MCP integration `M`
   - ✅ **CLI Implementation**: Complete CLI with auth, MCP, and core commands
   - ✅ **MCP Commands**: Full MCP server management functionality
   - ✅ **Security Module**: Created packages/core/monkey_coder/security_enhanced.py
+  - 🚧 **Unit Tests**: Added utils tests, config tests need fixing
   - 📅 **End-to-End Testing**: Test all CLI commands with live API
   - 📅 **MCP Integration Testing**: Validate MCP server operations
   - 📅 **Performance Testing**: Measure CLI response times and resource usage
@@ -30,6 +46,12 @@
   - [ ] Request Models: Split heavy ExecuteRequest model into focused components
 
 ##### Important Improvements (Priority 1 - Should Complete)
+
+- [x] **Quantum Tests Validation** - Ensure quantum features are properly tested `S` ✅
+  - ✅ **Test Fixes**: Fixed Experience buffer timestamp issues
+  - ✅ **Performance Tests**: All 6 buffer performance tests passing
+  - ✅ **Training Pipeline**: Fixed numpy enum handling and convergence tests
+  - ✅ **CI Integration**: Quantum tests run in separate CI job (164 tests, 161 passing, 3 skipped)
 
 - [ ] **MCP Server Manager** - Replace blocking subprocess calls with async operations, modular health checks `M`
   - [ ] Convert all subprocess calls to async/await patterns

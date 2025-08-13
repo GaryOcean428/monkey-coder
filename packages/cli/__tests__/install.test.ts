@@ -30,15 +30,15 @@ describe('CLI Installation', () => {
   test('should install without network calls in CI environment', async () => {
     // Test the postinstall script directly in CI mode
     const env = { ...process.env, CI: 'true' };
-    
+
     try {
       const postInstallPath = path.resolve('scripts/postinstall.cjs');
-      
+
       if (await fs.pathExists(postInstallPath)) {
         const { stdout, stderr } = await execAsync(`node ${postInstallPath}`, { env });
-        
+
         // Should detect CI environment and exit early
-        expect(stdout).toContain('CI environment detected');
+        expect(stdout).toContain('CI environment detected - skipping network-dependent setup');
         expect(stderr).toBe('');
       } else {
         // If postinstall script doesn't exist, create a package.json test
@@ -47,13 +47,13 @@ describe('CLI Installation', () => {
           version: '1.0.0',
           private: true
         };
-        
+
         await fs.writeJson(path.join(tempDir, 'package.json'), packageJson, { spaces: 2 });
-        
+
         // Test would pass if CI detection works correctly
         expect(env.CI).toBe('true');
       }
-      
+
     } catch (error) {
       // CI environment detection should work even if other issues exist
       if (error instanceof Error && error.message.includes('404')) {
@@ -70,7 +70,7 @@ describe('CLI Installation', () => {
     // Mock network calls to detect if any are made
     const originalFetch = global.fetch;
     const networkCalls: string[] = [];
-    
+
     global.fetch = jest.fn(async (url: string) => {
       networkCalls.push(url.toString());
       throw new Error('Network calls blocked in test');
@@ -79,14 +79,14 @@ describe('CLI Installation', () => {
     try {
       // Import the post-install script directly
       const postInstallPath = path.resolve('./scripts/postinstall.cjs');
-      
+
       if (await fs.pathExists(postInstallPath)) {
         // Set CI environment
         process.env.CI = 'true';
-        
+
         // Run post-install script
         const { stdout } = await execAsync(`node ${postInstallPath}`);
-        
+
         // Should not have made any network calls
         expect(networkCalls).toHaveLength(0);
         // Should detect CI and skip network operations
@@ -103,7 +103,7 @@ describe('CLI Installation', () => {
 
   test('should create config directory safely', async () => {
     const configDir = path.join(os.homedir(), '.monkey-coder');
-    
+
     // Remove config dir if it exists for clean test
     if (await fs.pathExists(configDir)) {
       await fs.remove(configDir);
@@ -118,25 +118,25 @@ describe('CLI Installation', () => {
     delete cleanEnv.JENKINS_URL;
     delete cleanEnv.BUILDKITE;
 cleanEnv.MONKEY_CODER_FORCE_POSTINSTALL = 'true';
-    
+
     try {
       const postInstallPath = path.resolve('./scripts/postinstall.cjs');
-      
+
       if (await fs.pathExists(postInstallPath)) {
         const { stdout } = await execAsync(`node ${postInstallPath}`, { env: cleanEnv });
-        
+
         // Config directory should be created
         expect(await fs.pathExists(configDir)).toBe(true);
-        
+
         // Config file should be created with defaults
         const configFile = path.join(configDir, 'config.json');
         expect(await fs.pathExists(configFile)).toBe(true);
-        
+
         const config = await fs.readJson(configFile);
         expect(config).toHaveProperty('baseUrl');
         expect(config).toHaveProperty('apiKey');
         expect(config.baseUrl).toBe('https://monkey-coder.up.railway.app');
-        
+
         expect(stdout).toContain('setup completed');
       } else {
         // If script doesn't exist, manually create config to test the concept
@@ -156,13 +156,13 @@ cleanEnv.MONKEY_CODER_FORCE_POSTINSTALL = 'true';
   test('should handle installation errors gracefully', async () => {
     // Test with CI environment to ensure graceful exit
     const env = { ...process.env, CI: 'true' };
-    
+
     try {
       const postInstallPath = path.resolve('./scripts/postinstall.cjs');
-      
+
       if (await fs.pathExists(postInstallPath)) {
         const { stdout } = await execAsync(`node ${postInstallPath}`, { env });
-        
+
         // Should complete without throwing, with CI detection
         expect(stdout).toContain('CI environment detected');
       } else {
@@ -178,27 +178,27 @@ cleanEnv.MONKEY_CODER_FORCE_POSTINSTALL = 'true';
   test('should have correct package.json structure', async () => {
     // Get the actual package.json from the CLI directory
     const packageJsonPath = path.resolve(process.cwd(), 'package.json');
-    
+
     if (await fs.pathExists(packageJsonPath)) {
       const packageJson = await fs.readJson(packageJsonPath);
-      
+
       // Should use scoped name
       expect(packageJson.name).toBe('monkey-coder-cli');
-      
+
       // Should have bin entries
       expect(packageJson.bin).toHaveProperty('monkey');
       expect(packageJson.bin).toHaveProperty('monkey-coder');
-      
+
       // Should have post-install script
       expect(packageJson.scripts).toHaveProperty('postinstall');
-      
+
       // Should not have pre-install scripts that could cause issues
       expect(packageJson.scripts).not.toHaveProperty('preinstall');
     } else {
       // If we can't find the package.json, test the working directory expectations
       const cwd = process.cwd();
       expect(cwd).toContain('cli');
-      
+
       // Test that the expected structure exists
       expect(await fs.pathExists('src')).toBe(true);
       expect(await fs.pathExists('scripts')).toBe(true);
@@ -207,18 +207,18 @@ cleanEnv.MONKEY_CODER_FORCE_POSTINSTALL = 'true';
 
   test('should work without internet connection', async () => {
     // Simulate offline environment
-    const env = { 
-      ...process.env, 
+    const env = {
+      ...process.env,
       CI: 'true',
       npm_config_offline: 'true'
     };
-    
+
     try {
       const postInstallPath = path.resolve('./scripts/postinstall.cjs');
-      
+
       if (await fs.pathExists(postInstallPath)) {
         const { stdout } = await execAsync(`node ${postInstallPath}`, { env });
-        
+
         // Should complete successfully even offline, with CI detection
         expect(stdout).toContain('CI environment detected');
       } else {

@@ -1,4 +1,4 @@
-[← Back to Roadmap Index](../roadmap.md)
+[← Back to Roadmap Index](./index.md)
 
 ### Phase 1.6: Authentication System Unification & Username Integration (Completed August 2024)
 
@@ -72,7 +72,7 @@
 - [x] **Developer User Creation** - Successfully created test developer account
   - Username: GaryOcean
   - Full Name: Braden James Lang
-  - Email: <braden.lang77@gmail.com>
+  - Email: [braden.lang77@gmail.com](mailto:braden.lang77@gmail.com)
   - User ID: c41ce112-54e6-4339-8e4c-306271857da3
   - Subscription: pro, Developer Status: true, Credits: 10,000
 - [x] **End-to-End Validation** - Comprehensive testing and verification

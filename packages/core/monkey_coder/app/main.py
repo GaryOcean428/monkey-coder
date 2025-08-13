@@ -49,6 +49,7 @@ from ..security import (
     Permission,
     get_user_permissions
 )
+from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
@@ -331,85 +332,72 @@ async def prometheus_metrics():
 
 # Authentication Endpoints
 @app.post("/v1/auth/login", response_model=AuthResponse)
-async def login(request: LoginRequest, response: Response) -> AuthResponse:
+async def login(request: LoginRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
     """
-    User login endpoint.
+    User login endpoint with enhanced authentication.
 
     Args:
         request: Login credentials (email and password)
+        response: FastAPI response object
+        background_tasks: Background tasks for async operations
 
     Returns:
-        JWT tokens and user information
+        AuthResponse with tokens and user information
     """
     try:
-        # Authenticate user against the user store
-        user_store = get_user_store()
-        user = await user_store.authenticate_user(request.email, request.password)
+        # Authenticate user using enhanced manager
+        auth_result = await enhanced_auth_manager.authenticate_user(
+            email=request.email,
+            password=request.password,
+            request=Request(scope={}),  # Mock request for CLI compatibility
+            for_cli=False
+        )
 
-        if not user:
+        if not auth_result.success or not auth_result.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail=auth_result.message or "Invalid email or password"
             )
 
-        # Create JWT user from authenticated user
-        roles_user_roles: List[UserRole] = []
-        for role_str in (user.roles or []):
-            try:
-                roles_user_roles.append(UserRole(role_str))
-            except Exception:
-                logger.warning(f"Unrecognized role '{role_str}' for user {user.email}")
+        if not auth_result.access_token or not auth_result.refresh_token or not auth_result.session_id:
+            raise HTTPException(status_code=500, detail="Authentication failed to generate tokens")
 
-        jwt_user = JWTUser(
-            user_id=user.id or "unknown_user",
-            username=user.username,
-            email=user.email,
-            roles=roles_user_roles,
-            permissions=get_user_permissions(roles_user_roles),
-            mfa_verified=True  # MFA not implemented yet
+        # Set cookies using enhanced manager
+        enhanced_auth_manager.set_auth_cookies(
+            response=response,
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
+            session_id=auth_result.session_id,
+            csrf_token=auth_result.csrf_token
         )
 
-        # Create tokens
-        access_token = create_access_token(jwt_user)
-        refresh_token = create_refresh_token(jwt_user.user_id)
+        # Get user details
+        user = await User.get_by_id(auth_result.user.user_id)
 
-        # Set httpOnly cookies (server-side session)
-        secure_cookie = os.getenv("ENVIRONMENT", "development") == "production"
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=secure_cookie,
-            samesite="lax",
-            max_age=15 * 60  # 15 minutes
-        )
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=secure_cookie,
-            samesite="lax",
-            max_age=30 * 24 * 60 * 60  # 30 days
-        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found after authentication")
 
-        # Set credits and subscription tier based on user type
-        credits = 10000 if user.is_developer else 100  # Developer account gets more credits
+        # Set credits and subscription tier
+        credits = 10000 if user.is_developer else 100
         subscription_tier = "developer" if user.is_developer else "free"
 
         return AuthResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
             user={
-                "id": jwt_user.user_id,
-                "email": jwt_user.email,
-                "name": jwt_user.username,
+                "id": auth_result.user.user_id,
+                "email": auth_result.user.email,
+                "name": auth_result.user.username,
                 "credits": credits,
                 "subscription_tier": subscription_tier,
                 "is_developer": user.is_developer,
-                "roles": [r.value for r in roles_user_roles]
-            }
+                "roles": [r.value for r in auth_result.user.roles]
+            },
+            expires_at=auth_result.expires_at.isoformat() if auth_result.expires_at else None
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -444,98 +432,92 @@ async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> 
 
 
 @app.post("/v1/auth/logout")
-async def logout(response: Response, current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+async def logout(request: Request, response: Response, current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
     """
     User logout endpoint.
 
     Args:
+        request: FastAPI request object
+        response: FastAPI response object
         current_user: Current authenticated user
 
     Returns:
         Logout confirmation
     """
     try:
-        # In production, you would invalidate the token in a blacklist
-        logger.info(f"User {current_user.email} logged out")
+        # Logout using enhanced manager
+        success = await enhanced_auth_manager.logout(request)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to invalidate session")
 
         # Clear cookies
-        response.set_cookie("access_token", value="", max_age=0)
-        response.set_cookie("refresh_token", value="", max_age=0)
+        enhanced_auth_manager.clear_auth_cookies(response)
+
+        logger.info(f"User {current_user.email} logged out successfully")
 
         return {"message": "Successfully logged out"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Logout failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
 @app.post("/v1/auth/refresh", response_model=AuthResponse)
-async def refresh_token(request: RefreshTokenRequest, response: Response) -> AuthResponse:
+async def refresh_token(request: Request, response: Response) -> AuthResponse:
     """
     Refresh JWT access token using refresh token.
 
     Args:
-        request: Refresh token request
+        request: FastAPI request object
+        response: FastAPI response object
 
     Returns:
         New JWT tokens
     """
     try:
-        from ..security import verify_token
+        # Refresh using enhanced manager
+        auth_result = await enhanced_auth_manager.refresh_authentication(request)
 
-        # Verify refresh token
-        payload = verify_token(request.refresh_token)
+        if not auth_result.success or not auth_result.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=auth_result.message or "Invalid refresh token"
+            )
 
-        if payload.get("type") != "refresh":
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        if not auth_result.access_token or not auth_result.refresh_token or not auth_result.session_id:
+            raise HTTPException(status_code=500, detail="Refresh failed to generate tokens")
 
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-        # Create new user object (in production, fetch from database)
-        mock_user = JWTUser(
-            user_id=user_id,
-            username="demo_user",
-            email="demo@example.com",
-            roles=[UserRole.DEVELOPER],
-            permissions=get_user_permissions([UserRole.DEVELOPER]),
-            mfa_verified=True
+        # Set refreshed cookies
+        enhanced_auth_manager.set_auth_cookies(
+            response=response,
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
+            session_id=auth_result.session_id,
+            csrf_token=auth_result.csrf_token
         )
 
-        # Create new tokens
-        access_token = create_access_token(mock_user)
-        new_refresh_token = create_refresh_token(mock_user.user_id)
+        # Get user details
+        user = await User.get_by_id(auth_result.user.user_id)
 
-        # Refresh httpOnly cookies
-        secure_cookie = os.getenv("ENVIRONMENT", "development") == "production"
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=secure_cookie,
-            samesite="lax",
-            max_age=15 * 60
-        )
-        response.set_cookie(
-            key="refresh_token",
-            value=new_refresh_token,
-            httponly=True,
-            secure=secure_cookie,
-            samesite="lax",
-            max_age=30 * 24 * 60 * 60
-        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found after refresh")
 
         return AuthResponse(
-            access_token=access_token,
-            refresh_token=new_refresh_token,
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
             user={
-                "id": mock_user.user_id,
-                "email": mock_user.email,
-                "name": mock_user.username,
-                "credits": 10000,
-                "subscription_tier": "developer"
-            }
+                "id": auth_result.user.user_id,
+                "email": auth_result.user.email,
+                "name": auth_result.user.username,
+                "credits": 10000 if user.is_developer else 100,
+                "subscription_tier": "developer" if user.is_developer else "free",
+                "is_developer": user.is_developer,
+                "roles": [r.value for r in auth_result.user.roles]
+            },
+            expires_at=auth_result.expires_at.isoformat() if auth_result.expires_at else None
         )
 
     except HTTPException:

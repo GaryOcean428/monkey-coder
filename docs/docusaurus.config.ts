@@ -71,6 +71,19 @@ const config: Config = {
 
   themes: ['@docusaurus/theme-live-codeblock'],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'roadmap',
+        path: 'roadmap',
+        routeBasePath: 'roadmap',
+        sidebarPath: require.resolve('./sidebars.roadmap.ts'),
+        editUrl: 'https://github.com/GaryOcean428/monkey-coder/tree/main/docs/roadmap/',
+      },
+    ],
+  ],
+
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
@@ -86,6 +99,13 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          type: 'doc',
+          docId: 'index',
+          docsPluginId: 'roadmap',
+          position: 'left',
+          label: 'Roadmap',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {

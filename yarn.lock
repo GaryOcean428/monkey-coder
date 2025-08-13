@@ -4671,7 +4671,8 @@ __metadata:
     "@radix-ui/react-toast": "npm:^1.1.5"
     "@radix-ui/react-toggle": "npm:^1.0.3"
     "@radix-ui/react-toggle-group": "npm:^1.0.4"
-    "@stripe/stripe-js": "npm:^7.6.1"
+    "@stripe/react-stripe-js": "npm:^3.9.0"
+    "@stripe/stripe-js": "npm:^7.8.0"
     "@tanstack/react-query": "npm:^5.17.0"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -4709,8 +4710,9 @@ __metadata:
     react-dom: "npm:^19.0.0"
     react-hook-form: "npm:^7.61.1"
     react-hot-toast: "npm:^2.4.1"
+    react-stripe-js: "npm:^1.1.5"
     recharts: "npm:^2.10.3"
-    stripe: "npm:^18.3.0"
+    stripe: "npm:^18.4.0"
     tailwind-merge: "npm:^3.3.1"
     tailwindcss: "npm:^3.3.0"
     tailwindcss-animate: "npm:^1.0.7"
@@ -6897,7 +6899,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@stripe/stripe-js@npm:^7.6.1":
+"@stripe/react-stripe-js@npm:1.7.2":
+  version: 1.7.2
+  resolution: "@stripe/react-stripe-js@npm:1.7.2"
+  dependencies:
+    prop-types: "npm:^15.7.2"
+  peerDependencies:
+    "@stripe/stripe-js": ^1.26.0
+    react: ^16.8.0 || ^17.0.0
+    react-dom: ^16.8.0 || ^17.0.0
+  checksum: 10c0/527a08473e19d373458770456e3fdc96605059144fefb85afa6d84e473f0d33e9dc2d1a0eb5c67e8feaf6dcfbd5783616c67995d0873ad19abcdb34a846807df
+  languageName: node
+  linkType: hard
+
+"@stripe/react-stripe-js@npm:^3.9.0":
+  version: 3.9.0
+  resolution: "@stripe/react-stripe-js@npm:3.9.0"
+  dependencies:
+    prop-types: "npm:^15.7.2"
+  peerDependencies:
+    "@stripe/stripe-js": ">=1.44.1 <8.0.0"
+    react: ">=16.8.0 <20.0.0"
+    react-dom: ">=16.8.0 <20.0.0"
+  checksum: 10c0/489328b8eadf4a2cfe4985afbd6fe805666a64faf21379a0c2c0e88a12d3043572d3fa1d2ec86375e2be2ad6f3e5bb731f28f895164ee976c15a63adc7eec605
+  languageName: node
+  linkType: hard
+
+"@stripe/stripe-js@npm:1.29.0":
+  version: 1.29.0
+  resolution: "@stripe/stripe-js@npm:1.29.0"
+  checksum: 10c0/c83c788214af7c5922c3025de68c25e2987defbc671337e701bd51c2774088cc916fa3462e1d04e9d698abddf14a8c83d1cf91f4c1dd29371e50cd9c9f0871c3
+  languageName: node
+  linkType: hard
+
+"@stripe/stripe-js@npm:^7.8.0":
   version: 7.8.0
   resolution: "@stripe/stripe-js@npm:7.8.0"
   checksum: 10c0/23265b831900ca8bcfb88980070107a17b8d83636d84dc503a6b80e0c6f383f9144fae7e6f549fd31c79ac8ca78ea79f87c3f06d939ef31a47d354037824acf9
@@ -13078,6 +13113,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globals@npm:^16.3.0":
+  version: 16.3.0
+  resolution: "globals@npm:16.3.0"
+  checksum: 10c0/c62dc20357d1c0bf2be4545d6c4141265d1a229bf1c3294955efb5b5ef611145391895e3f2729f8603809e81b30b516c33e6c2597573844449978606aad6eb38
+  languageName: node
+  linkType: hard
+
 "globalthis@npm:^1.0.4":
   version: 1.0.4
   resolution: "globalthis@npm:1.0.4"
@@ -17563,6 +17605,7 @@ __metadata:
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-import: "npm:^2.32.0"
     eslint-plugin-prettier: "npm:^5.5.3"
+    globals: "npm:^16.3.0"
     jest: "npm:^30.0.5"
     linkinator: "npm:^6.1.4"
     markdownlint-cli: "npm:^0.45.0"
@@ -20138,6 +20181,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-stripe-js@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "react-stripe-js@npm:1.1.5"
+  dependencies:
+    "@stripe/react-stripe-js": "npm:1.7.2"
+    "@stripe/stripe-js": "npm:1.29.0"
+  peerDependencies:
+    react: ">=16"
+  checksum: 10c0/dc489f987a2c655f4373cd6bb03b9cc6db33e862e68581ed5565d1caa8b4fec09c517287d42db869902db0da1087497525a4a6f9b707f49f0f26a28e90732044
+  languageName: node
+  linkType: hard
+
 "react-style-singleton@npm:^2.2.2, react-style-singleton@npm:^2.2.3":
   version: 2.2.3
   resolution: "react-style-singleton@npm:2.2.3"
@@ -21958,7 +22013,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stripe@npm:^18.3.0":
+"stripe@npm:^18.4.0":
   version: 18.4.0
   resolution: "stripe@npm:18.4.0"
   dependencies:

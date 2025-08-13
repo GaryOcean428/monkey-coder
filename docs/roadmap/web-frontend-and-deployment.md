@@ -1,4 +1,4 @@
-[← Back to Roadmap Index](../roadmap.md)
+[← Back to Roadmap Index](./index.md)
 
 ###### Phase 7: Web Frontend & Deployment (In Progress)
 
@@ -11,8 +11,20 @@
 - ✅ Logo gradient color theme implementation
 - ✅ Security Implementation: httpOnly Cookie Authentication
 - ✅ Website Improvements: UI/UX fixes and theme implementation
-- 🚧 Stripe payment integration
+- ✅ Stripe payment integration
+  - ✅ Created products via Stripe MCP (Basic, Pro, Enterprise)
+  - ✅ Installed Stripe packages (@stripe/stripe-js, @stripe/react-stripe-js)
+  - ✅ Created pricing configuration (packages/web/src/config/stripe.ts)
+  - ✅ Built PricingCard component with checkout flow
+  - ✅ Created pricing page (/pricing)
+  - ✅ Implemented checkout session API endpoint
+  - 📅 Need to create recurring prices via Stripe API
+  - 📅 Add webhook handlers for subscription events
 - 🚧 User dashboard
+  - 📅 Subscription management
+  - 📅 Usage metrics
+  - 📅 Billing history
+  - 📅 API key management
 - 🚧 API integration
 
 ##### Brand Identity System

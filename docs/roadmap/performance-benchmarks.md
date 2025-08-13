@@ -1,4 +1,4 @@
-[← Back to Roadmap Index](../roadmap.md)
+[← Back to Roadmap Index](./index.md)
 
 ## Performance Benchmarks
 
@@ -8,23 +8,23 @@
 
 | Endpoint | Target Response Time | Maximum Acceptable |
 |----------|---------------------|-------------------|
-| `/v1/health` | <50ms | 100ms |
-| `/v1/capabilities` | <100ms | 200ms |
-| `/v1/auth/login` | <200ms | 500ms |
-| `/v1/execute` (simple) | <2s | 5s |
-| `/v1/execute` (complex) | <10s | 30s |
+| `/v1/health` | `<50ms` | 100ms |
+| `/v1/capabilities` | `<100ms` | 200ms |
+| `/v1/auth/login` | `<200ms` | 500ms |
+| `/v1/execute` (simple) | `<2s` | 5s |
+| `/v1/execute` (complex) | `<10s` | 30s |
 
 **Quantum Routing Performance:**
-- Model selection decision: <100ms
-- Parallel variation execution: <5s for 3-5 variations
-- DQN training update: <50ms per experience
-- Cache hit response: <10ms
+- Model selection decision: `<100ms`
+- Parallel variation execution: `<5s` for 3-5 variations
+- DQN training update: `<50ms` per experience
+- Cache hit response: `<10ms`
 
 **System Resource Targets:**
-- Memory usage: <500MB for typical workload
-- CPU utilization: <70% under normal load
+- Memory usage: `<500MB` for typical workload
+- CPU utilization: `<70%` under normal load
 - Database connection pool: 95%+ efficiency
-- Cache hit ratio: >80% for frequent queries
+- Cache hit ratio: `>80%` for frequent queries
 
 ### Performance Testing
 

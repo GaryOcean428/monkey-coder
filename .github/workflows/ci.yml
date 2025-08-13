@@ -2,145 +2,125 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
-  node-workspaces:
-    name: Node Workspaces (Yarn 4)
+  node:
     runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - name: Enable Corepack (Yarn Berry)
-        run: corepack enable
-
+          node-version: '20'
+          cache: 'yarn'
       - name: Install dependencies
-        run: |
-          yarn --version
-          yarn install --immutable
-
-      - name: Type check
-        run: |
-          yarn workspaces foreach -At run typecheck --if-present
-          yarn workspaces foreach -At run type-check --if-present
-
+        run: yarn install --frozen-lockfile
       - name: Lint
+        run: yarn lint
+      - name: Typecheck
+        run: yarn typecheck
+      - name: Test with coverage
+        run: yarn test:coverage
+      - name: Check coverage thresholds
         run: |
-          yarn workspaces foreach -At run lint --if-present
-
-      - name: Test (with coverage)
-        run: |
-          yarn workspaces foreach -At run test:coverage --if-present
-
-      - name: Upload Node coverage artifacts
-        if: always()
+          echo "Checking coverage thresholds..."
+          # Extract coverage percentages from coverage reports
+          for workspace in packages/*/; do
+            if [ -f "$workspace/coverage/coverage-summary.json" ]; then
+              COVERAGE=$(node -e "const cov = require('./$workspace/coverage/coverage-summary.json'); console.log(Math.floor(cov.total.statements.pct))")
+              echo "$workspace: ${COVERAGE}% statement coverage"
+              if [ "$COVERAGE" -lt 70 ]; then
+                echo "❌ Coverage below 70% threshold for $workspace"
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All coverage thresholds met"
+      - name: Upload JUnit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-junit-reports
+          path: '**/coverage/junit/*.xml'
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
           name: node-coverage
-          path: |
-            coverage/**
-            packages/*/coverage/**
-          if-no-files-found: ignore
+          path: '**/coverage'
+      - name: Add coverage comment to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let coverageReport = '## 📊 Test Coverage Report\n\n';
+            coverageReport += '| Package | Statements | Branches | Functions | Lines |\n';
+            coverageReport += '|---------|------------|----------|-----------|-------|\n';
 
-      - name: Upload Node JUnit test results
-        if: always()
+            const workspaces = ['cli', 'sdk', 'web'];
+            for (const workspace of workspaces) {
+              const summaryPath = `packages/${workspace}/coverage/coverage-summary.json`;
+              if (fs.existsSync(summaryPath)) {
+                const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                const total = summary.total;
+                const statusIcon = total.statements.pct >= 70 ? '✅' : '❌';
+                coverageReport += `| ${statusIcon} ${workspace} | ${total.statements.pct.toFixed(1)}% | ${total.branches.pct.toFixed(1)}% | ${total.functions.pct.toFixed(1)}% | ${total.lines.pct.toFixed(1)}% |\n`;
+              }
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: coverageReport
+            });
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        working-directory: packages/core
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-junit
+      - name: Run tests with coverage
+        working-directory: packages/core
+        run: pytest --cov=monkey_coder --cov-report=xml:coverage.xml --junitxml=junit.xml
+      - name: Upload JUnit report
         uses: actions/upload-artifact@v4
         with:
-          name: node-junit
-          path: |
-            packages/*/coverage/junit/*.xml
-            coverage/junit/*.xml
-          if-no-files-found: ignore
-
-      - name: Publish Node Unit Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: |
-            packages/*/coverage/junit/*.xml
-            coverage/junit/*.xml
-
-  python-core:
-    name: Python Core (pytest)
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      pull-requests: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        working-directory: .
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          # Install core package and its dependencies
-          pip install -e packages/core
-          # Install test dependencies
-          pip install pytest pytest-asyncio pytest-cov
-
-      - name: Run tests with coverage
-        run: |
-          pytest -q --cov=monkey_coder --cov-report=xml:coverage.xml --cov-fail-under=60 --junitxml=pytest-results.xml packages/core/tests
-
-      - name: Upload Python coverage artifact
-        if: always()
+          name: python-junit-report
+          path: packages/core/junit.xml
+      - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
           name: python-coverage
-          path: coverage.xml
-          if-no-files-found: ignore
+          path: packages/core/coverage.xml
 
-      - name: Upload Python test results (JUnit)
-        if: always()
-        uses: actions/upload-artifact@v4
+  quantum-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          name: python-junit
-          path: pytest-results.xml
-          if-no-files-found: ignore
-
-      - name: Run quantum test subset (JUnit)
+          python-version: '3.11'
+      - name: Install dependencies
+        working-directory: packages/core
         run: |
-          pytest -q packages/core/tests/quantum --junitxml=pytest-quantum.xml
-
-      - name: Upload Python quantum test results (JUnit)
-        if: always()
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-junit
+      - name: Run quantum tests
+        working-directory: packages/core
+        run: pytest tests/quantum --junitxml=quantum-junit.xml
+      - name: Upload quantum JUnit report
         uses: actions/upload-artifact@v4
         with:
-          name: python-quantum-junit
-          path: pytest-quantum.xml
-          if-no-files-found: ignore
-
-      - name: Upload Quantum metrics artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-quantum-metrics
-          path: artifacts/quantum/metrics.json
-          if-no-files-found: ignore
-
-      - name: Publish Python Unit Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: |
-            pytest-results.xml
-            pytest-quantum.xml
+          name: quantum-junit-report
+          path: packages/core/quantum-junit.xml

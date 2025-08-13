@@ -3,6 +3,7 @@
 
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import nextPlugin from '@next/eslint-plugin-next';
 
 export default [
   {
@@ -20,6 +21,14 @@ export default [
     languageOptions: { ecmaVersion: 2022, sourceType: 'module' },
     rules: { 'no-undef': 'off' },
   },
+  // Next.js rules
+  {
+    plugins: { '@next/next': nextPlugin },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+    },
+  },
   // TS rules
   ...tseslint.configs.recommended,
   {
@@ -33,11 +42,11 @@ export default [
   // Allow require() and CommonJS in Node config files and mocks
   {
     files: ['**/*.config.js', 'jest.config.cjs', 'next.config.mjs', '__mocks__/**/*.js'],
-    languageOptions: { 
-      ecmaVersion: 2022, 
+    languageOptions: {
+      ecmaVersion: 2022,
       sourceType: 'script' // Use script mode for CommonJS files
     },
-    rules: { 
+    rules: {
       '@typescript-eslint/no-require-imports': 'off',
       'no-undef': 'off' // Allow module, require, etc.
     },
