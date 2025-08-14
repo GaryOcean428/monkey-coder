@@ -22,18 +22,32 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, AsyncIterator
 
 try:
-    import google.generativeai as genai
-    from google.generativeai.types import GenerationConfig, HarmCategory, HarmBlockThreshold
+    # Try new google.genai package first (latest API)
+    from google import genai
+    from google.genai.types import GenerateContentConfig, SafetySetting, HarmCategory, HarmBlockThreshold
     HAS_GOOGLE_AI = True
+    GOOGLE_API_VERSION = "new"
+    logging.info("Using new google.genai package")
 except ImportError:
-    genai = None
-    GenerationConfig = None
-    HarmCategory = None
-    HarmBlockThreshold = None
-    HAS_GOOGLE_AI = False
-    logging.warning(
-        "Google Generative AI package not installed. Install it with: pip install google-generativeai"
-    )
+    try:
+        # Fallback to older google-generativeai package
+        import google.generativeai as genai
+        from google.generativeai.types import GenerationConfig as GenerateContentConfig, HarmCategory, HarmBlockThreshold
+        from google.generativeai.types import SafetySetting
+        HAS_GOOGLE_AI = True
+        GOOGLE_API_VERSION = "legacy"
+        logging.info("Using legacy google.generativeai package")
+    except ImportError:
+        genai = None
+        GenerateContentConfig = None
+        HarmCategory = None
+        HarmBlockThreshold = None
+        SafetySetting = None
+        HAS_GOOGLE_AI = False
+        GOOGLE_API_VERSION = None
+        logging.warning(
+            "Google AI package not installed. Install it with: pip install google-genai or pip install google-generativeai"
+        )
 
 from . import BaseProvider
 from ..models import ProviderType, ProviderError, ModelInfo
@@ -172,17 +186,23 @@ class GoogleProvider(BaseProvider):
         """Initialize the Google client."""
         if not HAS_GOOGLE_AI:
             raise ProviderError(
-                "Google Generative AI package not installed. Install it with: pip install google-generativeai",
+                "Google AI package not installed. Install it with: pip install google-genai or pip install google-generativeai",
                 provider="Google",
                 error_code="PACKAGE_NOT_INSTALLED",
             )
 
         try:
-            # Configure the Google AI API
+            # Configure the Google AI API based on version
             if self.api_key:
-                genai.configure(api_key=self.api_key)
-                self.client = genai
-                logger.info("Google AI configured with API key")
+                if GOOGLE_API_VERSION == "new":
+                    # New API style
+                    self.client = genai.Client(api_key=self.api_key)
+                    logger.info("Google AI Client initialized with new API")
+                else:
+                    # Legacy API style
+                    genai.configure(api_key=self.api_key)
+                    self.client = genai
+                    logger.info("Google AI configured with legacy API")
             else:
                 raise ProviderError(
                     "API key must be provided for Google AI",
@@ -217,23 +237,38 @@ class GoogleProvider(BaseProvider):
             )
 
         try:
-            # Test with a simple model list or generation
             test_model_name = "gemini-2.5-flash"  # Use an actual available model
-            test_model = self.client.GenerativeModel(test_model_name)
             
-            # Quick test generation
-            response = test_model.generate_content("Hi", 
-                generation_config=genai.GenerationConfig(
-                    max_output_tokens=5,
-                    temperature=0
-                ))
-            
-            if not response.text:
-                raise ProviderError(
-                    "Empty response from Google API test",
-                    provider="Google",
-                    error_code="EMPTY_RESPONSE",
+            if GOOGLE_API_VERSION == "new":
+                # New API test
+                response = self.client.models.generate_content(
+                    model=test_model_name,
+                    contents="Hi"
                 )
+                
+                if not response.text:
+                    raise ProviderError(
+                        "Empty response from Google API test",
+                        provider="Google",
+                        error_code="EMPTY_RESPONSE",
+                    )
+            else:
+                # Legacy API test
+                test_model = self.client.GenerativeModel(test_model_name)
+                
+                # Quick test generation
+                response = test_model.generate_content("Hi", 
+                    generation_config=GenerateContentConfig(
+                        max_output_tokens=5,
+                        temperature=0
+                    ))
+                
+                if not response.text:
+                    raise ProviderError(
+                        "Empty response from Google API test",
+                        provider="Google",
+                        error_code="EMPTY_RESPONSE",
+                    )
             
             logger.info("Google API connection test successful")
         except Exception as e:
@@ -332,22 +367,27 @@ class GoogleProvider(BaseProvider):
                     else:  # user
                         prompt_parts.append(content)
             
-            # Create model instance with system instruction if provided
-            model_config = {
-                "model_name": actual_model,
-            }
-            
-            if system_instruction:
-                model_config["system_instruction"] = system_instruction
+            # Create model instance based on API version
+            if GOOGLE_API_VERSION == "new":
+                # New API doesn't need model instance creation
+                model_instance = None
+            else:
+                # Legacy API needs model instance
+                model_config = {
+                    "model_name": actual_model,
+                }
                 
-            # Add tools if provided
-            if kwargs.get("tools"):
-                model_config["tools"] = self._convert_tools_to_google_format(kwargs["tools"])
-            
-            model_instance = self.client.GenerativeModel(**model_config)
+                if system_instruction:
+                    model_config["system_instruction"] = system_instruction
+                    
+                # Add tools if provided
+                if kwargs.get("tools"):
+                    model_config["tools"] = self._convert_tools_to_google_format(kwargs["tools"])
+                
+                model_instance = self.client.GenerativeModel(**model_config)
             
             # Configure generation parameters with advanced options
-            generation_config = GenerationConfig(
+            generation_config = GenerateContentConfig(
                 max_output_tokens=kwargs.get("max_tokens", 8192),
                 temperature=kwargs.get("temperature", 0.7),
                 top_p=kwargs.get("top_p", 0.95),
@@ -374,24 +414,48 @@ class GoogleProvider(BaseProvider):
                 logger.info(f"Starting streaming completion with {actual_model}")
                 
                 async def stream_generator():
-                    # Google's SDK is synchronous, so we need to run it in an executor
-                    loop = asyncio.get_event_loop()
-                    stream = await loop.run_in_executor(
-                        None,
-                        model_instance.generate_content,
-                        prompt_parts,
-                        generation_config,
-                        safety_settings,
-                        True  # stream=True
-                    )
-                    
-                    for chunk in stream:
-                        if chunk.text:
-                            yield {
-                                "type": "delta",
-                                "content": chunk.text,
-                                "index": 0
-                            }
+                    if GOOGLE_API_VERSION == "new":
+                        # New API streaming
+                        config = {
+                            "temperature": kwargs.get("temperature", 0.7),
+                            "top_p": kwargs.get("top_p", 0.95),
+                            "top_k": kwargs.get("top_k", 40),
+                        }
+                        if system_instruction:
+                            config["system_instruction"] = system_instruction
+                        
+                        stream = self.client.models.generate_content_stream(
+                            model=actual_model,
+                            contents=prompt_parts if isinstance(prompt_parts, list) else [prompt_parts],
+                            config=config
+                        )
+                        
+                        for chunk in stream:
+                            if chunk.text:
+                                yield {
+                                    "type": "delta",
+                                    "content": chunk.text,
+                                    "index": 0
+                                }
+                    else:
+                        # Legacy API streaming
+                        loop = asyncio.get_event_loop()
+                        stream = await loop.run_in_executor(
+                            None,
+                            model_instance.generate_content,
+                            prompt_parts,
+                            generation_config,
+                            safety_settings,
+                            True  # stream=True
+                        )
+                        
+                        for chunk in stream:
+                            if chunk.text:
+                                yield {
+                                    "type": "delta",
+                                    "content": chunk.text,
+                                    "index": 0
+                                }
                     
                     yield {"type": "done"}
                 
@@ -403,15 +467,33 @@ class GoogleProvider(BaseProvider):
                     "is_streaming": True,
                 }
             
-            # Regular non-streaming generation with async wrapper
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                model_instance.generate_content,
-                prompt_parts if isinstance(prompt_parts, list) and prompt_parts else full_prompt,
-                generation_config,
-                safety_settings
-            )
+            # Regular non-streaming generation
+            if GOOGLE_API_VERSION == "new":
+                # New API call
+                config = {
+                    "temperature": kwargs.get("temperature", 0.7),
+                    "top_p": kwargs.get("top_p", 0.95),
+                    "top_k": kwargs.get("top_k", 40),
+                }
+                if system_instruction:
+                    config["system_instruction"] = system_instruction
+                    
+                response = self.client.models.generate_content(
+                    model=actual_model,
+                    contents=prompt_parts if isinstance(prompt_parts, list) else [prompt_parts],
+                    config=config
+                )
+            else:
+                # Legacy API call with async wrapper
+                loop = asyncio.get_event_loop()
+                full_prompt = " ".join(prompt_parts) if isinstance(prompt_parts, list) else str(prompt_parts)
+                response = await loop.run_in_executor(
+                    None,
+                    model_instance.generate_content,
+                    full_prompt,
+                    generation_config,
+                    safety_settings
+                )
             
             end_time = datetime.utcnow()
             execution_time = (end_time - start_time).total_seconds()
