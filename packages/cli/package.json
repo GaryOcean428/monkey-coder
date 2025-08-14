@@ -1,7 +1,7 @@
 {
   "name": "monkey-coder-cli",
   "version": "1.4.2",
-  "description": "TypeScript CLI for Monkey Coder",
+  "description": "CLI for Monkey Coder - AI-powered code generation platform. Requires account at https://coder.fastmonkey.au or local backend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",

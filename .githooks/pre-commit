@@ -1,137 +1,59 @@
 #!/bin/bash
 
-# Monkey Coder Pre-Commit Hook
-# Automatically increments version numbers before committing
+# Pre-commit hook to prevent Railway build system conflicts
+# This hook runs before each commit to ensure build configuration consistency
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+echo "🔍 Running Railway build configuration validation..."
 
-# Check if auto-versioning is disabled
-if [ "$SKIP_VERSION_BUMP" = "true" ] || [[ "$1" == *"[skip version]"* ]]; then
-    echo -e "${YELLOW}Skipping automatic version bump${NC}"
-    exit 0
+# Check if railpack.json exists and is valid
+if [ -f "railpack.json" ]; then
+    # Validate JSON syntax
+    if ! jq '.' railpack.json > /dev/null 2>&1; then
+        echo "❌ ERROR: railpack.json has invalid JSON syntax!"
+        echo "   Please fix the JSON syntax before committing."
+        exit 1
+    fi
+
+    # Check for competing files
+    COMPETING_FILES=()
+    if [ -f "railway.json" ]; then
+        COMPETING_FILES+=("railway.json")
+    fi
+    if [ -f "Dockerfile" ]; then
+        COMPETING_FILES+=("Dockerfile")
+    fi
+    if [ -f "railway.toml" ]; then
+        COMPETING_FILES+=("railway.toml")
+    fi
+    if [ -f "nixpacks.toml" ]; then
+        COMPETING_FILES+=("nixpacks.toml")
+    fi
+
+    if [ ${#COMPETING_FILES[@]} -gt 0 ]; then
+        echo "❌ ERROR: Found competing build configuration files:"
+        for file in "${COMPETING_FILES[@]}"; do
+            echo "   - $file"
+        done
+        echo ""
+        echo "   This will cause Railway deployment failures!"
+        echo "   Remove competing files to use railpack.json only:"
+        for file in "${COMPETING_FILES[@]}"; do
+            echo "   rm $file"
+        done
+        echo ""
+        echo "   Or run: ./scripts/railway-build-validation.sh"
+        exit 1
+    fi
+
+    echo "✅ Railway build configuration is valid"
+else
+    echo "⚠️  WARNING: railpack.json not found"
+    echo "   This project uses railpack.json for Railway deployment"
 fi
 
-# Check if commit message contains [skip ci]
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null || echo "")
-if [[ "$COMMIT_MSG" == *"[skip ci]"* ]]; then
-    echo -e "${YELLOW}Skipping version bump for [skip ci] commit${NC}"
-    exit 0
+# Run the full validation script if it exists
+if [ -f "scripts/railway-build-validation.sh" ]; then
+    ./scripts/railway-build-validation.sh
 fi
-
-# Function to bump patch version in package.json
-bump_npm_version() {
-    local package_file="$1"
-    local package_name="$2"
-    
-    if [ -f "$package_file" ]; then
-        # Check if package.json has changes
-        if git diff --cached --name-only | grep -q "$package_file"; then
-            echo -e "${BLUE}Auto-bumping version for $package_name${NC}"
-            
-            # Get current version
-            current_version=$(grep '"version"' "$package_file" | head -1 | cut -d'"' -f4)
-            
-            # Split version into parts
-            IFS='.' read -ra VERSION_PARTS <<< "$current_version"
-            major="${VERSION_PARTS[0]}"
-            minor="${VERSION_PARTS[1]}"
-            patch="${VERSION_PARTS[2]}"
-            
-            # Increment patch
-            new_patch=$((patch + 1))
-            new_version="${major}.${minor}.${new_patch}"
-            
-            # Update package.json
-            sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/" "$package_file"
-            
-            echo -e "${GREEN}  $package_name: $current_version → $new_version${NC}"
-            
-            # Stage the change
-            git add "$package_file"
-        fi
-    fi
-}
-
-# Function to bump version in pyproject.toml
-bump_pyproject_version() {
-    local pyproject_file="$1"
-    local package_name="$2"
-    
-    if [ -f "$pyproject_file" ]; then
-        # Check if pyproject.toml has changes
-        if git diff --cached --name-only | grep -q "$(dirname "$pyproject_file")"; then
-            echo -e "${BLUE}Auto-bumping version for $package_name${NC}"
-            
-            # Get current version
-            current_version=$(grep '^version = ' "$pyproject_file" | head -1 | cut -d'"' -f2)
-            
-            # Split version into parts
-            IFS='.' read -ra VERSION_PARTS <<< "$current_version"
-            major="${VERSION_PARTS[0]}"
-            minor="${VERSION_PARTS[1]}"
-            patch="${VERSION_PARTS[2]}"
-            
-            # Increment patch
-            new_patch=$((patch + 1))
-            new_version="${major}.${minor}.${new_patch}"
-            
-            # Update pyproject.toml
-            sed -i "s/version = \"$current_version\"/version = \"$new_version\"/" "$pyproject_file"
-            
-            echo -e "${GREEN}  $package_name: $current_version → $new_version${NC}"
-            
-            # Stage the change
-            git add "$pyproject_file"
-        fi
-    fi
-}
-
-# Function to bump version in setup.py
-bump_setup_version() {
-    local setup_file="$1"
-    local package_name="$2"
-    
-    if [ -f "$setup_file" ]; then
-        # Check if setup.py has changes
-        if git diff --cached --name-only | grep -q "$(dirname "$setup_file")"; then
-            echo -e "${BLUE}Auto-bumping version for $package_name${NC}"
-            
-            # Get current version
-            current_version=$(grep 'version=' "$setup_file" | head -1 | sed 's/.*version="\([^"]*\)".*/\1/')
-            
-            # Split version into parts
-            IFS='.' read -ra VERSION_PARTS <<< "$current_version"
-            major="${VERSION_PARTS[0]}"
-            minor="${VERSION_PARTS[1]}"
-            patch="${VERSION_PARTS[2]}"
-            
-            # Increment patch
-            new_patch=$((patch + 1))
-            new_version="${major}.${minor}.${new_patch}"
-            
-            # Update setup.py
-            sed -i "s/version=\"$current_version\"/version=\"$new_version\"/" "$setup_file"
-            
-            echo -e "${GREEN}  $package_name: $current_version → $new_version${NC}"
-            
-            # Stage the change
-            git add "$setup_file"
-        fi
-    fi
-}
-
-# Check and bump versions for changed packages
-echo -e "${BLUE}Checking for version bumps...${NC}"
-
-bump_npm_version "packages/cli/package.json" "monkey-coder-cli"
-bump_npm_version "packages/sdk/package.json" "monkey-coder-sdk"
-bump_pyproject_version "packages/core/pyproject.toml" "monkey-coder-core"
-bump_setup_version "packages/sdk/src/python/setup.py" "monkey-coder-sdk (Python)"
-
-echo -e "${GREEN}Version check complete!${NC}"
 
 exit 0

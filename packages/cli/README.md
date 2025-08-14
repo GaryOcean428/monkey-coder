@@ -26,14 +26,29 @@ yarn global add monkey-coder-cli
 ## Quick Start
 
 1. **Set up your API configuration:**
+
+Option A - Use the hosted service:
 ```bash
-monkey-coder config set apiKey "your-api-key-here"
-monkey-coder config set baseUrl "https://your-monkey-coder-api.com"
+# Set the API endpoint to the hosted service
+monkey config set baseUrl "https://coder.fastmonkey.au"
+
+# Login with your account (or create one at https://coder.fastmonkey.au)
+monkey auth login --email your@email.com --password yourpassword
+
+# Or use an API key if you have one
+monkey config set apiKey "your-api-key-here"
+```
+
+Option B - Use local development:
+```bash
+# For local development (default)
+monkey config set baseUrl "http://localhost:8000"
+monkey config set apiKey "mk-dev-YOUR-KEY"
 ```
 
 2. **Check server health:**
 ```bash
-monkey-coder health
+monkey health
 ```
 
 3. **Generate some code:**
