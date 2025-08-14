@@ -8,7 +8,8 @@
         "run": [
           "cd packages/web",
           "yarn install",
-          "yarn build"
+          "yarn build",
+          "yarn export"
         ],
         "output": [
           "packages/web/out"

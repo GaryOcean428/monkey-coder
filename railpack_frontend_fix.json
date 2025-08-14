@@ -1,0 +1,22 @@
+{
+  "build": {
+    "steps": [
+      {
+        "id": "web",
+        "name": "Build Web App",
+        "base": "node:20",
+        "run": [
+          "cd packages/web",
+          "yarn install",
+          "yarn build",
+          "yarn export"  // <-- Add this line if not present
+        ],
+        "output": [
+          "packages/web/out"
+        ]
+      },
+      ...
+    ]
+  },
+  ...
+}

@@ -1290,9 +1290,30 @@ for option in static_dir_options:
         break
 
 if static_dir:
-    # Mount static files with fallback to index.html for SPA routing
+    # Mount Next.js specific static directories first for proper asset loading
+    next_dir = static_dir / "_next"
+    if next_dir.exists():
+        app.mount("/_next", StaticFiles(directory=str(next_dir)), name="next-static")
+        logger.info(f"✅ Next.js assets served from: {next_dir}")
+    
+    # Mount other static assets
+    static_assets_dir = static_dir / "static"
+    if static_assets_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_assets_dir)), name="static-assets")
+        logger.info(f"✅ Static assets served from: {static_assets_dir}")
+    
+    # Mount favicon and other root files
+    favicon_path = static_dir / "favicon.ico"
+    if favicon_path.exists():
+        @app.get("/favicon.ico")
+        async def favicon():
+            from fastapi.responses import FileResponse
+            return FileResponse(str(favicon_path))
+    
+    # Mount the main static files with fallback to index.html for SPA routing
+    # This MUST be last to act as a catch-all for SPA routing
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-    logger.info(f"✅ Static files served from: {static_dir}")
+    logger.info(f"✅ Frontend served from: {static_dir}")
 else:
     logger.warning(f"❌ Static directory not found in any of: {[str(p) for p in static_dir_options]}. Frontend will not be served.")
 
