@@ -131,6 +131,12 @@ async def lifespan(app: FastAPI):
 
         app.state.api_key_manager = get_api_key_manager()
         logger.info("✅ APIKeyManager initialized successfully")
+        
+        # Initialize streaming components
+        from ..streaming import stream_manager
+        await stream_manager.start()
+        app.state.stream_manager = stream_manager
+        logger.info("✅ StreamManager initialized successfully")
 
         # Initialize providers with timeout
         await app.state.provider_registry.initialize_all()
@@ -148,6 +154,12 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Monkey Coder Core...")
+    
+    # Stop streaming components
+    if hasattr(app.state, 'stream_manager'):
+        await app.state.stream_manager.stop()
+        logger.info("StreamManager stopped")
+    
     await app.state.provider_registry.cleanup_all()
     logger.info("Shutdown complete")
 
@@ -167,6 +179,10 @@ app = FastAPI(
 load_pricing_from_file()
 # Mount Stripe Checkout routes
 app.include_router(stripe_checkout.router, prefix="/v1/stripe", tags=["stripe"])
+
+# Mount streaming endpoints
+from .streaming_endpoints import router as streaming_router
+app.include_router(streaming_router)
 
 # Initialize configuration for middleware setup
 middleware_config = get_config()

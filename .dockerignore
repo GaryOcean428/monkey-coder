@@ -20,7 +20,6 @@ packages/web/.next/cache/
 next-env.d.ts
 
 # Next.js standalone output (we build this in Docker)
-packages/web/out/
 packages/web/build/
 packages/web/dist/
 
@@ -149,7 +148,6 @@ railway.json
 railpack.json
 
 # Frontend build artifacts (we build these fresh in Docker)
-packages/web/out/
 packages/web/.next/
 packages/web/dist/
 packages/web/build/
