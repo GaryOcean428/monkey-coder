@@ -47,72 +47,70 @@ class OpenAIProvider(BaseProvider):
             "name": "gpt-5",
             "api_name": "gpt-5", 
             "type": "chat",
-            "context_length": 2000000,  # 2M tokens
-            "max_output_tokens": 32768,  # 32K tokens
-            "input_cost": 2.50,  # per 1M tokens
-            "output_cost": 10.00,  # per 1M tokens  
-            "description": "Latest flagship GPT model optimized for complex coding and reasoning tasks",
+            "context_length": 400000,  # 400K tokens per MODELS_MANIFEST.md
+            "max_output_tokens": 128000,  # 128K tokens per MODELS_MANIFEST.md
+            "input_cost": 3.00,  # per 1M tokens per MODELS_MANIFEST.md
+            "output_cost": 12.00,  # per 1M tokens per MODELS_MANIFEST.md
+            "description": "Advanced reasoning model with multimodal capabilities and long context reasoning",
             "capabilities": [
-                "text",
-                "vision", 
-                "function_calling",
-                "streaming",
-                "structured_outputs",
                 "advanced_reasoning",
-                "code_generation", 
-                "web_search",
-                "tool_usage",
-                "multimodal"
+                "multimodal",
+                "function_calling",
+                "tool_use",
+                "structured_outputs",
+                "streaming",
+                "code_generation",
+                "vision_understanding",
+                "enhanced_planning",
+                "long_context_reasoning",
+                "reasoning_tokens"
             ],
             "version": "5",
-            "release_date": datetime(2025, 1, 15),
+            "knowledge_cutoff": datetime(2024, 9, 30),  # September 30, 2024 knowledge
+            "release_date": datetime(2024, 5, 31),
         },
-        "gpt-5-mini": {
-            "name": "gpt-5-mini",
-            "api_name": "gpt-5-mini",
+        "gpt-5-mini-2025-08-07": {
+            "name": "gpt-5-mini-2025-08-07",
+            "api_name": "gpt-5-mini", 
             "type": "chat", 
-            "context_length": 2000000,  # 2M tokens
-            "max_output_tokens": 32768,  # 32K tokens
-            "input_cost": 0.25,  # per 1M tokens
-            "output_cost": 1.00,  # per 1M tokens
-            "description": "Fast and cost-effective GPT-5 model for high-volume applications",
+            "context_length": 400000,  # 400K tokens per MODELS_MANIFEST.md
+            "max_output_tokens": 128000,  # 128K tokens per MODELS_MANIFEST.md
+            "input_cost": 0.75,  # per 1M tokens per MODELS_MANIFEST.md
+            "output_cost": 3.00,  # per 1M tokens per MODELS_MANIFEST.md
+            "description": "Cost-efficient reasoning model with multimodal capabilities",
             "capabilities": [
-                "text",
-                "vision",
-                "function_calling", 
-                "streaming",
-                "structured_outputs",
-                "code_generation",
-                "fast_response",
-                "cost_efficient"
-            ],
-            "version": "5-mini", 
-            "release_date": datetime(2025, 1, 15),
-        },
-        "gpt-5-reasoning": {
-            "name": "gpt-5-reasoning", 
-            "api_name": "gpt-5-reasoning",
-            "type": "reasoning",
-            "context_length": 2000000,  # 2M tokens
-            "max_output_tokens": 32768,  # 32K tokens
-            "input_cost": 5.00,  # per 1M tokens
-            "output_cost": 20.00,  # per 1M tokens
-            "description": "GPT-5 optimized for complex reasoning and problem-solving tasks",
-            "capabilities": [
-                "text", 
-                "vision",
+                "reasoning",
+                "multimodal",
                 "function_calling",
-                "streaming", 
+                "tool_use",
                 "structured_outputs",
-                "advanced_reasoning",
-                "step_by_step_thinking", 
-                "mathematical_reasoning",
-                "code_reasoning",
-                "scientific_analysis"
+                "streaming",
+                "code_generation",
+                "vision_understanding",
+                "reasoning_tokens"
             ],
-            "version": "5-reasoning",
-            "release_date": datetime(2025, 1, 15),
-            "reasoning_time_limit": 120,  # seconds for reasoning
+            "version": "5-mini-2025-08-07", 
+            "release_date": datetime(2025, 8, 7),
+        },
+        "gpt-5-nano-2025-08-07": {
+            "name": "gpt-5-nano-2025-08-07", 
+            "api_name": "gpt-5-nano",
+            "type": "chat",
+            "context_length": 400000,  # 400K tokens per MODELS_MANIFEST.md
+            "max_output_tokens": 128000,  # 128K tokens per MODELS_MANIFEST.md
+            "input_cost": 0.20,  # per 1M tokens per MODELS_MANIFEST.md
+            "output_cost": 0.80,  # per 1M tokens per MODELS_MANIFEST.md
+            "description": "Ultra-low cost model for simple text generation and high throughput",
+            "capabilities": [
+                "basic_reasoning",
+                "text_generation",
+                "function_calling",
+                "streaming",
+                "code_completion",
+                "reasoning_tokens"
+            ],
+            "version": "5-nano-2025-08-07",
+            "release_date": datetime(2025, 8, 7),
         },
 
         # === o4 Series - Next-Generation Reasoning Models ===
@@ -324,35 +322,58 @@ class OpenAIProvider(BaseProvider):
             "version": "4.1-vision",
             "release_date": datetime(2025, 1, 15),
         },
+        "gpt-4.1-nano": {
+            "name": "gpt-4.1-nano",
+            "api_name": "gpt-4.1-nano",
+            "type": "chat",
+            "context_length": 1047576,  # ~1M tokens per MODELS_MANIFEST.md
+            "max_output_tokens": 32768,  # 32K tokens per MODELS_MANIFEST.md
+            "input_cost": 0.10,  # per 1M tokens per MODELS_MANIFEST.md
+            "output_cost": 0.40,  # per 1M tokens per MODELS_MANIFEST.md
+            "description": "Ultra-fast, cost-efficient model for quick tasks and tool orchestration",
+            "capabilities": [
+                "instruction_following",
+                "tool_calling",
+                "text",
+                "vision_input",
+                "fast_response",
+                "cost_efficient"
+            ],
+            "version": "4.1-nano",
+            "release_date": datetime(2024, 6, 1),
+        },
     }
 
     # Model aliases for convenience
     MODEL_ALIASES: Dict[str, str] = {
-        # GPT-5 model shortcuts  
+        # GPT-5 model shortcuts (preferred models)
         "gpt5": "gpt-5",
         "gpt-latest": "gpt-5",
         "gpt-flagship": "gpt-5",
-        "gpt-5-fast": "gpt-5-mini", 
-        "gpt5-mini": "gpt-5-mini",
-        "gpt-5-reason": "gpt-5-reasoning",
-        "gpt5-reasoning": "gpt-5-reasoning",
+        "gpt-5-fast": "gpt-5-mini-2025-08-07", 
+        "gpt5-mini": "gpt-5-mini-2025-08-07",
+        "gpt-5-mini": "gpt-5-mini-2025-08-07",
+        "gpt-5-nano": "gpt-5-nano-2025-08-07",
+        "gpt5-nano": "gpt-5-nano-2025-08-07",
         # Reasoning model shortcuts
         "reasoning": "o3",
         "reasoning-pro": "o3-pro",
         "reasoning-mini": "o3-mini",
         "reasoning-fast": "o4-mini",
-        # GPT shortcuts
-        "gpt-fast": "gpt-4.1-mini",
+        # GPT shortcuts - still available but not preferred
+        "gpt-fast": "gpt-4.1-nano",
         "gpt-vision": "gpt-4.1-vision",
-        # Legacy shortcuts
+        # Legacy shortcuts - map to newer models
         "gpt-4": "gpt-4.1",
         "gpt-4-mini": "gpt-4.1-mini",
+        "gpt-4o": "gpt-4.1",
+        "gpt-4o-mini": "gpt-4.1-mini",
     }
 
     # Model categories for recommendations
     MODEL_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "reasoning": {
-            "models": ["gpt-5-reasoning", "o3-pro", "o3", "o1", "o4-mini", "o3-mini", "o1-mini"],
+            "models": ["o3-pro", "o3", "o1", "o4-mini", "o3-mini", "o1-mini", "gpt-5"],
             "description": "Advanced reasoning and problem-solving capabilities",
             "best_for": [
                 "complex_analysis",
@@ -367,7 +388,7 @@ class OpenAIProvider(BaseProvider):
             "best_for": ["chat", "writing", "general_assistance", "content_creation"],
         },
         "efficient": {
-            "models": ["gpt-5-mini", "gpt-4.1-mini", "o4-mini", "o3-mini"],
+            "models": ["gpt-5-nano-2025-08-07", "gpt-5-mini-2025-08-07", "gpt-4.1-nano", "gpt-4.1-mini", "o4-mini", "o3-mini"],
             "description": "Cost-effective models for high-volume applications",
             "best_for": [
                 "automation",
@@ -393,7 +414,7 @@ class OpenAIProvider(BaseProvider):
         self.base_url = kwargs.get("base_url")
         self.organization = kwargs.get("organization")
         self.project = kwargs.get("project")
-        self.default_model = kwargs.get("default_model", "gpt-5")
+        self.default_model = kwargs.get("default_model", "gpt-5")  # GPT-5 is the preferred default
         self.reasoning_patience = kwargs.get(
             "reasoning_patience", True
         )  # Wait for reasoning models
@@ -870,28 +891,26 @@ class OpenAIProvider(BaseProvider):
             )
 
     def _get_actual_model(self, resolved_model: str) -> str:
-        """Map future/unavailable models to actual available models."""
-        # Map future models to currently available ones
+        """Return actual model names - GPT-5 is available as of August 2025."""
+        # According to MODELS_MANIFEST.md, these models are actually available:
+        # - GPT-5 family (gpt-5, gpt-5-mini-2025-08-07, gpt-5-nano-2025-08-07)
+        # - GPT-4.1 family (gpt-4.1, gpt-4.1-mini, gpt-4.1-vision, gpt-4.1-nano)
+        # - o1/o3/o4 series for reasoning
+        
+        # Map any date-specific versions to base names
         model_mapping = {
-            # GPT-5 models -> GPT-4 models
-            "gpt-5": "gpt-4-turbo-preview",
-            "gpt-5-mini": "gpt-4-0125-preview",
-            "gpt-5-reasoning": "gpt-4-turbo-preview",
+            # GPT-5 date-specific to base names
+            "gpt-5-mini-2025-08-07": "gpt-5-mini",
+            "gpt-5-nano-2025-08-07": "gpt-5-nano",
             
-            # o3/o4 models -> o1 models
-            "o3-pro": "o1-preview",
-            "o3": "o1-preview",
-            "o3-mini": "o1-mini",
-            "o4-mini": "o1-mini",
-            
-            # GPT-4.1 models -> GPT-4 models
-            "gpt-4.1": "gpt-4-turbo-preview",
-            "gpt-4.1-mini": "gpt-4-0125-preview",
-            "gpt-4.1-vision": "gpt-4-vision-preview",
-            
-            # o1 models (these should be available)
-            "o1": "o1-preview",
-            "o1-mini": "o1-mini",
+            # Legacy GPT-4 models to GPT-4.1
+            "gpt-4": "gpt-4.1",
+            "gpt-4-turbo": "gpt-4.1",
+            "gpt-4o": "gpt-4.1",
+            "gpt-4o-mini": "gpt-4.1-mini",
+            "gpt-4-turbo-preview": "gpt-4.1",
+            "gpt-4-0125-preview": "gpt-4.1-mini",
+            "gpt-4-vision-preview": "gpt-4.1-vision",
         }
         
         # Return mapped model or original if not in mapping
@@ -899,29 +918,30 @@ class OpenAIProvider(BaseProvider):
         
         # Log if we're using a different model
         if actual != resolved_model:
-            logger.info(f"Model {resolved_model} mapped to available model {actual}")
+            logger.info(f"Model {resolved_model} mapped to {actual}")
         
         return actual
 
     def get_recommended_model(self, use_case: str = "general") -> str:
-        """Get recommended model based on use case."""
+        """Get recommended model based on use case - GPT-5 is preferred per MODELS_MANIFEST.md."""
         recommendations = {
             "general": "gpt-5",
-            "reasoning": "gpt-5-reasoning", 
+            "reasoning": "o3-pro",  # o3-pro is best for reasoning per MODELS_MANIFEST.md
             "complex_reasoning": "o3-pro",
             "fast_reasoning": "o4-mini",
-            "cost_efficient": "gpt-5-mini",
+            "cost_efficient": "gpt-5-nano-2025-08-07",  # Ultra low cost
             "conversation": "gpt-5",
-            "vision": "gpt-5",
+            "vision": "gpt-5",  # GPT-5 has multimodal capabilities
             "multimodal": "gpt-5", 
             "coding": "gpt-5",
-            "analysis": "gpt-5-reasoning",
+            "analysis": "gpt-5",  # GPT-5 has advanced reasoning
             "math": "o3-pro",
             "science": "o3-pro", 
             "writing": "gpt-5",
             "chat": "gpt-5",
-            "automation": "gpt-5-mini",
+            "automation": "gpt-5-mini-2025-08-07",  # Cost-efficient for automation
             "latest": "gpt-5",
+            "high_throughput": "gpt-5-nano-2025-08-07",  # Best for high throughput
         }
 
         return recommendations.get(use_case, "gpt-5")

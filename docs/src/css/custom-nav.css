@@ -1,0 +1,148 @@
+/**
+ * Custom Navigation Styles
+ * Following OpenAI documentation patterns
+ */
+
+/* Navigation link styling */
+.md-nav__link {
+  position: relative;
+  display: block;
+  padding: 0.625em 1.25em;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.125s, background-color 0.125s;
+  border-radius: 0.25rem;
+}
+
+.md-nav__link:hover {
+  background-color: var(--ifm-menu-color-background-hover);
+  color: var(--ifm-menu-color-active);
+}
+
+.md-nav__link--active {
+  background-color: var(--ifm-menu-color-background-active);
+  color: var(--ifm-menu-color-active);
+  font-weight: 600;
+}
+
+/* Ellipsis for long navigation items */
+.md-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Category styling */
+.menu__list-item-collapsible .md-nav__link {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
+  opacity: 0.9;
+}
+
+.menu__list-item-collapsible .md-nav__link:hover {
+  opacity: 1;
+}
+
+/* Nested items */
+.menu__list .menu__list .md-nav__link {
+  padding-left: 2rem;
+  font-weight: 400;
+  font-size: 0.925rem;
+}
+
+/* Active trail */
+.menu__link--sublist-caret:after {
+  transition: transform 0.2s;
+}
+
+.menu__list-item--collapsed .menu__link--sublist-caret:after {
+  transform: rotateZ(-90deg);
+}
+
+/* Modern navigation hover effects */
+.md-nav__link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--ifm-color-primary);
+  transition: height 0.2s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+.md-nav__link:hover::before,
+.md-nav__link--active::before {
+  height: 60%;
+}
+
+/* Smooth category expansion */
+.menu__list {
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* External link indicator */
+.md-nav__link[href^="http"]:after {
+  content: "↗";
+  margin-left: 0.25em;
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 996px) {
+  .md-nav__link {
+    padding: 0.5em 1em;
+  }
+  
+  .menu__list .menu__list .md-nav__link {
+    padding-left: 1.5rem;
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .md-nav__link {
+  color: var(--ifm-menu-color);
+}
+
+[data-theme='dark'] .md-nav__link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .md-nav__link--active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--ifm-color-primary-light);
+}
+
+/* Accessibility improvements */
+.md-nav__link:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* TOC (Table of Contents) styling to match */
+.table-of-contents__link {
+  display: block;
+  padding: 0.25rem 0;
+  color: var(--ifm-toc-link-color);
+  transition: color 0.2s;
+}
+
+.table-of-contents__link:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.table-of-contents__link--active {
+  color: var(--ifm-color-primary);
+  font-weight: 500;
+}

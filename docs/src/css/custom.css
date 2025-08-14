@@ -1,1 +1,47 @@
-/* Custom CSS */ body { font-family: system-ui; }
+/**
+ * Monkey Coder Documentation - Custom Styles
+ * Combining OpenAI and Anthropic documentation best practices
+ */
+
+/* Import navigation styles */
+@import './custom-nav.css';
+@import './utility-nav.css';
+
+/* Base typography */
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Code blocks */
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, 'Courier New', monospace;
+}
+
+/* Improved readability */
+.markdown {
+  line-height: 1.6;
+}
+
+.markdown h1 {
+  font-size: 2.5rem;
+  margin-top: 2rem;
+}
+
+.markdown h2 {
+  font-size: 2rem;
+  margin-top: 1.5rem;
+}
+
+.markdown h3 {
+  font-size: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+/* Better spacing for documentation */
+.container {
+  max-width: 1200px;
+}
+
+article {
+  max-width: 860px;
+}
