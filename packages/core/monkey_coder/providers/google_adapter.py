@@ -459,21 +459,20 @@ class GoogleProvider(BaseProvider):
             )
     
     def _get_actual_model(self, model: str) -> str:
-        """Map future/unavailable models to actual available models."""
-        # Map future models to currently available ones
+        """Return actual model names - Gemini 2.5 is available as of August 2025."""
+        # According to MODELS_MANIFEST.md, all Gemini 2.x models are real and available
+        # No mapping needed - use them directly
         model_mapping = {
-            # Gemini 2.5 models -> Gemini 1.5 models  
-            "gemini-2.5-pro": "gemini-1.5-pro",
-            "gemini-2.5-flash": "gemini-1.5-flash",
-            "gemini-2.5-flash-lite": "gemini-1.5-flash",
+            # All these models exist and should be used directly
+            "gemini-2.5-pro": "gemini-2.5-pro",
+            "gemini-2.5-flash": "gemini-2.5-flash",
+            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
+            "gemini-2.0-flash": "gemini-2.0-flash",
             
-            # Gemini 2.0 -> Gemini 1.5
-            "gemini-2.0-flash": "gemini-1.5-flash",
-            
-            # Direct mappings for available models
-            "gemini-1.5-pro": "gemini-1.5-pro",
-            "gemini-1.5-flash": "gemini-1.5-flash",
-            "gemini-pro": "gemini-pro",
+            # Legacy models that might need mapping
+            "gemini-1.5-pro": "gemini-2.5-pro",  # Upgrade to newer version
+            "gemini-1.5-flash": "gemini-2.5-flash",  # Upgrade to newer version
+            "gemini-pro": "gemini-2.5-flash",  # Upgrade to newer version
         }
         
         # Return mapped model or original if not in mapping
@@ -481,7 +480,7 @@ class GoogleProvider(BaseProvider):
         
         # Log if we're using a different model
         if actual != model:
-            logger.info(f"Model {model} mapped to available model {actual}")
+            logger.info(f"Model {model} mapped to {actual}")
         
         return actual
     
