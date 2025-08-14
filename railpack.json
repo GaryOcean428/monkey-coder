@@ -33,7 +33,7 @@
       { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "/app/.venv/bin/python run_server.py",
+    "startCommand": "sh -lc 'if [ -x /app/.venv/bin/python ]; then /app/.venv/bin/python run_server.py; else python run_server.py; fi'",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
