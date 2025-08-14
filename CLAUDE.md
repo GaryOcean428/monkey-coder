@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-consider MODELS_MANIFEST.md as canonical.
+consider MODED_MANIFEST.md as canonical.
 
 ## Project Overview
 

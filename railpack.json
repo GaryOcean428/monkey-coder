@@ -42,8 +42,7 @@
         "corepack enable",
         "cd packages/web",
         "yarn install --immutable",
-        "yarn build",
-        "yarn export"
+        "yarn build"
       ],
       "cacheDirectories": ["/root/.yarn", "/root/.cache/yarn", "/usr/local/share/.cache/yarn"]
     }
@@ -53,7 +52,7 @@
     "inputs": [
       { "local": true, "include": ["."] },
       { "step": "python", "include": [".venv"] },
-      { "step": "web", "include": ["packages/web/out"] }
+      { "step": "web", "include": ["packages/web/out/**"] }
     ],
     "paths": ["/app/.venv/bin", "/.venv/bin"],
     "variables": { "PYTHONPATH": "/app:/app/packages/core" },
