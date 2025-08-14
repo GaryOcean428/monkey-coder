@@ -26,9 +26,10 @@ class MultiAgentOrchestrator:
     - Intelligent task decomposition and agent handoff
     """
 
-    def __init__(self):
+    def __init__(self, provider_registry=None):
         self.agents = []
-        self.coordination_engine = OrchestrationCoordinator()
+        self.coordination_engine = OrchestrationCoordinator(provider_registry=provider_registry)
+        self.provider_registry = provider_registry
         logger.info("MultiAgentOrchestrator initialized with enhanced coordination engine")
 
     async def orchestrate(

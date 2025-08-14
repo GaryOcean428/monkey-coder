@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from ..models import ExecuteRequest, ExecuteResponse, TaskStatus, ExecutionResult
 from ..config.env_config import get_config
+from .agent_executor import AgentExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -94,13 +95,15 @@ class OrchestrationCoordinator:
     and sophisticated execution strategies.
     """
 
-    def __init__(self):
+    def __init__(self, provider_registry=None):
         self.active_orchestrations = {}
         self.orchestration_templates = self._init_orchestration_templates()
         self.strategy_selectors = self._init_strategy_selectors()
         self.config = get_config()
+        self.provider_registry = provider_registry
+        self.agent_executor = AgentExecutor(provider_registry=provider_registry)  # Initialize real agent executor
 
-        logger.info("OrchestrationCoordinator initialized with enhanced patterns")
+        logger.info("OrchestrationCoordinator initialized with enhanced patterns and real AI integration")
 
     def _init_orchestration_templates(self) -> Dict[str, Dict[str, Any]]:
         """Initialize orchestration templates for different task patterns."""
@@ -595,20 +598,60 @@ class OrchestrationCoordinator:
         )
 
     async def _execute_sequential_phase(self, context: TaskContext, phase: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a sequential phase with specified agents."""
+        """Execute a sequential phase with specified agents using REAL AI calls."""
         context.add_execution_event({
             "type": "phase_start",
             "phase": phase["name"],
             "agents": phase["agent_types"]
         })
 
-        await asyncio.sleep(0.1)  # Simulate phase execution
-
+        start_time = datetime.utcnow()
+        phase_results = []
+        
+        # Execute each agent in the phase with real AI calls
+        for agent_type in phase["agent_types"]:
+            try:
+                # Build the prompt based on phase and context
+                prompt = self._build_agent_prompt(context, phase["name"], agent_type)
+                
+                # Make the REAL AI call through agent executor
+                agent_result = await self.agent_executor.execute_agent_task(
+                    agent_type=agent_type,
+                    prompt=prompt,
+                    context={
+                        "phase": phase["name"],
+                        "task_type": str(context.request.task_type),
+                        "previous_results": phase_results
+                    },
+                    max_tokens=4096,
+                    temperature=0.1
+                )
+                
+                phase_results.append(agent_result)
+                
+                logger.info(f"Real AI call completed for {agent_type} in phase {phase['name']}")
+                
+            except Exception as e:
+                logger.error(f"Error executing agent {agent_type}: {str(e)}")
+                phase_results.append({
+                    "agent_type": agent_type,
+                    "status": "failed",
+                    "error": str(e)
+                })
+        
+        end_time = datetime.utcnow()
+        duration = (end_time - start_time).total_seconds()
+        
+        # Aggregate the results from all agents
+        combined_output = self._combine_agent_outputs(phase_results)
+        
         result = {
             "phase": phase["name"],
             "agents_used": phase["agent_types"],
             "status": "completed",
-            "duration": 0.1
+            "duration": duration,
+            "output": combined_output,
+            "agent_results": phase_results
         }
 
         context.add_execution_event({
@@ -618,6 +661,30 @@ class OrchestrationCoordinator:
         })
 
         return result
+    
+    def _build_agent_prompt(self, context: TaskContext, phase_name: str, agent_type: str) -> str:
+        """Build the prompt for a specific agent based on context and phase."""
+        base_prompt = context.request.prompt
+        
+        # Phase-specific prompt modifications
+        phase_prompts = {
+            "analysis": f"Analyze this request and provide insights: {base_prompt}",
+            "planning": f"Create a detailed implementation plan for: {base_prompt}",
+            "implementation": f"Implement the following: {base_prompt}",
+            "testing": f"Create tests for the implementation of: {base_prompt}",
+            "review": f"Review and improve this solution for: {base_prompt}"
+        }
+        
+        return phase_prompts.get(phase_name, base_prompt)
+    
+    def _combine_agent_outputs(self, agent_results: List[Dict[str, Any]]) -> str:
+        """Combine outputs from multiple agents into a cohesive result."""
+        combined = []
+        for result in agent_results:
+            if result.get("status") == "completed" and result.get("output"):
+                combined.append(f"## {result.get('agent_type', 'Agent')} Output:\n{result['output']}\n")
+        
+        return "\n".join(combined) if combined else "No output generated"
 
     async def _execute_parallel_phase(self, context: TaskContext, phase: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a parallel phase with multiple agents."""
@@ -651,14 +718,43 @@ class OrchestrationCoordinator:
         return phase_result
 
     async def _simulate_agent_task(self, context: TaskContext, agent_id: str) -> Dict[str, Any]:
-        """Simulate agent task execution."""
-        await asyncio.sleep(0.05)  # Simulate work
-        return {
-            "agent_id": agent_id,
-            "status": "completed",
-            "confidence": 0.8,
-            "output": f"Result from {agent_id}"
-        }
+        """Execute agent task with REAL AI provider calls."""
+        try:
+            # Extract agent type from agent_id (e.g., "developer_agent_1" -> "developer")
+            agent_type = agent_id.split("_")[0] if "_" in agent_id else agent_id
+            
+            # Build prompt for the agent
+            prompt = f"{context.request.prompt}\n\nTask for {agent_type} agent."
+            
+            # Make REAL AI call
+            result = await self.agent_executor.execute_agent_task(
+                agent_type=agent_type,
+                prompt=prompt,
+                context={
+                    "task_id": context.request.task_id,
+                    "task_type": str(context.request.task_type)
+                },
+                max_tokens=4096,
+                temperature=0.1
+            )
+            
+            return {
+                "agent_id": agent_id,
+                "status": result.get("status", "completed"),
+                "confidence": result.get("confidence", 0.8),
+                "output": result.get("output", ""),
+                "provider": result.get("provider"),
+                "model": result.get("model"),
+                "usage": result.get("usage", {})
+            }
+        except Exception as e:
+            logger.error(f"Error in agent task {agent_id}: {str(e)}")
+            return {
+                "agent_id": agent_id,
+                "status": "failed",
+                "confidence": 0.0,
+                "output": f"Error: {str(e)}"
+            }
 
     async def _simulate_quantum_approach(self, context: TaskContext, approach: str) -> Dict[str, Any]:
         """Simulate quantum approach execution."""

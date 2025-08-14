@@ -108,11 +108,11 @@ async def lifespan(app: FastAPI):
     import traceback
     # Initialize core components with health checks
     try:
-        app.state.orchestrator = MultiAgentOrchestrator()
-        logger.info("✅ MultiAgentOrchestrator initialized successfully")
-
         app.state.provider_registry = ProviderRegistry()
         logger.info("✅ ProviderRegistry initialized successfully")
+        
+        app.state.orchestrator = MultiAgentOrchestrator(provider_registry=app.state.provider_registry)
+        logger.info("✅ MultiAgentOrchestrator initialized successfully")
 
         app.state.quantum_executor = QuantumExecutor(provider_registry=app.state.provider_registry)
         logger.info("✅ QuantumExecutor initialized successfully")
