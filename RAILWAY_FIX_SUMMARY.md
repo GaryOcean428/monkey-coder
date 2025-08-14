@@ -22,11 +22,14 @@ Having both `railpack.json` and `railway.json` created a conflict where Railway 
 rm railway.json
 ```
 
-### 2. Validated railpack.json
+### 2. Optimized railpack.json Configuration
 - ✅ JSON syntax is valid
-- ✅ Contains proper build steps for both Python and Node.js
+- ✅ Contains proper build steps for both Python (3.12) and Node.js (22)
 - ✅ Has health check endpoint configured (`/health`)
 - ✅ Uses correct start command
+- ✅ Added NODE_OPTIONS with increased memory for Next.js builds
+- ✅ Simplified deployment configuration to prevent conflicts
+- ✅ Fixed build step ordering and dependencies
 
 ### 3. Added Prevention Measures
 
