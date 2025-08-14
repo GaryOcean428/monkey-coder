@@ -79,7 +79,7 @@ async def create_sse_stream(
         
         # Get default model if not specified
         if not model:
-            model = provider_adapter.default_model if hasattr(provider_adapter, 'default_model') else "gpt-4-turbo"
+            model = provider_adapter.default_model if hasattr(provider_adapter, 'default_model') else "gpt-4.1"
         
         logger.info(f"Starting streaming execution with {provider}/{model}")
         

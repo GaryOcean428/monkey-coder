@@ -84,9 +84,9 @@ async def main():
     
     # Test configurations for each provider
     test_cases = [
-        ("openai", "gpt-4-turbo"),  # Using available model
+        ("openai", "gpt-4.1"),  # Using available model
         ("anthropic", "claude-3-5-sonnet-20241022"),  # Latest Claude
-        ("google", "gemini-1.5-pro"),  # Available Gemini model
+        ("google", "gemini-2.5-pro"),  # Available Gemini model
         ("groq", "llama-3.3-70b-versatile"),  # Groq's Llama model
         ("xai", "grok-3"),  # xAI's Grok model
     ]

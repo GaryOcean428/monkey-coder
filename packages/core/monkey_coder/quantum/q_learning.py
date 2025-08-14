@@ -170,7 +170,7 @@ class QLearningRouter:
         
         # Define provider-model combinations
         provider_models = {
-            'openai': ['gpt-4-turbo-preview', 'gpt-3.5-turbo'],
+            'openai': ['gpt-4.1', 'gpt-4.1-mini'],
             'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
             'google': ['gemini-2.5-pro', 'gemini-2.5-flash'],
             'groq': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'],
@@ -254,7 +254,7 @@ class QLearningRouter:
         # High complexity tasks -> stronger models
         if state.complexity > 0.7:
             provider = 'openai'
-            model = 'gpt-4-turbo-preview'
+            model = 'gpt-4.1'
             strategy = 'quantum' if state.complexity > 0.8 else 'hybrid'
         elif state.complexity > 0.4:
             provider = 'anthropic'

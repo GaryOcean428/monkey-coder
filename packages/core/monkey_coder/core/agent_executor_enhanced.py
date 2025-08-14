@@ -193,7 +193,7 @@ class EnhancedAgentExecutor:
                 "default": "llama-3.3-70b-versatile"
             },
             "google": {
-                "default": "gemini-1.5-pro"
+                "default": "gemini-2.5-pro"
             },
             "grok": {
                 "researcher": "grok-3",

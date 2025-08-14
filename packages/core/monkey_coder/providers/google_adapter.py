@@ -218,7 +218,7 @@ class GoogleProvider(BaseProvider):
 
         try:
             # Test with a simple model list or generation
-            test_model_name = "gemini-1.5-flash"  # Use an actual available model
+            test_model_name = "gemini-2.5-flash"  # Use an actual available model
             test_model = self.client.GenerativeModel(test_model_name)
             
             # Quick test generation

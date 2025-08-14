@@ -428,9 +428,9 @@ MODEL_REGISTRY = {
         "o4-mini",
         "o3-deep-research",
         "o4-mini-deep-research",
-        # Search models
-        "gpt-4o-search-preview",
-        "gpt-4o-mini-search-preview",
+        # Search models (not in manifest - commented out)
+        # "gpt-4o-search-preview",  # Not in manifest
+        # "gpt-4o-mini-search-preview",  # Not in manifest
         # Specialized
         "codex-mini-latest",
         # Legacy (deprecated - DO NOT USE)

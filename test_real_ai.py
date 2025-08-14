@@ -42,7 +42,7 @@ async def test_real_code_generation():
         },
         "preferred_providers": ["openai"],  # Provider preference list
         "model_preferences": {  # Model preferences by provider
-            "openai": "gpt-4-turbo-preview"
+            "openai": "gpt-4.1"
         },
         "orchestration_config": {
             "strategy": "sequential",

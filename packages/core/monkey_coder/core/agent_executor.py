@@ -168,7 +168,7 @@ class AgentExecutor:
                 "default": "llama-3.3-70b-versatile"
             },
             "google": {
-                "default": "gemini-1.5-pro"
+                "default": "gemini-2.5-pro"
             },
             "xai": {
                 "default": "grok-3"

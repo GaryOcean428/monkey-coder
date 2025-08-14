@@ -497,7 +497,7 @@ class OpenAIProvider(BaseProvider):
                 )
 
             # Test with a simple completion using an actual available model
-            test_model = "gpt-3.5-turbo"  # Use a real, available model for testing
+            test_model = "gpt-4.1-mini"  # Use a real, available model for testing
             actual_test_model = self._get_actual_model(test_model)
             logger.info(f"Testing OpenAI API with {actual_test_model}")
 
@@ -966,7 +966,7 @@ class OpenAIProvider(BaseProvider):
             models = await self.client.models.list()
 
             # Test a simple completion with an actual available model
-            test_model = "gpt-3.5-turbo"
+            test_model = "gpt-4.1-mini"
             actual_test_model = self._get_actual_model(test_model)
             test_response = await self.client.chat.completions.create(
                 model=actual_test_model,

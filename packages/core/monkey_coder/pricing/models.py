@@ -126,21 +126,21 @@ MODEL_PRICING_DATA: Dict[str, ModelPricing] = {
         output_cost_per_token=0.00004,    # $40.00 per 1M output tokens
         context_length=128000
     ),
-    # Search models
-    "gpt-4o-search-preview": ModelPricing(
-        model_id="gpt-4o-search-preview",
-        provider="openai",
-        input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
-        output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
-        context_length=128000
-    ),
-    "gpt-4o-mini-search-preview": ModelPricing(
-        model_id="gpt-4o-mini-search-preview",
-        provider="openai",
-        input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
-        output_cost_per_token=0.000002,   # $2.00 per 1M output tokens
-        context_length=128000
-    ),
+    # Search models (not in manifest - commented out)
+    # "gpt-4o-search-preview": ModelPricing(
+    #     model_id="gpt-4o-search-preview",
+    #     provider="openai",
+    #     input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
+    #     output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
+    #     context_length=128000
+    # ),
+    # "gpt-4o-mini-search-preview": ModelPricing(
+    #     model_id="gpt-4o-mini-search-preview",
+    #     provider="openai",
+    #     input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
+    #     output_cost_per_token=0.000002,   # $2.00 per 1M output tokens
+    #     context_length=128000
+    # ),
     # Specialized
     "codex-mini-latest": ModelPricing(
         model_id="codex-mini-latest",
