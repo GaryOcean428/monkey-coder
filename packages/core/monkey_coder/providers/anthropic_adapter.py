@@ -43,11 +43,24 @@ class AnthropicProvider(BaseProvider):
     Anthropic provider adapter implementing the BaseProvider interface.
 
     Provides access to Anthropic's Claude models 3.5 and above, including
-    Claude 4 Opus, Claude 4 Sonnet, Claude 3.7 Sonnet, and Claude 3.5 variants.
+    Claude Opus 4.1, Claude 4 Opus/Sonnet, Claude 3.7 Sonnet, and Claude 3.5 variants.
     """
 
     # Official Anthropic model names validated against API documentation (3.5+ only)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        "claude-opus-4-1-20250805": {
+            "name": "claude-opus-4-1-20250805",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 15.00,  # per 1M tokens
+            "output_cost": 75.00,  # per 1M tokens
+            "description": "Claude Opus 4.1 - Latest and most capable model with advanced reasoning",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking", "computer_use"],
+            "version": "4.1-opus",
+            "release_date": datetime(2025, 8, 5),
+            "max_output": 32000,
+            "training_cutoff": "Jan 2025",
+        },
         "claude-opus-4-20250514": {
             "name": "claude-opus-4-20250514",
             "type": "chat",
@@ -130,6 +143,9 @@ class AnthropicProvider(BaseProvider):
 
     # Model aliases for convenience (pointing to latest versions)
     MODEL_ALIASES: Dict[str, str] = {
+        "claude-opus-4-1": "claude-opus-4-1-20250805",
+        "claude-opus-4.1": "claude-opus-4-1-20250805",
+        "claude-opus-latest": "claude-opus-4-1-20250805",
         "claude-opus-4-0": "claude-opus-4-20250514",
         "claude-sonnet-4-0": "claude-sonnet-4-20250514",
         "claude-3-7-sonnet-latest": "claude-3-7-sonnet-20250219",
@@ -414,7 +430,8 @@ class AnthropicProvider(BaseProvider):
         """Map future/unavailable models to actual available models."""
         # Map future models to currently available ones
         model_mapping = {
-            # Claude 4 models -> Claude 3 models
+            # Claude 4.1 and 4 models -> Claude 3 models
+            "claude-opus-4-1-20250805": "claude-3-opus-20240229",
             "claude-opus-4-20250514": "claude-3-opus-20240229",
             "claude-sonnet-4-20250514": "claude-3-5-sonnet-20241022",
             
