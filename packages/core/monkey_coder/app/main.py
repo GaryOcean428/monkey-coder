@@ -110,7 +110,7 @@ async def lifespan(app: FastAPI):
     try:
         app.state.provider_registry = ProviderRegistry()
         logger.info("✅ ProviderRegistry initialized successfully")
-        
+
         app.state.orchestrator = MultiAgentOrchestrator(provider_registry=app.state.provider_registry)
         logger.info("✅ MultiAgentOrchestrator initialized successfully")
 
@@ -1254,10 +1254,15 @@ def create_app() -> FastAPI:
 # Mount static files for Next.js frontend (must be after all API routes)
 # Try multiple possible locations for static files
 static_dir_options = [
-    Path(__file__).parent.parent.parent.parent / "packages" / "web" / "out",  # Unified Dockerfile location
-    Path(__file__).parent.parent.parent.parent / "web" / "out",  # Legacy location
-    Path("/app/packages/web/out"),  # Absolute path in Docker
-    Path("/app/web/out"),  # Alternative absolute path
+    # Primary: Next.js static export folder bundled by Railpack
+    Path("/app/packages/web/out"),
+    # Repo-root based fallbacks (works both locally and in container)
+    Path(__file__).resolve().parents[4] / "packages" / "web" / "out",
+    # Docusaurus fallback (if docs is used as marketing site)
+    Path("/app/docs/build"),
+    Path(__file__).resolve().parents[4] / "docs" / "build",
+    # Additional absolute fallback
+    Path("/app/web/out"),
 ]
 
 static_dir = None
