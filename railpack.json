@@ -36,6 +36,12 @@
         "yarn install --immutable || yarn install",
         "yarn workspace @monkey-coder/web build"
       ]
+    },
+    "app": {
+      "inputs": [
+        { "local": true, "include": ["."] }
+      ],
+      "commands": []
     }
   },
   "deploy": {
@@ -43,7 +49,7 @@
     "inputs": [
       { "step": "python", "include": [".venv"] },
       { "step": "web", "include": ["packages/web/dist"] },
-      { "local": true, "include": ["."] }
+      { "step": "app" }
     ],
     "paths": ["/app/.venv/bin"],
     "startCommand": "python run_server.py",
