@@ -35,10 +35,11 @@ Adhere to Monkey Coder's established patterns and Agent OS standards:
 - **Documentation**: Keep code well-documented and consistent with specifications
 - **File Management**: Use docs/ folder for documentation, cleanup unneeded .md files after one-time use
 - **Git Workflow**: Review docs/roadmap.md and update before commits
+- **Check documentation**: Always looks to files like railway-docs-links.md and railpack-docs-links.md for Railway deployment patterns and configurations. Always use railpack and railpack.json setup.
 
 ### 5. Version Requirements Enforcement
 Maintain awareness of minimum version requirements per project specifications:
-- **Node.js**: >=18.0.0
+- **Node.js**: >=18.0.0 (22+ preferred)
 - **Python**: >=3.8 (3.12+ preferred)
 - **Yarn**: >=4.9.2
 - **TypeScript**: Strict typing enabled
