@@ -66,8 +66,11 @@ class EnhancedAgentExecutor:
             model = self._get_model_for_agent(agent_type, provider)
             
         # Build the messages with date awareness and web search reminders
+        # Pass model info in context for tool selection
+        enhanced_context = context or {}
+        enhanced_context["model"] = model
         messages, tools = self._build_messages_with_tools(
-            agent_type, prompt, context, provider, enable_web_search
+            agent_type, prompt, enhanced_context, provider, enable_web_search
         )
         
         try:
@@ -339,45 +342,83 @@ library versions, or best practices relevant to this task."""
         # Build tools configuration if enabled
         tools = None
         if enable_web_search:
-            tools = self._get_tools_for_provider(provider)
+            # Get model from context or use default
+            model = context.get("model") if context else None
+            tools = self._get_tools_for_provider(provider, model)
         
         return messages, tools
     
-    def _get_tools_for_provider(self, provider: str) -> Optional[List[Dict[str, Any]]]:
+    def _get_tools_for_provider(self, provider: str, model: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
         """Get the appropriate tool configuration for the provider."""
         if not provider:
             return None
         
-        # Provider-specific tool configurations
+        # Provider-specific tool configurations based on MODEL_MANIFEST.md and docs
         if provider == "openai":
-            return [{
-                "type": "web_search_preview",
-                "user_location": {
-                    "type": "approximate",
-                    "country": "US"
-                },
-                "search_context_size": "high"
-            }]
+            # GPT-5 models and newer GPT-4 models support web_search_preview
+            web_search_models = [
+                "gpt-5", "gpt-4.1", "o4", "o3"  # Models that support web search
+            ]
+            if model and any(m in model.lower() for m in web_search_models):
+                return [{
+                    "type": "web_search_preview",
+                    "user_location": {
+                        "type": "approximate",
+                        "country": "US"
+                    },
+                    "search_context_size": "high"
+                }]
+            # For other OpenAI models, don't use web search tools
+            return None
+        
+        elif provider == "anthropic":
+            # Claude 3.5, 3.7, 4, and 4.1 support search via tool calling
+            # They use a search_knowledge_base tool that returns SearchResultBlockParam
+            web_search_models = ["claude-3-5", "claude-3-7", "claude-4", "claude-opus-4", "claude-sonnet-4"]
+            if model and any(m in model.lower() for m in web_search_models):
+                return [{
+                    "name": "web_search",
+                    "description": "Search the web for current information",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query"
+                            }
+                        },
+                        "required": ["query"]
+                    }
+                }]
+            return None
         
         elif provider == "groq":
-            return [{
-                "type": "web_search",
-                "enabled": True
-            }]
+            # Groq uses compound-beta model with automatic web search
+            # No explicit tools needed - it handles search internally
+            if model and "compound" in model.lower():
+                # Groq compound model handles search automatically
+                return None  # No explicit tools needed
+            # For other Groq models, standard search may be available
+            web_search_models = ["llama-3.3", "llama-4", "qwen", "kimi"]
+            if model and any(m in model.lower() for m in web_search_models):
+                return [{
+                    "type": "web_search",
+                    "enabled": True
+                }]
+            return None
         
         elif provider in ["grok", "xai"]:
-            return [{
-                "type": "live_search",
-                "enabled": True
-            }]
+            # xAI Grok models have live search built-in
+            # Per docs: "Live Search (Beta) is available for all grok models by default"
+            # No explicit tools needed - it's automatic
+            return None  # Live search is automatic for Grok models
         
-        # Anthropic doesn't use tools array but search result injection
         # Google Gemini has different search integration
         return None
     
     def _provider_supports_tools(self, provider: str) -> bool:
         """Check if a provider supports the tools parameter."""
-        return provider in ["openai", "groq", "grok", "xai"]
+        return provider in ["openai", "anthropic", "groq"]  # These providers use explicit tools parameter
     
     def _get_provider_instance(self, provider_name: str):
         """Get a provider instance from the registry."""

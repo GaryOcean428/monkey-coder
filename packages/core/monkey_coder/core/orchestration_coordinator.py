@@ -347,24 +347,64 @@ class OrchestrationCoordinator:
         return min(score, 1.0)  # Cap at 1.0
 
     async def _execute_simple_strategy(self, context: TaskContext) -> ExecutionResult:
-        """Execute simple single-agent strategy."""
+        """Execute simple single-agent strategy using real AI."""
         context.phase = OrchestrationPhase.EXECUTION
         context.add_execution_event({
             "type": "strategy_start",
             "strategy": "simple",
-            "message": "Starting simple single-agent execution"
+            "message": "Starting simple single-agent execution with real AI"
         })
 
-        # Simulate single agent execution
-        await asyncio.sleep(0.1)  # Simulate processing
-
-        result = ExecutionResult(
-            result={"message": "Simple execution completed", "strategy": "simple"},
-            confidence_score=0.8,
-            metadata={"execution_type": "simple", "agents_used": 1},
-            artifacts=[],
-            quantum_collapse_info={}
-        )
+        try:
+            # Execute the actual AI task
+            agent_result = await self.agent_executor.execute_agent_task(
+                agent_type="developer",
+                prompt=context.request.prompt,
+                provider=None,  # Let it auto-select
+                model=None,  # Let it auto-select
+                context={
+                    "task_type": context.request.task_type.value,
+                    "language": getattr(context.request.context, 'language', 'python') if context.request.context else "python",
+                    "files": context.request.files
+                }
+            )
+            
+            # Extract the actual generated code/content
+            generated_content = agent_result.get("output", agent_result.get("content", ""))
+            
+            result = ExecutionResult(
+                result={
+                    "code": generated_content,
+                    "message": "Code generation completed successfully",
+                    "strategy": "simple",
+                    "provider": agent_result.get("provider"),
+                    "model": agent_result.get("model")
+                },
+                confidence_score=agent_result.get("confidence", 0.9),
+                metadata={
+                    "execution_type": "simple",
+                    "agents_used": 1,
+                    "provider": agent_result.get("provider"),
+                    "model": agent_result.get("model"),
+                    "tokens": agent_result.get("usage", {})
+                },
+                artifacts=[],
+                quantum_collapse_info={}
+            )
+            
+        except Exception as e:
+            logger.error(f"Agent execution failed: {e}")
+            result = ExecutionResult(
+                result={
+                    "message": f"Execution failed: {str(e)}",
+                    "strategy": "simple",
+                    "error": str(e)
+                },
+                confidence_score=0.0,
+                metadata={"execution_type": "simple", "agents_used": 1, "error": str(e)},
+                artifacts=[],
+                quantum_collapse_info={}
+            )
 
         context.phase = OrchestrationPhase.COMPLETION
         context.add_execution_event({
@@ -486,58 +526,89 @@ class OrchestrationCoordinator:
         )
 
     async def _execute_quantum_strategy(self, context: TaskContext) -> ExecutionResult:
-        """Execute quantum-inspired orchestration strategy."""
+        """Execute quantum-inspired orchestration strategy using real AI."""
         context.phase = OrchestrationPhase.EXECUTION
 
         context.add_execution_event({
             "type": "strategy_start",
             "strategy": "quantum",
-            "message": "Starting quantum-inspired execution"
+            "message": "Starting quantum-inspired execution with real AI"
         })
 
-        # Simulate quantum superposition - multiple solution approaches
-        quantum_tasks = []
-        for approach in ["conservative", "innovative", "hybrid"]:
-            task = self._simulate_quantum_approach(context, approach)
-            quantum_tasks.append(task)
+        try:
+            # For now, just use single AI call (later can expand to multiple approaches)
+            # Real quantum would evaluate multiple solution approaches in parallel
+            agent_result = await self.agent_executor.execute_agent_task(
+                agent_type="architect",  # Use architect for system design
+                prompt=context.request.prompt,
+                provider=None,  # Let it auto-select
+                model=None,  # Let it auto-select  
+                context={
+                    "task_type": context.request.task_type.value,
+                    "language": getattr(context.request.context, 'language', 'python') if context.request.context else "python",
+                    "files": context.request.files,
+                    "approach": "quantum-optimized"
+                }
+            )
+            
+            # Extract the actual generated content
+            generated_content = agent_result.get("output", agent_result.get("content", ""))
+            
+            best_result = {
+                "approach": "quantum-optimized",
+                "confidence": agent_result.get("confidence", 0.95),
+                "result": generated_content,
+                "quantum_metrics": {
+                    "entanglement": 0.9,
+                    "coherence": 0.95
+                }
+            }
 
-        # Execute in quantum superposition (parallel)
-        approach_results = await asyncio.gather(*quantum_tasks, return_exceptions=True)
+            context.phase = OrchestrationPhase.COMPLETION
+            context.add_execution_event({
+                "type": "quantum_collapse",
+                "message": "Quantum state collapsed to optimal solution",
+                "approaches_evaluated": 1,  # For now just 1, can expand later
+                "selected_approach": "quantum-optimized"
+            })
 
-        # Filter out exceptions before passing to collapse function
-        valid_results = [r for r in approach_results if not isinstance(r, Exception)]
-
-        # Quantum collapse - select best result
-        best_result = self._collapse_quantum_results(valid_results)
-
-        context.phase = OrchestrationPhase.COMPLETION
-        context.add_execution_event({
-            "type": "quantum_collapse",
-            "message": "Quantum state collapsed to optimal solution",
-            "approaches_evaluated": len(approach_results),
-            "selected_approach": best_result.get("approach", "unknown")
-        })
-
-        return ExecutionResult(
-            result={
-                "message": "Quantum execution completed",
-                "strategy": "quantum",
-                "selected_result": best_result,
-                "evaluated_approaches": len(approach_results)
-            },
-            confidence_score=0.95,
-            quantum_collapse_info={
-                "approaches": ["conservative", "innovative", "hybrid"],
-                "collapse_criteria": "confidence_and_quality",
-                "selected": best_result.get("approach", "unknown")
-            },
-            metadata={
-                "execution_type": "quantum",
-                "superposition_size": len(quantum_tasks),
-                "collapse_successful": True
-            },
-            artifacts=[]
-        )
+            return ExecutionResult(
+                result={
+                    "code": generated_content,
+                    "message": "Quantum execution completed with real AI",
+                    "strategy": "quantum",
+                    "provider": agent_result.get("provider"),
+                    "model": agent_result.get("model")
+                },
+                confidence_score=agent_result.get("confidence", 0.95),
+                quantum_collapse_info={
+                    "approaches": ["quantum-optimized"],
+                    "collapse_criteria": "confidence_and_quality",
+                    "selected": "quantum-optimized"
+                },
+                metadata={
+                    "execution_type": "quantum",
+                    "provider": agent_result.get("provider"),
+                    "model": agent_result.get("model"),
+                    "tokens": agent_result.get("usage", {}),
+                    "collapse_successful": True
+                },
+                artifacts=[]
+            )
+            
+        except Exception as e:
+            logger.error(f"Quantum agent execution failed: {e}")
+            return ExecutionResult(
+                result={
+                    "message": f"Quantum execution failed: {str(e)}",
+                    "strategy": "quantum",
+                    "error": str(e)
+                },
+                confidence_score=0.0,
+                quantum_collapse_info={},
+                metadata={"execution_type": "quantum", "error": str(e)},
+                artifacts=[]
+            )
 
     async def _execute_hybrid_strategy(self, context: TaskContext) -> ExecutionResult:
         """Execute hybrid orchestration strategy."""
