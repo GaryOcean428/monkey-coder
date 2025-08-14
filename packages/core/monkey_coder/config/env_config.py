@@ -273,6 +273,25 @@ def get_config(env_file: Optional[Union[str, Path]] = None, reload: bool = False
     global _config_instance
     
     if _config_instance is None or reload:
+        # If no env_file specified, check for common .env files
+        if env_file is None:
+            # Check for .env.local first (highest priority), then .env
+            # Look in both current directory and parent directories
+            search_paths = [
+                Path('.env.local'),  # Current directory
+                Path('.env'),        # Current directory
+                Path('../.env.local'),  # Parent directory
+                Path('../.env'),        # Parent directory
+                Path('../../.env.local'),  # Root directory (from packages/core)
+                Path('../../.env'),        # Root directory (from packages/core)
+            ]
+            
+            for env_path in search_paths:
+                if env_path.exists():
+                    env_file = env_path
+                    logger.info(f"Auto-detected environment file: {env_file}")
+                    break
+        
         _config_instance = EnvironmentConfig(env_file)
     
     return _config_instance

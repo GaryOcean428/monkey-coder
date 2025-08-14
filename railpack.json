@@ -24,32 +24,13 @@
         "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt"
       ],
       "cacheDirectories": ["/root/.cache/pip"]
-    },
-    "web": {
-      "inputs": [
-        { "local": true, "include": ["package.json", "yarn.lock", "packages/**"] }
-      ],
-      "commands": [
-        "corepack enable",
-        "corepack prepare yarn@4.9.2 --activate",
-        "yarn --version",
-        "yarn install --immutable || yarn install",
-        "yarn workspace @monkey-coder/web build"
-      ]
-    },
-    "app": {
-      "inputs": [
-        { "local": true, "include": ["."] }
-      ],
-      "commands": []
     }
   },
   "deploy": {
     "base": { "image": "python:3.12-slim" },
     "inputs": [
-      { "step": "python", "include": [".venv"] },
-      { "step": "web", "include": ["packages/web/dist"] },
-      { "step": "app" }
+      "...",
+      { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
     "startCommand": "python run_server.py",

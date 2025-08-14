@@ -5,7 +5,7 @@ Supports Llama, Qwen and Kimi models via Groq API
 
 import os
 import asyncio
-from typing import Dict, Any, List, Optional, AsyncGenerator
+from typing import Dict, Any, List, Optional, AsyncGenerator, AsyncIterator
 import logging
 from datetime import datetime
 from groq import AsyncGroq, Groq
@@ -164,6 +164,31 @@ class GroqProvider(BaseProvider):
                 "version": "3",
                 "release_date": datetime(2024, 10, 1),
             },
+            # OpenAI GPT-OSS models hosted on Groq
+            "openai/gpt-oss-120b": {
+                "name": "openai/gpt-oss-120b",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 65536,
+                "input_cost": 0.15,  # per 1M tokens
+                "output_cost": 0.75,  # per 1M tokens
+                "description": "GPT-OSS 120B - Agentic workflows and reasoning",
+                "capabilities": ["text", "streaming", "tool_use", "structured_outputs"],
+                "version": "oss-120b",
+                "release_date": datetime(2025, 1, 1),
+            },
+            "openai/gpt-oss-20b": {
+                "name": "openai/gpt-oss-20b",
+                "type": "chat",
+                "context_length": 131072,
+                "max_output_tokens": 65536,
+                "input_cost": 0.10,  # per 1M tokens
+                "output_cost": 0.50,  # per 1M tokens
+                "description": "GPT-OSS 20B - Low latency agentic apps",
+                "capabilities": ["text", "streaming", "tool_use", "structured_outputs"],
+                "version": "oss-20b",
+                "release_date": datetime(2025, 1, 1),
+            },
         }
 
     async def validate_model(self, model_name: str) -> bool:
@@ -237,7 +262,31 @@ class GroqProvider(BaseProvider):
                     error_code="INVALID_MODEL",
                 )
 
-            # Make the API call
+            # Handle streaming if requested
+            if kwargs.get("stream", False):
+                logger.info(f"Starting streaming completion with {model}")
+                
+                # Create streaming response
+                async def stream_generator():
+                    stream = await self.client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                        temperature=kwargs.get("temperature", 0.7),
+                        max_tokens=kwargs.get("max_tokens", 2048),
+                        stream=True,
+                        **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens", "stream"]}
+                    )
+                    async for chunk in stream:
+                        yield chunk
+                        
+                return {
+                    "stream": stream_generator(),
+                    "model": model,
+                    "provider": "groq",
+                    "is_streaming": True,
+                }
+            
+            # Make the non-streaming API call
             start_time = datetime.utcnow()
             response = await self.client.chat.completions.create(
                 model=model,
@@ -245,7 +294,7 @@ class GroqProvider(BaseProvider):
                 temperature=kwargs.get("temperature", 0.7),
                 max_tokens=kwargs.get("max_tokens", 2048),
                 stream=False,
-                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens"]}
+                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens", "stream"]}
             )
             end_time = datetime.utcnow()
 
@@ -309,3 +358,162 @@ class GroqProvider(BaseProvider):
                 "error": str(e),
                 "last_updated": datetime.utcnow().isoformat(),
             }
+
+    async def stream_completion(
+        self, model: str, messages: List[Dict[str, Any]], **kwargs
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """Stream completion tokens as they're generated."""
+        if not self.client:
+            raise ProviderError(
+                "Groq client not initialized",
+                provider="Groq",
+                error_code="CLIENT_NOT_INITIALIZED",
+            )
+
+        try:
+            # Validate model
+            if not await self.validate_model(model):
+                raise ProviderError(
+                    f"Invalid model: {model}",
+                    provider="Groq",
+                    error_code="INVALID_MODEL",
+                )
+
+            # Make streaming API call
+            stream = await self.client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=kwargs.get("temperature", 0.7),
+                max_tokens=kwargs.get("max_tokens", 2048),
+                stream=True,
+                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens", "stream"]}
+            )
+
+            # Stream the response
+            async for chunk in stream:
+                if chunk.choices and len(chunk.choices) > 0:
+                    choice = chunk.choices[0]
+                    if hasattr(choice, "delta") and choice.delta:
+                        if hasattr(choice.delta, "content") and choice.delta.content:
+                            yield {
+                                "type": "delta",
+                                "content": choice.delta.content,
+                                "index": 0
+                            }
+                    if hasattr(choice, "finish_reason") and choice.finish_reason:
+                        yield {
+                            "type": "done",
+                            "finish_reason": choice.finish_reason,
+                            "usage": getattr(chunk, "usage", {})
+                        }
+
+        except Exception as e:
+            logger.error(f"Groq streaming failed: {e}")
+            # Fallback to non-streaming
+            result = await self.generate_completion(model, messages, **kwargs)
+            yield {
+                "type": "complete",
+                "content": result.get("content", ""),
+                "usage": result.get("usage", {})
+            }
+
+    async def generate_completion_with_tools(
+        self, model: str, messages: List[Dict[str, Any]], tools: List[Dict[str, Any]], **kwargs
+    ) -> Dict[str, Any]:
+        """Generate completion with tool/function calling support."""
+        if not self.client:
+            raise ProviderError(
+                "Groq client not initialized",
+                provider="Groq",
+                error_code="CLIENT_NOT_INITIALIZED",
+            )
+        
+        try:
+            # Validate model
+            if not await self.validate_model(model):
+                raise ProviderError(
+                    f"Invalid model: {model}",
+                    provider="Groq",
+                    error_code="INVALID_MODEL",
+                )
+            
+            # Convert tools to Groq format if needed
+            groq_tools = self._convert_tools_to_groq_format(tools)
+            
+            # Make API call with tools
+            response = await self.client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=groq_tools,
+                tool_choice="auto",
+                temperature=kwargs.get("temperature", 0.7),
+                max_tokens=kwargs.get("max_tokens", 2048),
+                **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens", "tools"]}
+            )
+            
+            # Process response
+            message = response.choices[0].message
+            result = {
+                "content": message.content or "",
+                "role": "assistant",
+                "finish_reason": response.choices[0].finish_reason,
+                "model": response.model,
+                "provider": "groq",
+            }
+            
+            # Add tool calls if present
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                result["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments
+                        }
+                    }
+                    for tc in message.tool_calls
+                ]
+            
+            # Add usage info
+            if hasattr(response, "usage"):
+                result["usage"] = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Groq tool completion failed: {e}")
+            raise ProviderError(
+                f"Tool completion generation failed: {e}",
+                provider="Groq",
+                error_code="TOOL_COMPLETION_FAILED",
+            )
+    
+    def _convert_tools_to_groq_format(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert OpenAI-style tools to Groq format."""
+        groq_tools = []
+        
+        for tool in tools:
+            if tool.get("type") == "function":
+                function = tool.get("function", {})
+                groq_tool = {
+                    "type": "function",
+                    "function": {
+                        "name": function.get("name"),
+                        "description": function.get("description"),
+                        "parameters": function.get("parameters", {})
+                    }
+                }
+                groq_tools.append(groq_tool)
+        
+        return groq_tools
+
+    async def count_tokens(self, text: str, model: str = "llama-3.1-8b-instant") -> int:
+        """Count tokens in text for a specific model."""
+        # Groq doesn't provide a token counting API, so estimate
+        # Rough estimation: 1 token ≈ 4 characters for English text
+        return len(text) // 4
