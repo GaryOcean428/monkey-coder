@@ -7,8 +7,7 @@
   "secrets": [
     "DATABASE_URL",
     "REDIS_URL",
-    "RAILWAY_ENVIRONMENT",
-    "PYTHONPATH"
+    "RAILWAY_ENVIRONMENT"
   ],
   "steps": {
     "python": {
