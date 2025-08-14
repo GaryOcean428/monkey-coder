@@ -29,12 +29,12 @@
   "deploy": {
     "base": { "image": "python:3.12-slim" },
     "inputs": [
-      { "step": "python", "include": [".venv"] },
-      { "local": true, "include": ["."] }
+      { "local": true, "include": ["."] },
+      { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin", "/.venv/bin"],
     "env": { "PYTHONPATH": "/app:/app/packages/core" },
-    "startCommand": "sh -lc 'if [ -x /app/.venv/bin/python ]; then exec /app/.venv/bin/python run_server.py; elif [ -x /.venv/bin/python ]; then exec /.venv/bin/python run_server.py; else python3 -m venv /.venv && /.venv/bin/pip install --no-cache-dir --upgrade pip && /.venv/bin/pip install --no-cache-dir -r requirements.txt && exec /.venv/bin/python run_server.py; fi'",
+    "startCommand": "/app/.venv/bin/python run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
