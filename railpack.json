@@ -48,41 +48,8 @@
     ],
     "aptPackages": [],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'set -e; if [ ! -x /app/.venv/bin/python ]; then apt-get update; DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip; python3 -m venv /app/.venv; fi; if [ -f requirements.txt ]; then /app/.venv/bin/pip install --no-cache-dir -r requirements.txt || true; fi; exec /app/.venv/bin/python run_server.py'"
-  },
-  "healthcheck": {
-    "path": "/health",
-    "timeout": 300
-  },
-  "environments": {
-    "production": {
-      "python": {
-        "optimize": true
-      },
-      "env": {
-        "ENVIRONMENT": "production",
-        "LOG_LEVEL": "INFO",
-        "JSON_LOGS": "true",
-        "PERFORMANCE_LOGS": "true",
-        "DEBUG": "false",
-        "ENABLE_METRICS": "true",
-        "ENABLE_SECURITY_HEADERS": "true",
-        "CORS_ORIGINS": "*",
-        "TRUSTED_HOSTS": "*",
-        "PYTHONPATH": "/app/packages/core",
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    "development": {
-      "env": {
-        "ENVIRONMENT": "development",
-        "LOG_LEVEL": "DEBUG",
-        "JSON_LOGS": "false",
-        "PERFORMANCE_LOGS": "true",
-        "DEBUG": "true",
-        "PYTHONPATH": "/app",
-        "PYTHONUNBUFFERED": "1"
-      }
-    }
+    "startCommand": "sh -lc 'set -e; if [ ! -x /app/.venv/bin/python ]; then apt-get update; DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip; python3 -m venv /app/.venv; fi; if [ -f requirements.txt ]; then /app/.venv/bin/pip install --no-cache-dir -r requirements.txt || true; fi; exec /app/.venv/bin/python run_server.py'",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300
   }
 }

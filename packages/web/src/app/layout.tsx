@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Image from 'next/image'
 import '@/styles/globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/lib/auth-context'
@@ -79,11 +80,13 @@ export default function RootLayout({
                 {children}
                 {/* Logo placement and styling */}
                 <div className="flex justify-center items-center my-8">
-                  <img
+                  <Image
                     src="/splash.png"
                     alt="Monkey Coder Logo"
-                    className="max-w-xs w-full h-auto object-contain animate-pulse [text-shadow:0_0_5px_#00fff7,_0_0_10px_#00fff7,_0_0_15px_#00fff7,_0_0_20px_#00fff7]"
-                    style={{ maxWidth: '200px' }} // Example size, adjust as needed
+                    width={200}
+                    height={164}
+                    className="w-[200px] h-auto object-contain animate-pulse [text-shadow:0_0_5px_#00fff7,_0_0_10px_#00fff7,_0_0_15px_#00fff7,_0_0_20px_#00fff7]"
+                    sizes="200px"
                   />
                 </div>
               </main>

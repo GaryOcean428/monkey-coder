@@ -262,7 +262,7 @@ Prohibited Actions:
 
 If changes are required: Consult project maintainers and get explicit written approval before making ANY modifications to protected files.
 
-# important-instruction-reminders
+## Important instruction reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
@@ -332,23 +332,23 @@ When asked to work on this codebase:
 - Always adhere to established patterns, code style, and best practices documented above
 - System Status: Phase 1 is 100% complete with comprehensive enhancements - ready for Phase 2 quantum routing development
 
-# Railway Deployment Master Cheat Sheet
+## Railway Deployment Master Cheat Sheet (Reference)
 ## Common Pitfalls & Correct Solutions
 
 ---
 
 ## 🔴 ISSUE 1: Build System Conflicts
 
-### Common Error Pattern:
-```
+### Common Error Pattern
+```text
 Nixpacks build failed
 ERROR: failed to exec pid1: No such file or directory
 ```
 
-### Root Cause:
+### Root Cause
 Multiple build configurations competing (Dockerfile, railway.toml, railpack.json, nixpacks.toml)
 
-### Correct Solution:
+### Correct Solution
 ```bash
 # Railway Build Priority Order (highest to lowest):
 # 1. Dockerfile (if exists)
@@ -391,8 +391,8 @@ touch railpack.json                        # Create railpack config
 
 ## 🔴 ISSUE 2: PORT Binding Failures
 
-### Common Error Pattern:
-```
+### Common Error Pattern
+```text
 Application failed to respond
 Health check failed at /api/health
 ```
@@ -427,7 +427,7 @@ app.run(host="0.0.0.0", port=port)
 app.run(host="127.0.0.1", port=5000)  # Wrong host and hardcoded port
 ```
 
-#### railpack.json Start Commands:
+#### railpack.json Start Commands
 ```json
 {
   "deploy": {

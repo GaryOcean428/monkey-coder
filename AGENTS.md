@@ -2,23 +2,25 @@
 
 This document provides key operational guidance for agents working on this repository.
 
-# Railway Deployment Master Cheat Sheet
+### Railway Deployment Master Cheat Sheet (Reference)
 ## Common Pitfalls & Correct Solutions
 
 ---
 
 ## 🔴 **ISSUE 1: Build System Conflicts**
 
-### **Common Error Pattern:**
-```
+### Common Error Pattern
+
+```text
 Nixpacks build failed
 ERROR: failed to exec pid1: No such file or directory
 ```
 
-### **Root Cause:**
+### Root Cause
 Multiple build configurations competing (Dockerfile, railway.toml, railpack.json, nixpacks.toml)
 
-### **Correct Solution:**
+### Correct Solution
+
 ```bash
 # Railway Build Priority Order (highest to lowest):
 # 1. Dockerfile (if exists)
@@ -31,7 +33,8 @@ rm Dockerfile railway.toml nixpacks.toml  # Remove competing configs
 touch railpack.json                        # Create railpack config
 ```
 
-### **Correct railpack.json Template:**
+### **Correct railpack.JSON Template:**
+
 ```json
 {
   "version": "1",
@@ -39,7 +42,7 @@ touch railpack.json                        # Create railpack config
     "name": "my-app"
   },
   "build": {
-    "provider": "node",  // or "python"
+    "provider": "node",  // or "Python"
     "steps": {
       "install": {
         "commands": ["yarn install --frozen-lockfile"]
@@ -51,7 +54,7 @@ touch railpack.json                        # Create railpack config
   },
   "deploy": {
     "startCommand": "yarn start",
-    "healthCheckPath": "/api/health",
+    "healthCheckPath": "/API/health",
     "healthCheckTimeout": 300
   }
 }
@@ -61,18 +64,20 @@ touch railpack.json                        # Create railpack config
 
 ## 🔴 **ISSUE 2: PORT Binding Failures**
 
-### **Common Error Pattern:**
-```
+### Common Error Pattern
+
+```text
 Application failed to respond
-Health check failed at /api/health
+Health check failed at /API/health
 ```
 
-### **Root Cause:**
+### Root Cause
 Apps hardcoding ports or binding to localhost instead of 0.0.0.0
 
-### **Correct Solution:**
+### Correct Solution
 
 #### **Node.js/TypeScript:**
+
 ```javascript
 // ✅ CORRECT
 const PORT = process.env.PORT || 3000;
@@ -87,6 +92,7 @@ app.listen(PORT, 'localhost');  // Wrong host
 ```
 
 #### **Python:**
+
 ```python
 # ✅ CORRECT
 import os
@@ -97,7 +103,8 @@ app.run(host="0.0.0.0", port=port)
 app.run(host="127.0.0.1", port=5000)  # Wrong host and hardcoded port
 ```
 
-#### **railpack.json Start Commands:**
+#### railpack.json Start Commands
+
 ```json
 {
   "deploy": {
@@ -114,17 +121,18 @@ app.run(host="127.0.0.1", port=5000)  # Wrong host and hardcoded port
 
 ## 🔴 **ISSUE 3: Theme/CSS Loading Issues**
 
-### **Common Error Pattern:**
+### Common Error Pattern
 - Dark mode not persisting
 - Tailwind classes not applying
 - CSS loading after page render (flash of unstyled content)
 
-### **Root Cause:**
+### Root Cause
 Theme initialization happening after React renders, missing CSS imports
 
-### **Correct Solution:**
+### Correct Solution
 
 #### **1. Pre-React Theme Application:**
+
 ```javascript
 // src/main.tsx or index.tsx
 // ✅ CORRECT - Apply theme BEFORE React renders
@@ -140,8 +148,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 #### **2. Proper CSS Import Order:**
+
 ```css
-/* src/index.css */
+/* src/index.CSS */
 /* ✅ CORRECT ORDER */
 @tailwind base;
 @tailwind components;
@@ -156,6 +165,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 #### **3. Vite Config for Railway:**
+
 ```javascript
 // vite.config.ts
 export default defineConfig({
@@ -174,6 +184,7 @@ export default defineConfig({
 ## 🔴 **ISSUE 4: Reference Variable Mistakes**
 
 ### **Common Error Pattern:**
+
 ```
 "Install inputs must be an image or step input"
 "serviceA.PORT does not resolve"
@@ -185,11 +196,12 @@ Misunderstanding Railway's reference variable system
 ### **Correct Solution:**
 
 #### **❌ WRONG - Common Mistakes:**
+
 ```bash
 # Cannot reference PORT of another service
 BACKEND_URL=${{backend.PORT}}
 
-# Wrong inputs field in railpack.json install step
+# Wrong inputs field in railpack.JSON install step
 "install": {
   "inputs": [{"step": "setup"}],  # Install doesn't need inputs
   "commands": ["pip install -r requirements.txt"]
@@ -197,12 +209,13 @@ BACKEND_URL=${{backend.PORT}}
 ```
 
 #### **✅ CORRECT - Proper References:**
+
 ```bash
 # Reference public domain (Railway provides)
-BACKEND_URL=https://${{backend.RAILWAY_PUBLIC_DOMAIN}}
+BACKEND_URL=HTTPS://${{backend.RAILWAY_PUBLIC_DOMAIN}}
 
 # Reference private domain for internal communication
-INTERNAL_API=http://${{backend.RAILWAY_PRIVATE_DOMAIN}}
+INTERNAL_API=HTTP://${{backend.RAILWAY_PRIVATE_DOMAIN}}
 
 # Railway automatically provides PORT - don't set manually
 # Let Railway inject PORT, app reads from process.env.PORT
@@ -213,6 +226,7 @@ INTERNAL_API=http://${{backend.RAILWAY_PRIVATE_DOMAIN}}
 ## 🔴 **ISSUE 5: Health Check Configuration**
 
 ### **Common Error Pattern:**
+
 ```
 Health check failed: service unavailable
 ```
@@ -220,23 +234,25 @@ Health check failed: service unavailable
 ### **Correct Solution:**
 
 #### **1. Add Health Endpoint:**
+
 ```javascript
 // Express.js
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+app.get('/API/health', (req, res) => {
+  res.status(200).JSON({ status: 'healthy' });
 });
 
 // Python Flask
-@app.route('/api/health')
+@app.route('/API/health')
 def health():
     return jsonify({'status': 'healthy'}), 200
 ```
 
-#### **2. Configure in railpack.json:**
+#### **2. Configure in railpack.JSON:**
+
 ```json
 {
   "deploy": {
-    "healthCheckPath": "/api/health",
+    "healthCheckPath": "/API/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
@@ -249,6 +265,7 @@ def health():
 ## 🔴 **ISSUE 6: Monorepo Service Confusion**
 
 ### **Common Error Pattern:**
+
 ```
 Nixpacks unable to generate build plan
 Multiple services detected
@@ -256,18 +273,20 @@ Multiple services detected
 
 ### **Correct Solution:**
 
-#### **Separate railpack.json for Each Service:**
+#### **Separate railpack.JSON for Each Service:**
+
 ```bash
 # Project structure
 /
 ├── backend/
-│   └── railpack.json  # Backend-specific config
+│   └── railpack.JSON  # Backend-specific config
 ├── frontend/
-│   └── railpack.json  # Frontend-specific config
-└── railpack.json      # Root config (if needed)
+│   └── railpack.JSON  # Frontend-specific config
+└── railpack.JSON      # Root config (if needed)
 ```
 
-#### **Root railpack.json for Monorepo:**
+#### **Root railpack.JSON for Monorepo:**
+
 ```json
 {
   "version": "1",
@@ -275,7 +294,7 @@ Multiple services detected
     "backend": {
       "root": "./backend",
       "build": {
-        "provider": "python"
+        "provider": "Python"
       }
     },
     "frontend": {
@@ -294,10 +313,10 @@ Multiple services detected
 
 ```bash
 # 1. Check for conflicting build configs
-ls -la | grep -E "(Dockerfile|railway\.toml|nixpacks\.toml|railpack\.json)"
+ls -la | grep -E "(Dockerfile|railway\.toml|nixpacks\.toml|railpack\.JSON)"
 
-# 2. Validate railpack.json syntax
-cat railpack.json | jq '.' > /dev/null && echo "✅ Valid JSON"
+# 2. Validate railpack.JSON syntax
+cat railpack.JSON | jq '.' > /dev/null && echo "✅ Valid JSON"
 
 # 3. Verify PORT usage in code
 grep -r "process.env.PORT\|PORT" . | grep -v node_modules
@@ -306,7 +325,7 @@ grep -r "process.env.PORT\|PORT" . | grep -v node_modules
 grep -r "0\.0\.0\.0\|localhost\|127\.0\.0\.1" . | grep -E "(listen|HOST|host)"
 
 # 5. Verify health endpoint exists
-grep -r "/health\|/api/health" . | grep -v node_modules
+grep -r "/health\|/API/health" . | grep -v node_modules
 
 # 6. Test build locally
 yarn build && PORT=3000 yarn start
@@ -314,8 +333,8 @@ yarn build && PORT=3000 yarn start
 # 7. Create git hook for validation
 cat > .git/hooks/pre-push << 'EOF'
 #!/bin/bash
-if [ -f railpack.json ]; then
-  jq '.' railpack.json > /dev/null || exit 1
+if [ -f railpack.JSON ]; then
+  jq '.' railpack.JSON > /dev/null || exit 1
 fi
 EOF
 chmod +x .git/hooks/pre-push
@@ -346,16 +365,16 @@ railway run curl http://localhost:$PORT/api/health
 ```markdown
 ## Railway Deployment Standards
 
-1. **Always use railpack.json** as the primary build configuration
+1. **Always use railpack.JSON** as the primary build configuration
 2. **Never hardcode ports** - always use process.env.PORT
 3. **Always bind to 0.0.0.0** not localhost or 127.0.0.1
 4. **Apply theme before React renders** to prevent flash of unstyled content
 5. **Reference domains not ports** in Railway variables (${{service.RAILWAY_PUBLIC_DOMAIN}})
-6. **Include health check endpoint** at /api/health returning 200 status
-7. **Remove competing build files** (Dockerfile, railway.toml) when using railpack.json
+6. **Include health check endpoint** at /API/health returning 200 status
+7. **Remove competing build files** (Dockerfile, railway.toml) when using railpack.JSON
 8. **Test locally with Railway environment**: railway run yarn dev
-9. **Validate JSON syntax** before committing railpack.json
-10. **Use inputs field only for layer references** in railpack.json, not for basic installs
+9. **Validate JSON syntax** before committing railpack.JSON
+10. **Use inputs field only for layer references** in railpack.JSON, not for basic installs
 ```
 
 This cheat sheet addresses the recurring issues found across Railway projects. Follow these rules to prevent common pitfalls.
