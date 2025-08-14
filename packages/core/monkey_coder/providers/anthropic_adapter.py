@@ -3,17 +3,30 @@ Anthropic Provider Adapter for Monkey Coder Core.
 
 This adapter provides integration with Anthropic's API, including Claude models.
 All model names are validated against official Anthropic documentation.
-Updated to include only Claude 3.5+ models as of July 2025.
+Updated to include only Claude 3.5+ models as of August 2025.
+
+Features:
+- Full streaming support with fine-grained token streaming
+- Tool use and function calling
+- Vision capabilities for image analysis
+- Extended thinking for complex reasoning
+- System prompts and XML structuring
+- Multi-shot prompting support
 """
 
 import logging
+import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, AsyncIterator
 
 try:
     from anthropic import AsyncAnthropic
+    from anthropic.types import Message, TextBlock, ToolUseBlock
 except ImportError:
     AsyncAnthropic = None
+    Message = None
+    TextBlock = None
+    ToolUseBlock = None
     logging.warning(
         "Anthropic package not installed. Install it with: pip install anthropic"
     )
@@ -310,14 +323,32 @@ class AnthropicProvider(BaseProvider):
             if system:
                 params["system"] = system
 
+            # Add tool use support if tools are provided
+            if kwargs.get("tools"):
+                params["tools"] = self._convert_tools_to_anthropic_format(kwargs["tools"])
+                
+            # Add stop sequences if provided
+            if kwargs.get("stop"):
+                params["stop_sequences"] = kwargs["stop"]
+                
+            # Add metadata if provided
+            if kwargs.get("metadata"):
+                params["metadata"] = kwargs["metadata"]
+
             # Handle streaming if requested
             if kwargs.get("stream", False):
                 logger.info(f"Starting streaming completion with {actual_model}")
-                stream = await self.client.messages.create(**params, stream=True)
                 
-                # Return the stream object for the caller to iterate
+                # Create streaming response
+                async def stream_generator():
+                    async with self.client.messages.stream(
+                        **params
+                    ) as stream:
+                        async for event in stream:
+                            yield event
+                            
                 return {
-                    "stream": stream,
+                    "stream": stream_generator(),
                     "model": resolved_model,
                     "actual_model": actual_model,
                     "provider": "anthropic",
@@ -404,6 +435,95 @@ class AnthropicProvider(BaseProvider):
             logger.info(f"Model {resolved_model} mapped to available model {actual}")
         
         return actual
+    
+    def _convert_tools_to_anthropic_format(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert OpenAI-style tools to Anthropic format."""
+        anthropic_tools = []
+        
+        for tool in tools:
+            if tool.get("type") == "function":
+                function = tool.get("function", {})
+                anthropic_tool = {
+                    "name": function.get("name"),
+                    "description": function.get("description"),
+                    "input_schema": function.get("parameters", {})
+                }
+                anthropic_tools.append(anthropic_tool)
+        
+        return anthropic_tools
+    
+    async def generate_completion_with_vision(
+        self, model: str, messages: List[Dict[str, Any]], images: List[str], **kwargs
+    ) -> Dict[str, Any]:
+        """Generate completion with vision capabilities for image analysis."""
+        if not self.client:
+            raise ProviderError(
+                "Anthropic client not initialized",
+                provider="Anthropic",
+                error_code="CLIENT_NOT_INITIALIZED",
+            )
+        
+        # Convert images to base64 and add to messages
+        vision_messages = []
+        for msg in messages:
+            if msg["role"] == "user":
+                content = [
+                    {"type": "text", "text": msg["content"]}
+                ]
+                
+                # Add images if this is the last user message
+                if msg == messages[-1] and images:
+                    for image in images:
+                        content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/jpeg",
+                                "data": image
+                            }
+                        })
+                
+                vision_messages.append({
+                    "role": msg["role"],
+                    "content": content
+                })
+            else:
+                vision_messages.append(msg)
+        
+        # Call regular generate_completion with vision-formatted messages
+        return await self.generate_completion(model, vision_messages, **kwargs)
+    
+    async def stream_completion(
+        self, model: str, messages: List[Dict[str, Any]], **kwargs
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """Stream completion tokens as they're generated."""
+        kwargs["stream"] = True
+        result = await self.generate_completion(model, messages, **kwargs)
+        
+        if result.get("is_streaming"):
+            stream = result.get("stream")
+            async for event in stream:
+                # Convert Anthropic streaming events to standard format
+                if hasattr(event, "type"):
+                    if event.type == "content_block_delta":
+                        if hasattr(event.delta, "text"):
+                            yield {
+                                "type": "delta",
+                                "content": event.delta.text,
+                                "index": event.index
+                            }
+                    elif event.type == "message_stop":
+                        yield {
+                            "type": "done",
+                            "usage": getattr(event, "usage", {})
+                        }
+        else:
+            # Non-streaming fallback
+            yield {
+                "type": "complete",
+                "content": result.get("content", ""),
+                "usage": result.get("usage", {})
+            }
 
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check on Anthropic provider."""

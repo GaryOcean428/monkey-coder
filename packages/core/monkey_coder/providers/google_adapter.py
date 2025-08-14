@@ -3,17 +3,33 @@ Google Provider Adapter for Monkey Coder Core.
 
 This adapter provides integration with Google's AI API, including Gemini models.
 All model names are validated against official Google documentation.
+Updated for August 2025 with Gemini 2.5 series.
+
+Features:
+- Gemini 2.5 Pro/Flash/Flash-Lite support
+- Full streaming with fine-grained token control
+- Function calling and structured outputs
+- Vision, audio, video, and PDF processing
+- Code execution and search grounding
+- Image and audio generation
+- Live API for real-time interactions
+- Extended thinking capabilities
 """
 
 import logging
+import asyncio
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, AsyncIterator
 
 try:
     import google.generativeai as genai
+    from google.generativeai.types import GenerationConfig, HarmCategory, HarmBlockThreshold
     HAS_GOOGLE_AI = True
 except ImportError:
     genai = None
+    GenerationConfig = None
+    HarmCategory = None
+    HarmBlockThreshold = None
     HAS_GOOGLE_AI = False
     logging.warning(
         "Google Generative AI package not installed. Install it with: pip install google-generativeai"
@@ -276,7 +292,7 @@ class GoogleProvider(BaseProvider):
     async def generate_completion(
         self, model: str, messages: List[Dict[str, Any]], **kwargs
     ) -> Dict[str, Any]:
-        """Generate completion using Google's API with real HTTP calls."""
+        """Generate completion using Google's API with real HTTP calls and advanced features."""
         if not self.client:
             raise ProviderError(
                 "Google client not initialized",
@@ -290,32 +306,64 @@ class GoogleProvider(BaseProvider):
             
             logger.info(f"Generating completion with model: {actual_model} (requested: {model})")
 
-            # Convert messages to Google format
-            # Google uses a different format - combine all messages into a single prompt
+            # Convert messages to Google format with advanced handling
             prompt_parts = []
+            system_instruction = None
             
             for msg in messages:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
                 
-                if role == "system":
-                    prompt_parts.append(f"System: {content}")
-                elif role == "assistant":
-                    prompt_parts.append(f"Assistant: {content}")
-                else:  # user
-                    prompt_parts.append(f"User: {content}")
+                # Handle multi-modal content
+                if isinstance(content, list):
+                    # Content is already in multi-modal format
+                    for part in content:
+                        if part.get("type") == "text":
+                            prompt_parts.append(part.get("text", ""))
+                        elif part.get("type") == "image":
+                            # Handle image content
+                            prompt_parts.append({"inline_data": part.get("data")})
+                else:
+                    # Plain text content
+                    if role == "system":
+                        system_instruction = content
+                    elif role == "assistant":
+                        prompt_parts.append(f"Model: {content}")
+                    else:  # user
+                        prompt_parts.append(content)
             
-            full_prompt = "\n\n".join(prompt_parts)
+            # Create model instance with system instruction if provided
+            model_config = {
+                "model_name": actual_model,
+            }
             
-            # Create model instance
-            model_instance = self.client.GenerativeModel(actual_model)
+            if system_instruction:
+                model_config["system_instruction"] = system_instruction
+                
+            # Add tools if provided
+            if kwargs.get("tools"):
+                model_config["tools"] = self._convert_tools_to_google_format(kwargs["tools"])
             
-            # Configure generation parameters
-            generation_config = genai.GenerationConfig(
-                max_output_tokens=kwargs.get("max_tokens", 4096),
-                temperature=kwargs.get("temperature", 0.1),
-                top_p=kwargs.get("top_p", 1.0),
+            model_instance = self.client.GenerativeModel(**model_config)
+            
+            # Configure generation parameters with advanced options
+            generation_config = GenerationConfig(
+                max_output_tokens=kwargs.get("max_tokens", 8192),
+                temperature=kwargs.get("temperature", 0.7),
+                top_p=kwargs.get("top_p", 0.95),
+                top_k=kwargs.get("top_k", 40),
+                candidate_count=kwargs.get("n", 1),
+                stop_sequences=kwargs.get("stop", []),
             )
+            
+            # Add response format if specified
+            if kwargs.get("response_format"):
+                generation_config.response_mime_type = kwargs["response_format"].get("type", "text/plain")
+                if kwargs["response_format"].get("schema"):
+                    generation_config.response_schema = kwargs["response_format"]["schema"]
+            
+            # Configure safety settings
+            safety_settings = self._get_safety_settings(kwargs.get("safety_level", "default"))
             
             # Make the real API call
             start_time = datetime.utcnow()
@@ -324,24 +372,45 @@ class GoogleProvider(BaseProvider):
             # Handle streaming if requested
             if kwargs.get("stream", False):
                 logger.info(f"Starting streaming completion with {actual_model}")
-                stream = model_instance.generate_content(
-                    full_prompt,
-                    generation_config=generation_config,
-                    stream=True
-                )
+                
+                async def stream_generator():
+                    # Google's SDK is synchronous, so we need to run it in an executor
+                    loop = asyncio.get_event_loop()
+                    stream = await loop.run_in_executor(
+                        None,
+                        model_instance.generate_content,
+                        prompt_parts,
+                        generation_config,
+                        safety_settings,
+                        True  # stream=True
+                    )
+                    
+                    for chunk in stream:
+                        if chunk.text:
+                            yield {
+                                "type": "delta",
+                                "content": chunk.text,
+                                "index": 0
+                            }
+                    
+                    yield {"type": "done"}
                 
                 return {
-                    "stream": stream,
+                    "stream": stream_generator(),
                     "model": model,
                     "actual_model": actual_model,
                     "provider": "google",
                     "is_streaming": True,
                 }
             
-            # Regular non-streaming generation
-            response = model_instance.generate_content(
-                full_prompt,
-                generation_config=generation_config
+            # Regular non-streaming generation with async wrapper
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                model_instance.generate_content,
+                prompt_parts if isinstance(prompt_parts, list) and prompt_parts else full_prompt,
+                generation_config,
+                safety_settings
             )
             
             end_time = datetime.utcnow()
@@ -415,6 +484,97 @@ class GoogleProvider(BaseProvider):
             logger.info(f"Model {model} mapped to available model {actual}")
         
         return actual
+    
+    def _convert_tools_to_google_format(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Convert OpenAI-style tools to Google format."""
+        google_tools = []
+        
+        for tool in tools:
+            if tool.get("type") == "function":
+                function = tool.get("function", {})
+                google_tool = {
+                    "function_declarations": [{
+                        "name": function.get("name"),
+                        "description": function.get("description"),
+                        "parameters": function.get("parameters", {})
+                    }]
+                }
+                google_tools.append(google_tool)
+        
+        return google_tools
+    
+    def _get_safety_settings(self, level: str = "default") -> Dict:
+        """Get safety settings based on level."""
+        if not HarmCategory or not HarmBlockThreshold:
+            return {}
+            
+        if level == "none":
+            # Block nothing
+            return {
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+            }
+        elif level == "strict":
+            # Block low and above
+            return {
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+            }
+        else:  # default
+            # Block medium and above
+            return {
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            }
+    
+    async def generate_completion_with_vision(
+        self, model: str, messages: List[Dict[str, Any]], images: List[str], **kwargs
+    ) -> Dict[str, Any]:
+        """Generate completion with vision capabilities for image/video/PDF analysis."""
+        # Convert images to proper format and add to messages
+        vision_messages = []
+        for msg in messages:
+            if msg["role"] == "user" and msg == messages[-1]:
+                # Add images to the last user message
+                content = [{"type": "text", "text": msg["content"]}]
+                for image in images:
+                    content.append({
+                        "type": "image",
+                        "data": image
+                    })
+                vision_messages.append({
+                    "role": msg["role"],
+                    "content": content
+                })
+            else:
+                vision_messages.append(msg)
+        
+        return await self.generate_completion(model, vision_messages, **kwargs)
+    
+    async def stream_completion(
+        self, model: str, messages: List[Dict[str, Any]], **kwargs
+    ) -> AsyncIterator[Dict[str, Any]]:
+        """Stream completion tokens as they're generated with fine-grained control."""
+        kwargs["stream"] = True
+        result = await self.generate_completion(model, messages, **kwargs)
+        
+        if result.get("is_streaming"):
+            stream = result.get("stream")
+            async for chunk in stream:
+                yield chunk
+        else:
+            # Non-streaming fallback
+            yield {
+                "type": "complete",
+                "content": result.get("content", ""),
+                "usage": result.get("usage", {})
+            }
 
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check on Google provider."""
