@@ -37,7 +37,7 @@ class QuantumExecutor:
         Execute the given task using quantum execution principles.
         
         Args:
-            task: Task to execute
+            task: Task to execute (can be ExecuteResponse or request)
             parallel_futures: Whether to execute tasks in parallel futures
             
         Returns:
@@ -45,10 +45,20 @@ class QuantumExecutor:
         """
         logger.info("Executing task with QuantumExecutor...")
         
+        # Check if task is an ExecuteResponse object (from orchestrator)
+        from ..models import ExecuteResponse
+        if isinstance(task, ExecuteResponse):
+            # Already processed by orchestrator, just return it
+            logger.info("Task already processed by orchestrator, returning result")
+            return task
+        
+        # Otherwise process as a string task
         # Implement quantum-inspired execution logic here
         if parallel_futures:
+            # Convert task to string if it's an object
+            task_str = str(task) if not isinstance(task, str) else task
             # Use code_generation agent for parallel execution
-            result = await self.code_generation.process(task, AgentContext(task_id="quantum_task", user_id="system", session_id="quantum_session"))
+            result = await self.code_generation.process(task_str, AgentContext(task_id="quantum_task", user_id="system", session_id="quantum_session"))
         else:
             result = {"outcome": "success", "details": "Sequential execution"}
 

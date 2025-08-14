@@ -72,21 +72,21 @@ class MultiAgentOrchestrator:
                 request, strategy_hint
             )
             
-            # Enhance response with persona context
-            response.superclause_routing = persona_context
+            # TODO: Enhance response with persona context
+            # response.superclause_routing = persona_context
             
-            # Add orchestration metadata
-            if not response.monkey1_orchestration:
-                response.monkey1_orchestration = {}
-            
-            response.monkey1_orchestration.update({
-                "persona_influence": {
-                    "selected_persona": selected_persona.value if selected_persona else None,
-                    "confidence": confidence,
-                    "strategy_suggested": strategy_hint.value if strategy_hint else None
-                },
-                "orchestrator_version": "enhanced_v1.0"
-            })
+            # TODO: Add orchestration metadata - these fields need to be added to ExecuteResponse model
+            # if not response.monkey1_orchestration:
+            #     response.monkey1_orchestration = {}
+            # 
+            # response.monkey1_orchestration.update({
+            #     "persona_influence": {
+            #         "selected_persona": selected_persona.value if selected_persona else None,
+            #         "confidence": confidence,
+            #         "strategy_suggested": strategy_hint.value if strategy_hint else None
+            #     },
+            #     "orchestrator_version": "enhanced_v1.0"
+            # })
             
             logger.info(f"Enhanced orchestration completed: {response.status}")
             return response
