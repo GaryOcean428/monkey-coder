@@ -145,7 +145,6 @@ examples/
 # Railway and deployment
 .railway/
 railway.json
-railpack.json
 
 # Frontend build artifacts (we build these fresh in Docker)
 packages/web/.next/
