@@ -18,7 +18,11 @@
         { "step": "python" }
       ],
       "commands": [
-        "cd packages/web && yarn build"
+        "corepack enable",
+        "corepack prepare yarn@4.9.2 --activate",
+        "yarn --version",
+        "yarn install --immutable || yarn install",
+        "yarn workspace @monkey-coder/web build"
       ]
     },
     "python": {
