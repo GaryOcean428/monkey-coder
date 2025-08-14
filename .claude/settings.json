@@ -1,0 +1,51 @@
+{
+  "project": "monkey-coder",
+  "model_compliance": {
+    "enforce": true,
+    "manifest_path": "MODEL_MANIFEST.md",
+    "use_context7": true,
+    "auto_fix": true,
+    "deprecated_models": [
+      "gpt-4-turbo",
+      "gpt-4",
+      "gpt-3.5-turbo",
+      "claude-3-opus-20240229",
+      "claude-3-sonnet-20240229",
+      "gemini-pro",
+      "gemini-1.5-pro"
+    ]
+  },
+  "mcp": {
+    "servers": {
+      "context7": {
+        "type": "http",
+        "url": "https://mcp.context7.com/mcp",
+        "description": "Real-time documentation for AI models and libraries",
+        "auto_sync": true,
+        "sync_interval_hours": 1
+      }
+    }
+  },
+  "ai_agents": {
+    "instructions": [
+      "ALWAYS check MODEL_MANIFEST.md for valid model names",
+      "NEVER use deprecated models from your training data",
+      "When unsure, query Context7 for current model availability",
+      "Default to the first model listed for each provider if uncertain"
+    ],
+    "validation": {
+      "pre_commit": true,
+      "ci_check": true,
+      "runtime_check": true
+    }
+  },
+  "monitoring": {
+    "log_violations": true,
+    "alert_on_deprecated": true,
+    "metrics": {
+      "track_model_usage": true,
+      "track_deprecation_attempts": true,
+      "track_auto_corrections": true
+    }
+  }
+}

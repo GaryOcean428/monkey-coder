@@ -1,0 +1,33 @@
+Perform a comprehensive QA review of the Monkey Coder codebase and provide a detailed report:
+
+1. Code Quality Analysis:
+   - Review the Google provider implementation (packages/core/monkey_coder/providers/google_adapter.py)
+   - Check for proper error handling, logging, and type hints
+   - Verify the new google.genai vs google-generativeai dual API support
+   - Check for any security vulnerabilities or performance issues
+   - Verify async/await patterns are correctly implemented
+
+2. Model Compliance Check:
+   - Verify all models in google_adapter.py match the official Gemini 2.5 series
+   - Check that model mappings are correct
+   - Ensure deprecated models are properly handled
+   - Validate model version handling (new API vs legacy)
+
+3. Roadmap Validation:
+   - Review phase-1-7-critical-gaps.md claims vs reality
+   - The document claims 95% completion - verify this is accurate
+   - Check if AI provider integration is really working
+   - Validate quantum features implementation status
+
+4. Configuration Issues:
+   - Check pyproject.toml dependencies are correct
+   - Verify google-genai vs google-generativeai package handling
+   - Check for any version conflicts or missing dependencies
+   - Validate environment variable usage
+
+5. Integration Testing:
+   - Does the test_google_integration.py script work correctly?
+   - Are both API versions properly tested?
+   - Is error handling comprehensive?
+
+Please provide specific issues found with line numbers and recommended fixes.
