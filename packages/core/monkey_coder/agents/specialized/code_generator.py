@@ -18,7 +18,7 @@ class CodeGeneratorAgent(BaseAgent):
     Explores multiple implementation approaches using quantum execution
     """
     
-    def __init__(self):
+    def __init__(self, provider_registry=None):
         super().__init__(
             name="CodeGenerator",
             capabilities={
@@ -27,8 +27,9 @@ class CodeGeneratorAgent(BaseAgent):
                 AgentCapability.ARCHITECTURE_DESIGN,
             }
         )
-        # Will use direct provider calls for now until routing is implemented
-        self.preferred_model = "gpt-4.1"  # Default to GPT-4.1 flagship model
+        # Reference to provider registry for actual AI calls
+        self.provider_registry = provider_registry
+        self.preferred_model = "gpt-5"  # Default to GPT-5 flagship model
         
     async def _setup(self):
         """Initialize agent-specific resources"""
@@ -214,45 +215,143 @@ class CodeGeneratorAgent(BaseAgent):
         
         if complexity == "high":
             # Use most capable model for complex tasks
-            # Using GPT-4.1 flagship model instead of deprecated gpt-4o
-            return "gpt-4.1"  # or "claude-opus-4-20250514"
+            return "gpt-5"  # Latest flagship model with reasoning capabilities
         elif complexity == "low":
             # Use faster model for simple tasks
-            # Using GPT-4.1-mini instead of deprecated gpt-4o-mini
-            return "gpt-4.1-mini"  # or "claude-3-5-haiku-20241022"
+            return "gpt-5-mini"  # Fast and cost-effective GPT-5 variant
         else:
             # Default to balanced model
-            # Using GPT-4.1 instead of deprecated gpt-4o
-            return "gpt-4.1"  # or "claude-sonnet-4-20250514"
+            return "gpt-5"  # Default flagship model
+            
+    async def _call_ai_provider(self, prompt: str, model: str, **kwargs) -> Dict[str, Any]:
+        """
+        Actually call the AI provider to generate code.
+        
+        Args:
+            prompt: The prompt to send to the AI
+            model: Model to use for generation
+            **kwargs: Additional parameters for the AI call
+            
+        Returns:
+            Response from the AI provider
+        """
+        if not self.provider_registry:
+            logger.warning("No provider registry available, returning placeholder")
+            return {"result": f"# Placeholder code - Provider registry not available\n# Prompt: {prompt[:100]}..."}
+        
+        # Try OpenAI first (as it has GPT-5 support)
+        from ...providers import ProviderType
+        openai_provider = self.provider_registry.get_provider(ProviderType.OPENAI)
+        
+        if openai_provider:
+            try:
+                # Prepare messages for the AI call
+                messages = [
+                    {
+                        "role": "system",
+                        "content": "You are an expert software engineer. Generate high-quality, production-ready code based on the user's requirements. Follow best practices, include proper error handling, and add comments where helpful."
+                    },
+                    {
+                        "role": "user", 
+                        "content": prompt
+                    }
+                ]
+                
+                # Call the provider with GPT-5 support
+                response = await openai_provider.generate_completion(
+                    model=model,
+                    messages=messages,
+                    max_tokens=kwargs.get("max_tokens", 4096),
+                    temperature=kwargs.get("temperature", 0.1),
+                    enable_web_search=kwargs.get("enable_web_search", False),
+                    **kwargs
+                )
+                
+                logger.info(f"Successfully generated code using {model}")
+                return {"result": response.get("content", "")}
+                
+            except Exception as e:
+                logger.error(f"Failed to call OpenAI provider: {e}")
+                # Fallback to placeholder
+                return {"result": f"# Error calling AI provider: {e}\n# Prompt: {prompt[:100]}..."}
+        
+        # Fallback if no provider available
+        logger.warning("No OpenAI provider available, returning placeholder")
+        return {"result": f"# Placeholder code - No AI provider available\n# Prompt: {prompt[:100]}..."}
+
+    def _build_code_generation_prompt(self, task: str, analysis: Dict[str, Any], 
+                                    context: AgentContext, mcp_context: Dict[str, Any], 
+                                    style: str = "clean") -> str:
+        """Build a comprehensive prompt for code generation."""
+        prompt_parts = [
+            f"Task: {task}",
+            f"Programming Language: {analysis.get('language', 'python')}",
+            f"Style: {style}",
+            f"Complexity: {analysis.get('complexity', 'medium')}",
+        ]
+        
+        if analysis.get('framework'):
+            prompt_parts.append(f"Framework: {analysis['framework']}")
+            
+        if analysis.get('patterns'):
+            prompt_parts.append(f"Design Patterns: {', '.join(analysis['patterns'])}")
+        
+        # Add context information
+        context_str = self._format_context(context, mcp_context)
+        if context_str != "No additional context":
+            prompt_parts.append(f"Context:\n{context_str}")
+        
+        # Add specific style instructions
+        style_instructions = {
+            "clean": "Generate clean, readable code following best practices. Include clear variable names, proper formatting, and helpful comments.",
+            "optimized": "Generate performance-optimized code. Focus on efficiency, minimize redundancy, and use optimal algorithms and data structures.",
+            "comprehensive": "Generate comprehensive code with full documentation, error handling, input validation, and unit tests.",
+            "pythonic": "Generate idiomatic Python code following PEP 8 standards and Python best practices.",
+            "modern_js": "Generate modern JavaScript/TypeScript using ES6+ features, async/await, and current best practices."
+        }
+        
+        if style in style_instructions:
+            prompt_parts.append(f"Instructions: {style_instructions[style]}")
+        
+        # Add requirements for tests and documentation if requested
+        if analysis.get('include_tests'):
+            prompt_parts.append("Please include unit tests for the generated code.")
+            
+        if analysis.get('include_docs'):
+            prompt_parts.append("Please include comprehensive documentation.")
+        
+        return "\n\n".join(prompt_parts)
             
     async def _generate_clean_code(self, task: str, analysis: Dict[str, Any], 
                                   context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate clean, readable code"""
-        # For now, simulate the response - in production this would call the actual model
-        # This is a placeholder until the routing system is fully integrated
-        response = {
-            "result": f"# Generated code for: {task}\n# Model: {self.preferred_model}\n# Style: clean\n# Language: {analysis['language']}\n\n# Implementation placeholder"
-        }
+        model = await self._select_model(analysis)
+        prompt = self._build_code_generation_prompt(task, analysis, context, mcp_context, "clean")
+        
+        # Actually call the AI provider
+        response = await self._call_ai_provider(prompt, model)
         
         return {"code": response["result"]}
         
     async def _generate_optimized_code(self, task: str, analysis: Dict[str, Any],
                                      context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate performance-optimized code"""
-        # For now, simulate the response - in production this would call the actual model
-        response = {
-            "result": f"# Optimized code for: {task}\n# Model: {self.preferred_model}\n# Style: optimized\n# Language: {analysis['language']}\n\n# Optimized implementation placeholder"
-        }
+        model = await self._select_model(analysis)
+        prompt = self._build_code_generation_prompt(task, analysis, context, mcp_context, "optimized")
+        
+        # Actually call the AI provider
+        response = await self._call_ai_provider(prompt, model, temperature=0.05)  # Lower temperature for optimization
         
         return {"code": response["result"]}
         
     async def _generate_comprehensive_code(self, task: str, analysis: Dict[str, Any],
                                          context: AgentContext, mcp_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive code with all supporting files"""
-        # For now, simulate the response - in production this would call the actual model
-        response = {
-            "result": f"# Comprehensive implementation for: {task}\n# Model: {self.preferred_model}\n# Style: comprehensive\n# Language: {analysis['language']}\n\n# Full implementation placeholder"
-        }
+        model = await self._select_model(analysis)
+        prompt = self._build_code_generation_prompt(task, analysis, context, mcp_context, "comprehensive")
+        
+        # Actually call the AI provider with higher token limit for comprehensive output
+        response = await self._call_ai_provider(prompt, model, max_tokens=8192, temperature=0.2)
         
         # Parse multiple files from response
         code_parts = self._parse_multiple_files(response["result"])
@@ -269,22 +368,60 @@ class CodeGeneratorAgent(BaseAgent):
         
     async def _generate_documentation(self, code: str, analysis: Dict[str, Any]) -> str:
         """Generate documentation for the code"""
-        # For now, simulate the response - in production this would call the actual model
-        response = {
-            "result": f"# Documentation for the generated code\n# Model: {self.preferred_model}\n\n## Overview\nDocumentation placeholder for {analysis['language']} code."
-        }
+        if not self.provider_registry:
+            return f"# Documentation placeholder - Provider not available\n## Overview\nDocumentation for {analysis['language']} code."
         
+        model = await self._select_model(analysis)
+        prompt = f"""Generate comprehensive documentation for the following code:
+
+Language: {analysis.get('language', 'python')}
+Framework: {analysis.get('framework', 'N/A')}
+
+Code:
+```
+{code}
+```
+
+Please provide:
+1. Overview of what the code does
+2. Function/class descriptions
+3. Parameter explanations
+4. Usage examples
+5. Any important notes or considerations
+
+Format the documentation appropriately for {analysis.get('language', 'python')} (e.g., docstrings for Python, JSDoc for JavaScript)."""
+
+        response = await self._call_ai_provider(prompt, model, max_tokens=2048)
         return response["result"]
         
     async def _generate_tests(self, code: str, analysis: Dict[str, Any]) -> str:
         """Generate tests for the code"""
         framework = analysis.get("framework", "pytest" if analysis["language"] == "python" else "jest")
         
-        # For now, simulate the response - in production this would call the actual model
-        response = {
-            "result": f"# Unit tests for the generated code\n# Model: {self.preferred_model}\n# Framework: {framework}\n\n# Test implementation placeholder"
-        }
+        if not self.provider_registry:
+            return f"# Test placeholder - Provider not available\n# Framework: {framework}\n# Test implementation placeholder"
         
+        model = await self._select_model(analysis)
+        prompt = f"""Generate comprehensive unit tests for the following code:
+
+Language: {analysis.get('language', 'python')}
+Testing Framework: {framework}
+
+Code to test:
+```
+{code}
+```
+
+Please provide:
+1. Test cases covering main functionality
+2. Edge cases and error conditions
+3. Mock dependencies where appropriate
+4. Clear test descriptions
+5. Proper setup and teardown if needed
+
+Follow {framework} testing conventions and best practices."""
+
+        response = await self._call_ai_provider(prompt, model, max_tokens=3072)
         return response["result"]
         
     def _estimate_complexity(self, task: str) -> str:

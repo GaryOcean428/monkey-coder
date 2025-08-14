@@ -111,14 +111,14 @@ async def lifespan(app: FastAPI):
         app.state.orchestrator = MultiAgentOrchestrator()
         logger.info("✅ MultiAgentOrchestrator initialized successfully")
 
-        app.state.quantum_executor = QuantumExecutor()
+        app.state.provider_registry = ProviderRegistry()
+        logger.info("✅ ProviderRegistry initialized successfully")
+
+        app.state.quantum_executor = QuantumExecutor(provider_registry=app.state.provider_registry)
         logger.info("✅ QuantumExecutor initialized successfully")
 
         app.state.persona_router = PersonaRouter()
         logger.info("✅ PersonaRouter initialized successfully")
-
-        app.state.provider_registry = ProviderRegistry()
-        logger.info("✅ ProviderRegistry initialized successfully")
 
         app.state.metrics_collector = MetricsCollector()
         logger.info("✅ MetricsCollector initialized successfully")

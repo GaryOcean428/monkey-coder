@@ -22,14 +22,15 @@ class QuantumExecutor:
     - Scalable execution paths
     """
 
-    def __init__(self):
+    def __init__(self, provider_registry=None):
         logger.info("QuantumExecutor initialized.")
+        self.provider_registry = provider_registry
         self.code_generation = self._initialize_code_generation()
 
     def _initialize_code_generation(self):
-        # Implementation of code generation initialization
+        # Implementation of code generation initialization with provider registry
         from ..agents.specialized.code_generator import CodeGeneratorAgent
-        return CodeGeneratorAgent()
+        return CodeGeneratorAgent(provider_registry=self.provider_registry)
 
     async def execute(self, task, parallel_futures: bool = True) -> Any:
         """

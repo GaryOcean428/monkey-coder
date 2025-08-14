@@ -42,6 +42,79 @@ class OpenAIProvider(BaseProvider):
 
     # Official OpenAI model names validated against API documentation (July 2025)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        # === GPT-5 Series - Latest Flagship Models ===
+        "gpt-5": {
+            "name": "gpt-5",
+            "api_name": "gpt-5", 
+            "type": "chat",
+            "context_length": 2000000,  # 2M tokens
+            "max_output_tokens": 32768,  # 32K tokens
+            "input_cost": 2.50,  # per 1M tokens
+            "output_cost": 10.00,  # per 1M tokens  
+            "description": "Latest flagship GPT model optimized for complex coding and reasoning tasks",
+            "capabilities": [
+                "text",
+                "vision", 
+                "function_calling",
+                "streaming",
+                "structured_outputs",
+                "advanced_reasoning",
+                "code_generation", 
+                "web_search",
+                "tool_usage",
+                "multimodal"
+            ],
+            "version": "5",
+            "release_date": datetime(2025, 1, 15),
+        },
+        "gpt-5-mini": {
+            "name": "gpt-5-mini",
+            "api_name": "gpt-5-mini",
+            "type": "chat", 
+            "context_length": 2000000,  # 2M tokens
+            "max_output_tokens": 32768,  # 32K tokens
+            "input_cost": 0.25,  # per 1M tokens
+            "output_cost": 1.00,  # per 1M tokens
+            "description": "Fast and cost-effective GPT-5 model for high-volume applications",
+            "capabilities": [
+                "text",
+                "vision",
+                "function_calling", 
+                "streaming",
+                "structured_outputs",
+                "code_generation",
+                "fast_response",
+                "cost_efficient"
+            ],
+            "version": "5-mini", 
+            "release_date": datetime(2025, 1, 15),
+        },
+        "gpt-5-reasoning": {
+            "name": "gpt-5-reasoning", 
+            "api_name": "gpt-5-reasoning",
+            "type": "reasoning",
+            "context_length": 2000000,  # 2M tokens
+            "max_output_tokens": 32768,  # 32K tokens
+            "input_cost": 5.00,  # per 1M tokens
+            "output_cost": 20.00,  # per 1M tokens
+            "description": "GPT-5 optimized for complex reasoning and problem-solving tasks",
+            "capabilities": [
+                "text", 
+                "vision",
+                "function_calling",
+                "streaming", 
+                "structured_outputs",
+                "advanced_reasoning",
+                "step_by_step_thinking", 
+                "mathematical_reasoning",
+                "code_reasoning",
+                "scientific_analysis"
+            ],
+            "version": "5-reasoning",
+            "release_date": datetime(2025, 1, 15),
+            "reasoning_time_limit": 120,  # seconds for reasoning
+        },
+
         # === o4 Series - Next-Generation Reasoning Models ===
         "o4-mini": {
             "name": "o4-mini",
@@ -255,13 +328,20 @@ class OpenAIProvider(BaseProvider):
 
     # Model aliases for convenience
     MODEL_ALIASES: Dict[str, str] = {
+        # GPT-5 model shortcuts  
+        "gpt5": "gpt-5",
+        "gpt-latest": "gpt-5",
+        "gpt-flagship": "gpt-5",
+        "gpt-5-fast": "gpt-5-mini", 
+        "gpt5-mini": "gpt-5-mini",
+        "gpt-5-reason": "gpt-5-reasoning",
+        "gpt5-reasoning": "gpt-5-reasoning",
         # Reasoning model shortcuts
         "reasoning": "o3",
         "reasoning-pro": "o3-pro",
         "reasoning-mini": "o3-mini",
         "reasoning-fast": "o4-mini",
         # GPT shortcuts
-        "gpt-latest": "gpt-4.1",
         "gpt-fast": "gpt-4.1-mini",
         "gpt-vision": "gpt-4.1-vision",
         # Legacy shortcuts
@@ -272,37 +352,37 @@ class OpenAIProvider(BaseProvider):
     # Model categories for recommendations
     MODEL_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "reasoning": {
-            "models": ["o3-pro", "o3", "o1", "o4-mini", "o3-mini", "o1-mini"],
+            "models": ["gpt-5-reasoning", "o3-pro", "o3", "o1", "o4-mini", "o3-mini", "o1-mini"],
             "description": "Advanced reasoning and problem-solving capabilities",
             "best_for": [
                 "complex_analysis",
-                "mathematical_reasoning",
+                "mathematical_reasoning", 
                 "scientific_problems",
                 "code_reasoning",
             ],
         },
         "conversational": {
-            "models": ["gpt-4.1", "gpt-4.1-vision"],
+            "models": ["gpt-5", "gpt-4.1", "gpt-4.1-vision"],
             "description": "Natural conversation and general-purpose tasks",
             "best_for": ["chat", "writing", "general_assistance", "content_creation"],
         },
         "efficient": {
-            "models": ["gpt-4.1-mini", "o4-mini", "o3-mini"],
+            "models": ["gpt-5-mini", "gpt-4.1-mini", "o4-mini", "o3-mini"],
             "description": "Cost-effective models for high-volume applications",
             "best_for": [
                 "automation",
-                "api_integration",
+                "api_integration", 
                 "batch_processing",
                 "cost_optimization",
             ],
         },
         "multimodal": {
-            "models": ["gpt-4.1-vision", "gpt-4.1"],
+            "models": ["gpt-5", "gpt-4.1-vision", "gpt-4.1"],
             "description": "Text and vision capabilities for multimodal tasks",
             "best_for": [
                 "image_analysis",
                 "visual_reasoning",
-                "document_understanding",
+                "document_understanding", 
                 "multimodal_chat",
             ],
         },
@@ -313,7 +393,7 @@ class OpenAIProvider(BaseProvider):
         self.base_url = kwargs.get("base_url")
         self.organization = kwargs.get("organization")
         self.project = kwargs.get("project")
-        self.default_model = kwargs.get("default_model", "gpt-4.1")
+        self.default_model = kwargs.get("default_model", "gpt-5")
         self.reasoning_patience = kwargs.get(
             "reasoning_patience", True
         )  # Wait for reasoning models
@@ -396,7 +476,7 @@ class OpenAIProvider(BaseProvider):
                 )
 
             # Test with a simple completion using the most efficient model
-            test_model = "gpt-4.1-mini"
+            test_model = "gpt-5-mini"
             logger.info(f"Testing OpenAI API with {test_model}")
 
             test_response = await self.client.chat.completions.create(
@@ -545,47 +625,132 @@ class OpenAIProvider(BaseProvider):
         resolved_model = self.resolve_model_name(model)
         model_info = self.VALIDATED_MODELS.get(resolved_model, {})
         is_reasoning = self.is_reasoning_model(resolved_model)
+        is_gpt5_family = resolved_model.startswith("gpt-5") or resolved_model in ["o3", "o3-pro", "o3-mini", "o4", "o4-mini"]
 
-        # Base parameters
-        params = {
-            "model": resolved_model,
-            "messages": messages,
-        }
+        # Use new GPT-5/o3/o4 API format for latest models
+        if is_gpt5_family:
+            # Convert messages to new input format
+            input_messages = []
+            for msg in messages:
+                if msg.get("role") == "user":
+                    input_messages.append({
+                        "role": "developer",  # GPT-5 uses "developer" role
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": msg.get("content", "")
+                            }
+                        ]
+                    })
+                elif msg.get("role") == "system":
+                    # System messages can be converted to developer context
+                    input_messages.append({
+                        "role": "developer", 
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": f"System context: {msg.get('content', '')}"
+                            }
+                        ]
+                    })
+                else:
+                    # Other roles converted to developer
+                    input_messages.append({
+                        "role": "developer",
+                        "content": [
+                            {
+                                "type": "input_text", 
+                                "text": msg.get("content", "")
+                            }
+                        ]
+                    })
 
-        # Reasoning models have different parameter sets
-        if is_reasoning:
-            # o1/o3/o4 models have limited parameter support
-            params.update(
-                {
-                    "max_completion_tokens": kwargs.get("max_tokens", 16384),
-                    # Note: reasoning models don't support temperature, top_p, etc.
+            # New GPT-5 API parameters
+            params = {
+                "model": resolved_model,
+                "input": input_messages,
+                "text": {
+                    "format": {
+                        "type": "text"
+                    },
+                    "verbosity": kwargs.get("verbosity", "medium")
+                },
+                "store": kwargs.get("store", True)
+            }
+
+            # Add reasoning configuration for reasoning models
+            if is_reasoning:
+                params["reasoning"] = {
+                    "effort": kwargs.get("reasoning_effort", "medium"),
+                    "summary": kwargs.get("reasoning_summary", "auto")
                 }
-            )
+
+            # Add tools if provided
+            if tools := kwargs.get("tools"):
+                # Convert tools to new format
+                new_tools = []
+                for tool in tools:
+                    if tool.get("type") == "function":
+                        # Keep function tools as-is for compatibility
+                        new_tools.append(tool)
+                    else:
+                        new_tools.append(tool)
+                
+                # Add web search capability for enhanced functionality
+                if kwargs.get("enable_web_search", False):
+                    new_tools.append({
+                        "type": "web_search_preview",
+                        "user_location": {
+                            "type": "approximate",
+                            "country": kwargs.get("user_country", "US"),
+                            "region": kwargs.get("user_region", ""),
+                            "city": kwargs.get("user_city", "")
+                        },
+                        "search_context_size": "high"
+                    })
+                
+                params["tools"] = new_tools
 
             # Extended timeout for reasoning models
-            if self.reasoning_patience:
+            if self.reasoning_patience and is_reasoning:
                 reasoning_time = model_info.get("reasoning_time_limit", 60)
-                params["timeout"] = reasoning_time + 30  # Add buffer
+                params["timeout"] = reasoning_time + 30
+
         else:
-            # Standard chat models support full parameter set
-            params.update(
-                {
+            # Legacy chat completion format for older models
+            params = {
+                "model": resolved_model,
+                "messages": messages,
+            }
+
+            # Reasoning models have different parameter sets
+            if is_reasoning:
+                params.update({
+                    "max_completion_tokens": kwargs.get("max_tokens", 16384),
+                })
+
+                # Extended timeout for reasoning models
+                if self.reasoning_patience:
+                    reasoning_time = model_info.get("reasoning_time_limit", 60)
+                    params["timeout"] = reasoning_time + 30
+            else:
+                # Standard chat models support full parameter set
+                params.update({
                     "max_tokens": kwargs.get("max_tokens", 4096),
                     "temperature": kwargs.get("temperature", 0.1),
                     "top_p": kwargs.get("top_p", 1.0),
                     "frequency_penalty": kwargs.get("frequency_penalty", 0.0),
                     "presence_penalty": kwargs.get("presence_penalty", 0.0),
                     "stream": kwargs.get("stream", False),
-                }
-            )
+                })
 
-            # Add tools if provided
-            if tools := kwargs.get("tools"):
-                params["tools"] = tools
+                # Add tools if provided
+                if tools := kwargs.get("tools"):
+                    params["tools"] = tools
 
-            # Add response format if provided
-            if response_format := kwargs.get("response_format"):
-                params["response_format"] = response_format
+                # Add response format if provided
+                if response_format := kwargs.get("response_format"):
+                    params["response_format"] = response_format
 
         return params
 
@@ -613,45 +778,98 @@ class OpenAIProvider(BaseProvider):
             # Prepare model-specific parameters
             params = self._prepare_completion_params(resolved_model, messages, **kwargs)
             is_reasoning = self.is_reasoning_model(resolved_model)
+            is_gpt5_family = resolved_model.startswith("gpt-5") or resolved_model in ["o3", "o3-pro", "o3-mini", "o4", "o4-mini"]
 
             # Make the API call with appropriate handling
             start_time = datetime.utcnow()
 
-            if is_reasoning:
-                logger.info(f"Starting reasoning completion with {resolved_model}")
-                # Reasoning models may take longer
-                response = await self.client.chat.completions.create(**params)
+            # Use new responses API for GPT-5/o3/o4 models
+            if is_gpt5_family:
+                logger.info(f"Using new GPT-5 responses API with {resolved_model}")
+                try:
+                    response = await self.client.responses.create(**params)
+                    
+                    # Handle new API response format
+                    content = ""
+                    if hasattr(response, 'choices') and response.choices:
+                        if hasattr(response.choices[0], 'message'):
+                            content = response.choices[0].message.content or ""
+                        elif hasattr(response.choices[0], 'text'):
+                            content = response.choices[0].text or ""
+                    elif hasattr(response, 'text'):
+                        content = response.text or ""
+                    elif hasattr(response, 'content'):
+                        content = response.content or ""
+                    
+                    # Extract usage information
+                    usage_info = {}
+                    if hasattr(response, 'usage'):
+                        usage = response.usage
+                        usage_info = {
+                            "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                            "completion_tokens": getattr(usage, "completion_tokens", 0),
+                            "reasoning_tokens": getattr(usage, "reasoning_tokens", 0) if is_reasoning else 0,
+                            "total_tokens": getattr(usage, "total_tokens", 0),
+                        }
+                    
+                except AttributeError:
+                    # Fallback to chat completions if responses API not available
+                    logger.warning(f"responses.create not available for {resolved_model}, falling back to chat completions")
+                    # Remove GPT-5 specific params and use legacy format
+                    legacy_params = {
+                        "model": resolved_model,
+                        "messages": messages,
+                        "max_tokens": kwargs.get("max_tokens", 4096),
+                        "temperature": kwargs.get("temperature", 0.1),
+                    }
+                    response = await self.client.chat.completions.create(**legacy_params)
+                    content = response.choices[0].message.content
+                    usage_info = {
+                        "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                        "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                        "reasoning_tokens": 0,
+                        "total_tokens": response.usage.total_tokens if response.usage else 0,
+                    }
+
             else:
+                # Use traditional chat completions for older models
+                if is_reasoning:
+                    logger.info(f"Starting reasoning completion with {resolved_model}")
+                
                 response = await self.client.chat.completions.create(**params)
+                
+                # Extract content and usage
+                content = response.choices[0].message.content
+                usage = response.usage
+                
+                # Extract reasoning tokens for reasoning models
+                reasoning_tokens = 0
+                if is_reasoning and usage and hasattr(usage, "completion_tokens_details"):
+                    reasoning_tokens = getattr(
+                        usage.completion_tokens_details, "reasoning_tokens", 0
+                    )
 
-            end_time = datetime.utcnow()
-
-            # Calculate metrics
-            usage = response.usage
-            execution_time = (end_time - start_time).total_seconds()
-
-            # Extract reasoning tokens for reasoning models
-            reasoning_tokens = 0
-            if is_reasoning and usage and hasattr(usage, "completion_tokens_details"):
-                reasoning_tokens = getattr(
-                    usage.completion_tokens_details, "reasoning_tokens", 0
-                )
-
-            return {
-                "content": response.choices[0].message.content,
-                "role": response.choices[0].message.role,
-                "finish_reason": response.choices[0].finish_reason,
-                "usage": {
+                usage_info = {
                     "prompt_tokens": usage.prompt_tokens if usage else 0,
                     "completion_tokens": usage.completion_tokens if usage else 0,
                     "reasoning_tokens": reasoning_tokens,
                     "total_tokens": usage.total_tokens if usage else 0,
-                },
-                "model": response.model,
+                }
+
+            end_time = datetime.utcnow()
+            execution_time = (end_time - start_time).total_seconds()
+
+            return {
+                "content": content,
+                "role": "assistant",
+                "finish_reason": "completed",
+                "usage": usage_info,
+                "model": resolved_model,
                 "execution_time": execution_time,
                 "provider": "openai",
-                "model_type": "reasoning" if is_reasoning else "chat",
+                "model_type": "gpt5" if is_gpt5_family else ("reasoning" if is_reasoning else "chat"),
                 "reasoning_time": execution_time if is_reasoning else None,
+                "api_format": "responses" if is_gpt5_family else "chat_completions",
             }
 
         except Exception as e:
@@ -665,25 +883,25 @@ class OpenAIProvider(BaseProvider):
     def get_recommended_model(self, use_case: str = "general") -> str:
         """Get recommended model based on use case."""
         recommendations = {
-            "general": "gpt-4.1",
-            "reasoning": "o3",
+            "general": "gpt-5",
+            "reasoning": "gpt-5-reasoning", 
             "complex_reasoning": "o3-pro",
             "fast_reasoning": "o4-mini",
-            "cost_efficient": "gpt-4.1-mini",
-            "conversation": "gpt-4.1",
-            "vision": "gpt-4.1-vision",
-            "multimodal": "gpt-4.1-vision",
-            "coding": "o3",
-            "analysis": "o3",
+            "cost_efficient": "gpt-5-mini",
+            "conversation": "gpt-5",
+            "vision": "gpt-5",
+            "multimodal": "gpt-5", 
+            "coding": "gpt-5",
+            "analysis": "gpt-5-reasoning",
             "math": "o3-pro",
-            "science": "o3-pro",
-            "writing": "gpt-4.1",
-            "chat": "gpt-4.1",
-            "automation": "gpt-4.1-mini",
-            "latest": "gpt-4.1",
+            "science": "o3-pro", 
+            "writing": "gpt-5",
+            "chat": "gpt-5",
+            "automation": "gpt-5-mini",
+            "latest": "gpt-5",
         }
 
-        return recommendations.get(use_case, "gpt-4.1")
+        return recommendations.get(use_case, "gpt-5")
 
     def get_models_by_category(self, category: str) -> List[str]:
         """Get models filtered by category."""
@@ -705,7 +923,7 @@ class OpenAIProvider(BaseProvider):
             models = await self.client.models.list()
 
             # Test a simple completion with the most efficient model
-            test_model = "gpt-4.1-mini"
+            test_model = "gpt-5-mini"
             test_response = await self.client.chat.completions.create(
                 model=test_model,
                 messages=[{"role": "user", "content": "Hello"}],
@@ -748,7 +966,7 @@ class OpenAIProvider(BaseProvider):
                 "api_models_available": len(models.data),
                 "validated_models": model_stats,
                 "latest_models": [model[0] for model in latest_models],
-                "model_families": ["o1", "o3", "o4", "gpt-4.1"],
+                "model_families": ["gpt-5", "o1", "o3", "o4", "gpt-4.1"],
                 "capabilities": [
                     "reasoning",
                     "conversation",
