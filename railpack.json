@@ -1,21 +1,33 @@
 {
   "$schema": "https://schema.railpack.com",
   "provider": "python",
-  "buildAptPackages": ["python3", "python3-pip"],
   "packages": {
     "node": "22",
-    "python": "3.11"
+    "python": "3.12"
   },
+  "secrets": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "RAILWAY_ENVIRONMENT",
+    "PYTHONPATH"
+  ],
   "steps": {
-    "install": {
-      "commands": [
-        "echo 'Skipping system pip install; using baked venv'"
-      ]
-    },
-    "build": {
+    "python": {
       "inputs": [
-        { "step": "install" },
-        { "step": "python" }
+        { "image": "python:3.12-slim" },
+        { "local": true, "include": ["requirements.txt"] }
+      ],
+      "secrets": [],
+      "commands": [
+        "python -m venv /app/.venv",
+        "/app/.venv/bin/pip install --no-cache-dir --upgrade pip",
+        "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt"
+      ],
+      "cacheDirectories": ["/root/.cache/pip"]
+    },
+    "web": {
+      "inputs": [
+        { "local": true, "include": ["package.json", "yarn.lock", "packages/**"] }
       ],
       "commands": [
         "corepack enable",
@@ -24,31 +36,17 @@
         "yarn install --immutable || yarn install",
         "yarn workspace @monkey-coder/web build"
       ]
-    },
-    "python": {
-      "inputs": [
-        { "image": "python:3.11-slim" },
-        { "local": true, "include": ["requirements.txt"] }
-      ],
-      "commands": [
-        "python -m venv /app/.venv",
-        "/app/.venv/bin/pip install --no-cache-dir --upgrade pip",
-        "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt"
-      ]
     }
   },
   "deploy": {
-    "base": {
-      "image": "python:3.11-slim"
-    },
+    "base": { "image": "python:3.12-slim" },
     "inputs": [
-      "...",
       { "step": "python", "include": [".venv"] },
-      { "step": "build", "include": ["."] }
+      { "step": "web", "include": ["packages/web/dist"] },
+      { "local": true, "include": ["."] }
     ],
-    "aptPackages": [],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'set -e; if [ ! -x /app/.venv/bin/python ]; then apt-get update; DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip; python3 -m venv /app/.venv; fi; if [ -f requirements.txt ]; then /app/.venv/bin/pip install --no-cache-dir -r requirements.txt || true; fi; exec /app/.venv/bin/python run_server.py'",
+    "startCommand": "python run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
