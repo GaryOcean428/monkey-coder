@@ -1,4 +1,5 @@
 # AI Model Manifest
+> UNIFIED MODEL MANIFEST - AUGUST 14, 2025
 
 ## Overview
 This manifest documents all available AI models, their capabilities, configurations, and usage guidelines for the Monkey Coder project.
@@ -14,7 +15,7 @@ providers:
     - groq
     - xai
   specialized:
-
+    - together
     - openrouter
 ```
 
@@ -730,14 +731,6 @@ task_routing:
 
 ```yaml
 cost_tiers:
-  budget:
-    models:
-      - gpt-4.1-mini
-      - gemini-2.5-flash-lite
-      - claude-3-5-haiku-20241022
-      - llama-3.1-8b-instant
-    max_cost_per_1k_tokens: 0.0005
-
   balanced:
     models:
       - o4-mini
@@ -813,7 +806,6 @@ ANTHROPIC_API_KEY=your_key
 OPENAI_API_KEY=your_key
 GOOGLE_API_KEY=your_key
 GROQ_API_KEY=your_key
-TOGETHER_API_KEY=your_key
 OPENROUTER_API_KEY=your_key
 
 # Optional configuration
@@ -851,7 +843,6 @@ benchmarks:
   response_time:
     groq: 0.3s
     gemini-2.5-flash: 0.8s
-    together: 1.2s
     openai: 1.5s
     anthropic: 2.0s
 
@@ -860,7 +851,6 @@ benchmarks:
     gemini-2.5-flash: 500
     openai: 120
     anthropic: 100
-    together: 200
 
   reasoning_quality:
     claude-opus-4-1-20250805: 9.9/10
@@ -876,7 +866,6 @@ benchmarks:
     google: 99.8%
     openrouter: 99.7%
     groq: 99.5%
-    together: 99.3%
 ```
 
 ## Usage Examples
@@ -949,6 +938,8 @@ const modelReplacements = {
   // Google legacy models
   "gemini-1.5-pro": "gemini-2.5-pro",
   "gemini-1.5-flash": "gemini-2.5-flash"
+  "gpt-5-mini": "gpt-5-mini-2025-08-07",
+  "gpt-5-nano": "gpt-5-nano-2025-08-07",
 };
 ```
 

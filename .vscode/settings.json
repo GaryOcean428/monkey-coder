@@ -98,5 +98,29 @@
     "interactiveWindow.executeWithShiftEnter": true,
     "chat.checkpoints.showFileChanges": true,
     "chat.renderRelatedFiles": true,
-    "chat.todoListTool.enabled": true
+    "chat.todoListTool.enabled": true,
+    "github.copilot.enable": {
+        "plaintext": true,
+        "scminput": true,
+        "markdown": true,
+        "typescript": true,
+        "python": true,
+        "javascript": true,
+        "typescript tsx": true,
+        "javascriptreact": true,
+        "html": true,
+        "typescriptreact": true
+    },
+    "github.copilot.advanced": {
+        "authPermissions": "default"
+    },
+    "github.copilot.chat.newWorkspace.useContext7": true,
+    "github.copilot.chat.languageContext.typescript.enabled": true,
+    "github.copilot.chat.notebook.followCellExecution.enabled": true,
+    "github.copilot.chat.generateTests.codeLens": true,
+    "github.copilot.chat.edits.temporalContext.enabled": true,
+    "github.copilot.chat.editor.temporalContext.enabled": true,
+    "github.copilot.chat.alternateGptPrompt.enabled": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.chat.scopeSelection": true
 }

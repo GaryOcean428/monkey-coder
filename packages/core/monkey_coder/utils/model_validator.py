@@ -30,8 +30,8 @@ class ModelValidator:
         "gpt-4o-mini",  # Use gpt-4.1-mini instead
         "gpt-4",  # Use gpt-4.1 instead
         "gpt-4-turbo",  # Use gpt-4.1 instead
-        "claude-3-opus",  # Below 3.5 threshold - use claude-3-5-sonnet instead
-        "claude-3-sonnet",  # Below 3.5 threshold - use claude-3-5-sonnet instead
+        "claude-3-opus",  # Old naming - use claude-opus-4-1-20250805 instead
+        "claude-3-sonnet",  # Old naming - use claude-3-7-sonnet-20250219 instead
     }
     
     # Approved flagship models
@@ -53,9 +53,9 @@ class ModelValidator:
         "gpt-4-turbo": "gpt-4.1",
         "gpt-4-32k": "gpt-4.1",
         
-        # Anthropic replacements (3.5+ only, no Claude 3.0 models)
-        "claude-3-opus": "claude-3-5-sonnet-20241022",  # Map to 3.5+
-        "claude-3-sonnet": "claude-3-5-sonnet-20241022",  # Map to 3.5+
+        # Anthropic replacements - Map old names to new models
+        "claude-3-opus": "claude-opus-4-1-20250805",  # Use latest Opus 4.1
+        "claude-3-sonnet": "claude-3-7-sonnet-20250219",  # Use Claude 3.7
         "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
         "claude-3-haiku": "claude-3-5-haiku-20241022",
         

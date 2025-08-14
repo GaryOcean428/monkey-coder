@@ -1,4 +1,5 @@
 # AI Model Manifest
+> UNIFIED MODEL MANIFEST - AUGUST 14, 2025
 
 ## Overview
 This manifest documents all available AI models, their capabilities, configurations, and usage guidelines for the Monkey Coder project.
@@ -14,7 +15,6 @@ providers:
     - groq
     - xai
   specialized:
-    - together
     - openrouter
 ```
 
@@ -323,6 +323,103 @@ openai:
         - image_analysis
         - multimodal_understanding
         - visual_reasoning
+
+    gpt-5:
+      context_window: 400000
+      max_output: 128000
+      knowledge_cutoff: "May 31, 2024"
+      capabilities:
+        - advanced_reasoning
+        - multimodal
+        - function_calling
+        - tool_use
+        - structured_outputs
+        - streaming
+        - code_generation
+        - vision_understanding
+        - enhanced_planning
+        - long_context_reasoning
+        - reasoning_tokens
+      cost:
+        input: 0.003
+        output: 0.012
+        cached_input: 0.00075
+      use_cases:
+        - complex_reasoning_tasks
+        - multimodal_applications
+        - advanced_planning
+        - scientific_research
+        - creative_content_generation
+        - enterprise_automation
+      pricing_tier: ultra_premium
+
+    gpt-5-mini-2025-08-07:
+      context_window: 400000
+      max_output: 128000
+      knowledge_cutoff: "May 31, 2024"
+      capabilities:
+        - reasoning
+        - multimodal
+        - function_calling
+        - tool_use
+        - structured_outputs
+        - streaming
+        - code_generation
+        - vision_understanding
+        - reasoning_tokens
+      cost:
+        input: 0.00075
+        output: 0.003
+        cached_input: 0.000188
+      use_cases:
+        - cost_efficient_reasoning
+        - multimodal_tasks
+        - code_development
+        - high_throughput
+      pricing_tier: premium
+
+    gpt-5-nano-2025-08-07:
+      context_window: 400000
+      max_output: 128000
+      knowledge_cutoff: "May 31, 2024"
+      capabilities:
+        - basic_reasoning
+        - text_generation
+        - function_calling
+        - streaming
+        - code_completion
+        - reasoning_tokens
+      cost:
+        input: 0.00020
+        output: 0.00080
+        cached_input: 0.00005
+      use_cases:
+        - ultra_low_cost_tasks
+        - simple_text_generation
+        - rapid_responses
+        - high_throughput
+      pricing_tier: balanced
+
+    gpt-4.1-nano:
+      context_window: 1047576
+      max_output: 32768
+      knowledge_cutoff: "Jun 01, 2024"
+      capabilities:
+        - instruction_following
+        - tool_calling
+        - text
+        - vision_input
+        - fast_response
+        - cost_efficient
+      cost:
+        input: 0.00010
+        output: 0.00040
+      use_cases:
+        - quick_tasks
+        - tool_orchestration
+        - low_latency_automation
+        - simple_coding
+      pricing_tier: balanced
 ```
 
 ### Google Models (Gemini 2.5 Series)
@@ -512,6 +609,42 @@ groq:
         - advanced_reasoning
         - code_generation
         - qwen_capabilities
+
+    openai/gpt-oss-120b:
+      context_window: 131072
+      max_output: 65536
+      capabilities:
+        - reasoning
+        - tool_use
+        - structured_outputs
+        - text_generation
+        - streaming
+      cost:
+        input: 0.00015
+        output: 0.00075
+      use_cases:
+        - agentic_workflows
+        - coding_reasoning
+        - multilingual_assistants
+        - long_context_processing
+
+    openai/gpt-oss-20b:
+      context_window: 131072
+      max_output: 65536
+      capabilities:
+        - reasoning
+        - tool_use
+        - structured_outputs
+        - text_generation
+        - streaming
+      cost:
+        input: 0.00010
+        output: 0.00050
+      use_cases:
+        - low_latency_agentic_apps
+        - affordable_reasoning_and_coding
+        - tool_augmented_tasks
+        - long_context_processing
 ```
 
 ### xAI Models (Grok Series)
@@ -599,42 +732,6 @@ grok:
         - interactive_coding
         - real_time_conversations
         - efficient_processing
-```
-
-### Together Models
-
-```yaml
-together:
-  models:
-    meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo:
-      context_window: 131072
-      max_output: 4096
-      capabilities:
-        - code_generation
-        - instruction_following
-        - reasoning
-      cost:
-        input: 0.00088
-        output: 0.00088
-      use_cases:
-        - complex_tasks
-        - code_architecture
-        - detailed_analysis
-
-    deepseek-ai/deepseek-coder-33b-instruct:
-      context_window: 16384
-      max_output: 4096
-      capabilities:
-        - specialized_coding
-        - multi_language
-        - code_completion
-      cost:
-        input: 0.00014
-        output: 0.00014
-      use_cases:
-        - code_specific_tasks
-        - language_translation
-        - optimization
 ```
 
 ### OpenRouter Models
@@ -730,14 +827,6 @@ task_routing:
 
 ```yaml
 cost_tiers:
-  budget:
-    models:
-      - gpt-4.1-mini
-      - gemini-2.5-flash-lite
-      - claude-3-5-haiku-20241022
-      - llama-3.1-8b-instant
-    max_cost_per_1k_tokens: 0.0005
-
   balanced:
     models:
       - o4-mini
@@ -762,10 +851,12 @@ cost_tiers:
     max_cost_per_1k_tokens: 0.100
 ```
 
+
 ## Provider-Specific Features
 
 ### Anthropic
-- **Extended Thinking**: Advanced reasoning capabilities in Claude 4 series
+- **Extended Thinking**
+- **Policy**: Only Claude 3.5+ models permitted; Claude 3.0 series is disallowed.: Advanced reasoning capabilities in Claude 4 series
 - **Artifacts**: Structured output for code blocks
 - **System Prompts**: Enhanced instruction following
 - **XML Tags**: Better structured responses
@@ -780,7 +871,8 @@ cost_tiers:
 - **Structured Outputs**: Guaranteed output formats
 
 ### Google
-- **Gemini 2.5**: State-of-the-art reasoning capabilities
+- **Gemini 2.5**
+- **Policy**: Only Gemini 2.x (2.0 and 2.5) models permitted.: State-of-the-art reasoning capabilities
 - **Native Tool Use**: Built-in function calling
 - **Multimodal**: Advanced image and video understanding
 - **Large Context**: Up to 2M tokens context window
@@ -792,11 +884,6 @@ cost_tiers:
 - **Batch Processing**: Efficient bulk operations
 - **Llama 4**: Latest preview models available
 - **Specialized Models**: Kimi (MoE) and Qwen support
-
-### Together
-- **Custom Models**: Fine-tuned options
-- **Inference Optimization**: Hardware acceleration
-- **Model Mixing**: Ensemble approaches
 
 ### OpenRouter
 - **Unified API**: Single interface for multiple providers
@@ -813,7 +900,6 @@ ANTHROPIC_API_KEY=your_key
 OPENAI_API_KEY=your_key
 GOOGLE_API_KEY=your_key
 GROQ_API_KEY=your_key
-TOGETHER_API_KEY=your_key
 OPENROUTER_API_KEY=your_key
 
 # Optional configuration
@@ -851,7 +937,6 @@ benchmarks:
   response_time:
     groq: 0.3s
     gemini-2.5-flash: 0.8s
-    together: 1.2s
     openai: 1.5s
     anthropic: 2.0s
 
@@ -860,7 +945,6 @@ benchmarks:
     gemini-2.5-flash: 500
     openai: 120
     anthropic: 100
-    together: 200
 
   reasoning_quality:
     claude-opus-4-1-20250805: 9.9/10
@@ -876,7 +960,6 @@ benchmarks:
     google: 99.8%
     openrouter: 99.7%
     groq: 99.5%
-    together: 99.3%
 ```
 
 ## Usage Examples
@@ -949,6 +1032,8 @@ const modelReplacements = {
   // Google legacy models
   "gemini-1.5-pro": "gemini-2.5-pro",
   "gemini-1.5-flash": "gemini-2.5-flash"
+  "gpt-5-mini": "gpt-5-mini-2025-08-07",
+  "gpt-5-nano": "gpt-5-nano-2025-08-07",
 };
 ```
 
