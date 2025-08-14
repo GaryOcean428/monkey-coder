@@ -24,12 +24,15 @@ rm railway.json
 
 ### 2. Optimized railpack.json Configuration
 - ✅ JSON syntax is valid
-- ✅ Contains proper build steps for both Python (3.12) and Node.js (22)
+- ✅ Contains proper build steps for both Python (3.12) and Node.js (20)
 - ✅ Has health check endpoint configured (`/health`)
 - ✅ Uses correct start command
 - ✅ Added NODE_OPTIONS with increased memory for Next.js builds
 - ✅ Simplified deployment configuration to prevent conflicts
 - ✅ Fixed build step ordering and dependencies
+- ✅ Removed PYTHONPATH from secrets list (set in variables instead)
+- ✅ Added required build dependencies (python3 make g++)
+- ✅ Optimized cache directories for better performance
 
 ### 3. Added Prevention Measures
 
@@ -48,7 +51,7 @@ rm railway.json
 ## Current Build Configuration
 - **Primary Config**: `railpack.json` only
 - **Python Version**: 3.12
-- **Node.js Version**: 22
+- **Node.js Version**: 20
 - **Health Check**: `/health`
 - **Build Steps**:
   - Python environment setup with virtualenv
