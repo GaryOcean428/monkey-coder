@@ -33,7 +33,8 @@
       { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'PY=python3; if ! command -v \"$PY\" >/dev/null 2>&1; then PY=/usr/local/bin/python3; fi; if [ ! -x /app/.venv/bin/python3 ]; then \"$PY\" -m venv /app/.venv; /app/.venv/bin/python3 -m pip install --no-cache-dir --upgrade pip; /app/.venv/bin/python3 -m pip install --no-cache-dir -r requirements.txt; fi; exec /app/.venv/bin/python3 run_server.py'",
+    "env": { "PYTHONPATH": "/app:/app/packages/core" },
+    "startCommand": "sh -lc '\nset -e\n# Ensure python3 and pip exist in runtime (apk for Alpine, apt-get for Debian/Ubuntu)\nif ! command -v python3 >/dev/null 2>&1; then\n  if command -v apk >/dev/null 2>&1; then\n    apk add --no-cache python3 py3-pip python3-venv\n  elif command -v apt-get >/dev/null 2>&1; then\n    apt-get update\n    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip\n  else\n    echo \"No supported package manager found to install python3\" >&2\n    exit 1\n  fi\nfi\n# Create venv if missing and install deps\nif [ ! -x /app/.venv/bin/python3 ]; then\n  python3 -m venv /app/.venv\n  /app/.venv/bin/python3 -m pip install --no-cache-dir --upgrade pip\n  # If requirements.txt not present in CWD, try /app\n  REQ=requirements.txt\n  [ -f \"$REQ\" ] || REQ=/app/requirements.txt\n  /app/.venv/bin/python3 -m pip install --no-cache-dir -r \"$REQ\"\nfi\nexec /app/.venv/bin/python3 run_server.py\n'",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
