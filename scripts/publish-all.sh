@@ -1,79 +1,68 @@
 #!/bin/bash
-# Master script to publish all Monkey Coder packages
 
-set -e
+# Monkey Coder - Package Version Checker and Publishing Helper
+# This script checks versions and helps publish packages
 
-echo "🐒 Monkey Coder Package Publisher"
-echo "================================="
+set -e  # Exit on error
 
-# Load environment variables from .env file if it exists
-if [ -f ".env" ]; then
-    echo "📋 Loading environment variables from .env..."
-    export $(grep -v '^#' .env | xargs)
-fi
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Check if tokens are set
-if [ -z "$PYPI_TOKEN" ]; then
-    echo "❌ Error: PYPI_TOKEN not found in environment"
-    echo "Please ensure it's set in your .env file or environment"
-    exit 1
-fi
+# Script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-if [ -z "$NPM_ACCESS_TOKEN" ]; then
-    echo "❌ Error: NPM_ACCESS_TOKEN not found in environment"
-    echo "Please ensure it's set in your .env file or environment"
-    exit 1
-fi
+# Function to print colored messages
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
 
-echo "✅ All required tokens found"
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+# Main execution
+echo "======================================"
+echo "  Monkey Coder Package Version Check"
+echo "======================================"
 echo ""
 
-# Run validation first
-echo "🔍 Running package validation..."
-./scripts/validate-packages.sh
-if [ $? -ne 0 ]; then
-    echo "❌ Package validation failed. Please fix the issues before publishing."
-    exit 1
-fi
+log_info "Checking local versions..."
+echo ""
+echo "Local Versions:"
+echo "  CLI (npm):        $(grep '"version"' $ROOT_DIR/packages/cli/package.json | cut -d'"' -f4)"
+echo "  SDK (npm):        $(grep '"version"' $ROOT_DIR/packages/sdk/package.json | cut -d'"' -f4)"
+echo "  Core (PyPI):      $(grep '^version = ' $ROOT_DIR/packages/core/pyproject.toml | cut -d'"' -f2)"
+echo "  SDK Python:       $(grep 'version=' $ROOT_DIR/packages/sdk/src/python/setup.py | head -1 | sed 's/.*version="\([^"]*\)".*/\1/')"
 
 echo ""
-echo "📦 Package validation passed! Ready to publish."
+log_info "Checking published versions..."
 echo ""
-
-# Ask for confirmation
-read -p "Do you want to publish all packages? (y/N) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "❌ Publishing cancelled."
-    exit 1
-fi
+echo "Published Versions:"
+echo "  CLI (npm):        $(npm view monkey-coder-cli version 2>/dev/null || echo 'Not published')"
+echo "  SDK (npm):        $(npm view monkey-coder-sdk version 2>/dev/null || echo 'Not published')"
+echo "  Core (PyPI):      $(pip index versions monkey-coder-core 2>/dev/null | head -1 | sed 's/.*(\([^)]*\)).*/\1/' || echo 'Not published')"
+echo "  SDK (PyPI):       $(pip index versions monkey-coder-sdk 2>/dev/null | head -1 | sed 's/.*(\([^)]*\)).*/\1/' || echo 'Not published')"
 
 echo ""
-echo "🐍 Publishing Python packages to PyPI..."
-./scripts/publish-pypi.sh
-if [ $? -ne 0 ]; then
-    echo "❌ PyPI publishing failed."
-    exit 1
-fi
-
+echo "======================================"
+log_success "Version check complete!"
 echo ""
-echo "📦 Publishing npm packages..."
-./scripts/publish-npm.sh
-if [ $? -ne 0 ]; then
-    echo "❌ npm publishing failed."
-    exit 1
-fi
-
+echo "Publishing Instructions:"
 echo ""
-echo "🎉 All packages published successfully!"
+echo "1. For npm packages:"
+echo "   cd packages/cli && npm publish"
+echo "   cd packages/sdk && npm publish"
 echo ""
-echo "📋 Installation commands:"
-echo "  Python:"
-echo "    pip install monkey-coder-core"
-echo "    pip install monkey-coder-sdk"
-echo ""
-echo "  npm:"
-echo "    npm install -g monkey-coder-cli"
-echo "    npm install @monkey-coder/sdk"
-echo ""
-echo "✨ Happy coding with Monkey Coder!"
+echo "2. For PyPI packages:"
+echo "   cd packages/core && python -m build && twine upload dist/*"
+echo "   cd packages/sdk/src/python && python setup.py sdist bdist_wheel && twine upload dist/*"
+echo "======================================"

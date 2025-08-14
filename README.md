@@ -6,6 +6,16 @@
 project, restructured for better developer
 > experience and modular architecture.
 
+## 🚀 Auto-Publishing Enabled
+
+**Every commit to main automatically publishes updated packages!** Users always get the latest features and fixes immediately.
+
+[![Auto-Publish](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml/badge.svg)](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml)
+[![npm: CLI](https://img.shields.io/npm/v/monkey-coder-cli)](https://www.npmjs.com/package/monkey-coder-cli)
+[![npm: SDK](https://img.shields.io/npm/v/monkey-coder-sdk)](https://www.npmjs.com/package/monkey-coder-sdk)
+[![PyPI: Core](https://img.shields.io/pypi/v/monkey-coder-core)](https://pypi.org/project/monkey-coder-core/)
+[![PyPI: SDK](https://img.shields.io/pypi/v/monkey-coder-sdk)](https://pypi.org/project/monkey-coder-sdk/)
+
 ## Overview
 
 Monkey Coder transforms the powerful Qwen3-Coder models into a comprehensive development toolkit
@@ -16,6 +26,7 @@ with:
 - 📦 **SDK Libraries** for easy integration into your applications
 - 🛠️ **Monorepo Architecture** with yarn 4.9.2 workspaces
 - 📚 **Comprehensive Documentation** with MkDocs
+- ⚡ **Auto-Publishing** on every commit for instant updates
 
 ## Monorepo Structure
 

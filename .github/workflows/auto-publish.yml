@@ -1,0 +1,317 @@
+name: Auto-Publish Packages
+
+# Trigger on every push to main branch
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish all packages'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cli_changed: ${{ steps.changes.outputs.cli }}
+      sdk_changed: ${{ steps.changes.outputs.sdk }}
+      core_changed: ${{ steps.changes.outputs.core }}
+      force_publish: ${{ github.event.inputs.force_publish || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Detect changed packages
+        id: changes
+        run: |
+          # Check which packages have changes
+          echo "Checking for changes in packages..."
+          
+          # CLI package changes
+          if git diff HEAD^ HEAD --quiet -- packages/cli/; then
+            echo "cli=false" >> $GITHUB_OUTPUT
+          else
+            echo "cli=true" >> $GITHUB_OUTPUT
+            echo "CLI package has changes"
+          fi
+          
+          # SDK package changes (TypeScript and Python)
+          if git diff HEAD^ HEAD --quiet -- packages/sdk/; then
+            echo "sdk=false" >> $GITHUB_OUTPUT
+          else
+            echo "sdk=true" >> $GITHUB_OUTPUT
+            echo "SDK package has changes"
+          fi
+          
+          # Core package changes
+          if git diff HEAD^ HEAD --quiet -- packages/core/; then
+            echo "core=false" >> $GITHUB_OUTPUT
+          else
+            echo "core=true" >> $GITHUB_OUTPUT
+            echo "Core package has changes"
+          fi
+
+  publish-npm-cli:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cli_changed == 'true' || needs.detect-changes.outputs.force_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        working-directory: packages/cli
+        run: |
+          yarn install --frozen-lockfile
+      
+      - name: Auto-bump version
+        working-directory: packages/cli
+        id: version
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Auto-increment patch version
+          npm version patch --no-git-tag-version
+          
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Build package
+        working-directory: packages/cli
+        run: |
+          yarn build
+      
+      - name: Publish to npm
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
+          echo "✅ Published monkey-coder-cli@${{ steps.version.outputs.version }} to npm"
+      
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add packages/cli/package.json
+          git commit -m "chore(cli): bump version to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+  publish-npm-sdk:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.sdk_changed == 'true' || needs.detect-changes.outputs.force_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        working-directory: packages/sdk
+        run: |
+          yarn install --frozen-lockfile
+      
+      - name: Auto-bump version
+        working-directory: packages/sdk
+        id: version
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Auto-increment patch version
+          npm version patch --no-git-tag-version
+          
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Also update Python SDK version to match
+          sed -i "s/version=\".*\"/version=\"$NEW_VERSION\"/" src/python/setup.py
+      
+      - name: Build TypeScript SDK
+        working-directory: packages/sdk
+        run: |
+          yarn build:ts
+      
+      - name: Publish to npm
+        working-directory: packages/sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
+          echo "✅ Published monkey-coder-sdk@${{ steps.version.outputs.version }} to npm"
+      
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add packages/sdk/package.json packages/sdk/src/python/setup.py
+          git commit -m "chore(sdk): bump version to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+  publish-pypi-core:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.core_changed == 'true' || needs.detect-changes.outputs.force_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine toml
+      
+      - name: Auto-bump version
+        working-directory: packages/core
+        id: version
+        run: |
+          # Read current version from pyproject.toml
+          CURRENT_VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Increment patch version
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          # Update pyproject.toml
+          sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Build package
+        working-directory: packages/core
+        run: |
+          python -m build
+      
+      - name: Publish to PyPI
+        working-directory: packages/core
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m twine upload dist/* --non-interactive
+          echo "✅ Published monkey-coder-core@${{ steps.version.outputs.version }} to PyPI"
+      
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add packages/core/pyproject.toml
+          git commit -m "chore(core): bump version to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+  publish-pypi-sdk:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.sdk_changed == 'true' || needs.detect-changes.outputs.force_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine setuptools wheel
+      
+      - name: Auto-bump version
+        working-directory: packages/sdk/src/python
+        id: version
+        run: |
+          # Read current version from setup.py
+          CURRENT_VERSION=$(grep 'version=' setup.py | head -1 | sed 's/.*version="\([^"]*\)".*/\1/')
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Increment patch version
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          # Update setup.py
+          sed -i "s/version=\"$CURRENT_VERSION\"/version=\"$NEW_VERSION\"/" setup.py
+          
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Build package
+        working-directory: packages/sdk/src/python
+        run: |
+          python setup.py sdist bdist_wheel
+      
+      - name: Publish to PyPI
+        working-directory: packages/sdk/src/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m twine upload dist/* --non-interactive
+          echo "✅ Published monkey-coder-sdk@${{ steps.version.outputs.version }} to PyPI"
+      
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add packages/sdk/src/python/setup.py
+          git commit -m "chore(sdk-python): bump version to ${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+  summary:
+    needs: [publish-npm-cli, publish-npm-sdk, publish-pypi-core, publish-pypi-sdk]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publishing Summary
+        run: |
+          echo "## 📦 Publishing Summary"
+          echo ""
+          echo "### npm Packages"
+          echo "- CLI: ${{ needs.publish-npm-cli.result }}"
+          echo "- SDK: ${{ needs.publish-npm-sdk.result }}"
+          echo ""
+          echo "### PyPI Packages"
+          echo "- Core: ${{ needs.publish-pypi-core.result }}"
+          echo "- SDK: ${{ needs.publish-pypi-sdk.result }}"
+          echo ""
+          echo "All packages are automatically published on every commit to main!"
