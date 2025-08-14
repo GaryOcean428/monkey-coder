@@ -33,7 +33,7 @@
       { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "python run_server.py",
+    "startCommand": "/app/.venv/bin/python run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
