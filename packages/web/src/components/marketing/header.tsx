@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -19,6 +19,23 @@ const navigation = [
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+	useEffect(() => {
+		const originalOverflow = document.body.style.overflow
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setMobileMenuOpen(false)
+		}
+		if (mobileMenuOpen) {
+			document.body.style.overflow = 'hidden'
+			document.addEventListener('keydown', onKeyDown)
+		} else {
+			document.body.style.overflow = originalOverflow || ''
+		}
+		return () => {
+			document.body.style.overflow = originalOverflow || ''
+			document.removeEventListener('keydown', onKeyDown)
+		}
+	}, [mobileMenuOpen])
+
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 			<nav
@@ -30,21 +47,33 @@ export function Header() {
 						href="/"
 						className="-m-1.5 p-1.5 flex items-center gap-2"
 					>
-						<Image
-							src="/splash.png"
-							alt="Monkey Coder Logo"
-							width={120}
-							height={32}
-							className="h-8 w-auto object-contain"
-							priority
-						/>
+						<span className="relative h-8 w-[120px]">
+							<Image
+								src="/logo-light.png"
+								alt="Monkey Coder Logo"
+								width={120}
+								height={32}
+								className="h-8 w-auto object-contain block dark:hidden"
+								priority
+							/>
+							<Image
+								src="/logo-dark.png"
+								alt="Monkey Coder Logo"
+								width={120}
+								height={32}
+								className="h-8 w-auto object-contain hidden dark:block"
+								priority
+							/>
+						</span>
 						<span className="font-bold text-xl">Monkey Coder</span>
 					</Link>
 				</div>
 				<div className="flex lg:hidden">
 					<button
 						type="button"
-						className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 dark:text-gray-300"
+						aria-controls="mobile-menu"
+						aria-expanded={mobileMenuOpen}
+						className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 dark:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
 						onClick={() => setMobileMenuOpen(true)}
 					>
 						<span className="sr-only">Open main menu</span>
@@ -75,20 +104,30 @@ export function Header() {
 			{/* Mobile menu */}
 			<div className={cn('lg:hidden', mobileMenuOpen ? 'block' : 'hidden')}>
 				<div className="fixed inset-0 z-50" />
-				<div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-background px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+				<div id="mobile-menu" role="dialog" aria-modal="true" className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-background px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10" tabIndex={-1}>
 					<div className="flex items-center justify-between">
 						<Link
 							href="/"
 							className="-m-1.5 p-1.5 flex items-center gap-2"
 						>
+						<span className="relative h-8 w-[120px]">
 							<Image
-								src="/splash.png"
+								src="/logo-light.png"
 								alt="Monkey Coder Logo"
 								width={120}
 								height={32}
-								className="h-8 w-auto object-contain"
+								className="h-8 w-auto object-contain block dark:hidden"
 								priority
 							/>
+							<Image
+								src="/logo-dark.png"
+								alt="Monkey Coder Logo"
+								width={120}
+								height={32}
+								className="h-8 w-auto object-contain hidden dark:block"
+								priority
+							/>
+						</span>
 							<span className="font-bold text-xl">Monkey Coder</span>
 						</Link>
 						<button

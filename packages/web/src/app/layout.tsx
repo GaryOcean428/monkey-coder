@@ -10,25 +10,30 @@ import { SiteFooter } from '@/components/site-footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://coder.fastmonkey.au'),
   title: 'Monkey Coder - AI-Powered Code Generation Platform',
   description: 'Transform your ideas into production-ready code with AI. Powered by advanced language models.',
   keywords: 'AI, code generation, programming, development, automation',
   authors: [{ name: 'Monkey Coder Team' }],
   icons: {
-    icon: '/icon.png',
-    apple: '/android-chrome-192x192.png',
+    icon: ['/favicon.ico', '/favicon-32x32.ico', '/favicon-16x16.ico'],
+    apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+  alternates: {
+    canonical: '/',
+  },
+  themeColor: '#0b1324',
   openGraph: {
     title: 'Monkey Coder - AI-Powered Code Generation',
     description: 'Transform your ideas into production-ready code with AI',
-    url: 'https://monkey-coder.com',
+    url: '/',
     siteName: 'Monkey Coder',
     images: [
       {
-        url: 'https://monkey-coder.com/og-image.png',
-        width: 1200,
-        height: 630,
+        url: '/splash.png',
+        width: 1068,
+        height: 874,
       },
     ],
     locale: 'en_US',
@@ -38,7 +43,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Monkey Coder - AI-Powered Code Generation',
     description: 'Transform your ideas into production-ready code with AI',
-    images: ['https://monkey-coder.com/twitter-image.png'],
+    images: ['/splash.png'],
   },
   robots: {
     index: true,
