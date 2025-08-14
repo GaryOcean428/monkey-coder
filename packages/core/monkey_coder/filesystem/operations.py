@@ -1,566 +1,266 @@
 """
-Safe file system operations for Monkey Coder.
+filesystem_utils.py
 
-Implements secure file reading/writing with path validation,
-atomic operations, and backup creation.
+A robust Python module for safe file system operations and project structure analysis.
+
+Functions:
+    - read_file(filepath: str) -> str
+    - write_file(filepath: str, content: str, create_backup: bool = True) -> None
+    - analyze_project_structure(root_path: str) -> dict
+
+Includes:
+    - Path validation to prevent directory traversal
+    - Atomic file writes with optional backup
+    - Project type and framework detection
+    - Comprehensive logging and error handling
 """
 
 import os
 import shutil
-import hashlib
+import tempfile
 import logging
-import mimetypes
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Union, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
+from typing import Optional, Dict, Any
 
-logger = logging.getLogger(__name__)
+# --- Logging Setup ---
+logger = logging.getLogger("filesystem_utils")
+logger.setLevel(logging.INFO)
+_handler = logging.StreamHandler()
+_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s')
+_handler.setFormatter(_formatter)
+if not logger.hasHandlers():
+    logger.addHandler(_handler)
 
+# --- Constants ---
+SAFE_BASE_DIR = os.path.abspath(os.getcwd())  # Restrict file operations to current working directory
 
-class FileType(Enum):
-    """Enumeration of file types."""
-    PYTHON = "python"
-    JAVASCRIPT = "javascript"
-    TYPESCRIPT = "typescript"
-    JSON = "json"
-    YAML = "yaml"
-    MARKDOWN = "markdown"
-    HTML = "html"
-    CSS = "css"
-    TEXT = "text"
-    BINARY = "binary"
-    UNKNOWN = "unknown"
+# --- Helper Functions ---
 
-
-@dataclass
-class FileInfo:
-    """Information about a file."""
-    path: Path
-    name: str
-    size: int
-    type: FileType
-    mime_type: str
-    encoding: str
-    created_at: datetime
-    modified_at: datetime
-    is_readable: bool
-    is_writable: bool
-    hash: Optional[str] = None
-    content: Optional[str] = None
-
-
-@dataclass
-class ProjectStructure:
-    """Information about project structure."""
-    root_path: Path
-    files: List[FileInfo]
-    directories: List[Path]
-    total_files: int
-    total_size: int
-    project_type: Optional[str] = None
-    framework: Optional[str] = None
-    language: Optional[str] = None
-    dependencies: Optional[Dict[str, Any]] = None
-
-
-class FileSystemOperations:
+def _is_safe_path(base_dir: str, target_path: str) -> bool:
     """
-    Safe file system operations with security checks and atomic writes.
+    Ensure that the target_path is within base_dir to prevent directory traversal.
     """
-    
-    # Default allowed directories (can be configured)
-    DEFAULT_ALLOWED_DIRS = [
-        Path.cwd(),  # Current working directory
-        Path.home() / "projects",  # User projects directory
-        Path("/tmp"),  # Temporary directory
-    ]
-    
-    # Dangerous file patterns to block
-    DANGEROUS_PATTERNS = [
-        ".git/config",
-        ".ssh/",
-        ".env",
-        "id_rsa",
-        "credentials",
-        "password",
-        "secret",
-        "token",
-        ".aws/",
-    ]
-    
-    # Maximum file size for reading (10MB default)
-    MAX_FILE_SIZE = 10 * 1024 * 1024
-    
-    def __init__(self, allowed_dirs: Optional[List[Path]] = None,
-                 max_file_size: Optional[int] = None):
-        """
-        Initialize file system operations.
-        
-        Args:
-            allowed_dirs: List of allowed directories for operations
-            max_file_size: Maximum file size for reading
-        """
-        self.allowed_dirs = allowed_dirs or self.DEFAULT_ALLOWED_DIRS
-        self.max_file_size = max_file_size or self.MAX_FILE_SIZE
-        self.backup_dir = Path.home() / ".monkey_coder" / "backups"
-        self.backup_dir.mkdir(parents=True, exist_ok=True)
-    
-    def is_safe_path(self, path: Union[str, Path]) -> bool:
-        """
-        Check if a path is safe to access.
-        
-        Args:
-            path: Path to check
-            
-        Returns:
-            True if path is safe, False otherwise
-        """
+    base_dir = os.path.abspath(base_dir)
+    target_path = os.path.abspath(target_path)
+    try:
+        common = os.path.commonpath([base_dir, target_path])
+        is_safe = common == base_dir
+        if not is_safe:
+            logger.warning(f"Unsafe path detected: {target_path} is outside {base_dir}")
+        return is_safe
+    except ValueError:
+        logger.error(f"Error comparing paths: {base_dir}, {target_path}")
+        return False
+
+def _ensure_dir_exists(filepath: str) -> None:
+    """
+    Ensure the directory for the given file path exists.
+    """
+    dirpath = os.path.dirname(os.path.abspath(filepath))
+    if not os.path.exists(dirpath):
+        logger.info(f"Creating directory: {dirpath}")
+        os.makedirs(dirpath, exist_ok=True)
+
+def _detect_python_framework(files: set, dirs: set) -> Optional[str]:
+    if 'manage.py' in files or 'django' in dirs:
+        return 'Django'
+    if 'pyproject.toml' in files:
         try:
-            path = Path(path).resolve()
-            
-            # Check if path contains dangerous patterns
-            path_str = str(path).lower()
-            for pattern in self.DANGEROUS_PATTERNS:
-                if pattern.lower() in path_str:
-                    logger.warning(f"Dangerous pattern detected in path: {path}")
-                    return False
-            
-            # Check if path is within allowed directories
-            for allowed_dir in self.allowed_dirs:
-                try:
-                    allowed_dir = allowed_dir.resolve()
-                    path.relative_to(allowed_dir)
-                    return True
-                except ValueError:
-                    continue
-            
-            logger.warning(f"Path not in allowed directories: {path}")
-            return False
-            
-        except Exception as e:
-            logger.error(f"Error checking path safety: {e}")
-            return False
-    
-    def read_file(self, filepath: Union[str, Path],
-                  encoding: str = "utf-8") -> Tuple[bool, Union[str, str]]:
-        """
-        Safely read a file with validation.
-        
-        Args:
-            filepath: Path to file to read
-            encoding: File encoding
-            
-        Returns:
-            Tuple of (success, content/error_message)
-        """
-        try:
-            path = Path(filepath).resolve()
-            
-            # Security check
-            if not self.is_safe_path(path):
-                return False, f"Access denied: {filepath}"
-            
-            # Check if file exists
-            if not path.exists():
-                return False, f"File not found: {filepath}"
-            
-            # Check if it's a file
-            if not path.is_file():
-                return False, f"Not a file: {filepath}"
-            
-            # Check file size
-            file_size = path.stat().st_size
-            if file_size > self.max_file_size:
-                return False, f"File too large: {file_size} bytes (max: {self.max_file_size})"
-            
-            # Try to read the file
-            try:
-                with open(path, 'r', encoding=encoding) as f:
-                    content = f.read()
-                    logger.info(f"Successfully read file: {path} ({file_size} bytes)")
-                    return True, content
-            except UnicodeDecodeError:
-                # Try with binary mode for non-text files
-                with open(path, 'rb') as f:
-                    content = f.read()
-                    logger.info(f"Read binary file: {path} ({file_size} bytes)")
-                    return True, content.decode('latin-1', errors='replace')
-            
-        except Exception as e:
-            logger.error(f"Error reading file {filepath}: {e}")
-            return False, str(e)
-    
-    def write_file(self, filepath: Union[str, Path], content: str,
-                   create_backup: bool = True,
-                   encoding: str = "utf-8") -> Tuple[bool, str]:
-        """
-        Safely write content to a file with optional backup.
-        
-        Args:
-            filepath: Path to file to write
-            content: Content to write
-            create_backup: Whether to create backup before writing
-            encoding: File encoding
-            
-        Returns:
-            Tuple of (success, message/backup_path)
-        """
-        try:
-            path = Path(filepath).resolve()
-            
-            # Security check
-            if not self.is_safe_path(path):
-                return False, f"Access denied: {filepath}"
-            
-            # Create parent directories if needed
-            path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Create backup if file exists and backup requested
-            backup_path = None
-            if path.exists() and create_backup:
-                success, backup_result = self.create_backup(path)
-                if not success:
-                    return False, f"Failed to create backup: {backup_result}"
-                backup_path = backup_result
-            
-            # Write file atomically (write to temp file and rename)
-            temp_path = path.with_suffix(path.suffix + '.tmp')
-            try:
-                with open(temp_path, 'w', encoding=encoding) as f:
-                    f.write(content)
-                    f.flush()
-                    os.fsync(f.fileno())  # Ensure data is written to disk
-                
-                # Atomic rename
-                temp_path.replace(path)
-                
-                logger.info(f"Successfully wrote file: {path} ({len(content)} chars)")
-                
-                if backup_path:
-                    return True, f"File written successfully. Backup: {backup_path}"
-                else:
-                    return True, "File written successfully"
-                    
-            except Exception as e:
-                # Clean up temp file if it exists
-                if temp_path.exists():
-                    temp_path.unlink()
-                raise e
-                
-        except Exception as e:
-            logger.error(f"Error writing file {filepath}: {e}")
-            return False, str(e)
-    
-    def create_backup(self, filepath: Union[str, Path]) -> Tuple[bool, str]:
-        """
-        Create a backup of a file.
-        
-        Args:
-            filepath: Path to file to backup
-            
-        Returns:
-            Tuple of (success, backup_path/error_message)
-        """
-        try:
-            path = Path(filepath).resolve()
-            
-            if not path.exists():
-                return False, "File does not exist"
-            
-            # Generate backup filename with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_hash = hashlib.md5(str(path).encode()).hexdigest()[:8]
-            backup_name = f"{path.name}.{timestamp}.{file_hash}.backup"
-            backup_path = self.backup_dir / backup_name
-            
-            # Copy file to backup location
-            shutil.copy2(path, backup_path)
-            
-            logger.info(f"Created backup: {backup_path}")
-            return True, str(backup_path)
-            
-        except Exception as e:
-            logger.error(f"Error creating backup for {filepath}: {e}")
-            return False, str(e)
-    
-    def list_directory(self, dirpath: Union[str, Path],
-                      recursive: bool = False,
-                      patterns: Optional[List[str]] = None) -> Tuple[bool, Union[List[FileInfo], str]]:
-        """
-        List files in a directory.
-        
-        Args:
-            dirpath: Directory path
-            recursive: Whether to list recursively
-            patterns: File patterns to match (e.g., ["*.py", "*.js"])
-            
-        Returns:
-            Tuple of (success, file_list/error_message)
-        """
-        try:
-            path = Path(dirpath).resolve()
-            
-            # Security check
-            if not self.is_safe_path(path):
-                return False, f"Access denied: {dirpath}"
-            
-            if not path.exists():
-                return False, f"Directory not found: {dirpath}"
-            
-            if not path.is_dir():
-                return False, f"Not a directory: {dirpath}"
-            
-            files = []
-            
-            if recursive:
-                # Recursive listing
-                for item in path.rglob("*"):
-                    if item.is_file():
-                        if patterns:
-                            # Check if file matches any pattern
-                            if not any(item.match(pattern) for pattern in patterns):
-                                continue
-                        files.append(self._get_file_info(item))
-            else:
-                # Non-recursive listing
-                for item in path.iterdir():
-                    if item.is_file():
-                        if patterns:
-                            if not any(item.match(pattern) for pattern in patterns):
-                                continue
-                        files.append(self._get_file_info(item))
-            
-            logger.info(f"Listed {len(files)} files in {path}")
-            return True, files
-            
-        except Exception as e:
-            logger.error(f"Error listing directory {dirpath}: {e}")
-            return False, str(e)
-    
-    def _get_file_info(self, path: Path) -> FileInfo:
-        """Get information about a file."""
-        stat = path.stat()
-        mime_type, _ = mimetypes.guess_type(str(path))
-        
-        # Determine file type
-        file_type = self._detect_file_type(path)
-        
-        # Detect encoding for text files
-        encoding = "utf-8"
-        if file_type != FileType.BINARY:
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    f.read(100)  # Try reading first 100 chars
-            except UnicodeDecodeError:
-                encoding = "binary"
-                file_type = FileType.BINARY
-        
-        return FileInfo(
-            path=path,
-            name=path.name,
-            size=stat.st_size,
-            type=file_type,
-            mime_type=mime_type or "application/octet-stream",
-            encoding=encoding,
-            created_at=datetime.fromtimestamp(stat.st_ctime),
-            modified_at=datetime.fromtimestamp(stat.st_mtime),
-            is_readable=os.access(path, os.R_OK),
-            is_writable=os.access(path, os.W_OK),
-        )
-    
-    def _detect_file_type(self, path: Path) -> FileType:
-        """Detect the type of a file based on extension."""
-        ext = path.suffix.lower()
-        
-        type_map = {
-            '.py': FileType.PYTHON,
-            '.js': FileType.JAVASCRIPT,
-            '.jsx': FileType.JAVASCRIPT,
-            '.ts': FileType.TYPESCRIPT,
-            '.tsx': FileType.TYPESCRIPT,
-            '.json': FileType.JSON,
-            '.yaml': FileType.YAML,
-            '.yml': FileType.YAML,
-            '.md': FileType.MARKDOWN,
-            '.html': FileType.HTML,
-            '.css': FileType.CSS,
-            '.txt': FileType.TEXT,
-        }
-        
-        return type_map.get(ext, FileType.UNKNOWN)
-    
-    def analyze_project_structure(self, root_path: Union[str, Path]) -> Tuple[bool, Union[ProjectStructure, str]]:
-        """
-        Analyze project structure and detect project type.
-        
-        Args:
-            root_path: Root directory of the project
-            
-        Returns:
-            Tuple of (success, project_structure/error_message)
-        """
-        try:
-            path = Path(root_path).resolve()
-            
-            # Security check
-            if not self.is_safe_path(path):
-                return False, f"Access denied: {root_path}"
-            
-            if not path.exists() or not path.is_dir():
-                return False, f"Invalid project directory: {root_path}"
-            
-            # Collect all files and directories
-            files = []
-            directories = []
-            total_size = 0
-            
-            for item in path.rglob("*"):
-                if item.is_file():
-                    # Skip hidden files and common ignore patterns
-                    relative_path = item.relative_to(path)
-                    parts = relative_path.parts
-                    if any(part.startswith('.') for part in parts):
-                        continue
-                    if any(part in ['node_modules', '__pycache__', 'venv', '.git'] for part in parts):
-                        continue
-                    
-                    file_info = self._get_file_info(item)
-                    files.append(file_info)
-                    total_size += file_info.size
-                elif item.is_dir():
-                    directories.append(item)
-            
-            # Detect project type and framework
-            project_type, framework, language = self._detect_project_type(path)
-            
-            structure = ProjectStructure(
-                root_path=path,
-                files=files,
-                directories=directories,
-                total_files=len(files),
-                total_size=total_size,
-                project_type=project_type,
-                framework=framework,
-                language=language,
-            )
-            
-            logger.info(f"Analyzed project: {path} - {project_type}/{framework}/{language}")
-            return True, structure
-            
-        except Exception as e:
-            logger.error(f"Error analyzing project structure: {e}")
-            return False, str(e)
-    
-    def _detect_project_type(self, path: Path) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-        """Detect project type, framework, and language."""
-        project_type = None
-        framework = None
-        language = None
-        
-        # Check for common project files
-        if (path / "package.json").exists():
-            project_type = "node"
-            language = "javascript"
-            
-            # Try to detect framework
-            try:
-                import json
-                with open(path / "package.json", 'r') as f:
-                    data = json.load(f)
-                    deps = data.get("dependencies", {})
-                    dev_deps = data.get("devDependencies", {})
-                    all_deps = {**deps, **dev_deps}
-                    
-                    if "next" in all_deps:
-                        framework = "nextjs"
-                    elif "react" in all_deps:
-                        framework = "react"
-                    elif "vue" in all_deps:
-                        framework = "vue"
-                    elif "angular" in all_deps:
-                        framework = "angular"
-                    elif "express" in all_deps:
-                        framework = "express"
-            except:
-                pass
-        
-        elif (path / "requirements.txt").exists() or (path / "pyproject.toml").exists():
-            project_type = "python"
-            language = "python"
-            
-            # Try to detect framework
-            if (path / "manage.py").exists():
-                framework = "django"
-            elif (path / "app.py").exists() or (path / "application.py").exists():
-                # Could be Flask or FastAPI
-                framework = "flask"  # Default assumption
-        
-        elif (path / "Cargo.toml").exists():
-            project_type = "rust"
-            language = "rust"
-        
-        elif (path / "go.mod").exists():
-            project_type = "go"
-            language = "go"
-        
-        elif (path / "pom.xml").exists():
-            project_type = "java"
-            language = "java"
-            framework = "maven"
-        
-        elif (path / "build.gradle").exists():
-            project_type = "java"
-            language = "java"
-            framework = "gradle"
-        
-        return project_type, framework, language
-
-
-# Convenience functions
-def read_file(filepath: Union[str, Path], encoding: str = "utf-8") -> Tuple[bool, Union[str, str]]:
-    """Convenience function to read a file."""
-    ops = FileSystemOperations()
-    return ops.read_file(filepath, encoding)
-
-
-def write_file(filepath: Union[str, Path], content: str,
-               create_backup: bool = True, encoding: str = "utf-8") -> Tuple[bool, str]:
-    """Convenience function to write a file."""
-    ops = FileSystemOperations()
-    return ops.write_file(filepath, content, create_backup, encoding)
-
-
-def create_backup(filepath: Union[str, Path]) -> Tuple[bool, str]:
-    """Convenience function to create a backup."""
-    ops = FileSystemOperations()
-    return ops.create_backup(filepath)
-
-
-def list_directory(dirpath: Union[str, Path], recursive: bool = False,
-                  patterns: Optional[List[str]] = None) -> Tuple[bool, Union[List[FileInfo], str]]:
-    """Convenience function to list directory."""
-    ops = FileSystemOperations()
-    return ops.list_directory(dirpath, recursive, patterns)
-
-
-def analyze_project_structure(root_path: Union[str, Path]) -> Tuple[bool, Union[ProjectStructure, str]]:
-    """Convenience function to analyze project structure."""
-    ops = FileSystemOperations()
-    return ops.analyze_project_structure(root_path)
-
-
-def is_safe_path(path: Union[str, Path]) -> bool:
-    """Convenience function to check path safety."""
-    ops = FileSystemOperations()
-    return ops.is_safe_path(path)
-
-
-def get_file_info(filepath: Union[str, Path]) -> Optional[FileInfo]:
-    """Convenience function to get file info."""
-    ops = FileSystemOperations()
-    path = Path(filepath).resolve()
-    if ops.is_safe_path(path) and path.exists() and path.is_file():
-        return ops._get_file_info(path)
+            import toml
+            with open('pyproject.toml', 'r', encoding='utf-8') as f:
+                pyproject = toml.load(f)
+            if 'tool' in pyproject and 'poetry' in pyproject['tool']:
+                return 'Poetry'
+        except Exception:
+            pass
+    if 'requirements.txt' in files:
+        with open('requirements.txt', 'r', encoding='utf-8', errors='replace') as f:
+            reqs = f.read().lower()
+            if 'fastapi' in reqs:
+                return 'FastAPI'
+            if 'flask' in reqs:
+                return 'Flask'
+            if 'django' in reqs:
+                return 'Django'
     return None
+
+def _detect_node_framework(files: set, dirs: set, root_path: str) -> Optional[str]:
+    if 'package.json' in files:
+        import json
+        try:
+            with open(os.path.join(root_path, 'package.json'), 'r', encoding='utf-8', errors='replace') as f:
+                pkg = json.load(f)
+            deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
+            if 'react' in deps:
+                return 'React'
+            if 'vue' in deps:
+                return 'Vue'
+            if 'next' in deps:
+                return 'Next.js'
+            if 'nuxt' in deps:
+                return 'Nuxt.js'
+            if 'express' in deps:
+                return 'Express'
+        except Exception as e:
+            logger.warning(f"Could not parse package.json: {e}")
+    return None
+
+def _detect_php_framework(files: set, dirs: set, root_path: str) -> Optional[str]:
+    if 'composer.json' in files:
+        import json
+        try:
+            with open(os.path.join(root_path, 'composer.json'), 'r', encoding='utf-8', errors='replace') as f:
+                composer = json.load(f)
+            reqs = composer.get('require', {})
+            if 'laravel/framework' in reqs:
+                return 'Laravel'
+            if 'symfony/symfony' in reqs:
+                return 'Symfony'
+        except Exception as e:
+            logger.warning(f"Could not parse composer.json: {e}")
+    if 'index.php' in files:
+        return 'PHP (Generic)'
+    return None
+
+# --- Main Functions ---
+
+def read_file(filepath: str) -> str:
+    """
+    Safely read a file with path validation to prevent directory traversal.
+    Handles encoding errors with 'replace' strategy.
+    Logs all operations.
+
+    Args:
+        filepath (str): Path to the file to read.
+
+    Returns:
+        str: File contents.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        PermissionError: If the file cannot be accessed.
+        ValueError: If the path is unsafe.
+    """
+    abs_path = os.path.abspath(filepath)
+    if not _is_safe_path(SAFE_BASE_DIR, abs_path):
+        logger.error(f"Attempted directory traversal: {filepath}")
+        raise ValueError("Unsafe file path detected.")
+    try:
+        with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        logger.info(f"Read file: {abs_path}")
+        return content
+    except FileNotFoundError:
+        logger.error(f"File not found: {abs_path}")
+        raise
+    except PermissionError:
+        logger.error(f"Permission denied: {abs_path}")
+        raise
+    except Exception as e:
+        logger.error(f"Error reading file {abs_path}: {e}")
+        raise
+
+def write_file(filepath: str, content: str, create_backup: bool = True) -> None:
+    """
+    Write content to a file atomically, with optional backup of the existing file.
+
+    Args:
+        filepath (str): Path to the file to write.
+        content (str): Content to write.
+        create_backup (bool): Whether to create a backup of the existing file.
+
+    Raises:
+        ValueError: If the path is unsafe.
+        Exception: For other I/O errors.
+    """
+    abs_path = os.path.abspath(filepath)
+    if not _is_safe_path(SAFE_BASE_DIR, abs_path):
+        logger.error(f"Attempted directory traversal: {filepath}")
+        raise ValueError("Unsafe file path detected.")
+
+    _ensure_dir_exists(abs_path)
+
+    # Backup if requested and file exists
+    if create_backup and os.path.exists(abs_path):
+        backup_path = abs_path + ".bak"
+        try:
+            shutil.copy2(abs_path, backup_path)
+            logger.info(f"Backup created: {backup_path}")
+        except Exception as e:
+            logger.warning(f"Failed to create backup for {abs_path}: {e}")
+
+    # Write atomically using tempfile
+    dirpath = os.path.dirname(abs_path)
+    try:
+        with tempfile.NamedTemporaryFile('w', encoding='utf-8', dir=dirpath, delete=False) as tf:
+            tf.write(content)
+            tempname = tf.name
+        os.replace(tempname, abs_path)
+        logger.info(f"Wrote file atomically: {abs_path}")
+    except Exception as e:
+        logger.error(f"Error writing file {abs_path}: {e}")
+        raise
+
+def analyze_project_structure(root_path: str) -> Dict[str, Any]:
+    """
+    Analyze the project structure to detect project type and framework.
+
+    Args:
+        root_path (str): Path to the project root.
+
+    Returns:
+        dict: {
+            'project_type': str,
+            'framework': Optional[str],
+            'details': dict
+        }
+    """
+    abs_root = os.path.abspath(root_path)
+    if not os.path.isdir(abs_root):
+        logger.error(f"Not a directory: {abs_root}")
+        raise NotADirectoryError(f"{abs_root} is not a directory.")
+
+    files = set(os.listdir(abs_root))
+    dirs = set([d for d in files if os.path.isdir(os.path.join(abs_root, d))])
+    files = set([f for f in files if os.path.isfile(os.path.join(abs_root, f))])
+
+    project_type = None
+    framework = None
+    details = {}
+
+    # Python
+    if 'requirements.txt' in files or 'pyproject.toml' in files or any(f.endswith('.py') for f in files):
+        project_type = 'Python'
+        framework = _detect_python_framework(files, dirs)
+    # Node.js
+    elif 'package.json' in files:
+        project_type = 'Node.js'
+        framework = _detect_node_framework(files, dirs, abs_root)
+    # PHP
+    elif 'composer.json' in files or any(f.endswith('.php') for f in files):
+        project_type = 'PHP'
+        framework = _detect_php_framework(files, dirs, abs_root)
+    # Other
+    else:
+        project_type = 'Unknown'
+        framework = None
+
+    # Details: list of main files, directories, etc.
+    details['files'] = sorted(list(files))
+    details['directories'] = sorted(list(dirs))
+
+    logger.info(f"Analyzed project at {abs_root}: type={project_type}, framework={framework}")
+    return {
+        'project_type': project_type,
+        'framework': framework,
+        'details': details
+    }
+
+# --- Module Test (Optional) ---
+if __name__ == "__main__":
+    import sys
+    logging.basicConfig(level=logging.INFO)
+    # Example usage
+    try:
+        print(analyze_project_structure('.'))
+    except Exception as e:
+        logger.error(f"Error: {e}")
