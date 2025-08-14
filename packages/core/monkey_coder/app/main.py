@@ -182,7 +182,9 @@ app.include_router(stripe_checkout.router, prefix="/v1/stripe", tags=["stripe"])
 
 # Mount streaming endpoints
 from .streaming_endpoints import router as streaming_router
+from .streaming_execute import router as streaming_execute_router
 app.include_router(streaming_router)
+app.include_router(streaming_execute_router)
 
 # Initialize configuration for middleware setup
 middleware_config = get_config()
