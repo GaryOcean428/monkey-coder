@@ -33,7 +33,7 @@
       { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'if [ -x /app/.venv/bin/python ]; then /app/.venv/bin/python run_server.py; else python run_server.py; fi'",
+    "startCommand": "sh -lc 'if [ ! -x /app/.venv/bin/python ]; then python -m venv /app/.venv; /app/.venv/bin/pip install --no-cache-dir -r requirements.txt; fi; exec /app/.venv/bin/python run_server.py'",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
