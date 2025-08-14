@@ -1,15 +1,62 @@
 {
-  "version": "1",
-  "metadata": {
-    "name": "monkey-coder"
+  "$schema": "https://schema.railpack.com",
+  "packages": {
+    "node": "20",
+    "python": "3.12"
   },
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "cd packages/web && yarn install && yarn build && cd ../../ && pip install -r requirements.txt"
+  "secrets": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "RAILWAY_ENVIRONMENT"
+  ],
+  "steps": {
+    "python": {
+      "inputs": [
+        { "image": "python:3.12-slim" },
+        { "local": true, "include": ["requirements.txt"] }
+      ],
+      "secrets": [],
+      "commands": [
+        "python -m venv .venv",
+        ".venv/bin/pip install --no-cache-dir --upgrade pip",
+        ".venv/bin/pip install --no-cache-dir -r requirements.txt"
+      ],
+      "cacheDirectories": ["/root/.cache/pip"]
+    },
+    "web": {
+      "inputs": [
+        { "image": "node:20-alpine" },
+        { "local": true, "include": [
+          "packages/web/**",
+          "yarn.lock",
+          ".yarnrc.yml",
+          "package.json",
+          "packages/web/next.config.*",
+          "packages/web/tailwind.config.*",
+          "packages/web/postcss.config.*"
+        ] }
+      ],
+      "secrets": [],
+      "commands": [
+        "apk add --no-cache python3 make g++",
+        "corepack enable",
+        "cd packages/web && NODE_OPTIONS=--max-old-space-size=2048 yarn install --immutable",
+        "cd packages/web && NODE_OPTIONS=--max-old-space-size=2048 yarn build"
+      ],
+      "cacheDirectories": [".yarn/cache"]
+    }
   },
   "deploy": {
-    "startCommand": "cd packages/core && python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port ${PORT:-8000}",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "base": { "image": "python:3.12-slim" },
+    "inputs": [
+      { "step": "python", "include": [".venv"] },
+      { "step": "web", "include": ["packages/web/out/**"] },
+      { "local": true, "include": ["run_server.py", "requirements.txt", "packages/core/**"] }
+    ],
+    "paths": ["/app/.venv/bin"],
+    "variables": { "PYTHONPATH": "/app:/app/packages/core" },
+    "startCommand": ".venv/bin/python run_server.py",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300
   }
 }
