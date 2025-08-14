@@ -427,12 +427,13 @@ class AnthropicProvider(BaseProvider):
             )
     
     def _get_actual_model(self, resolved_model: str) -> str:
-        """Map future/unavailable models to actual available models."""
+        """Map future/unavailable models to actual available models (3.5+ only)."""
         # Map future models to currently available ones
+        # NOTE: We only use Claude 3.5+ models, no Claude 3.0 models
         model_mapping = {
-            # Claude 4.1 and 4 models -> Claude 3 models
-            "claude-opus-4-1-20250805": "claude-3-opus-20240229",
-            "claude-opus-4-20250514": "claude-3-opus-20240229",
+            # Claude 4.1 and 4 models -> Best available Claude 3.5 model
+            "claude-opus-4-1-20250805": "claude-3-5-sonnet-20241022",
+            "claude-opus-4-20250514": "claude-3-5-sonnet-20241022",
             "claude-sonnet-4-20250514": "claude-3-5-sonnet-20241022",
             
             # Claude 3.7 -> Claude 3.5

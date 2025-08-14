@@ -14,7 +14,7 @@ providers:
     - groq
     - xai
   specialized:
-    - together
+
     - openrouter
 ```
 

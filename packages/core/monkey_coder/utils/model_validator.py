@@ -30,14 +30,15 @@ class ModelValidator:
         "gpt-4o-mini",  # Use gpt-4.1-mini instead
         "gpt-4",  # Use gpt-4.1 instead
         "gpt-4-turbo",  # Use gpt-4.1 instead
-        "claude-3-opus",  # Use claude-opus-4-20250514 instead
-        "claude-3-sonnet",  # Use claude-sonnet-4-20250514 instead
+        "claude-3-opus",  # Below 3.5 threshold - use claude-3-5-sonnet instead
+        "claude-3-sonnet",  # Below 3.5 threshold - use claude-3-5-sonnet instead
     }
     
     # Approved flagship models
     FLAGSHIP_MODELS = {
         "gpt-4.1",  # OpenAI flagship
-        "claude-opus-4-20250514",  # Anthropic flagship
+        "claude-opus-4-1-20250805",  # Anthropic flagship (latest)
+        "claude-3-5-sonnet-20241022",  # Anthropic best available 3.5+
         "gemini-2.5-pro",  # Google flagship
         "grok-4-latest",  # xAI flagship
     }
@@ -52,9 +53,9 @@ class ModelValidator:
         "gpt-4-turbo": "gpt-4.1",
         "gpt-4-32k": "gpt-4.1",
         
-        # Anthropic replacements
-        "claude-3-opus": "claude-opus-4-20250514",
-        "claude-3-sonnet": "claude-sonnet-4-20250514",
+        # Anthropic replacements (3.5+ only, no Claude 3.0 models)
+        "claude-3-opus": "claude-3-5-sonnet-20241022",  # Map to 3.5+
+        "claude-3-sonnet": "claude-3-5-sonnet-20241022",  # Map to 3.5+
         "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
         "claude-3-haiku": "claude-3-5-haiku-20241022",
         
