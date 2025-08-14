@@ -1,62 +1,48 @@
 {
-  "$schema": "https://schema.railpack.com",
-  "packages": {
-    "node": "20",
-    "python": "3.12"
-  },
-  "secrets": [
-    "DATABASE_URL",
-    "REDIS_URL",
-    "RAILWAY_ENVIRONMENT"
-  ],
-  "steps": {
-    "python": {
-      "inputs": [
-        { "image": "python:3.12-slim" },
-        { "local": true, "include": ["requirements.txt"] }
-      ],
-      "secrets": [],
-      "commands": [
-        "python -m venv .venv",
-        ".venv/bin/pip install --no-cache-dir --upgrade pip",
-        ".venv/bin/pip install --no-cache-dir -r requirements.txt"
-      ],
-      "cacheDirectories": ["/root/.cache/pip"]
-    },
-    "web": {
-      "inputs": [
-        { "image": "node:20-alpine" },
-        { "local": true, "include": [
-          "packages/web/**",
-          "yarn.lock",
-          ".yarnrc.yml",
-          "package.json",
-          "packages/web/next.config.*",
-          "packages/web/tailwind.config.*",
-          "packages/web/postcss.config.*"
-        ] }
-      ],
-      "secrets": [],
-      "commands": [
-        "apk add --no-cache python3 make g++",
-        "corepack enable",
-        "cd packages/web && NODE_OPTIONS=--max-old-space-size=2048 yarn install --immutable",
-        "cd packages/web && NODE_OPTIONS=--max-old-space-size=2048 yarn build"
-      ],
-      "cacheDirectories": [".yarn/cache"]
-    }
+  "build": {
+    "steps": [
+      {
+        "id": "web",
+        "name": "Build Web App",
+        "base": "node:20",
+        "run": [
+          "cd packages/web",
+          "yarn install",
+          "yarn build"
+        ],
+        "output": [
+          "packages/web/out"
+        ]
+      },
+      {
+        "id": "python",
+        "name": "Install Python Dependencies",
+        "base": "python:3.11",
+        "run": [
+          "pip install --upgrade pip",
+          "pip install -r requirements.txt"
+        ],
+        "output": [
+          "."
+        ]
+      }
+    ]
   },
   "deploy": {
-    "base": { "image": "python:3.12-slim" },
-    "inputs": [
-      { "step": "python", "include": [".venv"] },
-      { "step": "web", "include": ["packages/web/out/**"] },
-      { "local": true, "include": ["run_server.py", "requirements.txt", "packages/core/**"] }
+    "base": "python:3.11",
+    "copy": [
+      {
+        "from": "web",
+        "source": "packages/web/out",
+        "dest": "packages/web/out"
+      },
+      {
+        "from": "python",
+        "source": ".",
+        "dest": "."
+      }
     ],
-    "paths": ["/app/.venv/bin"],
-    "variables": { "PYTHONPATH": "/app:/app/packages/core" },
-    "startCommand": ".venv/bin/python run_server.py",
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 300
+    "env": {},
+    "start": "cd packages/core && python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
   }
 }
