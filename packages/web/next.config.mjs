@@ -4,7 +4,6 @@ import path from 'node:path'
 const nextConfig = {
   reactStrictMode: true,
   output: 'export',
-  distDir: 'out',
   trailingSlash: true,
   images: {
     unoptimized: true,
