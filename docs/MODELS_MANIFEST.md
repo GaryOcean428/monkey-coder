@@ -1,3 +1,4 @@
+See preferred MODEL_MANIFEST.md
 # AI Model Manifest
 > UNIFIED MODEL MANIFEST - AUGUST 14, 2025
 

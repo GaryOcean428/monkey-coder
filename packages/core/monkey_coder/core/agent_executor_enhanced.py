@@ -175,12 +175,12 @@ class EnhancedAgentExecutor:
         """Determine the best model for a given agent type and provider."""
         model_map = {
             "openai": {
-                "developer": "gpt-4-turbo",
-                "reviewer": "gpt-4-turbo",
-                "architect": "gpt-4-turbo",
-                "security": "gpt-4-turbo",
-                "researcher": "gpt-4-turbo",
-                "default": "gpt-4-turbo"
+                "developer": "gpt-4.1",
+                "reviewer": "gpt-4.1",
+                "architect": "gpt-4.1",
+                "security": "gpt-4.1",
+                "researcher": "gpt-4.1",
+                "default": "gpt-4.1"
             },
             "anthropic": {
                 "developer": "claude-3-5-sonnet-20241022",
@@ -206,7 +206,7 @@ class EnhancedAgentExecutor:
         }
         
         provider_models = model_map.get(provider, {})
-        return provider_models.get(agent_type, provider_models.get("default", "gpt-4-turbo"))
+        return provider_models.get(agent_type, provider_models.get("default", "gpt-4.1"))
     
     def _build_messages_with_tools(
         self,

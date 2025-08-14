@@ -215,7 +215,7 @@ class QuantumExecutor:
             {
                 "id": "optimal_quality",
                 "provider": "openai",
-                "model": "gpt-4-turbo",
+                "model": "gpt-4.1",
                 "prompt_prefix": "Provide the highest quality solution for: "
             },
             {
