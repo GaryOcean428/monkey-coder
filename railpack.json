@@ -29,9 +29,9 @@
         { "image": "node:22-alpine" },
         { "local": true, "include": [
           "packages/web/**",
-          "packages/web/.yarnrc.yml",
-          "packages/web/yarn.lock",
-          "packages/web/package.json",
+          "yarn.lock",
+          ".yarnrc.yml",
+          "package.json",
           "packages/web/next.config.*",
           "packages/web/tailwind.config.*",
           "packages/web/postcss.config.*"
