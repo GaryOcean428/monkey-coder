@@ -33,7 +33,7 @@
       { "step": "python", "include": [".venv"] }
     ],
     "paths": ["/app/.venv/bin"],
-    "startCommand": "sh -lc 'if [ ! -x /app/.venv/bin/python ]; then python -m venv /app/.venv; /app/.venv/bin/pip install --no-cache-dir -r requirements.txt; fi; exec /app/.venv/bin/python run_server.py'",
+    "startCommand": "sh -lc 'PY=python3; if ! command -v \"$PY\" >/dev/null 2>&1; then PY=/usr/local/bin/python3; fi; if [ ! -x /app/.venv/bin/python3 ]; then \"$PY\" -m venv /app/.venv; /app/.venv/bin/python3 -m pip install --no-cache-dir --upgrade pip; /app/.venv/bin/python3 -m pip install --no-cache-dir -r requirements.txt; fi; exec /app/.venv/bin/python3 run_server.py'",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
