@@ -19,9 +19,9 @@
       ],
       "secrets": [],
       "commands": [
-        "python -m venv /app/.venv",
-        "/app/.venv/bin/pip install --no-cache-dir --upgrade pip",
-        "/app/.venv/bin/pip install --no-cache-dir -r requirements.txt"
+        "python -m venv .venv",
+        ".venv/bin/pip install --no-cache-dir --upgrade pip",
+        ".venv/bin/pip install --no-cache-dir -r requirements.txt"
       ],
       "cacheDirectories": ["/root/.cache/pip"]
     }
@@ -32,9 +32,9 @@
       { "step": "python", "include": [".venv"] },
       { "local": true, "include": ["."] }
     ],
-    "paths": ["/app/.venv/bin"],
+    "paths": ["/app/.venv/bin", "/.venv/bin"],
     "env": { "PYTHONPATH": "/app:/app/packages/core" },
-    "startCommand": "/app/.venv/bin/python run_server.py",
+    "startCommand": "sh -lc 'if [ -x /app/.venv/bin/python ]; then exec /app/.venv/bin/python run_server.py; elif [ -x /.venv/bin/python ]; then exec /.venv/bin/python run_server.py; else python3 -m venv /.venv && /.venv/bin/pip install --no-cache-dir --upgrade pip && /.venv/bin/pip install --no-cache-dir -r requirements.txt && exec /.venv/bin/python run_server.py; fi'",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300
   }
