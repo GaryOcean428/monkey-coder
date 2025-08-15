@@ -2,8 +2,8 @@
 FastAPI main application for Monkey Coder Core Orchestration Engine.
 
 This module provides the core FastAPI application with:
-- /v1/execute endpoint for task routing & quantum execution
-- /v1/billing/usage endpoint for metering
+- /api/v1/execute endpoint for task routing & quantum execution
+- /api/v1/billing/usage endpoint for metering
 - Integration with SuperClaude, monkey1, and Gary8D systems
 """
 
