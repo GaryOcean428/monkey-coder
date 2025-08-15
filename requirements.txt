@@ -38,6 +38,7 @@ stripe>=7.0.0
 # HTTP and networking
 aiohttp>=3.9.0
 httpx>=0.25.2
+sse-starlette>=1.6.0
 
 # Utilities
 click>=8.1.0
