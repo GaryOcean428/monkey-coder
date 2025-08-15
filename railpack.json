@@ -1,4 +1,8 @@
 {
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder"
+  },
   "build": {
     "steps": [
       {
@@ -6,9 +10,7 @@
         "name": "Build Web App",
         "base": "node:20",
         "run": [
-          "cd packages/web",
-          "yarn install",
-          "yarn build"
+          "cd packages/web && yarn install && yarn build"
         ],
         "output": [
           "packages/web/out"
@@ -16,11 +18,10 @@
       },
       {
         "id": "python",
-        "name": "Install Python Dependencies",
+        "name": "Install Python Dependencies", 
         "base": "python:3.11",
         "run": [
-          "pip install --upgrade pip",
-          "pip install -r requirements.txt"
+          "pip install --upgrade pip && pip install -r requirements.txt"
         ],
         "output": [
           "."
@@ -42,7 +43,6 @@
         "dest": "."
       }
     ],
-    "env": {},
     "start": "python run_server.py"
   }
 }
