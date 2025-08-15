@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { CheckIcon } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface PricingCardProps {
   name: string;
@@ -33,7 +32,6 @@ export function PricingCard({
   priceId,
 }: PricingCardProps) {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubscribe = async () => {
     setLoading(true);

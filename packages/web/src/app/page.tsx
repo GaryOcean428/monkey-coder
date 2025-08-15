@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Code2, Zap, Shield, ArrowRight, Github, Twitter } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Hero } from '@/components/marketing/hero'
 import { Features } from '@/components/marketing/features'

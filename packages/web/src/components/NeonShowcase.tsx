@@ -1,5 +1,5 @@
 import React from 'react';
-import { NEON_EFFECTS, NEON_BUTTON_CLASSES, getNeonClass, getNeonAnimation } from '../constants/colors';
+import { NEON_BUTTON_CLASSES } from '../constants/colors';
 
 interface NeonDemoProps {
   title: string;
@@ -41,7 +41,7 @@ export const NeonShowcase: React.FC = () => {
       <section className="space-y-4">
         <h3 className="text-xl font-bold text-cyan-300 mb-4">🌟 Subtle Neon Glows</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <NeonDemo 
+          <NeonDemo
             title="Cyan Glow"
             description="Primary brand color with subtle glow"
             className=""
@@ -51,8 +51,8 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
-            title="Violet Glow" 
+          <NeonDemo
+            title="Violet Glow"
             description="Electric purple with soft illumination"
             className=""
           >
@@ -61,7 +61,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Coral Glow"
             description="Warm coral with vibrant edge"
             className=""
@@ -77,7 +77,7 @@ export const NeonShowcase: React.FC = () => {
       <section className="space-y-4">
         <h3 className="text-xl font-bold text-violet-300 mb-4">⚡ Intense Neon Effects</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <NeonDemo 
+          <NeonDemo
             title="Intense Cyan"
             description="Maximum intensity glow effect"
             className=""
@@ -87,7 +87,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Intense Violet"
             description="High-intensity purple glow"
             className=""
@@ -97,7 +97,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Rainbow Neon"
             description="Multi-color glow combination"
             className=""
@@ -113,7 +113,7 @@ export const NeonShowcase: React.FC = () => {
       <section className="space-y-4">
         <h3 className="text-xl font-bold text-magenta-300 mb-4">🎬 Animated Neon Effects</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <NeonDemo 
+          <NeonDemo
             title="Flicker Effect"
             description="Realistic neon tube flickering"
             className=""
@@ -123,7 +123,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Pulse Effect"
             description="Steady pulsing glow"
             className=""
@@ -133,7 +133,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Breathe Effect"
             description="Gentle breathing animation"
             className=""
@@ -143,7 +143,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Rainbow Cycle"
             description="Color-cycling animation"
             className=""
@@ -159,7 +159,7 @@ export const NeonShowcase: React.FC = () => {
       <section className="space-y-4">
         <h3 className="text-xl font-bold text-yellow-300 mb-4">🎯 Interactive Neon Buttons</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <NeonDemo 
+          <NeonDemo
             title="Cyan Button"
             description="Hover for enhanced glow"
             className=""
@@ -169,7 +169,7 @@ export const NeonShowcase: React.FC = () => {
             </button>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Violet Button"
             description="Electric purple interaction"
             className=""
@@ -179,7 +179,7 @@ export const NeonShowcase: React.FC = () => {
             </button>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Coral Button"
             description="Warm coral with glow"
             className=""
@@ -189,7 +189,7 @@ export const NeonShowcase: React.FC = () => {
             </button>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Rainbow Button"
             description="Multi-color gradient effect"
             className=""
@@ -205,7 +205,7 @@ export const NeonShowcase: React.FC = () => {
       <section className="space-y-4">
         <h3 className="text-xl font-bold text-purple-300 mb-4">🔲 Border Glow Effects</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <NeonDemo 
+          <NeonDemo
             title="Animated Border"
             description="Color-cycling border glow"
             className=""
@@ -215,7 +215,7 @@ export const NeonShowcase: React.FC = () => {
             </div>
           </NeonDemo>
 
-          <NeonDemo 
+          <NeonDemo
             title="Card with Neon"
             description="Complete card design with neon accents"
             className=""
@@ -236,7 +236,7 @@ export const NeonShowcase: React.FC = () => {
         <h3 className="text-xl font-bold text-green-300 mb-4">📖 Usage Guide</h3>
         <div className="bg-gray-800 rounded-xl p-6 space-y-4">
           <h4 className="text-white font-semibold mb-3">Available Neon Classes:</h4>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <h5 className="text-cyan-300 font-medium">Subtle Glow Effects:</h5>

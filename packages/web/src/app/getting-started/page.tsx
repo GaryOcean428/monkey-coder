@@ -11,7 +11,6 @@ import {
   Copy,
   Terminal,
   Key,
-  Zap,
   ChevronRight,
   Package,
   Settings,

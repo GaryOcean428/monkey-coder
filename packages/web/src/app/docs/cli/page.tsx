@@ -16,11 +16,9 @@ import {
   Copy,
   Check,
   Info,
-  Users,
   Shield,
   Zap,
-  FileText,
-  AlertCircle
+  FileText
 } from 'lucide-react'
 import { useState } from 'react'
 import Link from 'next/link'

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Image from 'next/image'
 import '@/styles/globals.css'
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
-  themeColor: '#0b1324',
   openGraph: {
     title: 'Monkey Coder - AI-Powered Code Generation',
     description: 'Transform your ideas into production-ready code with AI',
@@ -57,6 +56,10 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0b1324',
 }
 
 export default function RootLayout({

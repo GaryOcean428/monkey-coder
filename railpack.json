@@ -1,24 +1,43 @@
 {
-  "version": "1",
-  "metadata": {
-    "name": "monkey-coder"
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",
+  "packages": {
+    "node": "22",
+    "python": "3.13"
   },
-  "build": {
-    "steps": {
-      "install": {
-        "commands": [
-          "corepack enable",
-          "yarn install --immutable",
-          "cd packages/web && yarn build",
-          "pip install --upgrade pip",
-          "pip install -r requirements.txt"
-        ]
-      }
+  "caches": {
+    "yarn": {
+      "directory": "/root/.yarn",
+      "type": "shared"
+    }
+  },
+  "steps": {
+    "node-install": {
+      "commands": [
+        { "cmd": "node -v && npm -v" },
+        { "cmd": "corepack enable" },
+        { "cmd": "yarn -v" },
+        { "cmd": "yarn install --immutable" }
+      ],
+      "caches": ["yarn"]
+    },
+    "node-build": {
+      "inputs": [
+        { "step": "node-install" }
+      ],
+      "commands": [
+        { "cmd": "cd packages/web && yarn build" }
+      ],
+      "deployOutputs": [
+        "packages/web/out/**"
+      ]
     }
   },
   "deploy": {
     "startCommand": "python run_server.py",
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 300
+    "inputs": [
+      "...",
+      { "step": "node-build", "include": ["packages/web/out/**"] }
+    ]
   }
 }

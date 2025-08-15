@@ -9,19 +9,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import {
   BarChart3,
-  Key,
   Activity,
   CreditCard,
-  Settings,
   Plus,
   Copy,
   Eye,
   EyeOff,
   Trash2,
   RefreshCw,
-  TrendingUp,
   Code2,
-  Clock,
   AlertCircle,
   CheckCircle,
   XCircle
