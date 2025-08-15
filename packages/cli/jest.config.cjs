@@ -1,18 +1,24 @@
 
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  extensionsToTreatAsEsm: ['.ts'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
+        useESM: true,
         tsconfig: {
           module: 'es2022',
+          target: 'es2022',
         },
       },
     ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex)/)'
+  ],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverageFrom: [
     '<rootDir>/src/**/*.{ts,tsx,js,jsx}',
     '!<rootDir>/src/**/__tests__/**',
