@@ -747,7 +747,7 @@ async def create_billing_portal_session(
         raise HTTPException(status_code=500, detail="Failed to create billing portal session")
 
 
-@app.get("/v1/providers", response_model=Dict[str, Any])
+@app.get("/api/v1/providers", response_model=Dict[str, Any])
 async def list_providers(
     api_key: str = Depends(get_api_key),
 ) -> Dict[str, Any]:
@@ -811,7 +811,7 @@ async def list_models(
         raise HTTPException(status_code=500, detail="Failed to list models")
 
 
-@app.post("/v1/router/debug", response_model=Dict[str, Any])
+@app.post("/api/v1/router/debug", response_model=Dict[str, Any])
 async def debug_routing(
     request: ExecuteRequest,
     api_key: str = Depends(get_api_key),
@@ -857,7 +857,7 @@ async def debug_routing(
         raise HTTPException(status_code=500, detail="Failed to generate routing debug info")
 
 
-@app.get("/v1/capabilities", response_model=Dict[str, Any])
+@app.get("/api/v1/capabilities", response_model=Dict[str, Any])
 async def get_system_capabilities(
     api_key: str = Depends(get_api_key),
 ) -> Dict[str, Any]:
@@ -996,7 +996,7 @@ class APIKeyResponse(BaseModel):
     permissions: List[str] = Field(..., description="Assigned permissions")
 
 
-@app.post("/v1/auth/keys", response_model=APIKeyResponse)
+@app.post("/api/v1/auth/keys", response_model=APIKeyResponse)
 async def create_api_key(
     request: APIKeyCreateRequest,
     current_user: JWTUser = Depends(get_current_user),
@@ -1054,7 +1054,7 @@ async def create_api_key(
         raise HTTPException(status_code=500, detail="Failed to create API key")
 
 
-@app.post("/v1/auth/keys/dev", response_model=APIKeyResponse)
+@app.post("/api/v1/auth/keys/dev", response_model=APIKeyResponse)
 async def create_development_api_key() -> APIKeyResponse:
     """
     Create a development API key for testing (no authentication required).
@@ -1098,7 +1098,7 @@ async def create_development_api_key() -> APIKeyResponse:
         raise HTTPException(status_code=500, detail="Failed to create development API key")
 
 
-@app.get("/v1/auth/keys", response_model=List[APIKeyResponse])
+@app.get("/api/v1/auth/keys", response_model=List[APIKeyResponse])
 async def list_api_keys(
     current_user: JWTUser = Depends(get_current_user),
 ) -> List[APIKeyResponse]:
@@ -1148,7 +1148,7 @@ async def list_api_keys(
         raise HTTPException(status_code=500, detail="Failed to list API keys")
 
 
-@app.delete("/v1/auth/keys/{key_id}")
+@app.delete("/api/v1/auth/keys/{key_id}")
 async def revoke_api_key(
     key_id: str,
     current_user: JWTUser = Depends(get_current_user),
@@ -1194,7 +1194,7 @@ async def revoke_api_key(
         raise HTTPException(status_code=500, detail="Failed to revoke API key")
 
 
-@app.get("/v1/auth/keys/stats", response_model=Dict[str, Any])
+@app.get("/api/v1/auth/keys/stats", response_model=Dict[str, Any])
 async def get_api_key_stats(
     current_user: JWTUser = Depends(get_current_user),
 ) -> Dict[str, Any]:
@@ -1349,22 +1349,22 @@ else:
 
             <h2>Available Endpoints</h2>
             <ul>
-                <li><code>POST /v1/auth/login</code> - User authentication</li>
-                <li><code>GET /v1/auth/status</code> - Authentication status</li>
-                <li><code>POST /v1/auth/keys/dev</code> - <strong>Create development API key</strong> 🔑</li>
-                <li><code>GET /v1/auth/keys</code> - List API keys</li>
-                <li><code>POST /v1/execute</code> - Task execution</li>
-                <li><code>GET /v1/billing/usage</code> - Usage metrics</li>
-                <li><code>GET /v1/providers</code> - List AI providers</li>
-                <li><code>GET /v1/models</code> - List available models</li>
-                <li><code>GET /v1/capabilities</code> - System capabilities and features</li>
+                <li><code>POST /api/v1/auth/login</code> - User authentication</li>
+                <li><code>GET /api/v1/auth/status</code> - Authentication status</li>
+                <li><code>POST /api/v1/auth/keys/dev</code> - <strong>Create development API key</strong> 🔑</li>
+                <li><code>GET /api/v1/auth/keys</code> - List API keys</li>
+                <li><code>POST /api/v1/execute</code> - Task execution</li>
+                <li><code>GET /api/v1/billing/usage</code> - Usage metrics</li>
+                <li><code>GET /api/v1/providers</code> - List AI providers</li>
+                <li><code>GET /api/v1/models</code> - List available models</li>
+                <li><code>GET /api/v1/capabilities</code> - System capabilities and features</li>
             </ul>
 
             <h2>🚀 Quick Start</h2>
             <p><strong>Get an API key for testing:</strong></p>
-            <pre><code>curl -X POST https://your-domain.railway.app/v1/auth/keys/dev</code></pre>
+            <pre><code>curl -X POST https://your-domain.railway.app/api/v1/auth/keys/dev</code></pre>
             <p><strong>Then use it to test the API:</strong></p>
-            <pre><code>curl -H "Authorization: Bearer mk-YOUR_KEY" https://your-domain.railway.app/v1/auth/status</code></pre>
+            <pre><code>curl -H "Authorization: Bearer mk-YOUR_KEY" https://your-domain.railway.app/api/v1/auth/status</code></pre>
 
             <p><em>Frontend static files not found. API endpoints are fully functional.</em></p>
         </body>
