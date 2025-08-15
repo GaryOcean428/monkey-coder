@@ -5,31 +5,19 @@
     "node": "22",
     "python": "3.13"
   },
-  "caches": {
-    "yarn": {
-      "directory": "/root/.yarn",
-      "type": "shared"
-    }
-  },
   "steps": {
-    "node-install": {
-      "commands": [
-        { "cmd": "node -v && npm -v" },
-        { "cmd": "corepack prepare yarn@4.9.2 --activate" },
-        { "cmd": "yarn -v || corepack yarn -v" },
-        { "cmd": "yarn install" }
-      ],
-      "caches": ["yarn"]
-    },
-    "node-build": {
+    "web-build": {
       "inputs": [
-        { "step": "node-install" }
+        { "local": true, "include": ["."] }
       ],
       "commands": [
-        { "cmd": "cd packages/web && yarn build" }
-      ],
-      "deployOutputs": [
-        "packages/web/out/**"
+        "node -v",
+        "npm -v",
+        "corepack enable",
+        "corepack prepare yarn@stable --activate",
+        "corepack yarn -v",
+        "corepack yarn install",
+        "sh -lc 'cd packages/web && corepack yarn build && rm -rf ../../out && mkdir -p ../../out && cp -R out/. ../../out'"
       ]
     }
   },
@@ -37,7 +25,7 @@
     "startCommand": "python run_server.py",
     "inputs": [
       "...",
-      { "step": "node-build", "include": ["packages/web/out/**"] }
+      { "step": "web-build", "include": ["out/**"] }
     ]
   }
 }
