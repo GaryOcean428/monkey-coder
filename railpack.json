@@ -15,9 +15,9 @@
     "node-install": {
       "commands": [
         { "cmd": "node -v && npm -v" },
-        { "cmd": "corepack enable" },
-        { "cmd": "yarn -v" },
-        { "cmd": "yarn install --immutable" }
+        { "cmd": "corepack prepare yarn@4.9.2 --activate" },
+        { "cmd": "yarn -v || corepack yarn -v" },
+        { "cmd": "yarn install" }
       ],
       "caches": ["yarn"]
     },
