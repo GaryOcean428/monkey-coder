@@ -74,7 +74,7 @@ ENV MEMORY_LIMIT=512m \
 
 # Health check for sandbox service
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/sandbox/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Use supervisor to manage multiple processes
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
