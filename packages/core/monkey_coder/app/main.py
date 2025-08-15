@@ -1284,6 +1284,9 @@ def create_app() -> FastAPI:
 
 
 # Mount static files for Next.js frontend (must be after all API routes)
+# Can be disabled with SERVE_FRONTEND=false (use separate frontend service)
+serve_frontend = os.getenv("SERVE_FRONTEND", "true").lower() in {"1", "true", "yes"}
+
 # Try multiple possible locations for static files
 static_dir_options = [
     # Primary: Next.js static export folder in Railway container
@@ -1300,12 +1303,13 @@ static_dir_options = [
 ]
 
 static_dir = None
-for option in static_dir_options:
-    if option.exists():
-        static_dir = option
-        break
+if serve_frontend:
+    for option in static_dir_options:
+        if option.exists():
+            static_dir = option
+            break
 
-if static_dir:
+if serve_frontend and static_dir:
     # Mount Next.js specific static directories first for proper asset loading
     next_dir = static_dir / "_next"
     if next_dir.exists():
