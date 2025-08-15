@@ -6,27 +6,16 @@
     "python": "3.13"
   },
   "steps": {
-    "web-build": {
-      "inputs": [
-        { "step": "install" }
-      ],
-      "commands": [
-        "node -v",
-        "npm -v",
-        "corepack enable",
-        "corepack prepare yarn@stable --activate",
-        "sh -lc 'cd /app && yarn -v'",
-        "sh -lc 'cd /app && yarn install'",
-        "sh -lc 'cd /app/packages/web && yarn build || (echo \"ERROR: Next build failed\"; exit 1)'",
-        "sh -lc 'cd /app/packages/web && npx -y next@latest export -o /app/out || (echo \"ERROR: Next export failed\"; exit 1)'"
-      ]
-    }
+    
   },
   "deploy": {
     "startCommand": "python run_server.py",
     "inputs": [
-      "...",
-      { "step": "web-build", "include": ["out/**"] }
+      { "local": true, "include": [
+        "run_server.py",
+        "requirements.txt",
+        "packages/core/**"
+  ] }
     ]
   }
 }
