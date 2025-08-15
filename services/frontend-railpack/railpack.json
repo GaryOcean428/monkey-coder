@@ -1,32 +1,24 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",
+  "version": "1",
+  "provider": "node",
   "packages": {
-    "node": "22",
-    "python": "3.13"
+    "node": "22"
   },
   "steps": {
     "web-build": {
-      "inputs": [
-        { "step": "install" }
-      ],
       "commands": [
-        "node -v",
-        "npm -v",
         "corepack enable",
         "corepack prepare yarn@stable --activate",
-        "sh -lc 'cd /app && yarn -v'",
-        "sh -lc 'cd /app && yarn install'",
-        "sh -lc 'cd /app/packages/web && yarn build || (echo \"ERROR: Next build failed\"; exit 1)'",
-        "sh -lc 'cd /app/packages/web && npx -y next@latest export -o /app/out || (echo \"ERROR: Next export failed\"; exit 1)'"
+        "cd /app/packages/web && yarn install --frozen-lockfile",
+        "cd /app/packages/web && yarn build"
       ]
     }
   },
   "deploy": {
-    "startCommand": "npx -y serve -s /app/out -l ${PORT}",
+    "startCommand": "cd /app/packages/web && corepack yarn start --port ${PORT} --hostname 0.0.0.0",
     "inputs": [
-      "...",
-      { "step": "web-build", "include": ["out/**"] }
+      { "step": "web-build" }
     ]
   }
 }

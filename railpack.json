@@ -2,9 +2,9 @@
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "node": "22",
     "python": "3.13"
   },
+<<<<<<< HEAD
   "steps": {
     
   },
@@ -17,5 +17,14 @@
         "packages/core/**"
   ] }
     ]
+=======
+  "install": {
+    "commands": [
+      "pip install -r requirements.txt"
+    ]
+  },
+  "deploy": {
+    "startCommand": "python run_server.py"
+>>>>>>> ff700f6082b3e32b84be4eafec30827b9438c54f
   }
 }
