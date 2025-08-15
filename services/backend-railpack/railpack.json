@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",
+  "packages": {
+    "python": "3.13"
+  },
+  "steps": {},
+  "deploy": {
+    "startCommand": "python run_server.py",
+    "inputs": [
+      { "local": true, "include": ["../../run_server.py"] },
+      { "local": true, "include": ["../../requirements.txt"] },
+      { "local": true, "include": ["../../packages/core/**"] }
+    ]
+  }
+}
