@@ -16,7 +16,7 @@
     }
   },
   "deploy": {
-    "startCommand": "cd /app/packages/web && corepack yarn start --port ${PORT} --hostname 0.0.0.0",
+    "startCommand": "cd /app/packages/web && node node_modules/next/dist/bin/next start -p ${PORT} -H 0.0.0.0",
     "inputs": [
       { "step": "web-build" }
     ]
