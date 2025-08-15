@@ -1272,9 +1272,11 @@ def create_app() -> FastAPI:
 # Mount static files for Next.js frontend (must be after all API routes)
 # Try multiple possible locations for static files
 static_dir_options = [
-    # Primary: Next.js static export folder bundled by Railpack
-    Path("/app/packages/web/out"),
+    # Primary: Next.js static export folder in Railway container
+    Path("/app/out"),  # Root out directory (where Next.js actually exports)
+    Path("/app/packages/web/out"),  # Expected location
     # Repo-root based fallbacks (works both locally and in container)
+    Path(__file__).resolve().parents[4] / "out",  # Root out for local dev
     Path(__file__).resolve().parents[4] / "packages" / "web" / "out",
     # Docusaurus fallback (if docs is used as marketing site)
     Path("/app/docs/build"),

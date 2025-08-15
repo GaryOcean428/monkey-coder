@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next dev",
     "build": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build",
-    "export": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build",
+    "export": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 next build && echo 'Static export complete to out/ directory'",
     "start": "next start",
     "lint": "eslint .",
     "test": "NEXT_IGNORE_INCORRECT_LOCKFILE=1 jest",
