@@ -4,27 +4,18 @@
   "packages": {
     "python": "3.13"
   },
-<<<<<<< HEAD
-  "steps": {
-    
-  },
+  "steps": {},
   "deploy": {
     "startCommand": "python run_server.py",
     "inputs": [
-      { "local": true, "include": [
-        "run_server.py",
-        "requirements.txt",
-        "packages/core/**"
-  ] }
+      {
+        "local": true,
+        "include": [
+          "run_server.py",
+          "requirements.txt",
+          "packages/core/**"
+        ]
+      }
     ]
-=======
-  "install": {
-    "commands": [
-      "pip install -r requirements.txt"
-    ]
-  },
-  "deploy": {
-    "startCommand": "python run_server.py"
->>>>>>> ff700f6082b3e32b84be4eafec30827b9438c54f
   }
 }
