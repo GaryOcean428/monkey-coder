@@ -87,7 +87,7 @@ export class MonkeyCoderAPIClient {
    */
   async execute(request: ExecuteRequest): Promise<ExecuteResponse> {
     console.log('DEBUG: Sending request:', JSON.stringify(request, null, 2));
-    const response = await this.makeRequest('/v1/execute', {
+    const response = await this.makeRequest('/api/v1/execute', {
       method: 'POST',
       body: JSON.stringify(request),
     });
@@ -160,7 +160,7 @@ export class MonkeyCoderAPIClient {
       });
 
       // Make streaming request
-      fetch(`${this.baseUrl}/v1/execute/stream`, {
+      fetch(`${this.baseUrl}/api/v1/execute/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +226,7 @@ export class MonkeyCoderAPIClient {
     granularity?: string;
   }): Promise<any> {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
-    const response = await this.makeRequest(`/v1/billing/usage${queryString}`);
+    const response = await this.makeRequest(`/api/v1/billing/usage${queryString}`);
     return response.json();
   }
 
@@ -248,7 +248,7 @@ export class MonkeyCoderAPIClient {
    * Authenticate user with email and password
    */
   async authenticate(credentials: { email: string; password: string }): Promise<any> {
-    const response = await this.makeRequest('/v1/auth/login', {
+    const response = await this.makeRequest('/api/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -259,7 +259,7 @@ export class MonkeyCoderAPIClient {
    * Logout current user
    */
   async logout(): Promise<void> {
-    await this.makeRequest('/v1/auth/logout', {
+    await this.makeRequest('/api/v1/auth/logout', {
       method: 'POST',
     });
   }
@@ -268,7 +268,7 @@ export class MonkeyCoderAPIClient {
    * Get current user status
    */
   async getUserStatus(): Promise<any> {
-    const response = await this.makeRequest('/v1/auth/status');
+    const response = await this.makeRequest('/api/v1/auth/status');
     return response.json();
   }
 
@@ -276,7 +276,7 @@ export class MonkeyCoderAPIClient {
    * Refresh authentication token
    */
   async refreshToken(refreshToken: string): Promise<any> {
-    const response = await this.makeRequest('/v1/auth/refresh', {
+    const response = await this.makeRequest('/api/v1/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
@@ -287,7 +287,7 @@ export class MonkeyCoderAPIClient {
    * Create billing portal session
    */
   async createBillingPortalSession(data: { return_url: string }): Promise<any> {
-    const response = await this.makeRequest('/v1/billing/portal', {
+    const response = await this.makeRequest('/api/v1/billing/portal', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -303,7 +303,7 @@ export class MonkeyCoderAPIClient {
     success_url: string;
     cancel_url: string;
   }): Promise<any> {
-    const response = await this.makeRequest('/v1/billing/payment', {
+    const response = await this.makeRequest('/api/v1/billing/payment', {
       method: 'POST',
       body: JSON.stringify(data),
     });
