@@ -1,3 +1,6 @@
+export const dynamic = 'force-static';
+export const revalidate = 60;
+
 import { NextResponse } from 'next/server';
 
 export async function GET() {
