@@ -8,16 +8,17 @@
   "steps": {
     "web-build": {
       "inputs": [
-        { "local": true, "include": ["."] }
+        { "step": "install" }
       ],
       "commands": [
         "node -v",
         "npm -v",
         "corepack enable",
         "corepack prepare yarn@stable --activate",
-        "corepack yarn -v",
-        "corepack yarn install",
-        "sh -lc 'cd packages/web && corepack yarn build && rm -rf ../../out && mkdir -p ../../out && cp -R out/. ../../out'"
+        "sh -lc 'cd /app && yarn -v'",
+        "sh -lc 'cd /app && yarn install'",
+        "sh -lc 'cd /app/packages/web && yarn build || (echo \"ERROR: Next build failed\"; exit 1)'",
+        "sh -lc 'cd /app/packages/web && npx -y next@latest export -o /app/out || (echo \"ERROR: Next export failed\"; exit 1)'"
       ]
     }
   },
