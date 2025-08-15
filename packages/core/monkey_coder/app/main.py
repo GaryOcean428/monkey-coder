@@ -183,8 +183,33 @@ enable_pricing = middleware_config._get_env_bool("ENABLE_PRICING_MIDDLEWARE", Tr
 app.add_middleware(PricingMiddleware, enabled=enable_pricing)
 
 # Add other middleware with environment-aware configuration
-allowed_origins = ["*"] if middleware_config.environment != "production" else middleware_config._get_env("CORS_ORIGINS", "*").split(",")
-allowed_hosts = ["*"] if middleware_config.environment != "production" else middleware_config._get_env("TRUSTED_HOSTS", "*").split(",")
+# Normalize comma-separated env values (trim spaces, drop empties) and ensure Railway internal domain is allowed
+if middleware_config.environment == "production":
+    allowed_origins = [
+        o.strip() for o in middleware_config._get_env("CORS_ORIGINS", "").split(",")
+        if o.strip()
+    ]
+    allowed_hosts = [
+        h.strip() for h in middleware_config._get_env("TRUSTED_HOSTS", "").split(",")
+        if h.strip()
+    ]
+
+    # Ensure Railway's internal routing is permitted by TrustedHostMiddleware
+    if not any("railway.internal" in h for h in allowed_hosts):
+        allowed_hosts.append("*.railway.internal")
+
+    # If CORS_ORIGINS is empty in production, fall back to public domain (if present)
+    if not allowed_origins:
+        public_domain = middleware_config._get_env("RAILWAY_PUBLIC_DOMAIN", "").strip()
+        if public_domain:
+            allowed_origins = [f"https://{public_domain}"]
+        else:
+            # Safe fallback to no-origins (or could default to '*', but avoid broadening in prod)
+            allowed_origins = []
+else:
+    # Development: keep permissive defaults
+    allowed_origins = ["*"]
+    allowed_hosts = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
