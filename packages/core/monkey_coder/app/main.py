@@ -131,7 +131,7 @@ async def lifespan(app: FastAPI):
 
         app.state.api_key_manager = get_api_key_manager()
         logger.info("✅ APIKeyManager initialized successfully")
-        
+
         # Initialize streaming components
         from ..streaming import stream_manager
         await stream_manager.start()
@@ -154,12 +154,12 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Monkey Coder Core...")
-    
+
     # Stop streaming components
     if hasattr(app.state, 'stream_manager'):
         await app.state.stream_manager.stop()
         logger.info("StreamManager stopped")
-    
+
     await app.state.provider_registry.cleanup_all()
     logger.info("Shutdown complete")
 
@@ -177,14 +177,14 @@ app = FastAPI(
 
 # Load pricing data from file (if exists) on startup
 load_pricing_from_file()
-# Mount Stripe Checkout routes
-app.include_router(stripe_checkout.router, prefix="/v1/stripe", tags=["stripe"])
+# Mount Stripe Checkout routes with /api prefix
+app.include_router(stripe_checkout.router, prefix="/api/v1/stripe", tags=["stripe"])
 
-# Mount streaming endpoints
+# Mount streaming endpoints with /api prefix
 from .streaming_endpoints import router as streaming_router
 from .streaming_execute import router as streaming_execute_router
-app.include_router(streaming_router)
-app.include_router(streaming_execute_router)
+app.include_router(streaming_router, prefix="/api")
+app.include_router(streaming_execute_router, prefix="/api")
 
 # Initialize configuration for middleware setup
 middleware_config = get_config()
@@ -354,7 +354,7 @@ async def prometheus_metrics():
 
 
 # Authentication Endpoints
-@app.post("/v1/auth/login", response_model=AuthResponse)
+@app.post("/api/v1/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
     """
     User login endpoint with enhanced authentication.
@@ -426,7 +426,7 @@ async def login(request: LoginRequest, response: Response, background_tasks: Bac
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
-@app.get("/v1/auth/status", response_model=UserStatusResponse)
+@app.get("/api/v1/auth/status", response_model=UserStatusResponse)
 async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> UserStatusResponse:
     """
     Get current user authentication status.
@@ -454,7 +454,7 @@ async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> 
         raise HTTPException(status_code=500, detail="Failed to get user status")
 
 
-@app.post("/v1/auth/logout")
+@app.post("/api/v1/auth/logout")
 async def logout(request: Request, response: Response, current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
     """
     User logout endpoint.
@@ -488,7 +488,7 @@ async def logout(request: Request, response: Response, current_user: JWTUser = D
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
-@app.post("/v1/auth/refresh", response_model=AuthResponse)
+@app.post("/api/v1/auth/refresh", response_model=AuthResponse)
 async def refresh_token(request: Request, response: Response) -> AuthResponse:
     """
     Refresh JWT access token using refresh token.
@@ -550,7 +550,7 @@ async def refresh_token(request: Request, response: Response) -> AuthResponse:
         raise HTTPException(status_code=401, detail="Failed to refresh token")
 
 
-@app.post("/v1/execute", response_model=ExecuteResponse)
+@app.post("/api/v1/execute", response_model=ExecuteResponse)
 async def execute_task(
     request: ExecuteRequest,
     background_tasks: BackgroundTasks,
@@ -637,7 +637,7 @@ async def execute_task(
             raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/v1/billing/usage", response_model=UsageResponse)
+@app.get("/api/v1/billing/usage", response_model=UsageResponse)
 async def get_usage_metrics(
     request: UsageRequest = Depends(),
     api_key: str = Depends(get_api_key),
@@ -689,7 +689,7 @@ async def get_usage_metrics(
         raise HTTPException(status_code=500, detail="Failed to retrieve usage metrics")
 
 
-@app.post("/v1/billing/portal", response_model=BillingPortalSession)
+@app.post("/api/v1/billing/portal", response_model=BillingPortalSession)
 async def create_billing_portal_session(
     api_key: str = Depends(get_api_key),
     return_url: str = "https://yourdomain.com/billing"
@@ -781,7 +781,7 @@ async def list_providers(
         raise HTTPException(status_code=500, detail="Failed to list providers")
 
 
-@app.get("/v1/models", response_model=Dict[str, Any])
+@app.get("/api/v1/models", response_model=Dict[str, Any])
 async def list_models(
     provider: Optional[str] = None,
     api_key: str = Depends(get_api_key),
@@ -1295,13 +1295,13 @@ if static_dir:
     if next_dir.exists():
         app.mount("/_next", StaticFiles(directory=str(next_dir)), name="next-static")
         logger.info(f"✅ Next.js assets served from: {next_dir}")
-    
+
     # Mount other static assets
     static_assets_dir = static_dir / "static"
     if static_assets_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_assets_dir)), name="static-assets")
         logger.info(f"✅ Static assets served from: {static_assets_dir}")
-    
+
     # Mount favicon and other root files
     favicon_path = static_dir / "favicon.ico"
     if favicon_path.exists():
@@ -1309,7 +1309,7 @@ if static_dir:
         async def favicon():
             from fastapi.responses import FileResponse
             return FileResponse(str(favicon_path))
-    
+
     # Mount the main static files with fallback to index.html for SPA routing
     # This MUST be last to act as a catch-all for SPA routing
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
