@@ -1,0 +1,48 @@
+{
+  "build": {
+    "steps": [
+      {
+        "id": "web",
+        "name": "Build Web App",
+        "base": "node:20",
+        "run": [
+          "cd packages/web",
+          "yarn install",
+          "yarn build"
+        ],
+        "output": [
+          "packages/web/out"
+        ]
+      },
+      {
+        "id": "python",
+        "name": "Install Python Dependencies",
+        "base": "python:3.11",
+        "run": [
+          "pip install --upgrade pip",
+          "pip install -r requirements.txt"
+        ],
+        "output": [
+          "."
+        ]
+      }
+    ]
+  },
+  "deploy": {
+    "base": "python:3.11",
+    "copy": [
+      {
+        "from": "web",
+        "source": "packages/web/out",
+        "dest": "packages/web/out"
+      },
+      {
+        "from": "python",
+        "source": ".",
+        "dest": "."
+      }
+    ],
+    "env": {},
+    "start": "python run_server.py"
+  }
+}
