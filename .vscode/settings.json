@@ -122,5 +122,7 @@
     "github.copilot.chat.editor.temporalContext.enabled": true,
     "github.copilot.chat.alternateGptPrompt.enabled": true,
     "github.copilot.chat.codesearch.enabled": true,
-    "github.copilot.chat.scopeSelection": true
+    "github.copilot.chat.scopeSelection": true,
+    "editor.aiStats.enabled": true,
+    "github.copilot.chat.byok.responsesApi": true
 }

@@ -14,11 +14,10 @@ import re
 import json
 import hashlib
 import logging
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
+import aiohttp
 from datetime import datetime, timedelta
 from pathlib import Path
-import asyncio
-import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 class ModelManifestValidator:
     """
     Enforces MODEL_MANIFEST.md as the canonical source of truth for all AI models.
-    
+
     This validator:
     1. Parses MODEL_MANIFEST.md for the official model list
     2. Validates all model usage against this list
@@ -34,7 +33,7 @@ class ModelManifestValidator:
     4. Caches validation results with TTL
     5. Provides clear error messages when outdated models are used
     """
-    
+
     # Provider documentation URLs for live validation
     PROVIDER_DOCS = {
         "openai": "https://platform.openai.com/docs/models",
@@ -43,7 +42,7 @@ class ModelManifestValidator:
         "groq": "https://console.groq.com/docs/models",
         "xai": "https://docs.x.ai/api/models"
     }
-    
+
     # Known deprecated models that AI agents keep suggesting
     DEPRECATED_MODELS = {
         # OpenAI deprecated
@@ -51,26 +50,26 @@ class ModelManifestValidator:
         "gpt-4-1106-preview", "gpt-4-vision-preview",
         "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106",
         "text-davinci-003", "text-davinci-002",
-        
-        # Anthropic deprecated  
+
+        # Anthropic deprecated
         "claude-2.1", "claude-2.0", "claude-instant-1.2",
         "claude-3-opus-20240229", "claude-3-sonnet-20240229",
         "claude-3-haiku-20240307",
-        
+
         # Google deprecated
         "gemini-1.0-pro", "gemini-1.5-pro-001",
         "gemini-pro", "gemini-pro-vision",
         "palm-2", "bard",
-        
+
         # Common AI hallucinations
         "gpt-5-turbo", "claude-4", "gemini-3",
         "gpt-4.5", "claude-3.5", "gemini-1.75"
     }
-    
+
     def __init__(self, manifest_path: Optional[str] = None, enable_live_validation: bool = False):
         """
         Initialize the validator.
-        
+
         Args:
             manifest_path: Path to MODEL_MANIFEST.md (auto-detects if not provided)
             enable_live_validation: Whether to check provider docs in real-time
@@ -81,48 +80,46 @@ class ModelManifestValidator:
         self._cache_time: Optional[datetime] = None
         self._cache_ttl = timedelta(hours=1)  # Refresh cache every hour
         self._manifest_hash: Optional[str] = None
-        
+
     def _find_manifest(self) -> str:
-        """Find MODEL_MANIFEST.md in the project structure."""
-        # Try common locations
-        possible_paths = [
-            "MODEL_MANIFEST.md",
-            "MODELS_MANIFEST.md",
-            "../../../MODEL_MANIFEST.md",
-            "../../../MODELS_MANIFEST.md",
-            Path(__file__).parent.parent.parent.parent / "MODEL_MANIFEST.md",
-            Path(__file__).parent.parent.parent.parent / "MODELS_MANIFEST.md",
+        """Find MODEL_MANIFEST.md in the project structure, preferring docs/ if present."""
+        root_candidate = Path(__file__).resolve().parents[4]
+        candidates = [
+            # Prefer docs folder in current working dir or repo root
+            Path("docs") / "MODEL_MANIFEST.md",
+            root_candidate / "docs" / "MODEL_MANIFEST.md",
+            # Fallbacks
+            Path("MODEL_MANIFEST.md"),
+            root_candidate / "MODEL_MANIFEST.md",
         ]
-        
-        for path in possible_paths:
-            if isinstance(path, str):
-                path = Path(path)
+
+        for path in candidates:
             if path.exists():
                 logger.info(f"Found MODEL_MANIFEST at: {path}")
-                return str(path.absolute())
-        
+                return str(path.resolve())
+
         raise FileNotFoundError(
             "MODEL_MANIFEST.md not found! This file is REQUIRED for model validation. "
-            "Please ensure MODEL_MANIFEST.md exists in the project root."
+            "Please add docs/MODEL_MANIFEST.md or MODEL_MANIFEST.md to the repository."
         )
-    
+
     def _parse_manifest(self) -> Dict[str, Set[str]]:
         """
         Parse MODEL_MANIFEST.md to extract the canonical model list.
-        
+
         Returns:
             Dict mapping provider names to sets of valid model names
         """
         with open(self.manifest_path, 'r') as f:
             content = f.read()
-        
+
         # Calculate hash to detect changes
         content_hash = hashlib.md5(content.encode()).hexdigest()
         if content_hash != self._manifest_hash:
             logger.info("MODEL_MANIFEST.md has changed, refreshing cache")
             self._manifest_hash = content_hash
             self._model_cache.clear()
-        
+
         models = {
             "openai": set(),
             "anthropic": set(),
@@ -130,13 +127,13 @@ class ModelManifestValidator:
             "groq": set(),
             "xai": set()
         }
-        
+
         current_provider = None
         in_model_section = False
-        
+
         for line in content.split('\n'):
             line = line.strip()
-            
+
             # Detect provider sections
             if '## OpenAI' in line or '### OpenAI' in line:
                 current_provider = 'openai'
@@ -157,7 +154,7 @@ class ModelManifestValidator:
                 # New section, reset
                 in_model_section = False
                 current_provider = None
-            
+
             # Extract model names
             if in_model_section and current_provider and line.startswith('- `'):
                 # Parse model name from markdown list
@@ -166,56 +163,57 @@ class ModelManifestValidator:
                     model_name = match.group(1)
                     models[current_provider].add(model_name)
                     logger.debug(f"Found {current_provider} model: {model_name}")
-        
+
         return models
-    
+
     def get_valid_models(self, provider: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Set[str]]:
         """
         Get the list of valid models from MODEL_MANIFEST.md.
-        
+
         Args:
             provider: Optional provider to filter by
             force_refresh: Force cache refresh
-            
+
         Returns:
             Dictionary of provider -> set of valid model names
         """
-        # Check cache
-        if (not force_refresh and 
-            self._model_cache and 
-            self._cache_time and 
-            datetime.now() - self._cache_time < self._cache_ttl):
-            
+        # Serve from cache if valid
+        if (
+            not force_refresh
+            and self._model_cache
+            and self._cache_time is not None
+            and datetime.now() - self._cache_time < self._cache_ttl
+        ):
             if provider:
                 return {provider: self._model_cache.get(provider, set())}
             return self._model_cache
-        
-        # Parse manifest
+
+        # Refresh cache by parsing the manifest
         self._model_cache = self._parse_manifest()
         self._cache_time = datetime.now()
-        
+
         if provider:
             return {provider: self._model_cache.get(provider, set())}
         return self._model_cache
-    
+
     def validate_model(self, model: str, provider: str) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Validate a model name against MODEL_MANIFEST.md.
-        
+
         Args:
             model: The model name to validate
             provider: The provider name
-            
+
         Returns:
             Tuple of (is_valid, error_message, suggested_alternative)
         """
         valid_models = self.get_valid_models(provider)
         provider_models = valid_models.get(provider, set())
-        
+
         # Check if model is valid
         if model in provider_models:
             return True, None, None
-        
+
         # Check if it's a known deprecated model
         if model in self.DEPRECATED_MODELS:
             suggestion = self._suggest_alternative(model, provider, provider_models)
@@ -227,7 +225,7 @@ class ModelManifestValidator:
                 "\n".join(f"  - {m}" for m in sorted(provider_models)[:5])
             )
             return False, error, suggestion
-        
+
         # Unknown model
         suggestion = self._suggest_alternative(model, provider, provider_models)
         error = (
@@ -238,16 +236,16 @@ class ModelManifestValidator:
             "\n".join(f"  - {m}" for m in sorted(provider_models)[:5])
         )
         return False, error, suggestion
-    
+
     def _suggest_alternative(self, invalid_model: str, provider: str, valid_models: Set[str]) -> str:
         """
         Suggest an alternative model based on the invalid model name.
-        
+
         Args:
             invalid_model: The invalid model name
             provider: The provider name
             valid_models: Set of valid models for this provider
-            
+
         Returns:
             Suggested alternative model name
         """
@@ -260,7 +258,7 @@ class ModelManifestValidator:
             elif "gpt-3.5" in invalid_model or "turbo" in invalid_model:
                 return "gpt-4.1-mini"  # Fast, affordable
             return "gpt-4.1"  # Default to latest
-            
+
         elif provider == "anthropic":
             if "opus" in invalid_model:
                 return "claude-opus-4-1-20250805"  # Latest Opus
@@ -269,49 +267,49 @@ class ModelManifestValidator:
             elif "haiku" in invalid_model:
                 return "claude-3-5-haiku-20241022"  # Latest Haiku
             return "claude-sonnet-4-20250514"  # Default to Sonnet
-            
+
         elif provider == "google":
             if "flash" in invalid_model:
                 return "gemini-2.5-flash"
             elif "pro" in invalid_model:
                 return "gemini-2.5-pro"
             return "gemini-2.5-flash"  # Default to Flash
-            
+
         elif provider == "groq":
             if "llama" in invalid_model:
                 return "llama-3.3-70b-versatile"
             elif "qwen" in invalid_model:
                 return "qwen/qwen3-32b"
             return "llama-3.3-70b-versatile"  # Default
-            
+
         elif provider == "xai":
             return "grok-4-latest"  # Latest Grok
-        
+
         # Fallback: return first valid model
         return sorted(valid_models)[0] if valid_models else "unknown"
-    
+
     async def check_provider_docs(self, provider: str) -> Optional[List[str]]:
         """
         Check provider documentation for latest model list (optional).
-        
+
         Args:
             provider: Provider name to check
-            
+
         Returns:
             List of models found in docs, or None if check fails
         """
         if not self.enable_live_validation:
             return None
-            
+
         url = self.PROVIDER_DOCS.get(provider)
         if not url:
             return None
-        
+
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=5) as response:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
                     if response.status == 200:
-                        content = await response.text()
+                        await response.text()
                         # Parse models from docs (provider-specific parsing needed)
                         logger.info(f"Successfully fetched {provider} docs from {url}")
                         # This would need provider-specific parsing logic
@@ -319,40 +317,41 @@ class ModelManifestValidator:
         except Exception as e:
             logger.warning(f"Could not fetch {provider} docs: {e}")
             return None
-    
+
     def enforce_compliance(self, model: str, provider: str) -> str:
         """
         Enforce MODEL_MANIFEST.md compliance by replacing invalid models.
-        
+
         Args:
             model: Requested model name
             provider: Provider name
-            
+
         Returns:
             Valid model name (original if valid, replacement if not)
         """
         is_valid, error, suggestion = self.validate_model(model, provider)
-        
+
         if is_valid:
             return model
-        
+
         # Log the violation
         logger.error(f"MODEL COMPLIANCE VIOLATION: {error}")
-        
+
         # Return suggested alternative
-        logger.info(f"AUTO-CORRECTING: '{model}' -> '{suggestion}'")
-        return suggestion
-    
-    def get_manifest_info(self) -> Dict[str, any]:
+        suggestion_str = suggestion or "unknown"
+        logger.info(f"AUTO-CORRECTING: '{model}' -> '{suggestion_str}'")
+        return suggestion_str
+
+    def get_manifest_info(self) -> Dict[str, Any]:
         """
         Get information about the MODEL_MANIFEST.md file.
-        
+
         Returns:
             Dictionary with manifest metadata
         """
         stat = os.stat(self.manifest_path)
         models = self.get_valid_models()
-        
+
         return {
             "path": self.manifest_path,
             "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
@@ -381,11 +380,11 @@ def get_validator() -> ModelManifestValidator:
 def validate_model(model: str, provider: str) -> Tuple[bool, Optional[str], Optional[str]]:
     """
     Convenience function to validate a model.
-    
+
     Args:
         model: Model name to validate
         provider: Provider name
-        
+
     Returns:
         Tuple of (is_valid, error_message, suggested_alternative)
     """
@@ -395,11 +394,11 @@ def validate_model(model: str, provider: str) -> Tuple[bool, Optional[str], Opti
 def enforce_model_compliance(model: str, provider: str) -> str:
     """
     Convenience function to enforce model compliance.
-    
+
     Args:
         model: Requested model name
         provider: Provider name
-        
+
     Returns:
         Valid model name (original if valid, replacement if not)
     """
@@ -408,11 +407,10 @@ def enforce_model_compliance(model: str, provider: str) -> str:
 
 # Example usage and testing
 if __name__ == "__main__":
-    import asyncio
-    
+
     # Test the validator
     validator = ModelManifestValidator()
-    
+
     # Test cases
     test_cases = [
         ("gpt-4-turbo", "openai"),  # Deprecated
@@ -424,18 +422,17 @@ if __name__ == "__main__":
         ("gpt-5", "openai"),  # Might be valid in manifest
         ("llama-2-70b", "groq"),  # Deprecated
     ]
-    
+
     print("MODEL VALIDATION TEST RESULTS")
     print("=" * 60)
-    
+
     for model, provider in test_cases:
         is_valid, error, suggestion = validator.validate_model(model, provider)
         print(f"\nModel: {model} ({provider})")
-        print(f"Valid: {is_valid}")
         if not is_valid:
             print(f"Suggestion: {suggestion}")
             print(error)
-    
+
     print("\n" + "=" * 60)
     print("MANIFEST INFO")
     print(json.dumps(validator.get_manifest_info(), indent=2))

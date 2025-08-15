@@ -402,7 +402,7 @@ class ValidationError(Exception):
 # Full documentation at https://ai1docs.abacusai.app/
 # Add to top of MODEL_REGISTRY section
 DEFAULT_MODELS = {
-    ProviderType.ANTHROPIC: "claude-sonnet-4-20250514",  # Default as per user spec
+    ProviderType.ANTHROPIC: "claude-opus-4-1-20250805",  # Default as per user spec
     # Defaults for other providers
     ProviderType.OPENAI: "gpt-5",  # Latest GPT-5 model
     ProviderType.GOOGLE: "gemini-2.5-pro",
@@ -480,6 +480,9 @@ MODEL_REGISTRY = {
         "moonshotai/kimi-k2-instruct",
         # Qwen model
         "qwen/qwen3-32b",
+    # Groq GPT-OSS family (OpenAI GPT-OSS models hosted by Groq)
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
     ],
 }
 
@@ -501,6 +504,13 @@ MODEL_ALIASES = {
     "claude-sonnet-4-0": "claude-opus-4-20250514",  # Alias for latest Claude 4 (Opus)
     "opus": "claude-opus-4-20250514",  # Alias for Opus/latest
     "claude-4-latest": "claude-opus-4-20250514",  # General latest
+    # GPT-5 dated variants resolve to unversioned latest names
+    "gpt-5-2025-08-07": "gpt-5",
+    "gpt-5-mini-2025-08-07": "gpt-5-mini",
+    "gpt-5-nano-2025-08-07": "gpt-5-nano",
+    # Claude Opus 4.1 unversioned aliases
+    "claude-opus-4-1": "claude-opus-4-1-20250805",
+    "claude-opus-4.1": "claude-opus-4-1-20250805",
 }
 
 # New resolve_model function

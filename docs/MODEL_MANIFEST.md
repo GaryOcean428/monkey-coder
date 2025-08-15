@@ -1,5 +1,5 @@
 # AI Model Manifest
-> UNIFIED MODEL MANIFEST - AUGUST 14, 2025
+> UNIFIED MODEL MANIFEST - AUGUST 15, 2025 (Canonical)
 
 ## Overview
 This manifest documents all available AI models, their capabilities, configurations, and usage guidelines for the Monkey Coder project.
@@ -15,7 +15,6 @@ providers:
     - groq
     - xai
   specialized:
-    - together
     - openrouter
 ```
 
@@ -152,6 +151,66 @@ anthropic:
 ```yaml
 openai:
   models:
+    # GPT-5 Family (latest flagship)
+    gpt-5:
+      context_window: 400000
+      max_output: 128000
+      capabilities:
+        - advanced_reasoning
+        - multimodal
+        - function_calling
+        - streaming
+        - structured_outputs
+        - code_generation
+        - reasoning_tokens
+      cost:
+        input: 0.0025
+        output: 0.010
+      use_cases:
+        - complex_reasoning
+        - code_architecture
+        - long_context_analysis
+
+    gpt-5-mini-2025-08-07:
+      context_window: 400000
+      max_output: 128000
+      capabilities:
+        - text
+        - function_calling
+        - streaming
+        - structured_outputs
+        - fast_response
+        - cost_efficient
+      cost:
+        input: 0.00025
+        output: 0.001
+      use_cases:
+        - automation
+        - high_throughput
+        - cost_optimized_tasks
+
+    gpt-5-nano-2025-08-07:
+      context_window: 400000
+      max_output: 128000
+      capabilities:
+        - text
+        - function_calling
+        - streaming
+        - structured_outputs
+        - fast_response
+        - cost_efficient
+      cost:
+        input: 0.00010
+        output: 0.00040
+      use_cases:
+        - ultra_high_throughput
+        - lightweight_tasks
+        - tool_orchestration
+  aliases:
+    # Unversioned names resolve to latest
+    gpt-5-flagship: gpt-5
+    gpt-5-mini: gpt-5-mini-2025-08-07
+    gpt-5-nano: gpt-5-nano-2025-08-07
     # Reasoning Models (o1/o3/o4 Series)
     o4-mini:
       context_window: 200000
@@ -303,6 +362,23 @@ openai:
         - cost_sensitive_applications
         - code_formatting
         - simple_analysis
+
+    gpt-4.1-nano:
+      context_window: 1047576
+      max_output: 32768
+      capabilities:
+        - instruction_following
+        - tool_calling
+        - text
+        - fast_response
+        - cost_efficient
+      cost:
+        input: 0.00010
+        output: 0.00040
+      use_cases:
+        - small_tool_calls
+        - orchestrations
+        - quick_text_tasks
 
     gpt-4.1-vision:
       context_window: 1048576
@@ -513,6 +589,34 @@ groq:
         - advanced_reasoning
         - code_generation
         - qwen_capabilities
+
+    # GPT-OSS (Open-weight models hosted by Groq)
+    openai/gpt-oss-120b:
+      context_window: 131072
+      max_output: 65536
+      capabilities:
+        - text
+        - instruction_following
+        - code_generation
+      cost:
+        input: 0.00015
+        output: 0.00075
+      use_cases:
+        - balanced_quality_speed
+        - cost_efficiency
+
+    openai/gpt-oss-20b:
+      context_window: 131072
+      max_output: 65536
+      capabilities:
+        - text
+        - instruction_following
+      cost:
+        input: 0.00010
+        output: 0.00050
+      use_cases:
+        - very_low_cost
+        - bulk_generation
 ```
 
 ### xAI Models (Grok Series)
@@ -602,41 +706,6 @@ grok:
         - efficient_processing
 ```
 
-### Together Models
-
-```yaml
-together:
-  models:
-    meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo:
-      context_window: 131072
-      max_output: 4096
-      capabilities:
-        - code_generation
-        - instruction_following
-        - reasoning
-      cost:
-        input: 0.00088
-        output: 0.00088
-      use_cases:
-        - complex_tasks
-        - code_architecture
-        - detailed_analysis
-
-    deepseek-ai/deepseek-coder-33b-instruct:
-      context_window: 16384
-      max_output: 4096
-      capabilities:
-        - specialized_coding
-        - multi_language
-        - code_completion
-      cost:
-        input: 0.00014
-        output: 0.00014
-      use_cases:
-        - code_specific_tasks
-        - language_translation
-        - optimization
-```
 
 ### OpenRouter Models
 

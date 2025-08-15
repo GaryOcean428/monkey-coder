@@ -7,12 +7,24 @@ including fetching updated pricing data and calculating costs.
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from ..config import get_config
+# Local helper to determine pricing file path without importing config package/module
+def _get_pricing_file_path() -> Path:
+    """Resolve the pricing data file path consistently across environments."""
+    try:
+        base_dir = Path("/data") if os.path.exists("/data") and os.access("/data", os.W_OK) else Path.cwd() / "data"
+        pricing_dir = base_dir / "pricing"
+        pricing_dir.mkdir(parents=True, exist_ok=True)
+        return pricing_dir / "pricing_data.json"
+    except Exception:
+        # Fallback to current directory if anything goes wrong
+        return Path("pricing_data.json")
 
 logger = logging.getLogger(__name__)
 
@@ -23,30 +35,30 @@ class ModelPricing(BaseModel):
     """
     model_id: str = Field(..., description="Model identifier")
     provider: str = Field(..., description="Provider name")
-    
+
     # Pricing per token (in USD)
     input_cost_per_token: float = Field(..., description="Cost per input token")
     output_cost_per_token: float = Field(..., description="Cost per output token")
-    
+
     # Additional pricing info
     context_length: int = Field(default=4096, description="Maximum context length")
     last_updated: datetime = Field(default_factory=datetime.utcnow)
-    
+
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> Tuple[float, float, float]:
         """
         Calculate costs for token usage.
-        
+
         Args:
             input_tokens: Number of input tokens
             output_tokens: Number of output tokens
-            
+
         Returns:
             Tuple[float, float, float]: (input_cost, output_cost, total_cost)
         """
         input_cost = input_tokens * self.input_cost_per_token
         output_cost = output_tokens * self.output_cost_per_token
         total_cost = input_cost + output_cost
-        
+
         return input_cost, output_cost, total_cost
 
 
@@ -74,7 +86,29 @@ MODEL_PRICING_DATA: Dict[str, ModelPricing] = {
         provider="openai",
         input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
         output_cost_per_token=0.0000004,  # $0.40 per 1M output tokens
-        context_length=128000
+        context_length=1047576
+    ),
+    # GPT-5 Family (latest) per MODEL_MANIFEST.md
+    "gpt-5": ModelPricing(
+        model_id="gpt-5",
+        provider="openai",
+        input_cost_per_token=0.0000025,   # $2.50 per 1M input tokens
+        output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5-mini": ModelPricing(
+        model_id="gpt-5-mini",
+        provider="openai",
+        input_cost_per_token=0.00000025,  # $0.25 per 1M input tokens
+        output_cost_per_token=0.000001,   # $1.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5-nano": ModelPricing(
+        model_id="gpt-5-nano",
+        provider="openai",
+        input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
+        output_cost_per_token=0.0000004,  # $0.40 per 1M output tokens
+        context_length=400000
     ),
     # Reasoning models
     "o1": ModelPricing(
@@ -319,16 +353,31 @@ MODEL_PRICING_DATA: Dict[str, ModelPricing] = {
         output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
         context_length=32768
     ),
+    # Groq GPT-OSS Models
+    "openai/gpt-oss-120b": ModelPricing(
+        model_id="openai/gpt-oss-120b",
+        provider="groq",
+        input_cost_per_token=0.00000015,  # $0.15 per 1M input tokens
+        output_cost_per_token=0.00000075, # $0.75 per 1M output tokens
+        context_length=131072
+    ),
+    "openai/gpt-oss-20b": ModelPricing(
+        model_id="openai/gpt-oss-20b",
+        provider="groq",
+        input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
+        output_cost_per_token=0.0000005,  # $0.50 per 1M output tokens
+        context_length=131072
+    ),
 }
 
 
 def get_model_pricing(model_id: str) -> Optional[ModelPricing]:
     """
     Get pricing information for a model.
-    
+
     Args:
         model_id: Model identifier
-        
+
     Returns:
         Optional[ModelPricing]: Pricing info if available
     """
@@ -338,23 +387,22 @@ def get_model_pricing(model_id: str) -> Optional[ModelPricing]:
 async def update_pricing_data(force_update: bool = False) -> bool:
     """
     Update pricing data from external sources.
-    
+
     This function fetches updated pricing information and updates
     the in-memory pricing data. It's designed to be called nightly
     via a cron job.
-    
+
     Args:
         force_update: Force update even if data is recent
-        
+
     Returns:
         bool: True if update was successful
     """
     try:
-        # Use configured pricing file path
-        config = get_config()
-        pricing_file = config.storage.pricing_data_file
+        # Use global storage config for pricing data path
+        pricing_file = _get_pricing_file_path()
         should_update = force_update
-        
+
         if not should_update:
             try:
                 stat = pricing_file.stat()
@@ -362,21 +410,21 @@ async def update_pricing_data(force_update: bool = False) -> bool:
                 should_update = datetime.now() - last_update > timedelta(hours=12)
             except (OSError, FileNotFoundError):
                 should_update = True
-        
+
         if not should_update:
-            logger.debug("Pricing data is recent, skipping update") 
+            logger.debug("Pricing data is recent, skipping update")
             return True
-        
+
         logger.info("Updating pricing data from external sources")
-        
+
         # In a real implementation, you would fetch from APIs like:
         # - OpenAI pricing API
         # - Anthropic pricing information
         # - Google Cloud Vertex AI pricing
         # For now, we'll use static data but demonstrate the structure
-        
+
         updated_pricing = {}
-        
+
         # Example: Fetch OpenAI pricing (pseudo-code)
         try:
             # This would be a real API call in production
@@ -384,21 +432,21 @@ async def update_pricing_data(force_update: bool = False) -> bool:
             updated_pricing.update(openai_pricing)
         except Exception as e:
             logger.warning(f"Failed to fetch OpenAI pricing: {e}")
-        
+
         # Example: Fetch Anthropic pricing
         try:
             anthropic_pricing = await _fetch_anthropic_pricing()
-            updated_pricing.update(anthropic_pricing)  
+            updated_pricing.update(anthropic_pricing)
         except Exception as e:
             logger.warning(f"Failed to fetch Anthropic pricing: {e}")
-        
+
         # Example: Fetch Google pricing
         try:
             google_pricing = await _fetch_google_pricing()
             updated_pricing.update(google_pricing)
         except Exception as e:
             logger.warning(f"Failed to fetch Google pricing: {e}")
-        
+
         # Save updated pricing to file
         if updated_pricing:
             with open(pricing_file, 'w') as f:
@@ -406,15 +454,15 @@ async def update_pricing_data(force_update: bool = False) -> bool:
                 for model_id, pricing in updated_pricing.items():
                     pricing_dict[model_id] = pricing.dict()
                 json.dump(pricing_dict, f, indent=2, default=str)
-            
+
             logger.info(f"Saved pricing data to {pricing_file}")
-            
+
             # Update in-memory data
             MODEL_PRICING_DATA.update(updated_pricing)
             logger.info(f"Updated pricing for {len(updated_pricing)} models")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to update pricing data: {e}")
         return False
@@ -423,13 +471,13 @@ async def update_pricing_data(force_update: bool = False) -> bool:
 async def _fetch_openai_pricing() -> Dict[str, ModelPricing]:
     """
     Fetch OpenAI pricing information.
-    
+
     In production, this would call OpenAI's pricing API or scrape
     their pricing page for the latest rates.
     """
     # This is a placeholder implementation
     # In reality, you'd fetch from OpenAI's API or pricing page
-    
+
     # For now, return empty dict to keep existing pricing
     return {}
 
@@ -437,7 +485,7 @@ async def _fetch_openai_pricing() -> Dict[str, ModelPricing]:
 async def _fetch_anthropic_pricing() -> Dict[str, ModelPricing]:
     """
     Fetch Anthropic pricing information.
-    
+
     In production, this would fetch from Anthropic's pricing information.
     """
     # Placeholder implementation
@@ -447,7 +495,7 @@ async def _fetch_anthropic_pricing() -> Dict[str, ModelPricing]:
 async def _fetch_google_pricing() -> Dict[str, ModelPricing]:
     """
     Fetch Google Cloud Vertex AI pricing information.
-    
+
     In production, this would fetch from Google Cloud's pricing API.
     """
     # Placeholder implementation
@@ -457,28 +505,28 @@ async def _fetch_google_pricing() -> Dict[str, ModelPricing]:
 def load_pricing_from_file() -> None:
     """
     Load pricing data from file if available.
-    
+
     This is called on startup to load any updated pricing data
     that was fetched by the nightly cron job.
     """
     try:
-        config = get_config()
-        pricing_file = config.storage.pricing_data_file
+        # Use global storage config for pricing data path
+        pricing_file = _get_pricing_file_path()
         if not pricing_file.exists():
             logger.debug(f"No pricing data file found at {pricing_file}")
             return
-            
+
         with open(pricing_file, 'r') as f:
             pricing_dict = json.load(f)
-            
+
         for model_id, pricing_data in pricing_dict.items():
             if isinstance(pricing_data.get('last_updated'), str):
                 pricing_data['last_updated'] = datetime.fromisoformat(pricing_data['last_updated'])
-            
+
             MODEL_PRICING_DATA[model_id] = ModelPricing(**pricing_data)
-        
+
         logger.info(f"Loaded pricing data for {len(pricing_dict)} models from file")
-        
+
     except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
         logger.debug(f"Could not load pricing from file: {e}")
         # Use default pricing data

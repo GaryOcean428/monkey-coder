@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 // Model costs with 15% markup (10% GST + 5% profit) applied
-// Base costs from MODELS_MANIFEST.md × 1.15
+// Base costs from MODEL_MANIFEST.md × 1.15
 const modelCosts = {
   // Budget tier
   'gpt-4.1-mini': {

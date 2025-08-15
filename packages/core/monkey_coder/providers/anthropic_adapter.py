@@ -15,9 +15,8 @@ Features:
 """
 
 import logging
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional, AsyncIterator
+from typing import Any, Dict, List, AsyncIterator
 
 try:
     from anthropic import AsyncAnthropic
@@ -298,10 +297,10 @@ class AnthropicProvider(BaseProvider):
         try:
             # Resolve alias and validate model
             resolved_model = self._resolve_model_alias(model)
-            
+
             # Map future models to currently available ones
             actual_model = self._get_actual_model(resolved_model)
-            
+
             logger.info(f"Generating completion with model: {actual_model} (requested: {resolved_model})")
 
             # Convert messages to Anthropic format if needed
@@ -335,18 +334,18 @@ class AnthropicProvider(BaseProvider):
             # Only add optional parameters if they're provided
             if kwargs.get("top_p") is not None:
                 params["top_p"] = kwargs["top_p"]
-            
+
             if system:
                 params["system"] = system
 
             # Add tool use support if tools are provided
             if kwargs.get("tools"):
                 params["tools"] = self._convert_tools_to_anthropic_format(kwargs["tools"])
-                
+
             # Add stop sequences if provided
             if kwargs.get("stop"):
                 params["stop_sequences"] = kwargs["stop"]
-                
+
             # Add metadata if provided
             if kwargs.get("metadata"):
                 params["metadata"] = kwargs["metadata"]
@@ -354,15 +353,19 @@ class AnthropicProvider(BaseProvider):
             # Handle streaming if requested
             if kwargs.get("stream", False):
                 logger.info(f"Starting streaming completion with {actual_model}")
-                
+
                 # Create streaming response
+                client = self.client  # type: ignore[assignment]
+
                 async def stream_generator():
-                    async with self.client.messages.stream(
-                        **params
-                    ) as stream:
-                        async for event in stream:
+                    # Guard against None at runtime (should be initialized above)
+                    if not client:
+                        return
+                    async with client.messages.stream(**params) as s:  # type: ignore[attr-defined]
+                        async for event in s:  # type: ignore[operator]
+                            # Yield raw SDK events; higher layer will adapt
                             yield event
-                            
+
                 return {
                     "stream": stream_generator(),
                     "model": resolved_model,
@@ -385,10 +388,13 @@ class AnthropicProvider(BaseProvider):
             thinking_content = ""
 
             for block in response.content:
-                if hasattr(block, "text"):
-                    content += block.text
-                elif hasattr(block, "thinking") and block.thinking:
-                    thinking_content += block.thinking
+                block_any: Any = block
+                text_val = getattr(block_any, "text", None)
+                if isinstance(text_val, str):
+                    content += text_val
+                thinking_val = getattr(block_any, "thinking", None)
+                if isinstance(thinking_val, str) and thinking_val:
+                    thinking_content += thinking_val
 
             # Build response with actual API data
             usage_info = {}
@@ -425,10 +431,10 @@ class AnthropicProvider(BaseProvider):
                 provider="Anthropic",
                 error_code="COMPLETION_FAILED",
             )
-    
+
     def _get_actual_model(self, resolved_model: str) -> str:
         """Return the actual model to use - all these models exist as of August 2025."""
-        # According to MODELS_MANIFEST.md, all these Claude models are real and available
+    # According to MODEL_MANIFEST.md, all these Claude models are real and available
         # No mapping needed - use them directly
         model_mapping = {
             # All these models exist and should be used directly
@@ -440,20 +446,20 @@ class AnthropicProvider(BaseProvider):
             "claude-3-5-sonnet-20240620": "claude-3-5-sonnet-20240620",
             "claude-3-5-haiku-20241022": "claude-3-5-haiku-20241022",
         }
-        
+
         # Return mapped model or original if not in mapping
         actual = model_mapping.get(resolved_model, resolved_model)
-        
+
         # Log if we're using a different model
         if actual != resolved_model:
             logger.info(f"Model {resolved_model} mapped to available model {actual}")
-        
+
         return actual
-    
+
     def _convert_tools_to_anthropic_format(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Convert OpenAI-style tools to Anthropic format."""
         anthropic_tools = []
-        
+
         for tool in tools:
             if tool.get("type") == "function":
                 function = tool.get("function", {})
@@ -463,9 +469,9 @@ class AnthropicProvider(BaseProvider):
                     "input_schema": function.get("parameters", {})
                 }
                 anthropic_tools.append(anthropic_tool)
-        
+
         return anthropic_tools
-    
+
     async def generate_completion_with_vision(
         self, model: str, messages: List[Dict[str, Any]], images: List[str], **kwargs
     ) -> Dict[str, Any]:
@@ -476,7 +482,7 @@ class AnthropicProvider(BaseProvider):
                 provider="Anthropic",
                 error_code="CLIENT_NOT_INITIALIZED",
             )
-        
+
         # Convert images to base64 and add to messages
         vision_messages = []
         for msg in messages:
@@ -484,7 +490,7 @@ class AnthropicProvider(BaseProvider):
                 content = [
                     {"type": "text", "text": msg["content"]}
                 ]
-                
+
                 # Add images if this is the last user message
                 if msg == messages[-1] and images:
                     for image in images:
@@ -496,26 +502,28 @@ class AnthropicProvider(BaseProvider):
                                 "data": image
                             }
                         })
-                
+
                 vision_messages.append({
                     "role": msg["role"],
                     "content": content
                 })
             else:
                 vision_messages.append(msg)
-        
+
         # Call regular generate_completion with vision-formatted messages
         return await self.generate_completion(model, vision_messages, **kwargs)
-    
+
     async def stream_completion(
         self, model: str, messages: List[Dict[str, Any]], **kwargs
     ) -> AsyncIterator[Dict[str, Any]]:
         """Stream completion tokens as they're generated."""
         kwargs["stream"] = True
         result = await self.generate_completion(model, messages, **kwargs)
-        
+
         if result.get("is_streaming"):
             stream = result.get("stream")
+            if not stream:
+                return
             async for event in stream:
                 # Convert Anthropic streaming events to standard format
                 if hasattr(event, "type"):
@@ -558,8 +566,10 @@ class AnthropicProvider(BaseProvider):
 
             content = ""
             for block in test_response.content:
-                if hasattr(block, "text"):
-                    content += block.text
+                block_any: Any = block
+                text_val = getattr(block_any, "text", None)
+                if isinstance(text_val, str):
+                    content += text_val
 
             return {
                 "status": "healthy",

@@ -10,14 +10,14 @@ The examples demonstrate three conceptual GPT-5 model configurations:
 - **GPT-5 Mini**: Balanced model for general development tasks
 - **GPT-5 Nano**: Lightweight model for simple tasks
 
-> **Note**: These examples use conceptual GPT-5 models for demonstration purposes. Please refer to the [Models Manifest](../../docs/MODELS_MANIFEST.md) for currently supported models.
+> **Note**: These examples use conceptual GPT-5 models for demonstration purposes. Please refer to the [Model Manifest](../../docs/MODEL_MANIFEST.md) for currently supported models.
 
 ## Files
 
 ### Python Implementation
 - `openai_response_examples.py` - Complete Python implementation with sync/async support
 
-### TypeScript/JavaScript Implementation  
+### TypeScript/JavaScript Implementation
 - `openai-response-examples.ts` - TypeScript implementation with React hooks and Express middleware
 
 ## Usage
@@ -128,5 +128,5 @@ Both implementations include comprehensive error handling for:
 ## Related Documentation
 
 - [OpenAI Response Examples Documentation](../../docs/docs/openai-response-examples.md)
-- [Models Manifest](../../docs/MODELS_MANIFEST.md)
+- [Model Manifest](../../docs/MODEL_MANIFEST.md)
 - [Quick Start Guide](../../docs/docs/quick-start.md)

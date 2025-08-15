@@ -9,6 +9,18 @@ const nextConfig = {
     unoptimized: true,
     domains: ['localhost', 'monkey-coder.up.railway.app'],
   },
+
+  // Proxy API routes to the internal FastAPI backend (port 8000 when run_unified.js is used)
+  async rewrites () {
+    return [
+      {
+        source: '/api/:path*',
+        destination: process.env.NEXT_PUBLIC_API_URL
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`
+          : 'http://127.0.0.1:8000/api/:path*',
+      },
+    ]
+  },
   // Note: headers don't work with output: 'export' mode
   // We'll handle CSP and other security through meta tags in the document
   webpack: (config, { isServer, dev }) => {

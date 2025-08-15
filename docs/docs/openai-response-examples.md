@@ -17,7 +17,7 @@ The GPT-5 model examples shown below are conceptual templates for future OpenAI 
 The OpenAI API supports various response configurations depending on the model type and intended use case. This guide covers three main model categories with their optimal configurations:
 
 - **Chat Latest Models**: High-performance models for complex reasoning
-- **Mini Models**: Balanced models for general-purpose tasks  
+- **Mini Models**: Balanced models for general-purpose tasks
 - **Nano Models**: Lightweight models for simple tasks
 
 ## Python Examples
@@ -193,7 +193,7 @@ async function generateHighPerformanceResponse() {
     top_p: 1,
     store: true,
   });
-  
+
   return response;
 }
 ```
@@ -234,7 +234,7 @@ async function generateBalancedResponse() {
     tools: [],
     store: true,
   });
-  
+
   return response;
 }
 ```
@@ -275,7 +275,7 @@ async function generateLightweightResponse() {
     tools: [],
     store: true,
   });
-  
+
   return response;
 }
 ```
@@ -349,7 +349,7 @@ async function handleResponse() {
       reasoning: { effort: 'high' },
       store: true,
     });
-    
+
     return response;
   } catch (error) {
     if (error instanceof OpenAI.APIError) {
@@ -494,7 +494,7 @@ app.listen(3000, () => {
 
 ## Related Resources
 
-- [Models Manifest](pathname:///monkey-coder/MODELS_MANIFEST.md) - Current supported models
+- [Model Manifest](pathname:///monkey-coder/MODEL_MANIFEST.md) - Current supported models
 - [Quick Start Guide](./quick-start.md) - Getting started with Monkey Coder
 - [Migration Guide](./migration-guide.md) - Upgrading and migration information
 
