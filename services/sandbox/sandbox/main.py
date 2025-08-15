@@ -87,10 +87,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configure CORS origins
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+# Add Railway domain support
+cors_origins.extend(["*.railway.app", "https://*.railway.app"])
+
 # Add security middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Restrict to known origins
+    allow_origins=cors_origins,
     allow_credentials=False,  # No credentials in sandbox
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
@@ -100,6 +105,12 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["localhost", "127.0.0.1", "*.railway.app"]
 )
+
+
+@app.get("/health")
+async def root_health_check():
+    """Root health check endpoint for Railway."""
+    return await health_check()
 
 
 @app.get("/sandbox/health")
