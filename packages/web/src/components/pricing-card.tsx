@@ -40,7 +40,7 @@ export function PricingCard({
     try {
       // Here we'll call our API to create a checkout session
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const endpoint = `${baseUrl}/v1/stripe/create-checkout-session`;
+      const endpoint = `${baseUrl}/api/v1/stripe/create-checkout-session`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
