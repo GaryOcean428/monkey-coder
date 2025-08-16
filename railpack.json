@@ -2,9 +2,28 @@
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13"
+    "python": "3.13",
+    "node": "20"
   },
-  "steps": {},
+  "steps": {
+    "install-yarn": {
+      "commands": [
+        "corepack enable",
+        "corepack prepare yarn@4.9.2 --activate"
+      ]
+    },
+    "build-web": {
+      "commands": [
+        "yarn install --immutable",
+        "yarn workspace @monkey-coder/web build"
+      ],
+      "inputs": [
+        {
+          "step": "install-yarn"
+        }
+      ]
+    }
+  },
   "deploy": {
     "startCommand": "python run_server.py",
     "inputs": [
@@ -13,8 +32,12 @@
         "include": [
           "run_server.py",
           "requirements.txt",
-          "packages/core/**"
+          "packages/core/**",
+          "packages/web/out/**"
         ]
+      },
+      {
+        "step": "build-web"
       }
     ]
   }

@@ -6,13 +6,23 @@ consider MODED_MANIFEST.md as canonical.
 
 ## Project Overview
 
-Monkey Coder is an AI-powered code generation and analysis platform that transforms Qwen3-Coder models into a comprehensive development toolkit. It's structured as a yarn 4.9.2 workspace monorepo with TypeScript CLI tools, Python orchestration core, and multi-language SDKs.
+Monkey Coder is an AI-powered code generation and analysis platform that transforms Qwen3-Coder models into a comprehensive development toolkit. It's structured as a Yarn 4.9.2 workspace monorepo with TypeScript CLI tools, Python orchestration core, and multi-language SDKs.
+
+### Yarn Workspace Configuration
+- **Package Manager**: Yarn 4.9.2 with Corepack
+- **Node Linker**: node-modules with hardlinks for performance
+- **Global Cache**: Enabled for 30-50% faster installs
+- **Constraints**: Enforced via yarn.config.cjs for dependency consistency
+- **Security**: Zero vulnerabilities with automated auditing
 
 ## Common Development Commands
 
 ### Building and Testing
 
 ```bash
+# Install dependencies (uses global cache and hardlinks)
+yarn install
+
 # Build all packages
 yarn build
 
@@ -36,6 +46,15 @@ yarn typecheck
 
 # Format code
 yarn format
+
+# Check workspace constraints
+yarn constraints
+
+# Fix constraint violations
+yarn constraints --fix
+
+# Security audit
+yarn npm audit --all
 ```
 
 ### Package-Specific Commands
@@ -83,16 +102,22 @@ yarn docs:validate-links
 - packages/cli/: TypeScript CLI with Commander.js, providing commands like `implement`, `analyze`, `build`, `test`, and `chat`
 - packages/core/: Python FastAPI orchestration engine with multi-agent support, MCP integration, and quantum task execution
 - packages/sdk/: Dual TypeScript/Python SDK for API integration
-- packages/web/: Next.js web interface (optional)
+- packages/web/: Next.js 15.2.3 web interface with React 18.2.0
 - docs/: Docusaurus documentation site with interactive examples
 - services/: Optional microservices (sandbox execution)
 
+### Workspace Dependencies
+- All internal dependencies use `workspace:*` protocol
+- Consistent versions enforced across workspaces
+- Node.js >=20.0.0 required for all packages
+
 ### Key Technologies
-- Frontend: TypeScript, Commander.js, Chalk, Ora (CLI); Next.js, React (Web)
-- Backend: Python 3.8+, FastAPI, Pydantic, asyncio
+- Frontend: TypeScript 5.8.3, Commander.js, Chalk, Ora (CLI); Next.js 15.2.3, React 18.2.0 (Web)
+- Backend: Python 3.13, FastAPI, Pydantic, asyncio
 - AI Integration: OpenAI, Anthropic, Google GenAI, Groq, Qwen-Agent
-- Infrastructure: Docker, Railway deployment, Sentry monitoring
-- Testing: Jest (TypeScript), Pytest (Python)
+- Infrastructure: Railway deployment with railpack.json, Sentry monitoring ^9.42.0
+- Testing: Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
+- Package Manager: Yarn 4.9.2 with workspace constraints
 
 ### Core Components
 
@@ -112,6 +137,14 @@ yarn docs:validate-links
 - monkey_coder/billing/: Stripe integration for usage tracking
 
 ## Configuration
+
+### Yarn Configuration
+
+The project uses Yarn 4.9.2 with optimized settings in `.yarnrc.yml`:
+- Global cache enabled for performance
+- Hardlinks for local dependencies
+- Immutable installs configurable for CI
+- Constraints enforced via `yarn.config.cjs`
 
 ### Environment Variables
 
@@ -333,6 +366,39 @@ When asked to work on this codebase:
 - User's specific instructions override (or amend) instructions found in `.agent-os/specs/...`
 - Always adhere to established patterns, code style, and best practices documented above
 - System Status: Phase 1 is 100% complete with comprehensive enhancements - ready for Phase 2 quantum routing development
+
+## Railway Deployment Configuration
+
+### railpack.json Setup
+
+The project uses a unified railpack.json configuration that supports both Python backend and Yarn workspace builds:
+
+```json
+{
+  "provider": "python",
+  "packages": {
+    "python": "3.13",
+    "node": "20"
+  },
+  "steps": {
+    "install-yarn": {
+      "commands": [
+        "corepack enable",
+        "corepack prepare yarn@4.9.2 --activate"
+      ]
+    },
+    "build-web": {
+      "commands": [
+        "yarn install --immutable",
+        "yarn workspace @monkey-coder/web build"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "python run_server.py"
+  }
+}
+```
 
 ## Railway Deployment Master Cheat Sheet (Reference)
 ## Common Pitfalls & Correct Solutions

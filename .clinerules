@@ -26,10 +26,21 @@ Use structured thinking approaches:
 ### 4. Technical Standards & Architecture Compliance
 Adhere to Monkey Coder's established patterns and Agent OS standards:
 - **Project Architecture**: Yarn 4.9.2 workspace monorepo with TypeScript CLI, Python FastAPI core
-- **Package Management**: Use yarn 4.9.2+, pnpm fallback before npm directly (enable corepack as required)
-- **Python Management**: Use uv then poetry before pip directly for Python 3.8+ projects
+- **Package Management**: 
+  - Use Yarn 4.9.2+ with Corepack enabled (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
+  - Global cache enabled for 30-50% faster installs
+  - Hardlinks configured for node_modules performance
+  - Workspace dependencies use `workspace:*` protocol
+  - Constraints enforced via `yarn.config.cjs`
+  - Run `yarn constraints` to check consistency
+  - Run `yarn npm audit --all` for security checks
+- **Python Management**: Python 3.13 for production, use uv then poetry before pip directly
 - **MCP Integration**: Use MCPs like context7 to verify current LLM models, API specifications and parameters
-- **Language Conventions**: Follow TypeScript strict typing, Python type hints, React functional patterns
+- **Language Conventions**: 
+  - TypeScript 5.8.3 with strict typing
+  - Python type hints
+  - React 18.2.0 functional patterns
+  - Next.js 15.2.3 for web interface
 - **Code Organization**: Maintain modular and maintainable structure consistent with packages/ layout
 - **Error Handling**: Implement proper error handling and loading states
 - **Documentation**: Keep code well-documented and consistent with specifications
@@ -39,10 +50,16 @@ Adhere to Monkey Coder's established patterns and Agent OS standards:
 
 ### 5. Version Requirements Enforcement
 Maintain awareness of minimum version requirements per project specifications:
-- **Node.js**: >=18.0.0 (22+ preferred)
-- **Python**: >=3.8 (3.12+ preferred)
-- **Yarn**: >=4.9.2
-- **TypeScript**: Strict typing enabled
+- **Node.js**: >=20.0.0 (enforced via yarn.config.cjs constraints)
+- **Python**: 3.13 (production via railpack.json)
+- **Yarn**: 4.9.2 (exact version via Corepack)
+- **TypeScript**: ^5.8.3 (enforced across all workspaces)
+- **React**: ^18.2.0 (consistent across workspaces)
+- **Next.js**: 15.2.3 (security patched version)
+- **ESLint**: ^9.32.0 (unified configuration)
+- **Prettier**: ^3.6.2 (consistent formatting)
+- **Sentry**: ^9.42.0 (all packages synchronized)
+- **Jest**: ^30.0.5 (CLI/SDK), ^29.7.0 (Next.js)
 - Prioritize modern, well-supported versions
 - Check compatibility before recommendations
 - Warn about deprecated technologies
@@ -105,10 +122,15 @@ Only suggest changes that are:
 
 ### 13. TypeScript & Modern Development Focus
 When providing code solutions:
-- Prioritize TypeScript with strict typing
-- Use modern React patterns (functional components, hooks)
-- Use yarn 4.9.2+ and above, pnpm fallback before npm directly (enable corepack as required)
-- Use uv then poetry before pip directly for Python 3.8+ projects
+- Prioritize TypeScript 5.8.3 with strict typing
+- Use modern React 18.2.0 patterns (functional components, hooks)
+- Use Yarn 4.9.2 exclusively with Corepack (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
+- Utilize Yarn workspace features:
+  - Run `yarn constraints` to check consistency
+  - Use `workspace:*` protocol for internal dependencies
+  - Run `yarn npm audit --all` for security checks
+  - Leverage global cache and hardlinks for performance
+- Use uv then poetry before pip directly for Python 3.13 projects
 - Follow established naming conventions from Agent OS standards
 - Implement proper error handling and loading states
 
@@ -299,28 +321,36 @@ rm Dockerfile railway.toml nixpacks.toml  # Remove competing configs
 touch railpack.json                        # Create railpack config
 ```
 
-### **Correct railpack.json Template:**
+### **Correct railpack.json Template (Yarn Workspace):**
 ```json
 {
-  "version": "1",
-  "metadata": {
-    "name": "my-app"
+  "$schema": "https://schema.railpack.com",
+  "provider": "python",  // or "node" for Node.js primary
+  "packages": {
+    "python": "3.13",
+    "node": "20"  // Required for Yarn workspaces
   },
-  "build": {
-    "provider": "node",  // or "python"
-    "steps": {
-      "install": {
-        "commands": ["yarn install --frozen-lockfile"]
-      },
-      "build": {
-        "commands": ["yarn build"]
-      }
+  "steps": {
+    "install-yarn": {
+      "commands": [
+        "corepack enable",
+        "corepack prepare yarn@4.9.2 --activate"
+      ]
+    },
+    "build-web": {
+      "commands": [
+        "yarn install --immutable",
+        "yarn workspace @monkey-coder/web build"
+      ],
+      "inputs": [{"step": "install-yarn"}]
     }
   },
   "deploy": {
-    "startCommand": "yarn start",
-    "healthCheckPath": "/api/health",
-    "healthCheckTimeout": 300
+    "startCommand": "python run_server.py",  // or "yarn start"
+    "inputs": [
+      {"local": true, "include": ["packages/**", "yarn.lock", ".yarnrc.yml"]},
+      {"step": "build-web"}
+    ]
   }
 }
 ```

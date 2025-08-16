@@ -6,9 +6,10 @@
 
 ## Application Framework
 - **Framework:** Node.js + Python FastAPI Hybrid Architecture
-- **Version:** Node.js 20+ / Python 3.8+
-- **CLI Framework:** TypeScript with Commander.js for CLI interface
+- **Version:** Node.js 20+ (enforced >=20.0.0) / Python 3.13 (production)
+- **CLI Framework:** TypeScript 5.8.3 with Commander.js for CLI interface
 - **Backend Framework:** Python FastAPI for AI orchestration and quantum routing
+- **Monorepo Management:** Yarn 4.9.2 workspaces with enforced constraints
 
 ## Database System
 - **Primary Database:** PostgreSQL (for production)
@@ -17,10 +18,15 @@
 - **Vector Database:** ChromaDB (for AI context and embeddings)
 
 ## JavaScript Framework
-- **Frontend Framework:** Next.js 14+ with React 18+
-- **CLI Framework:** TypeScript with Commander.js and Chalk for CLI interface
-- **Package Manager:** yarn 4.9.2 (Workspaces)
+- **Frontend Framework:** Next.js 15.2.3 with React 18.2.0
+- **CLI Framework:** TypeScript 5.8.3 with Commander.js and Chalk for CLI interface
+- **Package Manager:** Yarn 4.9.2 (Workspaces with constraints)
 - **Module System:** ESM with TypeScript
+- **Workspace Configuration:** 
+  - Global cache enabled for performance
+  - Hardlinks for node_modules optimization
+  - Constraints via yarn.config.cjs
+  - Workspace protocol for internal dependencies
 
 ## Import Strategy
 - **Strategy:** Node.js modules with TypeScript compilation
@@ -155,11 +161,16 @@
 - **Security:** Secure handling of sensitive configuration without logging secrets
 
 ## Development Tools
-- **Language:** TypeScript + Python
-- **Testing:** Jest (TypeScript), Pytest (Python)
-- **Linting:** ESLint + Prettier (TypeScript), Black + isort (Python)
+- **Language:** TypeScript 5.8.3 + Python 3.13
+- **Testing:** Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
+- **Linting:** ESLint ^9.32.0 + Prettier ^3.6.2 (TypeScript), Black + isort (Python)
 - **Type Checking:** TypeScript compiler + mypy (Python)
 - **Documentation:** Docusaurus for project documentation
+- **Package Management:** 
+  - Yarn 4.9.2 with Corepack
+  - Global cache and hardlinks enabled
+  - Workspace constraints enforcement
+  - Security auditing via `yarn npm audit`
 
 ## Security & Monitoring
 - **Error Tracking:** Sentry integration across all components

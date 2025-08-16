@@ -24,7 +24,7 @@ with:
 - 🚀 **TypeScript CLI** for seamless integration into your workflow
 - 🐍 **Python Core** for AI model orchestration and processing
 - 📦 **SDK Libraries** for easy integration into your applications
-- 🛠️ **Monorepo Architecture** with yarn 4.9.2 workspaces
+- 🛠️ **Monorepo Architecture** with Yarn 4.9.2 workspaces (optimized with global cache and constraints)
 - 📚 **Comprehensive Documentation** with MkDocs
 - ⚡ **Auto-Publishing** on every commit for instant updates
 
@@ -92,8 +92,9 @@ Detailed performance and introduction are shown in this
 
 ### Prerequisites
 
-- **Node.js** 18+ and **yarn** 4.9.2
-- **Python** 3.8+ with pip
+- **Node.js** 20+ (required for all packages)
+- **Yarn** 4.9.2 via Corepack (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
+- **Python** 3.13 for production deployment
 - **Git** for cloning and version control
 
 ### Package Installation
@@ -126,16 +127,29 @@ npm install -g monkey-coder-cli
    cd monkey-coder
    ```
 
-2. **Install dependencies**:
+2. **Enable Yarn 4.9.2**:
+
+   ```bash
+   corepack enable
+   corepack prepare yarn@4.9.2 --activate
+   ```
+
+3. **Install dependencies** (uses global cache and hardlinks):
 
    ```bash
    yarn install
    ```
 
-3. **Build all packages**:
+4. **Build all packages**:
 
    ```bash
    yarn build
+   ```
+
+5. **Verify workspace constraints**:
+
+   ```bash
+   yarn constraints
    ```
 
 ## Published Packages
@@ -587,12 +601,14 @@ The fastest way to get started with development is using our pre-configured dev 
 3. **Start Developing**: All dependencies, databases, and tools are automatically configured!
 
 **Features:**
-- ✅ Python 3.11 + Node.js 18 pre-installed
+- ✅ Python 3.13 + Node.js 20 pre-installed
+- ✅ Yarn 4.9.2 with workspace constraints
 - ✅ PostgreSQL 15 + Redis 7 running automatically  
 - ✅ All VS Code extensions and settings optimized
-- ✅ Automatic dependency installation
+- ✅ Automatic dependency installation with global cache
 - ✅ Database migrations and setup
 - ✅ Pre-commit hooks configured
+- ✅ Workspace constraints enforcement
 
 **Available Services:**
 - Frontend: http://localhost:3000
