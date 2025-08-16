@@ -9,7 +9,7 @@
     "dev": "node --watch index.js"
   },
   "dependencies": {
-    "@monkey-coder/sdk": "^1.0.0"
+    "@monkey-coder/sdk": "workspace:*"
   },
   "keywords": ["monkey-coder", "sdk", "nodejs", "example"],
   "author": "Monkey Coder",

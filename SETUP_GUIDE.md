@@ -34,7 +34,7 @@ This is a separate package that provides Python bindings for the Monkey Coder AP
 
 ### Step 1: Install the CLI
 ```bash
-npm install -g monkey-coder-cli
+yarn global add monkey-coder-cli
 ```
 
 ### Step 2: Configure the Service
@@ -150,7 +150,7 @@ Example config file:
 
 ### Q: Is the Python SDK included with the CLI?
 **A:** No, they're separate packages:
-- CLI: `npm install -g monkey-coder-cli`
+- CLI: `yarn global add monkey-coder-cli`
 - Python SDK: `pip install monkey-coder-core`
 
 ### Q: Can I self-host the backend?

@@ -6,10 +6,10 @@
 
 ```bash
 # Install the CLI globally
-npm install -g monkey-coder-cli
-
-# Or with yarn
 yarn global add monkey-coder-cli
+
+# Or with npm
+npm install -g monkey-coder-cli
 
 # Verify installation
 monkey --version
@@ -240,9 +240,9 @@ security = await monkey.execute_agent(
 ### Installation
 
 ```bash
-npm install monkey-coder-sdk
-# or
 yarn add monkey-coder-sdk
+# or
+npm install monkey-coder-sdk
 ```
 
 ### Usage

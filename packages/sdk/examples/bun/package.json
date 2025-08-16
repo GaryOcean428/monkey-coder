@@ -9,7 +9,7 @@
     "dev": "bun --watch run index.ts"
   },
   "dependencies": {
-    "@monkey-coder/sdk": "^1.0.0"
+    "@monkey-coder/sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest"
