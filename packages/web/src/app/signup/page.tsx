@@ -41,35 +41,28 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true)
     try {
-      // Create user account
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: data.username,
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          plan: selectedPlan || 'hobby',
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to create account')
-      }
-
-      const result = await response.json()
-
-      // If Pro plan selected, redirect to Stripe checkout
-      if (selectedPlan === 'pro') {
-        window.location.href = result.checkoutUrl
-      } else {
-        // For free plan, redirect to dashboard
-        router.push('/dashboard')
-      }
+      // TODO: Signup endpoint not yet implemented in backend
+      // For now, show a message that signup is coming soon
+      alert('Signup functionality is coming soon! Please check back later.')
+      
+      // In production, this would call:
+      // const response = await fetch('/api/v1/auth/signup', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     username: data.username,
+      //     name: data.name,
+      //     email: data.email,
+      //     password: data.password,
+      //     plan: selectedPlan || 'hobby',
+      //   }),
+      // })
+      
+      // For demo purposes, redirect to login
+      router.push('/login')
     } catch (error) {
       console.error('Signup error:', error)
-      alert('Failed to create account. Please try again.')
+      alert('Signup is not yet available. Please try again later.')
     } finally {
       setIsLoading(false)
     }
