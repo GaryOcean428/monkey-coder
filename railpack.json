@@ -12,15 +12,31 @@
         "corepack prepare yarn@4.9.2 --activate"
       ]
     },
-    "build-web": {
+    "install-deps": {
       "commands": [
-        "yarn install --immutable",
-        "yarn workspace @monkey-coder/web build"
+        "yarn install --immutable"
       ],
       "inputs": [
         {
           "step": "install-yarn"
         }
+      ]
+    },
+    "build-web": {
+      "commands": [
+        "yarn workspace @monkey-coder/web build",
+        "ls -la packages/web/out || echo 'No out directory found'",
+        "cp -r packages/web/out /app/out 2>/dev/null || echo 'Could not copy out directory'"
+      ],
+      "inputs": [
+        {
+          "step": "install-deps"
+        }
+      ]
+    },
+    "install-python": {
+      "commands": [
+        "pip install --no-cache-dir -r requirements.txt"
       ]
     }
   },
@@ -28,13 +44,7 @@
     "startCommand": "python run_server.py",
     "inputs": [
       {
-        "local": true,
-        "include": [
-          "run_server.py",
-          "requirements.txt",
-          "packages/core/**",
-          "packages/web/out/**"
-        ]
+        "step": "install-python"
       },
       {
         "step": "build-web"
