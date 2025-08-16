@@ -1,22 +1,45 @@
-# Monkey Coder Documentation
+# Documentation Index
 
-This directory contains the Docusaurus-based documentation site for Monkey Coder.
+## Getting Started
 
-## Features Implemented
+- [Setup Guide](../SETUP_GUIDE.md) - Installation and configuration
+- [Testing Guide](../TESTING_GUIDE.md) - Running tests across the monorepo
+- [Troubleshooting Guide](troubleshooting-guide.md) - Common issues and solutions
 
-### 📚 Complete Documentation Structure
-- **Quick Start Guide**: Get up and running with Monkey Coder in 5 minutes
-- **Quantum Tasks**: Advanced AI-powered development capabilities
-- **Billing & Usage**: Pricing tiers and usage management
-- **Migration Guide**: Detailed guide for migrating from Qwen3-Coder
+## Architecture & Development
 
-### 🚀 Interactive Features
-- **Live Code Blocks**: Interactive JavaScript/TypeScript examples using `jsx live`
-- **WebContainer Integration**: Client-side code execution for JavaScript/TypeScript
-- **Replit Integration**: Python REPL for interactive Python examples
-- **Responsive Design**: Mobile-friendly documentation
+- [Yarn Workspace Optimizations](yarn-workspace-optimizations.md) - Performance and configuration
+- [Model Manifest](../MODEL_MANIFEST.md) - AI model configurations and capabilities
+- [Model Compliance](MODEL_COMPLIANCE.md) - Model validation and compliance rules
+- [Quantum Routing Progress](QUANTUM_ROUTING_PROGRESS.md) - Advanced routing implementation
 
-### 🔧 Technical Implementation
+## Deployment
+
+- [Deployment Guide](DEPLOYMENT.md) - Railway deployment and local development
+- [Railway Deployment Guide](railway-deployment-guide.md) - Railway-specific optimizations
+- [Build Outputs and Ignores](BUILD_OUTPUTS_AND_IGNORES.md) - Build configuration
+
+## Workflows
+
+- [AI Automated Workflows](AI_AUTOMATED_WORKFLOWS.md) - Automation patterns
+- [Documentation Structure](DOCUMENTATION_STRUCTURE.md) - Documentation organization
+- [Navigation Best Practices](NAVIGATION_BEST_PRACTICES.md) - UI/UX guidelines
+
+## Roadmap
+
+- [Project Roadmap](roadmap.md) - Development roadmap and milestones
+
+## Reference
+
+- [Railway Docs Links](railway-docs-links.md) - Railway documentation references
+- [Railpack Docs Links](railpack-docs-links.md) - Railpack configuration references
+- [Changelog](../CHANGELOG.md) - Version history
+
+## Docusaurus Site
+
+This directory also contains the Docusaurus-based documentation site:
+
+### 📚 Features
 - **Docusaurus 3.8.1**: Latest version with TypeScript support
 - **Yarn 4.9.2**: Consistent package management across the monorepo
 - **Link Validation**: Automated link checking with `linkinator`

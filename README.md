@@ -92,10 +92,11 @@ Detailed performance and introduction are shown in this
 
 ### Prerequisites
 
-- **Node.js** 20+ (required for all packages)
+- **Node.js** 20+ (enforced via Yarn constraints)
 - **Yarn** 4.9.2 via Corepack (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
-- **Python** 3.13 for production deployment
-- **Git** for cloning and version control
+- **Python** 3.13 (required for Railway deployment)
+- **Git** for version control
+- **Railway CLI** (optional) for deployment management
 
 ### Package Installation
 
@@ -121,35 +122,39 @@ npm install -g monkey-coder-cli
 ### Development Setup
 
 1. **Clone the repository**:
-
    ```bash
    git clone https://github.com/GaryOcean428/monkey-coder.git
    cd monkey-coder
    ```
 
 2. **Enable Yarn 4.9.2**:
-
    ```bash
    corepack enable
    corepack prepare yarn@4.9.2 --activate
    ```
 
-3. **Install dependencies** (uses global cache and hardlinks):
-
+3. **Install dependencies** (uses global cache and hardlinks for 30-50% faster installs):
    ```bash
    yarn install
    ```
 
-4. **Build all packages**:
+4. **Verify workspace constraints**:
+   ```bash
+   yarn constraints
+   ```
 
+5. **Build all packages**:
    ```bash
    yarn build
    ```
 
-5. **Verify workspace constraints**:
-
+6. **Run development servers**:
    ```bash
-   yarn constraints
+   # Start FastAPI backend
+   cd packages/core && python -m monkey_coder.app.main
+   
+   # In another terminal, start Next.js frontend (optional)
+   yarn workspace @monkey-coder/web dev
    ```
 
 ## Published Packages
@@ -585,40 +590,59 @@ If you are interested to leave a message to either our research team or product 
     </a>
 </p>
 
-## 🚀 Development Environment
+## 🚀 Railway Deployment
 
-### Dev Container (Recommended)
+### Production Deployment
 
-The fastest way to get started with development is using our pre-configured dev container:
+The project is configured for single-service deployment on Railway using `railpack.json`:
 
-1. **Prerequisites**: Install [Docker](https://docs.docker.com/get-docker/) and [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+```bash
+# Deploy to Railway
+railway up
 
-2. **Open in Container**: 
-   - Open the project in VS Code
-   - Click "Reopen in Container" when prompted
-   - Wait for the setup to complete (~3-5 minutes)
+# Or use GitHub integration for automatic deployments
+```
 
-3. **Start Developing**: All dependencies, databases, and tools are automatically configured!
+**Railway Configuration (`railpack.json`):**
+- Python 3.13 + Node.js 20 runtime
+- Yarn 4.9.2 workspace build support
+- Next.js static export served via FastAPI
+- Unified single-service architecture
 
-**Features:**
-- ✅ Python 3.13 + Node.js 20 pre-installed
-- ✅ Yarn 4.9.2 with workspace constraints
-- ✅ PostgreSQL 15 + Redis 7 running automatically  
-- ✅ All VS Code extensions and settings optimized
-- ✅ Automatic dependency installation with global cache
-- ✅ Database migrations and setup
-- ✅ Pre-commit hooks configured
-- ✅ Workspace constraints enforcement
+### Local Development with Railway
 
-**Available Services:**
-- Frontend: http://localhost:3000
-- API: http://localhost:8000  
-- Docs: http://localhost:3001
-- Metrics: http://localhost:9090
+```bash
+# Run with Railway environment variables
+railway run yarn dev
 
-See [.devcontainer/README.md](.devcontainer/README.md) for detailed information.
+# Test production build locally
+railway run yarn build
+railway run python run_server.py
+```
 
-### Manual Setup
+## 📦 Yarn Workspace Configuration
 
-If you prefer to set up the environment manually, see the [Local Development](#local-development) section below.
+### Performance Optimizations
+
+- **Global Cache**: 30-50% faster subsequent installs
+- **Hardlinks**: Reduced disk usage and faster module resolution  
+- **Constraints**: Enforced dependency consistency across workspaces
+- **Zero Vulnerabilities**: Automated security auditing
+
+### Key Commands
+
+```bash
+# Check and fix constraints
+yarn constraints
+yarn constraints --fix
+
+# Security audit
+yarn npm audit --all
+
+# Run command in specific workspace
+yarn workspace @monkey-coder/web dev
+
+# Run command in all workspaces
+yarn workspaces foreach -At run build
+```
 

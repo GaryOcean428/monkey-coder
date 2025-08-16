@@ -2,12 +2,12 @@
 
 ## 🌐 Service Architecture
 
-Monkey Coder has two main components:
+Monkey Coder uses a unified service architecture:
 
 1. **CLI Tool** (`monkey-coder-cli`) - The command-line interface you install locally
-2. **Backend Service** - Can be either:
-   - **Hosted Service**: https://coder.fastmonkey.au (recommended)
-   - **Local Development**: http://localhost:8000 (for development)
+2. **Backend Service** - Can be deployed as:
+   - **Railway Production**: Deployed via `railpack.json` with unified Python/Node.js runtime
+   - **Local Development**: http://localhost:8000 (FastAPI) + optional Next.js frontend
 
 ## 📦 What Gets Installed
 
@@ -51,17 +51,28 @@ monkey auth login --email your@email.com --password yourpassword
 
 #### Option B: Use Local Development
 ```bash
-# Clone and run the backend locally
+# Clone and setup the monorepo
 git clone https://github.com/GaryOcean428/monkey-coder.git
 cd monkey-coder
+
+# Enable Yarn 4.9.2
+corepack enable
+corepack prepare yarn@4.9.2 --activate
+
+# Install dependencies (uses global cache)
 yarn install
+
+# Verify constraints
+yarn constraints
+
+# Build all packages
 yarn build
 
 # Start the backend service
 cd packages/core
 python -m monkey_coder.app.main
 
-# In another terminal, configure the CLI
+# Configure the CLI
 monkey config set baseUrl "http://localhost:8000"
 monkey config set apiKey "mk-dev-test-key"
 ```
