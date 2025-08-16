@@ -1289,12 +1289,13 @@ serve_frontend = os.getenv("SERVE_FRONTEND", "true").lower() in {"1", "true", "y
 
 # Try multiple possible locations for static files
 static_dir_options = [
-    # Primary: Next.js static export folder in Railway container
-    Path("/app/out"),  # Root out directory (where Next.js actually exports)
-    Path("/app/packages/web/out"),  # Expected location
+    # Primary: Expected location in Railway container
+    Path("/app/packages/web/out"),  # Where yarn workspace builds to
+    # Fallback locations
+    Path("/app/out"),  # If someone copies it to root
     # Repo-root based fallbacks (works both locally and in container)
-    Path(__file__).resolve().parents[4] / "out",  # Root out for local dev
     Path(__file__).resolve().parents[4] / "packages" / "web" / "out",
+    Path(__file__).resolve().parents[4] / "out",  # Root out for local dev
     # Docusaurus fallback (if docs is used as marketing site)
     Path("/app/docs/build"),
     Path(__file__).resolve().parents[4] / "docs" / "build",
@@ -1304,9 +1305,18 @@ static_dir_options = [
 
 static_dir = None
 if serve_frontend:
+    logger.info("🔍 Searching for frontend static files...")
     for option in static_dir_options:
+        logger.info(f"   Checking: {option} - Exists: {option.exists()}")
         if option.exists():
             static_dir = option
+            logger.info(f"✅ Found static directory at: {static_dir}")
+            # List some contents to verify
+            try:
+                contents = list(static_dir.iterdir())[:5]
+                logger.info(f"   Contains {len(list(static_dir.iterdir()))} items including: {[p.name for p in contents]}")
+            except Exception as e:
+                logger.warning(f"   Could not list directory contents: {e}")
             break
 
 if serve_frontend and static_dir:

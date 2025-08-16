@@ -20,13 +20,16 @@
 ## JavaScript Framework
 - **Frontend Framework:** Next.js 15.2.3 with React 18.2.0
 - **CLI Framework:** TypeScript 5.8.3 with Commander.js and Chalk for CLI interface
-- **Package Manager:** Yarn 4.9.2 (Workspaces with constraints)
+- **Package Manager:** Yarn 4.9.2 (Workspaces with constraints - exact version via Corepack)
 - **Module System:** ESM with TypeScript
 - **Workspace Configuration:** 
-  - Global cache enabled for performance
-  - Hardlinks for node_modules optimization
-  - Constraints via yarn.config.cjs
-  - Workspace protocol for internal dependencies
+  - Global cache enabled for 30-50% faster installs
+  - Node linker: node-modules with hardlinks for performance
+  - Constraints enforced via yarn.config.cjs
+  - Workspace protocol (`workspace:*`) for internal dependencies
+  - Installation: `corepack enable && corepack prepare yarn@4.9.2 --activate`
+  - Security auditing: `yarn npm audit --all`
+  - Use `yarn dlx` instead of `npx` for one-off execution
 
 ## Import Strategy
 - **Strategy:** Node.js modules with TypeScript compilation
@@ -57,10 +60,12 @@
 ## Application Hosting
 - **Primary Hosting:** Railway.app (Single unified service)
 - **Architecture:** FastAPI backend with Next.js static serving
+- **Build System:** Simplified railpack.json with runtime frontend building
+- **Frontend Building:** Automatic at runtime via `run_server.py` if assets missing
 - **Static Assets:** FastAPI StaticFiles with multi-path fallback system
 - **CLI Distribution:** npm registry
 - **Python Distribution:** PyPI registry
-- **Container Runtime:** Docker with multi-stage builds
+- **Container Runtime:** Python 3.13 + Node.js 20 via railpack
 
 ## Database Hosting
 - **Primary Database:** Railway PostgreSQL addon
@@ -167,10 +172,12 @@
 - **Type Checking:** TypeScript compiler + mypy (Python)
 - **Documentation:** Docusaurus for project documentation
 - **Package Management:** 
-  - Yarn 4.9.2 with Corepack
-  - Global cache and hardlinks enabled
-  - Workspace constraints enforcement
-  - Security auditing via `yarn npm audit`
+  - Yarn 4.9.2 with Corepack (exact version enforcement)
+  - Global cache and hardlinks enabled (30-50% faster installs)
+  - Workspace constraints enforcement via yarn.config.cjs
+  - Security auditing via `yarn npm audit --all`
+  - Never mix npm and yarn commands
+  - Use `yarn dlx` instead of `npx`
 
 ## Security & Monitoring
 - **Error Tracking:** Sentry integration across all components

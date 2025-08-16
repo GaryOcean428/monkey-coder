@@ -32,11 +32,11 @@ This document summarizes the comprehensive Yarn workspace optimization performed
 - ✅ Resolved all critical and high severity vulnerabilities
 
 ### 4. **Railway Deployment Configuration**
-- ✅ Updated railpack.json for Yarn workspace support
+- ✅ Simplified railpack.json to minimal configuration
 - ✅ Added Node.js 20 alongside Python 3.13
-- ✅ Configured Yarn 4.9.2 installation via Corepack
-- ✅ Added web build step for Next.js static export
-- ✅ Included static assets in deployment
+- ✅ Moved frontend building to runtime execution
+- ✅ Added automatic Yarn 4.9.2 installation at runtime if needed
+- ✅ Implemented graceful fallback if frontend build fails
 
 ### 5. **Cleanup**
 - ✅ Removed redundant .npmrc file
@@ -74,6 +74,9 @@ This document summarizes the comprehensive Yarn workspace optimization performed
 ## 📝 Key Commands
 
 ```bash
+# Enable Yarn 4.9.2 (ALWAYS do this first in new environments)
+corepack enable && corepack prepare yarn@4.9.2 --activate
+
 # Install dependencies
 yarn install
 
@@ -94,7 +97,17 @@ yarn workspaces foreach -At run build
 
 # Run command in specific workspaces
 yarn workspaces foreach --include '@monkey-coder/web' run dev
+
+# Use yarn dlx instead of npx for one-off execution
+yarn dlx <package>  # NOT: npx <package>
 ```
+
+## ⚠️ Important Notes
+
+- **NEVER mix npm and yarn commands** in this project
+- **Always use Yarn 4.9.2** via Corepack for consistency
+- **Use `yarn dlx`** instead of `npx` for one-off package execution
+- **Workspace dependencies** must use `workspace:*` protocol
 
 ## 🔧 Configuration Files
 

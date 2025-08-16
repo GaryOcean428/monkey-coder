@@ -27,13 +27,15 @@ Use structured thinking approaches:
 Adhere to Monkey Coder's established patterns and Agent OS standards:
 - **Project Architecture**: Yarn 4.9.2 workspace monorepo with TypeScript CLI, Python FastAPI core
 - **Package Management**: 
-  - Use Yarn 4.9.2+ with Corepack enabled (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
+  - Use Yarn 4.9.2 exclusively with Corepack enabled (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
   - Global cache enabled for 30-50% faster installs
-  - Hardlinks configured for node_modules performance
+  - Node linker: node-modules with hardlinks for performance
   - Workspace dependencies use `workspace:*` protocol
   - Constraints enforced via `yarn.config.cjs`
   - Run `yarn constraints` to check consistency
   - Run `yarn npm audit --all` for security checks
+  - Never mix npm and yarn commands in the same project
+  - Use `yarn dlx` instead of `npx` for one-off package execution
 - **Python Management**: Python 3.13 for production, use uv then poetry before pip directly
 - **MCP Integration**: Use MCPs like context7 to verify current LLM models, API specifications and parameters
 - **Language Conventions**: 
@@ -321,38 +323,21 @@ rm Dockerfile railway.toml nixpacks.toml  # Remove competing configs
 touch railpack.json                        # Create railpack config
 ```
 
-### **Correct railpack.json Template (Yarn Workspace):**
+### **Correct railpack.json Template (Simplified for Yarn Workspace):**
 ```json
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",  // or "node" for Node.js primary
+  "provider": "python",
   "packages": {
     "python": "3.13",
-    "node": "20"  // Required for Yarn workspaces
-  },
-  "steps": {
-    "install-yarn": {
-      "commands": [
-        "corepack enable",
-        "corepack prepare yarn@4.9.2 --activate"
-      ]
-    },
-    "build-web": {
-      "commands": [
-        "yarn install --immutable",
-        "yarn workspace @monkey-coder/web build"
-      ],
-      "inputs": [{"step": "install-yarn"}]
-    }
+    "node": "20"
   },
   "deploy": {
-    "startCommand": "python run_server.py",  // or "yarn start"
-    "inputs": [
-      {"local": true, "include": ["packages/**", "yarn.lock", ".yarnrc.yml"]},
-      {"step": "build-web"}
-    ]
+    "startCommand": "python run_server.py"
   }
 }
+```
+**Note**: Due to railpack limitations with complex build steps, frontend building is handled at runtime by `run_server.py` which automatically builds the Next.js app if needed.
 ```
 
 ---

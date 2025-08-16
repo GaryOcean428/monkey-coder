@@ -9,11 +9,13 @@ consider MODED_MANIFEST.md as canonical.
 Monkey Coder is an AI-powered code generation and analysis platform that transforms Qwen3-Coder models into a comprehensive development toolkit. It's structured as a Yarn 4.9.2 workspace monorepo with TypeScript CLI tools, Python orchestration core, and multi-language SDKs.
 
 ### Yarn Workspace Configuration
-- **Package Manager**: Yarn 4.9.2 with Corepack
+- **Package Manager**: Yarn 4.9.2 with Corepack (exact version)
 - **Node Linker**: node-modules with hardlinks for performance
 - **Global Cache**: Enabled for 30-50% faster installs
 - **Constraints**: Enforced via yarn.config.cjs for dependency consistency
-- **Security**: Zero vulnerabilities with automated auditing
+- **Security**: Zero vulnerabilities with automated auditing via `yarn npm audit --all`
+- **Installation**: Always use `corepack enable && corepack prepare yarn@4.9.2 --activate`
+- **Commands**: Use `yarn dlx` instead of `npx` for one-off package execution
 
 ## Common Development Commands
 
@@ -371,34 +373,27 @@ When asked to work on this codebase:
 
 ### railpack.json Setup
 
-The project uses a unified railpack.json configuration that supports both Python backend and Yarn workspace builds:
+The project uses a simplified railpack.json configuration with runtime frontend building:
 
 ```json
 {
+  "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
     "python": "3.13",
     "node": "20"
-  },
-  "steps": {
-    "install-yarn": {
-      "commands": [
-        "corepack enable",
-        "corepack prepare yarn@4.9.2 --activate"
-      ]
-    },
-    "build-web": {
-      "commands": [
-        "yarn install --immutable",
-        "yarn workspace @monkey-coder/web build"
-      ]
-    }
   },
   "deploy": {
     "startCommand": "python run_server.py"
   }
 }
 ```
+
+**Note**: Frontend building is handled at runtime by `run_server.py` which automatically:
+- Checks if `packages/web/out` directory exists
+- Installs Yarn and dependencies if needed
+- Builds the Next.js frontend using `yarn workspace @monkey-coder/web export`
+- Continues with server startup even if frontend build fails (with warnings)
 
 ## Railway Deployment Master Cheat Sheet (Reference)
 ## Common Pitfalls & Correct Solutions

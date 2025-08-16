@@ -16,34 +16,27 @@ Monkey Coder is configured for single-service deployment on Railway using `railp
 
 ### Railway Configuration (`railpack.json`)
 
-The project uses a unified deployment configuration:
+The project uses a simplified deployment configuration with runtime frontend building:
 
 ```json
 {
+  "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
     "python": "3.13",
     "node": "20"
-  },
-  "steps": {
-    "install-yarn": {
-      "commands": [
-        "corepack enable",
-        "corepack prepare yarn@4.9.2 --activate"
-      ]
-    },
-    "build-web": {
-      "commands": [
-        "yarn install --immutable",
-        "yarn workspace @monkey-coder/web build"
-      ]
-    }
   },
   "deploy": {
     "startCommand": "python run_server.py"
   }
 }
 ```
+
+**Note**: Frontend building is handled automatically at runtime by `run_server.py` which:
+- Checks if `packages/web/out` directory exists
+- Installs Yarn 4.9.2 and dependencies if needed
+- Builds the Next.js frontend using `yarn workspace @monkey-coder/web export`
+- Continues with server startup even if frontend build fails (with warnings)
 
 ### Deployment Steps
 
