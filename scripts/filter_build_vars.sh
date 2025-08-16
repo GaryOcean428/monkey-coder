@@ -16,7 +16,7 @@ env | grep -E "_KEY=|_TOKEN=|_SECRET=|_API=|STRIPE_|OPENAI_|ANTHROPIC_|AWS_|GCP_
 echo
 
 echo "Total env vars: $(env | wc -l | awk '{print $1}')"
-echo "Sensitive-pattern matches (to keep runtime-only): $(env | grep -E \"_KEY=|_TOKEN=|_SECRET=|_API=|STRIPE_|OPENAI_|ANTHROPIC_|AWS_|GCP_|GOOGLE_|AZURE_\" | wc -l | awk '{print $1}')"
+echo "Sensitive-pattern matches (to keep runtime-only): $(env | grep -E '_KEY=|_TOKEN=|_SECRET=|_API=|STRIPE_|OPENAI_|ANTHROPIC_|AWS_|GCP_|GOOGLE_|AZURE_' | wc -l | awk '{print $1}')"
 echo
 echo "Note:"
 echo "- railpack.json now uses an explicit secrets list to prevent auto-propagation of ALL service variables to BuildKit."

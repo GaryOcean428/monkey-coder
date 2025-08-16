@@ -116,7 +116,7 @@ pip install monkey-coder-sdk
 
 ```bash
 # Will be available after publishing
-npm install -g monkey-coder-cli
+yarn global add monkey-coder-cli
 ```
 
 ### Development Setup

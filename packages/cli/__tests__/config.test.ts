@@ -27,15 +27,15 @@ describe('ConfigManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (os.homedir as jest.Mock).mockReturnValue(mockHomedir);
-    (os.hostname as jest.Mock).mockReturnValue('test-host');
-    (os.userInfo as jest.Mock).mockReturnValue({ username: 'testuser' });
+    (os.homedir as jest.MockedFunction<typeof os.homedir>).mockReturnValue(mockHomedir);
+    (os.hostname as jest.MockedFunction<typeof os.hostname>).mockReturnValue('test-host');
+    (os.userInfo as jest.MockedFunction<typeof os.userInfo>).mockReturnValue({ username: 'testuser' });
 
-    // Mock fs-extra methods
-    (fs.pathExistsSync as jest.Mock).mockReturnValue(false);
-    (fs.pathExists as jest.Mock).mockResolvedValue(false);
-    (fs.readFileSync as jest.Mock).mockReturnValue('{}');
-    (fs.readFile as jest.Mock).mockResolvedValue('{}');
+    // Mock fs-extra methods with proper typing
+    (fs.pathExistsSync as jest.MockedFunction<typeof fs.pathExistsSync>).mockReturnValue(false);
+    (fs.pathExists as jest.MockedFunction<typeof fs.pathExists>).mockResolvedValue(false);
+    (fs.readFileSync as jest.MockedFunction<typeof fs.readFileSync>).mockReturnValue('{}');
+    (fs.readFile as jest.MockedFunction<typeof fs.readFile>).mockResolvedValue(Buffer.from('{}'));
 
     // Create new instance for each test
     configManager = new ConfigManager();

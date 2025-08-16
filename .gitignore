@@ -285,3 +285,4 @@ scripts/test-docker-build.sh
 # Exceptions: keep sandbox service Dockerfile and docker assets tracked
 !services/sandbox/Dockerfile
 !services/sandbox/docker/**
+# Temporary deployment validation files
