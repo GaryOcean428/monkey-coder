@@ -8,10 +8,10 @@
   "steps": {
     "setup": {
       "commands": [
-        "corepack enable && corepack prepare yarn@4.9.2 --activate",
-        "yarn install --immutable",
-        "yarn workspace @monkey-coder/web build",
-        "pip install --no-cache-dir -r requirements.txt"
+        "npm install -g yarn",
+        "yarn install",
+        "yarn workspace @monkey-coder/web export",
+        "pip install -r requirements.txt"
       ]
     }
   },
