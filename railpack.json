@@ -1,77 +1,11 @@
 {
   "$schema": "https://schema.railpack.com",
-  "version": "1",
-  "metadata": {
-    "name": "monkey-coder-monorepo"
+  "provider": "python",
+  "packages": {
+    "python": "3.13",
+    "node": "20"
   },
-  "services": {
-    "backend": {
-      "root": "./",
-      "build": {
-        "provider": "python",
-        "packages": {
-          "python": "3.12"
-        },
-        "steps": {
-          "install": {
-            "commands": [
-              "pip install -r requirements.txt",
-              "cd packages/core && pip install -e ."
-            ]
-          }
-        },
-        "secrets": [
-          "RAILWAY_ENVIRONMENT",
-          "PYTHONPATH"
-        ]
-      },
-      "deploy": {
-        "startCommand": "python run_server.py",
-        "healthCheckPath": "/health",
-        "healthCheckTimeout": 300,
-        "inputs": [
-          {
-            "step": "install"
-          }
-        ]
-      }
-    },
-    "frontend": {
-      "root": "./packages/web",
-      "build": {
-        "provider": "node",
-        "packages": {
-          "node": "20"
-        },
-        "steps": {
-          "install": {
-            "commands": [
-              "corepack enable",
-              "corepack prepare yarn@stable --activate",
-              "cd /app && yarn install --frozen-lockfile"
-            ]
-          },
-          "build": {
-            "commands": [
-              "cd /app/packages/web && RAILWAY_ENVIRONMENT=production yarn build"
-            ]
-          }
-        },
-        "secrets": [
-          "RAILWAY_ENVIRONMENT"
-        ]
-      },
-      "deploy": {
-        "startCommand": "yarn start",
-        "healthCheckPath": "/api/health",
-        "healthCheckTimeout": 300,
-        "inputs": [
-          { "step": "build" }
-        ],
-        "environment": {
-          "NEXT_PUBLIC_API_URL": "https://${{backend.RAILWAY_PUBLIC_DOMAIN}}"
-        }
-      }
-    }
+  "deploy": {
+    "startCommand": "python run_server.py"
   }
 }
