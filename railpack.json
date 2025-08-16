@@ -6,36 +6,11 @@
     "node": "20"
   },
   "steps": {
-    "install-yarn": {
+    "setup": {
       "commands": [
-        "corepack enable",
-        "corepack prepare yarn@4.9.2 --activate"
-      ]
-    },
-    "install-deps": {
-      "commands": [
-        "yarn install --immutable"
-      ],
-      "inputs": [
-        {
-          "step": "install-yarn"
-        }
-      ]
-    },
-    "build-web": {
-      "commands": [
+        "corepack enable && corepack prepare yarn@4.9.2 --activate",
+        "yarn install --immutable",
         "yarn workspace @monkey-coder/web build",
-        "ls -la packages/web/out || echo 'No out directory found'",
-        "cp -r packages/web/out /app/out 2>/dev/null || echo 'Could not copy out directory'"
-      ],
-      "inputs": [
-        {
-          "step": "install-deps"
-        }
-      ]
-    },
-    "install-python": {
-      "commands": [
         "pip install --no-cache-dir -r requirements.txt"
       ]
     }
@@ -44,10 +19,7 @@
     "startCommand": "python run_server.py",
     "inputs": [
       {
-        "step": "install-python"
-      },
-      {
-        "step": "build-web"
+        "step": "setup"
       }
     ]
   }
