@@ -180,8 +180,9 @@ node_modules/
 
 # Next.js build output
 .next/
-out/
-packages/web/out/
+# Don't ignore out/ - we need it for deployment
+# out/
+# packages/web/out/
 packages/web/.next/
 
 # Next.js cache and build artifacts

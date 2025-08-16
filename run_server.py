@@ -4,8 +4,8 @@ import subprocess
 import uvicorn
 from pathlib import Path
 
-def build_frontend_if_needed():
-  """Build the Next.js frontend if the out directory doesn't exist."""
+def check_frontend():
+  """Check if the Next.js frontend build exists."""
   base_dir = Path(__file__).parent
   web_out_dir = base_dir / "packages" / "web" / "out"
   
@@ -13,52 +13,22 @@ def build_frontend_if_needed():
   print(f"   Base directory: {base_dir}")
   print(f"   Directory exists: {web_out_dir.exists()}")
   
-  if not web_out_dir.exists():
-    print("🔨 Frontend build directory not found. Building Next.js app...")
-    try:
-      # Check if we have Node.js
-      try:
-        subprocess.run(["node", "--version"], check=True, capture_output=True)
-        print("✅ Node.js is available")
-      except:
-        print("❌ Node.js not found - cannot build frontend")
-        return
-      
-      # Install dependencies if node_modules doesn't exist
-      node_modules = base_dir / "node_modules"
-      if not node_modules.exists():
-        print("📦 Installing dependencies with Yarn...")
-        # Use corepack to get exact Yarn version
-        subprocess.run(["corepack", "enable"], check=True, cwd=str(base_dir))
-        subprocess.run(["corepack", "prepare", "yarn@4.9.2", "--activate"], check=True, cwd=str(base_dir))
-        subprocess.run(["yarn", "install"], check=True, cwd=str(base_dir))
-      
-      # Build the Next.js app
-      print("🏗️ Building Next.js frontend...")
-      subprocess.run(["yarn", "workspace", "@monkey-coder/web", "export"], check=True, cwd=str(base_dir))
-      print("✅ Frontend build complete!")
-      
-      # Verify the build output
-      if web_out_dir.exists():
-        print(f"✅ Build output verified at: {web_out_dir}")
-        # List some files to confirm
-        files = list(web_out_dir.glob("*.html"))[:5]
-        print(f"   Found {len(list(web_out_dir.glob('*')))} files including: {[f.name for f in files]}")
-    except subprocess.CalledProcessError as e:
-      print(f"⚠️ Warning: Failed to build frontend: {e}")
-      print("   Continuing without frontend assets...")
-    except FileNotFoundError as e:
-      print(f"⚠️ Warning: Build tools not found: {e}")
-      print("   Continuing without frontend assets...")
-  else:
+  if web_out_dir.exists():
     print("✅ Frontend assets found at:", web_out_dir)
     # List some files to confirm
     files = list(web_out_dir.glob("*.html"))[:5]
-    print(f"   Contains {len(list(web_out_dir.glob('*')))} files including: {[f.name for f in files]}")
+    total_files = len(list(web_out_dir.glob('*')))
+    print(f"   Contains {total_files} files including: {[f.name for f in files]}")
+    return True
+  else:
+    print("⚠️ Frontend build directory not found.")
+    print("   Please build the frontend locally with: ./build-frontend.sh")
+    print("   Then commit the packages/web/out/ directory to git")
+    return False
 
 def main():
-  # Build frontend if needed
-  build_frontend_if_needed()
+  # Check frontend exists
+  check_frontend()
   
   # Ensure package path for Monkey Coder when running from /app
   base_dir = os.path.dirname(os.path.abspath(__file__))
