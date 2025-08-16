@@ -64,16 +64,6 @@ export default function LoginPage() {
       {/* Left side - Form */}
       <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-sm">
-          <Link href="/" className="flex items-center gap-2 mb-8">
-            <Image
-              src="/splash.png"
-              alt="Monkey Coder Logo"
-              width={150}
-              height={40}
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
-
           <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
           <p className="text-sm text-muted-foreground mb-8">
             Don't have an account?{' '}
