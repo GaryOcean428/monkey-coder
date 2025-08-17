@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { navigationConfig } from '@/config/navigation';
 
 export function SiteFooter() {
   return (
@@ -23,11 +24,15 @@ export function SiteFooter() {
             </ul>
           </div>
           <div className="space-y-2">
-            <h4 className="font-medium text-foreground/90">Company</h4>
+            <h4 className="font-medium text-foreground/90">Legal</h4>
             <ul className="space-y-1">
-              <li><Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link></li>
-              <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</Link></li>
-              <li><Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">Terms</Link></li>
+              {navigationConfig.legal.map((item) => (
+                <li key={item.name}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </nav>

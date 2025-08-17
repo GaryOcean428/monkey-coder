@@ -5,13 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/contact', label: 'Contact' },
-];
+import { simpleNavigation } from '@/config/navigation';
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -41,7 +35,7 @@ export function SiteHeader() {
             </span>
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            {navItems.map((item) => {
+            {simpleNavigation.map((item) => {
               const active = pathname === item.href;
               return (
                 <Link
@@ -55,7 +49,7 @@ export function SiteHeader() {
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   )}
                 >
-                  {item.label}
+                  {item.name}
                 </Link>
               );
             })}

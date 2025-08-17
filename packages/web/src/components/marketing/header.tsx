@@ -6,15 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-
-const navigation = [
-	{ name: 'Getting Started', href: '/getting-started' },
-	{ name: 'Features', href: '/#features' },
-	{ name: 'Pricing', href: '/pricing' },
-	{ name: 'Docs', href: '/docs/cli' },
-	{ name: 'API Keys', href: '/api-keys' },
-	{ name: 'Contact', href: '/contact' },
-]
+import { mainNavigation } from '@/config/navigation'
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -81,7 +73,7 @@ export function Header() {
 					</button>
 				</div>
 				<div className="hidden lg:flex lg:gap-x-12">
-					{navigation.map((item) => (
+					{mainNavigation.map((item) => (
 						<Link
 							key={item.name}
 							href={item.href}
@@ -142,7 +134,7 @@ export function Header() {
 					<div className="mt-6 flow-root">
 						<div className="-my-6 divide-y divide-gray-500/10">
 							<div className="space-y-2 py-6">
-								{navigation.map((item) => (
+								{mainNavigation.map((item) => (
 									<Link
 										key={item.name}
 										href={item.href}
