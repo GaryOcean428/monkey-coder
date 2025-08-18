@@ -25,7 +25,7 @@ export interface AuthResponse {
  * Uses httpOnly cookies for token storage (server-side)
  */
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch('/api/auth/login', {
+  const response = await fetch('/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include', // Important for httpOnly cookies
@@ -54,7 +54,7 @@ export async function signup(data: {
   password: string;
   plan?: string;
 }): Promise<AuthResponse> {
-  const response = await fetch('/api/auth/signup', {
+  const response = await fetch('/api/v1/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include', // Important for httpOnly cookies
@@ -75,7 +75,7 @@ export async function signup(data: {
  * Clears httpOnly cookies on server-side
  */
 export async function logout(): Promise<void> {
-  const response = await fetch('/api/auth/logout', {
+  const response = await fetch('/api/v1/auth/logout', {
     method: 'POST',
     credentials: 'include', // Important for httpOnly cookies
   });
@@ -95,7 +95,7 @@ export async function getUserStatus(): Promise<{
   session_expires?: string;
 }> {
   try {
-    const response = await fetch('/api/auth/status', {
+    const response = await fetch('/api/v1/auth/status', {
       credentials: 'include', // Important for httpOnly cookies
     });
 
@@ -116,7 +116,7 @@ export async function getUserStatus(): Promise<{
  */
 export async function refreshToken(): Promise<AuthResponse | null> {
   try {
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch('/api/v1/auth/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // Important for httpOnly cookies
