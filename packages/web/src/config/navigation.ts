@@ -22,8 +22,8 @@ export interface NavigationConfig {
 }
 
 /**
- * Main navigation items used in headers
- * Consolidated from marketing/header.tsx and site-header.tsx
+ * Main navigation items used in the site header
+ * Consolidated single source of truth for navigation
  */
 export const mainNavigation: NavigationItem[] = [
   { name: 'Getting Started', href: '/getting-started' },
@@ -92,17 +92,10 @@ export const navigationConfig: NavigationConfig = {
 };
 
 /**
- * Unified navigation for site header (now includes all essential items)
- * Replaces both simpleNavigation and mainNavigation to eliminate duplication
+ * Unified navigation for site header
+ * Single source of truth for all navigation items
  */
-export const unifiedNavigation: NavigationItem[] = [
-  { name: 'Getting Started', href: '/getting-started' },
-  { name: 'Features', href: '/#features' },
-  { name: 'Pricing', href: '/pricing' },
-  { name: 'Docs', href: '/docs' },
-  { name: 'API Keys', href: '/api-keys' },
-  { name: 'Contact', href: '/contact' },
-];
+export const unifiedNavigation: NavigationItem[] = mainNavigation;
 
 /**
  * @deprecated Use unifiedNavigation instead
