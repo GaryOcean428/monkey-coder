@@ -5,6 +5,9 @@
     "python": "3.13",
     "node": "20"
   },
+  "build": {
+    "command": "bash build-and-deploy.sh"
+  },
   "deploy": {
     "startCommand": "python run_server.py"
   }
