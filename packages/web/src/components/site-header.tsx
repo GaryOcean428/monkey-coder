@@ -42,21 +42,21 @@ export function SiteHeader() {
             href="/"
             className="-m-1.5 p-1.5 flex items-center gap-2"
           >
-            <span className="relative h-8 w-[120px]">
+            <span className="relative h-12 w-[160px]">
               <Image
                 src="/logo-light.png"
                 alt="Monkey Coder"
-                width={120}
-                height={32}
-                className="h-8 w-auto object-contain block dark:hidden"
+                width={160}
+                height={48}
+                className="h-12 w-auto object-contain block dark:hidden"
                 priority
               />
               <Image
                 src="/logo-dark.png"
                 alt="Monkey Coder"
-                width={120}
-                height={32}
-                className="h-8 w-auto object-contain hidden dark:block"
+                width={160}
+                height={48}
+                className="h-12 w-auto object-contain hidden dark:block neon-logo"
                 priority
               />
             </span>
@@ -104,10 +104,12 @@ export function SiteHeader() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
           <ThemeToggle />
           <Link href="/login">
-            <Button variant="ghost">Log in</Button>
+            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
+              Log in
+            </Button>
           </Link>
           <Link href="/signup">
-            <Button>Get started</Button>
+            <Button className="neon-button-cyan">Get started</Button>
           </Link>
         </div>
       </nav>
@@ -127,21 +129,21 @@ export function SiteHeader() {
               href="/"
               className="-m-1.5 p-1.5 flex items-center gap-2"
             >
-              <span className="relative h-8 w-[120px]">
+              <span className="relative h-12 w-[160px]">
                 <Image
                   src="/logo-light.png"
                   alt="Monkey Coder"
-                  width={120}
-                  height={32}
-                  className="h-8 w-auto object-contain block dark:hidden"
+                  width={160}
+                  height={48}
+                  className="h-12 w-auto object-contain block dark:hidden"
                   priority
                 />
                 <Image
                   src="/logo-dark.png"
                   alt="Monkey Coder"
-                  width={120}
-                  height={32}
-                  className="h-8 w-auto object-contain hidden dark:block"
+                  width={160}
+                  height={48}
+                  className="h-12 w-auto object-contain hidden dark:block neon-logo"
                   priority
                 />
               </span>
@@ -175,12 +177,12 @@ export function SiteHeader() {
                   <ThemeToggle />
                 </div>
                 <Link href="/login" className="block">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
                     Log in
                   </Button>
                 </Link>
                 <Link href="/signup" className="block">
-                  <Button className="w-full">Get started</Button>
+                  <Button className="w-full neon-button-cyan">Get started</Button>
                 </Link>
               </div>
             </div>
