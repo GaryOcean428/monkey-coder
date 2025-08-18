@@ -5,13 +5,10 @@ import { Hero } from '@/components/marketing/hero'
 import { Features } from '@/components/marketing/features'
 import { PricingSection } from '@/components/marketing/pricing'
 import { Footer } from '@/components/marketing/footer'
-import { Header } from '@/components/marketing/header'
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
-
       <main className="flex-1">
         {/* Hero Section */}
         <Hero />

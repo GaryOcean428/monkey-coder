@@ -92,12 +92,20 @@ export const navigationConfig: NavigationConfig = {
 };
 
 /**
- * Simplified navigation for smaller components (like site-header)
- * Contains essential links only
+ * Unified navigation for site header (now includes all essential items)
+ * Replaces both simpleNavigation and mainNavigation to eliminate duplication
  */
-export const simpleNavigation: NavigationItem[] = [
-  { name: 'Home', href: '/' },
+export const unifiedNavigation: NavigationItem[] = [
+  { name: 'Getting Started', href: '/getting-started' },
+  { name: 'Features', href: '/#features' },
   { name: 'Pricing', href: '/pricing' },
   { name: 'Docs', href: '/docs' },
+  { name: 'API Keys', href: '/api-keys' },
   { name: 'Contact', href: '/contact' },
 ];
+
+/**
+ * @deprecated Use unifiedNavigation instead
+ * Kept for backward compatibility during transition
+ */
+export const simpleNavigation: NavigationItem[] = unifiedNavigation;
