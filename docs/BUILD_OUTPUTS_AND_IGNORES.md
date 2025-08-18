@@ -18,14 +18,15 @@ This repo uses a monorepo with a Next.js frontend and a FastAPI backend.
   - No compiled/dist output is committed.
 
 - Ignore rules
-  - `.gitignore` ignores typical Node/Python outputs, including `.next/` and `out/`.
-  - Exception: `services/sandbox/Dockerfile` is explicitly allowed so it can be tracked
-    while other Dockerfiles remain ignored to avoid conflicts with Railpack builds.
-  - There is no `.dockerignore` at the root. Railpack handles deploy inputs via `railpack.JSON`.
+  - `.gitignore` ignores typical Node/Python outputs, including `.next/`.
+  - **UPDATE (2025-08-18)**: `out/` directory is now tracked in git for Railway deployment.
+  - Exception: `services/sandbox/Dockerfile` is explicitly allowed so it can be tracked.
+  - **UPDATE (2025-08-18)**: Dockerfiles in root are now allowed for flexible Railway deployment.
+  - There is no `.dockerignore` at the root. Railpack handles deploy inputs via `railpack.json`.
 
 - Deploy
-  - `railpack.JSON` orchestrates two steps: `web` (builds Next.js export) and `Python`
+  - `railpack.json` orchestrates two steps: `web` (builds Next.js export) and `Python`
     (installs Python deps). The unified service starts with `Python run_server.py`.
 
 Keep Next.js static export-only mode unless switching to server rendering.
-If you switch, update `railpack.JSON` and FastAPI static mounting accordingly.
+If you switch, update `railpack.json` and FastAPI static mounting accordingly.
