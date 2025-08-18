@@ -29,13 +29,19 @@ describe('ConfigManager', () => {
     jest.clearAllMocks();
     (os.homedir as jest.MockedFunction<typeof os.homedir>).mockReturnValue(mockHomedir);
     (os.hostname as jest.MockedFunction<typeof os.hostname>).mockReturnValue('test-host');
-    (os.userInfo as jest.MockedFunction<typeof os.userInfo>).mockReturnValue({ username: 'testuser' });
+    (os.userInfo as jest.MockedFunction<typeof os.userInfo>).mockReturnValue({
+      username: 'testuser',
+      uid: 1000,
+      gid: 1000,
+      shell: '/bin/bash',
+      homedir: mockHomedir
+    });
 
     // Mock fs-extra methods with proper typing
     (fs.pathExistsSync as jest.MockedFunction<typeof fs.pathExistsSync>).mockReturnValue(false);
-    (fs.pathExists as jest.MockedFunction<typeof fs.pathExists>).mockResolvedValue(false);
+    (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(false);
     (fs.readFileSync as jest.MockedFunction<typeof fs.readFileSync>).mockReturnValue('{}');
-    (fs.readFile as jest.MockedFunction<typeof fs.readFile>).mockResolvedValue(Buffer.from('{}'));
+    (fs.readFile as unknown as jest.MockedFunction<() => Promise<Buffer>>).mockResolvedValue(Buffer.from('{}'));
 
     // Create new instance for each test
     configManager = new ConfigManager();
@@ -182,9 +188,9 @@ describe('ConfigManager', () => {
 
   describe('saveConfig', () => {
     it('creates config directory if it does not exist', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       await configManager.saveConfig();
 
@@ -192,9 +198,9 @@ describe('ConfigManager', () => {
     });
 
     it('writes config to file as JSON', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       configManager.set('baseUrl', 'https://test.api.com');
       configManager.set('defaultModel', 'test-model');
