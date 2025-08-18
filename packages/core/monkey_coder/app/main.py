@@ -36,6 +36,7 @@ from ..models import (
     TaskStatus,
     ExecutionError,
 )
+from ..context.simple_manager import SimpleContextManager
 from ..security import (
     get_api_key,
     verify_permissions,
@@ -133,6 +134,23 @@ async def lifespan(app: FastAPI):
         app.state.api_key_manager = get_api_key_manager()
         logger.info("✅ APIKeyManager initialized successfully")
 
+        # Initialize context manager for multi-turn conversations
+        app.state.context_manager = SimpleContextManager()
+        logger.info("✅ SimpleContextManager initialized successfully")
+
+        # Start periodic context cleanup task
+        async def periodic_cleanup():
+            while True:
+                try:
+                    await asyncio.sleep(3600)  # Run every hour
+                    await app.state.context_manager.cleanup_expired_sessions()
+                    logger.info("Periodic context cleanup completed")
+                except Exception as e:
+                    logger.error(f"Periodic context cleanup failed: {e}")
+        
+        app.state.cleanup_task = asyncio.create_task(periodic_cleanup())
+        logger.info("✅ Periodic context cleanup task started")
+
         # Initialize providers with timeout
         await app.state.provider_registry.initialize_all()
         logger.info("✅ All providers initialized successfully")
@@ -149,6 +167,15 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Monkey Coder Core...")
+
+    # Cancel periodic cleanup task
+    if hasattr(app.state, 'cleanup_task'):
+        app.state.cleanup_task.cancel()
+        try:
+            await app.state.cleanup_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Periodic cleanup task cancelled")
 
     await app.state.provider_registry.cleanup_all()
     logger.info("Shutdown complete")
@@ -626,6 +653,33 @@ async def execute_task(
         # Verify permissions
         await verify_permissions(api_key, "execute")
 
+        # Context Management Integration - Handle conversation history
+        conversation_context = []
+        
+        if request.context.session_id:
+            try:
+                # Add user message to conversation
+                await app.state.context_manager.add_message(
+                    user_id=request.context.user_id,
+                    session_id=request.context.session_id,
+                    role="user",
+                    content=request.prompt,
+                    metadata={"task_type": str(request.task_type), "task_id": request.task_id}
+                )
+                
+                # Get conversation context for better prompt understanding
+                conversation_context = await app.state.context_manager.get_conversation_context(
+                    user_id=request.context.user_id,
+                    session_id=request.context.session_id,
+                    include_system=True
+                )
+                logger.info(f"Loaded conversation context with {len(conversation_context)} messages")
+                
+            except Exception as e:
+                logger.warning(f"Context management error (continuing without context): {e}")
+                # Continue execution without context rather than failing
+                conversation_context = []
+
         # Start metrics collection
         execution_id = app.state.metrics_collector.start_execution(request)
 
@@ -656,6 +710,22 @@ async def execute_task(
             orchestration_info={},
             quantum_execution={}
         )
+
+        # Save assistant response to conversation context
+        if request.context.session_id:
+            try:
+                assistant_content = response.result if response.result else "Task completed successfully"
+                await app.state.context_manager.add_message(
+                    user_id=request.context.user_id,
+                    session_id=request.context.session_id,
+                    role="assistant", 
+                    content=str(assistant_content),
+                    metadata={"execution_id": execution_id, "task_type": str(request.task_type)}
+                )
+                logger.info(f"Saved assistant response to conversation context")
+            except Exception as e:
+                logger.warning(f"Failed to save assistant response to context: {e}")
+                # Continue without failing the request
 
         # Track billing in background
         background_tasks.add_task(
@@ -1276,6 +1346,162 @@ async def get_api_key_stats(
     except Exception as e:
         logger.error(f"API key stats retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve API key statistics")
+
+
+# Context Management Endpoints
+@app.get("/api/v1/context/history", response_model=Dict[str, Any])
+async def get_conversation_history(
+    user_id: str,
+    limit: int = 10,
+    api_key: str = Depends(get_api_key),
+) -> Dict[str, Any]:
+    """
+    Get conversation history for a user.
+
+    Args:
+        user_id: User identifier
+        limit: Maximum number of conversations to return
+        api_key: API key for authentication
+
+    Returns:
+        Dictionary with conversation history
+
+    Raises:
+        HTTPException: If history retrieval fails
+    """
+    try:
+        # Verify permissions
+        await verify_permissions(api_key, "execute")
+
+        # Get conversation history
+        history = await app.state.context_manager.get_conversation_history(user_id, limit)
+        
+        return {
+            "user_id": user_id,
+            "history": history,
+            "total_conversations": len(history)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get conversation history: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve conversation history")
+
+
+@app.get("/api/v1/context/session/{session_id}", response_model=Dict[str, Any])
+async def get_session_context(
+    session_id: str,
+    user_id: str,
+    include_system: bool = True,
+    api_key: str = Depends(get_api_key),
+) -> Dict[str, Any]:
+    """
+    Get conversation context for a specific session.
+
+    Args:
+        session_id: Session identifier
+        user_id: User identifier
+        include_system: Whether to include system messages
+        api_key: API key for authentication
+
+    Returns:
+        Dictionary with session context
+
+    Raises:
+        HTTPException: If context retrieval fails
+    """
+    try:
+        # Verify permissions
+        await verify_permissions(api_key, "execute")
+
+        # Get session context
+        context = await app.state.context_manager.get_conversation_context(
+            user_id, session_id, include_system
+        )
+        
+        return {
+            "session_id": session_id,
+            "user_id": user_id,
+            "context": context,
+            "message_count": len(context),
+            "include_system": include_system
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get session context: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve session context")
+
+
+@app.get("/api/v1/context/stats", response_model=Dict[str, Any])
+async def get_context_stats(
+    api_key: str = Depends(get_api_key),
+) -> Dict[str, Any]:
+    """
+    Get context manager statistics.
+
+    Args:
+        api_key: API key for authentication
+
+    Returns:
+        Dictionary with context statistics
+
+    Raises:
+        HTTPException: If stats retrieval fails
+    """
+    try:
+        # Verify permissions
+        await verify_permissions(api_key, "execute")
+
+        # Get context stats
+        stats = app.state.context_manager.get_stats()
+        
+        return {
+            "stats": stats,
+            "status": "active"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get context stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve context statistics")
+
+
+@app.post("/api/v1/context/cleanup")
+async def cleanup_context(
+    background_tasks: BackgroundTasks,
+    api_key: str = Depends(get_api_key)
+) -> Dict[str, str]:
+    """
+    Trigger cleanup of expired conversations.
+
+    Args:
+        api_key: API key for authentication
+        background_tasks: FastAPI background tasks
+
+    Returns:
+        Cleanup confirmation
+
+    Raises:
+        HTTPException: If cleanup fails
+    """
+    try:
+        # Verify permissions
+        await verify_permissions(api_key, "execute")
+
+        # Schedule cleanup in background
+        background_tasks.add_task(app.state.context_manager.cleanup_expired_sessions)
+        
+        return {"message": "Cleanup scheduled successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to schedule cleanup: {e}")
+        raise HTTPException(status_code=500, detail="Failed to schedule context cleanup")
 
 
 # Error handlers
