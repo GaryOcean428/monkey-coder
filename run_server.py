@@ -22,8 +22,7 @@ def check_frontend():
     return True
   else:
     print("⚠️ Frontend build directory not found.")
-    print("   Please build the frontend locally with: ./build-frontend.sh")
-    print("   Then commit the packages/web/out/ directory to git")
+    print("   The application will serve API only.")
     return False
 
 def main():

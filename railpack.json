@@ -2,11 +2,7 @@
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
-    "node": "20"
-  },
-  "build": {
-    "command": "python railway_build.py"
+    "python": "3.13"
   },
   "deploy": {
     "startCommand": "python run_server.py"
