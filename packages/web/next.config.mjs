@@ -8,14 +8,17 @@ import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js'
 const createConfig = (isDev) => {
   // For Railway deployment, use standalone mode when in production
   const isRailwayProduction = process.env.RAILWAY_ENVIRONMENT === 'production'
+  // Allow forcing static export via environment variable
+  const forceStaticExport = process.env.NEXT_OUTPUT_EXPORT === 'true'
   
   return {
     reactStrictMode: true,
     // Use export mode for local/unified deployment, standalone for Railway multi-service
-    output: isRailwayProduction ? undefined : 'export',
-    trailingSlash: !isRailwayProduction, // Only use trailing slash for static export
+    // But allow forcing static export for unified deployments
+    output: (isRailwayProduction && !forceStaticExport) ? undefined : 'export',
+    trailingSlash: !(isRailwayProduction && !forceStaticExport), // Only use trailing slash for static export
     images: {
-      unoptimized: !isRailwayProduction, // Only unoptimize for static export
+      unoptimized: !(isRailwayProduction && !forceStaticExport), // Only unoptimize for static export
       domains: ['localhost', 'monkey-coder.up.railway.app'],
     },
 

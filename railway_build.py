@@ -44,19 +44,27 @@ def main():
             print("❌ Yarn install failed!")
             sys.exit(1)
     
-    # 3. Build frontend
-    print("\n🏗️ Building Next.js frontend...")
+    # 3. Build frontend with static export
+    print("\n🏗️ Building Next.js frontend with static export...")
     web_dir = Path("packages/web")
+    
+    # Force static export for Railway deployment by setting environment variable
+    os.environ["NEXT_OUTPUT_EXPORT"] = "true"
     
     # Use npm if yarn failed
     if use_npm:
-        build_cmd = "npm run build"
+        build_cmd = "npm run export"
     else:
-        build_cmd = "yarn build"
+        build_cmd = "yarn export"
     
     if not run_command(build_cmd, cwd=str(web_dir)):
         print("❌ Frontend build failed!")
-        sys.exit(1)
+        # Fallback to regular build if export fails
+        print("⚠️ Trying fallback build...")
+        fallback_cmd = "npm run build" if use_npm else "yarn build"
+        if not run_command(fallback_cmd, cwd=str(web_dir)):
+            print("❌ Fallback build also failed!")
+            sys.exit(1)
     
     # 4. Verify build output
     out_dir = web_dir / "out"
