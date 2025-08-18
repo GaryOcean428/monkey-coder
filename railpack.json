@@ -6,7 +6,7 @@
     "node": "20"
   },
   "build": {
-    "command": "bash build-and-deploy.sh"
+    "command": "python railway_build.py"
   },
   "deploy": {
     "startCommand": "python run_server.py"
