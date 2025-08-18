@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next build && echo 'Static export complete to out/ directory'",
+    "export": "NEXT_OUTPUT_EXPORT=true next build && echo 'Static export complete to out/ directory'",
     "start": "next start",
     "lint": "eslint .",
     "test": "jest",
