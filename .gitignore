@@ -269,14 +269,10 @@ npm-audit-report.json
 config-backup.*
 # Dev container files should be committed
 
-# Disallow Docker artifacts (force Railpack detection)
+# Docker files - allowed for Railway deployment
 # NOTE: We explicitly allow the sandbox service Dockerfile to be tracked
-Dockerfile
-**/Dockerfile
-docker-compose.yml
-**/docker-compose*.yml
-docker/
-**/docker/
+# Dockerfile  # Commented out to allow Railway Dockerfile
+# docker-compose.yml  # Commented out if needed
 scripts/test-docker-build.sh
 
 # Exceptions: keep sandbox service Dockerfile and docker assets tracked
