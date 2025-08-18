@@ -50,6 +50,7 @@ from ..security import (
     get_user_permissions
 )
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
+from ..auth.cookie_auth import get_current_user_from_cookie
 from ..monitoring import MetricsCollector, BillingTracker
 from ..database import run_migrations, get_user_store
 from ..pricing import PricingMiddleware, load_pricing_from_file
@@ -202,10 +203,19 @@ if middleware_config.environment == "production":
     if not allowed_origins:
         public_domain = middleware_config._get_env("RAILWAY_PUBLIC_DOMAIN", "").strip()
         if public_domain:
-            allowed_origins = [f"https://{public_domain}"]
+            # Include both https and http for local testing through Railway domain
+            allowed_origins = [
+                f"https://{public_domain}",
+                f"http://{public_domain}",
+                "https://coder.fastmonkey.au",
+                "http://coder.fastmonkey.au"
+            ]
         else:
-            # Safe fallback to no-origins (or could default to '*', but avoid broadening in prod)
-            allowed_origins = []
+            # Safe fallback to Railway domains
+            allowed_origins = [
+                "https://aetheros-production.up.railway.app",
+                "https://coder.fastmonkey.au"
+            ]
 else:
     # Development: keep permissive defaults
     allowed_origins = ["*"]
@@ -441,57 +451,79 @@ async def login(request: LoginRequest, response: Response, background_tasks: Bac
 
 
 @app.get("/api/v1/auth/status", response_model=UserStatusResponse)
-async def get_user_status(current_user: JWTUser = Depends(get_current_user)) -> UserStatusResponse:
+async def get_user_status(request: Request) -> UserStatusResponse:
     """
     Get current user authentication status.
 
     Args:
-        current_user: Current authenticated user
+        request: FastAPI request object
 
     Returns:
         User status and information
     """
     try:
-        return UserStatusResponse(
-            authenticated=True,
-            user={
-                "email": current_user.email,
-                "name": current_user.username,
-                "credits": 10000,  # Mock credits
-                "subscription_tier": "developer"
-            },
-            session_expires=current_user.expires_at.isoformat() if current_user.expires_at else None
-        )
+        # Try to get user from cookie authentication
+        try:
+            current_user = await get_current_user_from_cookie(request)
+            return UserStatusResponse(
+                authenticated=True,
+                user={
+                    "email": current_user.email,
+                    "name": current_user.username,
+                    "credits": 10000,  # Mock credits
+                    "subscription_tier": "developer"
+                },
+                session_expires=current_user.expires_at.isoformat() if current_user.expires_at else None
+            )
+        except HTTPException:
+            # Not authenticated
+            return UserStatusResponse(
+                authenticated=False,
+                user=None,
+                session_expires=None
+            )
 
     except Exception as e:
         logger.error(f"Status check failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get user status")
+        return UserStatusResponse(
+            authenticated=False,
+            user=None,
+            session_expires=None
+        )
 
 
 @app.post("/api/v1/auth/logout")
-async def logout(request: Request, response: Response, current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+async def logout(request: Request, response: Response) -> Dict[str, str]:
     """
     User logout endpoint.
 
     Args:
         request: FastAPI request object
         response: FastAPI response object
-        current_user: Current authenticated user
 
     Returns:
         Logout confirmation
     """
     try:
+        # Try to get current user for logging purposes
+        current_user = None
+        try:
+            current_user = await get_current_user_from_cookie(request)
+        except:
+            pass  # User might already be logged out
+
         # Logout using enhanced manager
         success = await enhanced_auth_manager.logout(request)
 
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to invalidate session")
+            # Still clear cookies even if session invalidation fails
+            pass
 
         # Clear cookies
         enhanced_auth_manager.clear_auth_cookies(response)
 
-        logger.info(f"User {current_user.email} logged out successfully")
+        if current_user:
+            logger.info(f"User {current_user.email} logged out successfully")
 
         return {"message": "Successfully logged out"}
 
