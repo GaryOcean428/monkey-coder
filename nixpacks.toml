@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ["python313", "sqlite", "gcc", "binutils"]
+aptPkgs = ["libsqlite3-dev", "libsqlite3-0", "sqlite3"]
+
+[phases.install]
+cmds = [
+    "pip install --upgrade pip setuptools wheel",
+    "pip install -r requirements.txt",
+    "cd packages/core && pip install -e .",
+    "cd ../.."
+]
+
+[start]
+cmd = "python run_server.py"
+
+[variables]
+PYTHONUNBUFFERED = "1"
+PYTHON_VERSION = "3.13"
