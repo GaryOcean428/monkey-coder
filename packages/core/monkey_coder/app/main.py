@@ -9,6 +9,8 @@ This module provides the core FastAPI application with:
 
 import logging
 import os
+import asyncio
+import traceback
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
