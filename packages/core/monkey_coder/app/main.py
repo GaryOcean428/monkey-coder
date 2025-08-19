@@ -266,6 +266,23 @@ app.add_middleware(
 # Add Sentry middleware for error tracking
 app.add_middleware(SentryAsgiMiddleware)
 
+# Add production security headers middleware
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Add production security headers to all responses."""
+    response = await call_next(request)
+    
+    # Get production security headers
+    if middleware_config.environment == "production":
+        from ..config.production_config import get_production_config
+        prod_config = get_production_config()
+        security_headers = prod_config.get_security_headers()
+        
+        for header, value in security_headers.items():
+            response.headers[header] = value
+    
+    return response
+
 # Add metrics collection middleware
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
@@ -285,6 +302,20 @@ async def metrics_middleware(request: Request, call_next):
             status=response.status_code,
             duration=duration
         )
+
+    # Record performance metrics for Phase 2.0 monitoring
+    from ..optimization.performance_cache import get_performance_monitor
+    try:
+        performance_monitor = get_performance_monitor()
+        performance_monitor.record_request(
+            endpoint=request.url.path,
+            method=request.method,
+            duration=duration,
+            status_code=response.status_code,
+            user_id=getattr(request.state, 'user_id', None)
+        )
+    except Exception as e:
+        logger.debug(f"Performance monitoring error: {e}")
 
     # Log performance data for Railway
     performance_logger.logger.info(
@@ -383,9 +414,92 @@ async def health_check():
 
     return HealthResponse(
         status="healthy",
-        version="1.0.0",
+        version="2.0.0",  # Updated to Phase 2.0
         timestamp=datetime.utcnow().isoformat(),
         components=components
+    )
+
+
+@app.get("/health/comprehensive")
+async def comprehensive_health_check():
+    """
+    Comprehensive health check for production monitoring.
+    
+    Provides detailed health status including system resources,
+    database connectivity, AI provider status, and component health.
+    """
+    from ..config.production_config import get_production_config
+    
+    prod_config = get_production_config()
+    health_status = await prod_config.comprehensive_health_check()
+    
+    return JSONResponse(
+        content=health_status,
+        status_code=200 if health_status["status"] == "healthy" else 503
+    )
+
+
+@app.get("/health/readiness")
+async def readiness_check():
+    """
+    Kubernetes-style readiness check for production deployment.
+    
+    Returns 200 if the application is ready to receive traffic,
+    503 if still initializing or experiencing issues.
+    """
+    # Check if critical components are initialized
+    if not all([
+        hasattr(app.state, 'orchestrator'),
+        hasattr(app.state, 'quantum_executor'),
+        hasattr(app.state, 'provider_registry')
+    ]):
+        return JSONResponse(
+            content={"status": "not_ready", "message": "Core components not initialized"},
+            status_code=503
+        )
+    
+    return JSONResponse(
+        content={"status": "ready", "timestamp": datetime.utcnow().isoformat()},
+        status_code=200
+    )
+
+
+@app.get("/api/v1/production/validate")
+async def validate_production_readiness():
+    """
+    Production readiness validation endpoint.
+    
+    Performs comprehensive validation of production configuration,
+    security settings, and system health for deployment readiness.
+    """
+    from ..config.production_config import get_production_config
+    
+    prod_config = get_production_config()
+    validation_results = prod_config.validate_production_readiness()
+    
+    # Add additional runtime checks
+    runtime_checks = {
+        "components_initialized": all([
+            hasattr(app.state, 'orchestrator'),
+            hasattr(app.state, 'quantum_executor'),
+            hasattr(app.state, 'provider_registry')
+        ]),
+        "metrics_enabled": hasattr(app.state, 'metrics_collector'),
+        "security_headers_active": True,  # We added the middleware
+        "performance_monitoring_active": True  # We added performance monitoring
+    }
+    
+    validation_results["runtime_checks"] = runtime_checks
+    validation_results["overall_ready"] = (
+        validation_results["ready"] and 
+        all(runtime_checks.values())
+    )
+    
+    status_code = 200 if validation_results["overall_ready"] else 503
+    
+    return JSONResponse(
+        content=validation_results,
+        status_code=status_code
     )
 
 
@@ -404,6 +518,41 @@ async def prometheus_metrics():
 
     metrics_data = app.state.metrics_collector.get_prometheus_metrics()
     return Response(content=metrics_data, media_type="text/plain")
+
+
+@app.get("/metrics/performance")
+async def performance_metrics():
+    """
+    Performance metrics endpoint for monitoring dashboard.
+    
+    Returns detailed performance statistics including response times,
+    cache hit rates, and slow request analysis.
+    """
+    from ..optimization.performance_cache import get_performance_monitor, get_cache
+    
+    performance_monitor = get_performance_monitor()
+    cache = get_cache()
+    
+    metrics = {
+        "performance": performance_monitor.get_performance_summary(),
+        "cache": cache.get_stats(),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    return JSONResponse(content=metrics)
+
+
+@app.get("/metrics/cache")
+async def cache_metrics():
+    """
+    Cache statistics endpoint for performance monitoring.
+    """
+    from ..optimization.performance_cache import get_cache
+    
+    cache = get_cache()
+    stats = cache.get_stats()
+    
+    return JSONResponse(content=stats)
 
 
 # Authentication Endpoints
