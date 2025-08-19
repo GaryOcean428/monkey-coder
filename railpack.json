@@ -1,10 +1,41 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",
-  "packages": {
-    "python": "3.13"
+  "version": "1",
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.13",
+      "node": "20"
+    },
+    "steps": {
+      "web": {
+        "description": "Build Next.js frontend for static export",
+        "commands": [
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn install --immutable",
+          "yarn workspace @monkey-coder/web build"
+        ]
+      },
+      "python": {
+        "description": "Install Python dependencies",
+        "commands": [
+          "pip install --no-cache-dir --upgrade pip setuptools wheel",
+          "pip install --no-cache-dir -r requirements.txt",
+          "cd packages/core && pip install --no-cache-dir -e ."
+        ],
+        "inputs": [
+          {"step": "web"}
+        ]
+      }
+    }
   },
   "deploy": {
-    "startCommand": "python run_server.py"
+    "startCommand": "python run_server.py",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
+    "inputs": [
+      {"step": "python"}
+    ]
   }
 }
