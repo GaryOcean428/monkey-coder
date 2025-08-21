@@ -1,6 +1,8 @@
+# Backlog & Priorities
+
 [← Back to Roadmap Index](./index.md)
 
-##### Critical Issues (Priority 0 - Must Complete)
+## Critical Issues (Priority 0 - Must Complete)
 
 - [x] **Web Package Testing** - Comprehensive test coverage for React components `S` ✅
   - ✅ **Component Tests**: Added tests for Button, Input, Card components (66 tests)
@@ -45,7 +47,7 @@
   - [x] API Models: Fix naming inconsistencies (superclause_config → persona_config) ✅
   - [ ] Request Models: Split heavy ExecuteRequest model into focused components
 
-##### Important Improvements (Priority 1 - Should Complete)
+## Important Improvements (Priority 1 - Should Complete)
 
 - [x] **Quantum Tests Validation** - Ensure quantum features are properly tested `S` ✅
   - ✅ **Test Fixes**: Fixed Experience buffer timestamp issues
@@ -71,7 +73,7 @@
   - [ ] Add configuration validation and schema checking
   - [ ] Support multiple configuration profiles
 
-##### Testing & Quality (Priority 2 - Nice to Have)
+## Testing & Quality (Priority 2 - Nice to Have)
 
 - [ ] **Testing Infrastructure** - Add unit tests for routing logic, CLI commands, API endpoints `L`
   - [ ] Implement comprehensive unit test coverage
@@ -89,23 +91,23 @@
 - [ ] **Internationalization** - Extract hardcoded strings, add i18n support `L`
 - [ ] **Performance Monitoring** - Add instrumentation for routing performance, cache frequently used prompts `S`
 
-##### Security & Performance Improvements
+## Security & Performance Improvements
 
-###### Security Enhancements
+### Security Enhancements
 - [ ] **Token Security Audit** - Replace localStorage with httpOnly cookies, implement secure CLI token storage with keytar
 - [ ] **Input Validation** - Add comprehensive input sanitization and validation across all API endpoints
 - [ ] **Dependency Security** - Run bandit (Python) and npm audit, integrate Snyk security scanning
 - [ ] **CSRF Protection** - Implement CSRF tokens for state-changing operations
 - [ ] **Rate Limiting** - Add intelligent rate limiting to prevent abuse
 
-###### Performance Optimizations
+### Performance Optimizations
 - [ ] **Router Performance** - Instrument scoring functions, add caching for repeated prompts
 - [ ] **Async Operations** - Convert blocking operations to async/await patterns
 - [ ] **Bundle Optimization** - Optimize frontend bundle size and loading performance
 - [ ] **Database Performance** - Add connection pooling and query optimization
 - [ ] **Monitoring Integration** - Add performance metrics collection and alerting
 
-###### Technical Debt Priority Matrix
+### Technical Debt Priority Matrix
 
 | Issue | Impact | Complexity | Priority | Status |
 |-------|--------|------------|----------|---------|
@@ -115,14 +117,14 @@
 | Type safety gaps | Medium | Low | P1 | Planned |
 | MCP blocking operations | Medium | Medium | P1 | Planned |
 
-###### Dependencies & Timeline
+### Dependencies & Timeline
 
 - **Dependencies:** Phase 1 completion ✅, QA analysis ✅, Security implementation 🚧
 - **Estimated Duration:** 2-3 weeks
 - **Team Allocation:** Security specialist, Backend engineer, Frontend engineer
 - **Risk Level:** HIGH - Critical technical debt blocking future development
 
-##### Newly Added (Aug 2025) – Operational & Observability Roadmap
+## Newly Added (Aug 2025) – Operational & Observability Roadmap
 
 - [ ] **CI Workflow Implementation** `P0`
   - [ ] Add GitHub Actions pipeline (uv sync, pytest, yarn workspaces build, markdownlint, drift check)
@@ -132,7 +134,8 @@
   - [ ] Evaluate restoring DB + semantic search context vs. redesign
   - [ ] Produce ADR with scope, acceptance criteria, migration plan
 - [ ] **Quantum Performance Instrumentation** `P1`
-  - [ ] Add latency & strategy distribution counters
+  - [x] Skeleton module created (`quantum_performance.py`) ✅
+  - [ ] Add latency & strategy distribution counters (wire to routing/execution)
   - [ ] Define SLOs and baseline metrics
 - [ ] **Caching & Performance RFC (Phase 2.4 Prep)** `P2`
   - [ ] Draft caching architecture (routing/model selection layers)
@@ -141,5 +144,5 @@
   - [ ] Decide on remediation vs. selective ignore list
   - [ ] Automate lint in CI with clear contribution guidance
 - [ ] **Dependency Drift Enforcement** `P0`
-  - [ ] Integrate scripts/check_python_deps_sync.sh into CI fail-fast job (Python dependency drift)
+  - [ ] Integrate scripts/check_python_deps_sync.sh into CI fail-fast job (ensure Python dependency drift is blocked)
   - [ ] Document workflow in CONTRIBUTING (future)

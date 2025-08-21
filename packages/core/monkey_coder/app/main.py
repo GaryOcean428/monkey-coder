@@ -56,6 +56,7 @@ from ..security import (
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
 from ..monitoring import MetricsCollector, BillingTracker
+from ..monitoring import quantum_performance
 from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
@@ -548,6 +549,7 @@ async def performance_metrics():
     metrics = {
         "performance": performance_monitor.get_performance_summary(),
         "cache": cache.get_stats(),
+        "quantum": quantum_performance.get_summary(),
         "timestamp": datetime.utcnow().isoformat()
     }
 
