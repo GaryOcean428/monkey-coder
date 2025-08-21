@@ -125,7 +125,20 @@ class QuantumAdvancedRouter(AdvancedRouter):
                 pass
             decision = self._route_request_with_metrics(request, start_time)
             try:
-                self._routing_cache.set(request.prompt, decision.metadata.get("context_type", "unknown"), decision.metadata.get("complexity_level", "unknown"), decision)
+                context_type = decision.metadata.get("context_type")
+                complexity_level = decision.metadata.get("complexity_level")
+
+                # Validate context_type and complexity_level
+                if not isinstance(context_type, str) or not context_type:
+                    # Fallback: use a hash of the prompt to reduce collisions
+                    import hashlib
+                    context_type = f"unknown_{hashlib.md5(request.prompt.encode()).hexdigest()[:8]}"
+                if not isinstance(complexity_level, str) or not complexity_level:
+                    # Fallback: use a hash of the prompt to reduce collisions
+                    import hashlib
+                    complexity_level = f"unknown_{hashlib.sha1(request.prompt.encode()).hexdigest()[:8]}"
+
+                self._routing_cache.set(request.prompt, context_type, complexity_level, decision)
             except Exception:  # pragma: no cover
                 pass
             return decision
