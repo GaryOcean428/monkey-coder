@@ -5,8 +5,8 @@ This document is an index of the complete roadmap, now organized into focused su
 - Archive of the original monolithic roadmap (unchanged): [docs/archive/roadmap-legacy-2025-08-08.md](./archive/roadmap-legacy-2025-08-08.md)
 
 Metadata
-- Version: 4.0.0
-- Last Updated: 2025-01-14 (PHASE 1.7 COMPLETION UPDATE)
+- Version: 4.1.0
+- Last Updated: 2025-08-21 (Observability & Dependency Update)
 - Contributors: Core Team, Community Contributors
 
 ## 🎉 MAJOR MILESTONE: System 98% Production Ready!
@@ -19,7 +19,7 @@ Metadata
 - ✅ File System Operations - COMPLETE (Dogfooded!)
 - ✅ Streaming Support - DISCOVERED COMPLETE! (Just needed dependency)
 - ✅ Authentication - FIXED! CLI-Backend now working (API path fix)
-- 🟡 Context Management - IN PROGRESS (est. 1–2 days)
+- 🟡 Context Management - Simple in-memory manager active & instrumented; advanced persistent + semantic search deferred
 - 🟢 Railway deployment - Ready for production
 
 
@@ -91,6 +91,64 @@ Metadata
 3. **Production Ready**: Database integration with SQLAlchemy, proper async handling
 4. **Multi-turn Support**: Conversation history storage and retrieval working
 5. **Performance Optimized**: Context window management with intelligent eviction policies
+
+---
+
+## 🔄 Progress Update (2025-08-21)
+
+Recent work focused on tightening operational reliability, observability, and dependency consistency rather than major feature expansion.
+
+### Delivered Since 2025-08-19
+1. Python Dependency Standardization
+   - Adopted `pyproject.toml` + `uv` as authoritative runtime dependency source
+   - Added `scripts/check_python_deps_sync.sh` to detect and optionally fix drift with `requirements.txt`
+2. Context Observability
+   - Added JSON endpoint: `GET /api/v1/context/metrics` (lightweight stats)
+   - Metrics refresh hooks integrated into SimpleContextManager (Prometheus gauges/counters)
+3. Documentation & Environment
+   - README updated with dependency policy & environment flag usage
+   - Feature flags documented: `ENABLE_CONTEXT_MANAGER`, `CONTEXT_MODE` (future: model selector, result cache)
+4. Branch & Workflow Preparation
+   - Created enhancement branch `enhancement/observability-ci` for CI/metrics hardening
+   - Planned GitHub Actions workflow (pending) for: uv sync check, pytest, markdownlint, yarn workspace build, drift enforcement
+5. Minor API Improvement
+   - Added context stats JSON endpoint without requiring Prometheus scraping
+
+### Context Management Status Clarification
+Earlier documents referenced a “full database & semantic search” implementation. Current live system (Aug 21) uses the in-memory SimpleContextManager with instrumentation. Advanced persistent layer + embeddings are deferred and will be re-scoped under upcoming performance / data durability initiatives. Roadmap bullets updated to reflect this.
+
+### Updated Production Readiness Assessment
+| Area | Status | Notes |
+|------|--------|-------|
+| Core Execution (orchestrator, routing, quantum base) | ✅ Stable | No regressions detected |
+| Context (simple) | ✅ Functional | In-memory only; persistence deferred |
+| Context (advanced) | 🟡 Deferred | DB + semantic search to be revalidated |
+| Observability | 🟡 Improving | New JSON metrics; CI pipeline pending |
+| Dependency Hygiene | ✅ Baseline | Drift script in place; CI enforcement pending |
+| Quantum Advanced Phases (2.2–2.4) | ⚠️ Partial | Monitoring / caching not started |
+
+### Near-Term (Next 5–7 Days)
+| Priority | Task | Outcome |
+|----------|------|---------|
+| P0 | Add CI workflow (tests, lint, drift check) | Enforce quality gates pre-merge |
+| P0 | README markdown lint remediation / suppression policy | Cleaner docs & consistent formatting |
+| P1 | Decide fate of advanced context (rebuild vs revive) | Clear scope & acceptance criteria |
+| P1 | Quantum performance instrumentation (latency, collapse strategy stats) | Data for optimization roadmap |
+| P2 | Caching layer design (routing/model selection) | Draft spec feeding Phase 2.4 |
+
+### Newly Logged Risks
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Dual dependency sources may drift | Medium | CI drift check (planned) + single-source policy enforced |
+| Advanced context claims vs reality | Reputational | Clarified status; future scope redefinition |
+| Missing CI gates delays regression detection | High | Prioritized as P0 task |
+
+### Action Items Recorded
+- [ ] Implement CI workflow (uv + yarn + lint + drift)
+- [ ] Decide on markdown lint compliance vs selective ignore
+- [ ] Scope advanced context persistence (design doc or retire claim)
+- [ ] Add quantum performance metrics collector skeleton
+- [ ] Introduce caching RFC (Phase 2.4 groundwork)
 
 ---
 

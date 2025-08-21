@@ -160,3 +160,44 @@ These tasks should be addressed AFTER completing Phase 1.7 critical gaps:
 
 4) P1 DX hardening
    - Ensure .gitignore includes .next/ and out/ in all relevant paths; add typecheck scripts in web/cli/sdk; ensure scripts don’t fail when a workspace has no tests.
+
+---
+
+### Addendum – Progress Alignment (2025-08-21)
+
+Recent engineering efforts shifted from net-new feature delivery to operational reliability:
+
+1. Dependency Governance
+   - Adopted `pyproject.toml` + `uv` as authoritative Python dependency source
+   - Added drift detection script (`scripts/check_python_deps_sync.sh`) – pending CI enforcement
+2. Context Layer Clarification
+   - Active: In-memory `SimpleContextManager` with metrics instrumentation (Prometheus + JSON endpoint)
+   - Deferred: Previously claimed DB + semantic search context layer awaiting
+      re-validation; removed from "complete" assertions elsewhere
+3. Observability Expansion
+   - New endpoint: `GET /api/v1/context/metrics` (lightweight JSON)
+   - Planned: CI pipeline to add coverage gates, drift checks, markdown lint
+4. Documentation Enhancements
+   - README updated with dependency policy and environment flag usage
+5. Upcoming (Next Window)
+   - Implement CI GitHub Actions workflow for tests & drift enforcement (P0)
+   - Decision record: rebuild advanced context vs. de-scope (P1)
+   - Quantum routing instrumentation scaffolding (P1)
+
+Status Snapshot (Aug 21):
+
+| Domain | State | Notes |
+|--------|-------|-------|
+| Core orchestration | Stable | No regressions detected |
+| Context (simple) | Functional | Provides conversation continuity only |
+| Context (advanced) | Deferred | Semantic/persistent features paused |
+| Observability | Improving | Metrics endpoints added; CI pending |
+| Dependency hygiene | Baseline | Single-source policy instituted |
+
+
+Action Items Logged:
+- [ ] Add CI workflow (tests, lint, drift, coverage)
+- [ ] Define scope for advanced context persistence
+- [ ] Add quantum routing performance counters (latency, strategy distribution)
+- [ ] Draft caching & performance RFC (Phase 2.4 precursor)
+
