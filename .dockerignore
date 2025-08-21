@@ -1,0 +1,60 @@
+# Node modules (will be installed fresh)
+**/node_modules
+**/.yarn/cache
+**/.yarn/install-state.gz
+
+# Python cache
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/*.egg-info
+**/dist
+**/build
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git and IDE
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Testing
+**/*.test.*
+**/*.spec.*
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.log
+*.tmp
+
+# Build outputs (will be built in container)
+packages/web/out/
+packages/web/.next/
+
+# Development files
+.husky/
+.changeset/
+.githooks/
+monitoring/
+scripts/test-*
+scripts/dev-*
+
+# Railway specific (not needed in container)
+railpack.json
+railway.toml
+deploy-railway.sh
+verify_deployment.sh
