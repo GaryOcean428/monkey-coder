@@ -24,8 +24,8 @@ Source Documents:
 | P0-1 | CI Workflow Enforcement | Add unified workflow: drift, tests, coverage, lint | Gates block PR; thresholds recorded | roadmap Near-Term |
 | P0-2 | Dependency Drift Guard | Wire `check_python_deps_sync.sh` into CI | CI fails on drift; README updated | delivered section |
 | P0-3 | Quantum Metrics Wiring | Counters/timers: latency, branches, collapse strategy | Metrics endpoint returns non-zero sample | metrics note |
-| P0-4 | Cache Stats Exposure | Surface `/api/v1/cache/stats` + Prometheus counters | Hit/miss + counters visible | RFC 0001 |
-| P0-5 | Context Claim Reconciliation | Annotate/remove legacy advanced context claims | All outdated claims updated | ADR 0002 |
+| P0-4 | Cache Stats Exposure | Surface `/API/v1/cache/stats` + Prometheus counters | Hit/miss + counters visible | RFC 0001 |
+| P0-5 | Context Claim Reconciliation | Annotate/remove legacy advanced context claims | All outdated claims updated | ADR 0002 / ADR 0003 |
 | P0-6 | Markdown Lint Policy | Decide compliance vs selective disable | Policy doc + CI lint job stable | roadmap Near-Term |
 | P0-7 | RFC 0001 Acceptance | Move Draft → Accepted (or notes) | Status header updated w/ date | RFC 0001 |
 
@@ -39,7 +39,7 @@ Source Documents:
 | P1-2 | Caching Ph 2–3 | Routing + latency_saved; ≥10% latency cut | Benchmark artifact ≥10% | RFC 0001 P2–3 |
 | P1-3 | Benchmark Harness | Synthetic latency & cost suite | JSON baseline produced | RFC goals |
 | P1-4 | Quantum SLO Definition | p95 latency + hit & collapse SLOs | SLO doc in repo & CI link | current-dev addendum |
-| P1-5 | Context Decision | ADR 0003: rebuild, defer, de-scope | ADR merged & roadmap updated | roadmap / ADR 0002 |
+| P1-5 | Context Decision | ADR 0003: rebuild, defer, de-scope | ADR merged + roadmap sync | roadmap+ADR 0002/0003 |
 | P1-6 | Coverage & Badges | Coverage + test badges in docs | Badges present & update | current-dev |
 | P1-7 | Auth Parity | Cookie + bearer regression tests | Both flows covered & green | backlog |
 
