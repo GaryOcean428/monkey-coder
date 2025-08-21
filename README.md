@@ -152,7 +152,7 @@ yarn global add monkey-coder-cli
    ```bash
    # Start FastAPI backend
    cd packages/core && python -m monkey_coder.app.main
-   
+
    # In another terminal, start Next.js frontend (optional)
    yarn workspace @monkey-coder/web dev
    ```
@@ -195,6 +195,43 @@ To add a dependency to a specific package (example for CLI):
 
 ```bash
 yarn workspace monkey-coder-cli add chalk@^5.3.0
+```
+
+### Python Dependency Source of Truth
+
+We now treat `pyproject.toml` as the authoritative source for Python runtime
+dependencies. The `requirements.txt` file is maintained for compatibility
+(deploy platforms, legacy tooling) and must be kept in sync.
+
+Use the provided scripts:
+
+```bash
+# Sync / install deps (uv)
+./scripts/sync_python.sh
+
+# Check for drift between pyproject.toml and requirements.txt
+./scripts/check_python_deps_sync.sh
+
+# Auto-fix drift (regen requirements.txt)
+./scripts/check_python_deps_sync.sh --fix
+```
+
+Add new dependencies only in `pyproject.toml` (not directly in `requirements.txt`).
+CI (planned) will run the drift check to fail builds if they diverge.
+
+### Environment Configuration
+
+Environment variables are documented in `.env.example`. Copy it to `.env` and adjust as needed:
+
+```bash
+cp .env.example .env
+```
+
+Key feature flags:
+- `ENABLE_CONTEXT_MANAGER=true|false`
+- `CONTEXT_MODE=simple|advanced`
+
+Planned flags (placeholders): `ENABLE_MODEL_SELECTOR`, `ENABLE_RESULT_CACHE`.
 ```
 
 ## Published Packages
@@ -665,7 +702,7 @@ railway run python run_server.py
 ### Performance Optimizations
 
 - **Global Cache**: 30-50% faster subsequent installs
-- **Hardlinks**: Reduced disk usage and faster module resolution  
+- **Hardlinks**: Reduced disk usage and faster module resolution
 - **Constraints**: Enforced dependency consistency across workspaces
 - **Zero Vulnerabilities**: Automated security auditing
 
@@ -685,4 +722,3 @@ yarn workspace @monkey-coder/web dev
 # Run command in all workspaces
 yarn workspaces foreach -At run build
 ```
-

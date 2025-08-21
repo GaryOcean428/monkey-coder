@@ -1613,6 +1613,35 @@ async def context_stats():
     return {"enabled": True, "mode": cm.__class__.__name__}
 
 
+@app.get("/api/v1/context/metrics", response_model=Dict[str, Any])
+async def context_metrics():
+    """Lightweight JSON metrics for context manager.
+
+    This complements the Prometheus /metrics endpoint by exposing
+    raw conversation/message counts and eviction stats in a simple
+    JSON structure suitable for dashboards or health probes that
+    don't parse Prometheus format.
+    """
+    cm = getattr(app.state, "context_manager", None)
+    if not cm:
+        return {"enabled": False, "reason": "context manager disabled"}
+    base: Dict[str, Any] = {"enabled": True, "mode": cm.__class__.__name__}
+    if hasattr(cm, "get_stats"):
+        try:
+            stats = cm.get_stats()
+            # Add a derived field for average messages per conversation (avoid div by zero)
+            total_conversations = stats.get("total_conversations", 0)
+            total_messages = stats.get("total_messages", 0)
+            if total_conversations:
+                stats["avg_messages_per_conversation"] = round(total_messages / total_conversations, 2)
+            else:
+                stats["avg_messages_per_conversation"] = 0.0
+            base.update(stats)
+        except Exception as e:  # pragma: no cover
+            base["error"] = str(e)
+    return base
+
+
 @app.post("/api/v1/context/cleanup")
 async def cleanup_context(
     background_tasks: BackgroundTasks,
