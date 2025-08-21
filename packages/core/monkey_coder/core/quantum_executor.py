@@ -332,8 +332,7 @@ class QuantumExecutor:
             return 0.0
 
         variance = float(np.var(confidences))
-        entanglement = 1 - min(variance * 2.0, 1.0)
-        return entanglement
+        return 1 - min(variance * 2.0, 1.0)
 
     def _record_measurement(
         self,
