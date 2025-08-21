@@ -41,11 +41,15 @@ dependencies = [
   "beautifulsoup4>=4.12.0",
   "html2text>=2020.1.16",
   "python-dotenv>=1.0.0",
-  "torch==2.7.1+cpu",
+  # Torch pin adjusted: previous 2.7.1+cpu does not exist yet, causing uv resolution failure.
+  # Use a known stable CPU wheel version; keep pin exact so uv compile is deterministic.
+  "torch==2.2.0+cpu",
   "transformers>=4.39.0",
   "accelerate>=1.2.0",
   "safetensors>=0.4.3",
   "tokenizers>=0.14.0,<0.19.0",
+  # Add missing embedding dependency actually imported in context_manager
+  "sentence-transformers>=2.5.0,<3.0.0",
 ]
 
 [project.optional-dependencies]
