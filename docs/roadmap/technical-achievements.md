@@ -19,3 +19,10 @@
 - [x] **Integration Testing** - End-to-end signup and authentication flow verified
 - [x] **Error Handling** - Robust error handling throughout authentication system
 - [x] **Documentation** - Complete technical documentation and implementation guide
+
+**Operational Enhancements (Aug 2025):**
+- [x] **Python Dependency Governance** - Adopted pyproject.toml + uv as authoritative source; drift detection script added
+- [x] **Context Metrics Endpoint** - Introduced /api/v1/context/metrics lightweight JSON API endpoint
+- [x] **Prometheus Integration Hooks** - In-memory context manager emits conversation/message/eviction metrics
+- [x] **Environment Flag Documentation** - Centralized feature flag guidance (ENABLE_CONTEXT_MANAGER, CONTEXT_MODE)
+- [x] **Observability Branch Setup** - Dedicated enhancement branch for CI, drift enforcement, and metrics hardening
