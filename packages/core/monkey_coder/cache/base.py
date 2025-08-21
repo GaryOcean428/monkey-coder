@@ -11,12 +11,38 @@ class CacheEntry:
     created_at: float
     hits: int = 0
 
+CACHE_REGISTRY: Dict[str, "TTLRUCache"] = {}
+
+
+def register_cache(name: str, cache: "TTLRUCache") -> None:
+    """Register a cache instance under a global name.
+
+    Overwrites existing entry with same name. Lightweight global registry allows
+    aggregation of stats for monitoring endpoints.
+    """
+    CACHE_REGISTRY[name] = cache
+
+
+def get_cache_registry_stats() -> Dict[str, Any]:
+    """Return stats for all registered caches plus aggregate summary."""
+    per_cache = {name: cache.stats() for name, cache in CACHE_REGISTRY.items()}
+    aggregate = {
+        "total_size": sum(s["size"] for s in per_cache.values()),
+        "total_hits": sum(s["hits"] for s in per_cache.values()),
+        "total_misses": sum(s["misses"] for s in per_cache.values()),
+        "total_evictions": sum(s["evictions"] for s in per_cache.values()),
+        "total_expired": sum(s["expired"] for s in per_cache.values()),
+        "cache_count": len(per_cache),
+    }
+    return {"caches": per_cache, "aggregate": aggregate}
+
+
 class TTLRUCache:
     """Combined TTL + LRU cache.
 
     Not thread-safe (assumes single-threaded async usage or external locking).
     """
-    def __init__(self, max_entries: int = 256, default_ttl: float = 60.0):
+    def __init__(self, max_entries: int = 256, default_ttl: float = 60.0, register_as: Optional[str] = None):
         self.max_entries = max_entries
         self.default_ttl = default_ttl
         self._store: OrderedDict[str, CacheEntry] = OrderedDict()
@@ -24,6 +50,9 @@ class TTLRUCache:
         self.misses = 0
         self.evictions = 0
         self.expired = 0
+        if register_as:
+            # Delay registration until after construction to ensure attributes exist
+            register_cache(register_as, self)
 
     def _purge_expired(self):
         now = time.time()

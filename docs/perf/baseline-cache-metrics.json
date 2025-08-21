@@ -1,0 +1,5 @@
+{
+  "description": "Baseline placeholder for cache metrics; real capture requires running app server and hitting /api/v1/cache/stats",
+  "captured_at": "TODO-runtime",
+  "note": "Replace this file with an automated capture script in future (Phase 2)."
+}

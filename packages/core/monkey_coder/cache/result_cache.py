@@ -5,8 +5,10 @@ import json
 from .base import TTLRUCache
 
 class ResultCache:
-    def __init__(self, max_entries: int = 256, default_ttl: float = 120.0):
-        self._cache = TTLRUCache(max_entries=max_entries, default_ttl=default_ttl)
+    def __init__(self, max_entries: int = 256, default_ttl: float = 120.0, register: bool = True):
+        # Register so it appears in global cache stats
+        name = "result_cache" if register else None
+        self._cache = TTLRUCache(max_entries=max_entries, default_ttl=default_ttl, register_as=name)
 
     @staticmethod
     def _stable_key(prompt: str, persona: str, provider: Optional[str] = None, model: Optional[str] = None, extra: Optional[Dict[str, Any]] = None) -> str:
