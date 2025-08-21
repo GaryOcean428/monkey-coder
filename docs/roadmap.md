@@ -96,7 +96,9 @@ Metadata
 
 ## 🔄 Progress Update (2025-08-21)
 
-Recent work focused on tightening operational reliability, observability, and dependency consistency rather than major feature expansion.
+Recent work focused on tightening operational reliability, observability, and
+dependency consistency rather than major feature expansion. A quantum
+performance metrics skeleton and enhanced CI gates were initiated.
 
 ### Delivered Since 2025-08-19
 1. Python Dependency Standardization
@@ -113,11 +115,20 @@ Recent work focused on tightening operational reliability, observability, and de
    - Planned GitHub Actions workflow (pending) for: uv sync check, pytest, markdownlint, yarn workspace build, drift enforcement
 5. Minor API Improvement
    - Added context stats JSON endpoint without requiring Prometheus scraping
+6. Foundational Quantum Metrics
+   - Added `quantum_performance.py` skeleton (timers + counters stubs)
+7. CI Foundations
+   - Extended CI with drift check, markdown lint (non-blocking), Python coverage threshold, job dependency graph
 
 ### Context Management Status Clarification
-Earlier documents referenced a “full database & semantic search” implementation. Current live system (Aug 21) uses the in-memory SimpleContextManager with instrumentation. Advanced persistent layer + embeddings are deferred and will be re-scoped under upcoming performance / data durability initiatives. Roadmap bullets updated to reflect this.
+Earlier documents referenced a “full database & semantic search” implementation.
+Current live system (Aug 21) uses the in-memory SimpleContextManager with
+instrumentation. Advanced persistent layer + embeddings are deferred and will be
+re-scoped under upcoming performance / data durability initiatives. Roadmap
+bullets updated to reflect this.
 
 ### Updated Production Readiness Assessment
+
 | Area | Status | Notes |
 |------|--------|-------|
 | Core Execution (orchestrator, routing, quantum base) | ✅ Stable | No regressions detected |
@@ -128,6 +139,7 @@ Earlier documents referenced a “full database & semantic search” implementat
 | Quantum Advanced Phases (2.2–2.4) | ⚠️ Partial | Monitoring / caching not started |
 
 ### Near-Term (Next 5–7 Days)
+
 | Priority | Task | Outcome |
 |----------|------|---------|
 | P0 | Add CI workflow (tests, lint, drift check) | Enforce quality gates pre-merge |
@@ -137,6 +149,7 @@ Earlier documents referenced a “full database & semantic search” implementat
 | P2 | Caching layer design (routing/model selection) | Draft spec feeding Phase 2.4 |
 
 ### Newly Logged Risks
+
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | Dual dependency sources may drift | Medium | CI drift check (planned) + single-source policy enforced |

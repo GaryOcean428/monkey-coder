@@ -7,7 +7,31 @@ on:
     branches: [main]
 
 jobs:
+  drift-and-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "UV_BIN=$HOME/.local/bin" >> $GITHUB_ENV
+      - name: Add uv to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Python dependency drift check
+        run: |
+          ./scripts/check_python_deps_sync.sh || (echo "❌ Drift detected" && exit 1)
+      - name: Install Node for markdown lint
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+      - name: Install JS dependencies (for markdownlint)
+        run: yarn install --frozen-lockfile --mode=skip-build
+      - name: Markdown lint
+        run: yarn lint:md || echo "Markdown lint warnings (non-blocking for now)"
+
   node:
+    needs: drift-and-docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +101,7 @@ jobs:
             });
 
   python:
+    needs: drift-and-docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -92,6 +117,16 @@ jobs:
       - name: Run tests with coverage
         working-directory: packages/core
         run: pytest --cov=monkey_coder --cov-report=xml:coverage.xml --junitxml=junit.xml
+      - name: Enforce Python coverage threshold
+        working-directory: packages/core
+        run: |
+          THRESHOLD=50
+          COV=$(python -c "import xml.etree.ElementTree as ET;\nimport sys;\nroot=ET.parse('coverage.xml').getroot();\nprint(int(float(root.get('line-rate','0'))*100))")
+          echo "Python line coverage: ${COV}% (threshold ${THRESHOLD}%)"
+          if [ "${COV}" -lt "${THRESHOLD}" ]; then
+            echo "❌ Coverage below threshold (${THRESHOLD}%)" >&2
+            exit 1
+          fi
       - name: Upload JUnit report
         uses: actions/upload-artifact@v4
         with:
@@ -104,6 +139,7 @@ jobs:
           path: packages/core/coverage.xml
 
   quantum-tests:
+    needs: python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
