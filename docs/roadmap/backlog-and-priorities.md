@@ -121,3 +121,25 @@
 - **Estimated Duration:** 2-3 weeks
 - **Team Allocation:** Security specialist, Backend engineer, Frontend engineer
 - **Risk Level:** HIGH - Critical technical debt blocking future development
+
+##### Newly Added (Aug 2025) – Operational & Observability Roadmap
+
+- [ ] **CI Workflow Implementation** `P0`
+  - [ ] Add GitHub Actions pipeline (uv sync, pytest, yarn workspaces build, markdownlint, drift check)
+  - [ ] Enforce non-drift between pyproject.toml and requirements.txt
+  - [ ] Publish coverage + JUnit summaries as PR check
+- [ ] **Advanced Context Decision Record** `P1`
+  - [ ] Evaluate restoring DB + semantic search context vs. redesign
+  - [ ] Produce ADR with scope, acceptance criteria, migration plan
+- [ ] **Quantum Performance Instrumentation** `P1`
+  - [ ] Add latency & strategy distribution counters
+  - [ ] Define SLOs and baseline metrics
+- [ ] **Caching & Performance RFC (Phase 2.4 Prep)** `P2`
+  - [ ] Draft caching architecture (routing/model selection layers)
+  - [ ] Define cache invalidation & metrics plan
+- [ ] **Markdown Lint Compliance Policy** `P2`
+  - [ ] Decide on remediation vs. selective ignore list
+  - [ ] Automate lint in CI with clear contribution guidance
+- [ ] **Dependency Drift Enforcement** `P0`
+  - [ ] Integrate scripts/check_python_deps_sync.sh into CI fail-fast job (Python dependency drift)
+  - [ ] Document workflow in CONTRIBUTING (future)
