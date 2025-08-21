@@ -8,13 +8,28 @@
       "node": "20"
     },
     "steps": {
+      "setup": {
+        "description": "Setup Node.js environment and Yarn 4.9.2",
+        "commands": [
+          "# Bypass Corepack - install Yarn directly via npm",
+          "npm install -g yarn@4.9.2",
+          "# Clean up any conflicting Yarn configs",
+          "rm -f .yarnrc 2>/dev/null || true",
+          "rm -rf .yarn/releases 2>/dev/null || true",
+          "# Verify Yarn version",
+          "yarn --version",
+          "# Set Yarn to use node-modules linker for Railway compatibility",
+          "yarn config set nodeLinker node-modules"
+        ]
+      },
       "web": {
         "description": "Build Next.js frontend for static export",
         "commands": [
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable",
+          "yarn install --immutable --network-timeout 300000",
           "yarn workspace @monkey-coder/web build"
+        ],
+        "inputs": [
+          {"step": "setup"}
         ]
       },
       "python": {
