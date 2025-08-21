@@ -27,8 +27,11 @@ jobs:
           cache: 'yarn'
       - name: Install JS dependencies (for markdownlint)
         run: yarn install --frozen-lockfile --mode=skip-build
+      - name: Documentation hygiene check
+        run: |
+          bash scripts/verify_docs.sh
       - name: Markdown lint
-        run: yarn lint:md || echo "Markdown lint warnings (non-blocking for now)"
+        run: yarn lint:md
 
   node:
     needs: drift-and-docs
@@ -160,3 +163,92 @@ jobs:
         with:
           name: quantum-junit-report
           path: packages/core/quantum-junit.xml
+
+  coverage-summary:
+    name: Consolidated Coverage & Test Summary
+    needs: [node, python, quantum-tests]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Download Node coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: node-coverage
+          path: node-coverage
+      - name: Download Python coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-coverage
+          path: python-coverage
+      - name: Download quantum JUnit artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: quantum-junit-report
+          path: quantum-junit-report
+      - name: Generate consolidated summary comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            function globSync(dir, suffix) {
+              const out = [];
+              function walk(d){
+                for (const f of fs.readdirSync(d)) {
+                  const p = path.join(d,f);
+                  const st = fs.statSync(p);
+                  if (st.isDirectory()) walk(p); else if (p.endsWith(suffix)) out.push(p);
+                }
+              }
+              walk(dir); return out;
+            }
+
+            let body = '## 🧪 Consolidated Test & Coverage Summary\n\n';
+            // Node coverage
+            const nodeFiles = globSync('node-coverage', 'coverage-summary.json');
+            if (nodeFiles.length) {
+              body += '### Node Workspaces\n';
+              body += '| Workspace | Statements | Branches | Functions | Lines |\n';
+              body += '|-----------|------------|----------|-----------|-------|\n';
+              for (const file of nodeFiles) {
+                try {
+                  const summary = JSON.parse(fs.readFileSync(file,'utf8'));
+                  const total = summary.total;
+                  const wsMatch = file.match(/packages\\/(.*?)\\//);
+                  const ws = wsMatch ? wsMatch[1] : path.basename(path.dirname(file));
+                  body += `| ${ws} | ${total.statements.pct.toFixed(1)}% | ${total.branches.pct.toFixed(1)}% | ${total.functions.pct.toFixed(1)}% | ${total.lines.pct.toFixed(1)}% |\n`;
+                } catch(e) { /* ignore */ }
+              }
+              body += '\n';
+            }
+
+            // Python coverage
+            const pyCov = 'python-coverage/coverage.xml';
+            if (fs.existsSync(pyCov)) {
+              const xml = fs.readFileSync(pyCov,'utf8');
+              const m = xml.match(/line-rate="([0-9.]+)"/);
+              if (m) {
+                body += `### Python Core\nLine coverage: ${(parseFloat(m[1])*100).toFixed(1)}%\n\n`;
+              }
+            }
+
+            // Quantum JUnit test counts
+            const quantum = 'quantum-junit-report/packages/core/quantum-junit.xml';
+            if (fs.existsSync(quantum)) {
+              const x = fs.readFileSync(quantum,'utf8');
+              const suiteMatch = x.match(/tests="(\d+)" failures="(\d+)" errors="(\d+)"/);
+              if (suiteMatch) {
+                const [_, tests, failures, errors] = suiteMatch;
+                body += `### Quantum Tests\nTests: ${tests}, Failures: ${failures}, Errors: ${errors}\n\n`;
+              }
+            }
+
+            body += '---\n_This summary is auto-generated._';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

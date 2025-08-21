@@ -5,8 +5,9 @@ import json
 from .base import TTLRUCache
 
 class RoutingDecisionCache:
-    def __init__(self, max_entries: int = 512, default_ttl: float = 30.0):
-        self._cache = TTLRUCache(max_entries=max_entries, default_ttl=default_ttl)
+    def __init__(self, max_entries: int = 512, default_ttl: float = 30.0, register: bool = True):
+        name = "routing_decision_cache" if register else None
+        self._cache = TTLRUCache(max_entries=max_entries, default_ttl=default_ttl, register_as=name)
 
     @staticmethod
     def _stable_key(prompt: str, context_type: str, complexity_bucket: str) -> str:

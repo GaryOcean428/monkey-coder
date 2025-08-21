@@ -55,8 +55,9 @@ from ..security import (
 )
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
-from ..monitoring import MetricsCollector, BillingTracker
 from ..monitoring import quantum_performance
+from ..monitoring import BillingTracker as BillingTracker  # type: ignore
+from ..monitoring import MetricsCollector as MetricsCollector  # type: ignore
 from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
@@ -68,6 +69,7 @@ from ..auth import get_api_key_manager
 
 # Import Railway-optimized logging first
 from ..logging_utils import setup_logging, get_performance_logger
+from ..cache.base import get_cache_registry_stats
 
 # Configure Railway-optimized logging
 setup_logging()
@@ -377,6 +379,33 @@ class UserStatusResponse(BaseModel):
     authenticated: bool = Field(..., description="User authentication status")
     user: Optional[Dict[str, Any]] = Field(None, description="User information if authenticated")
     session_expires: Optional[str] = Field(None, description="Session expiration timestamp")
+
+
+class CacheStatsResponse(BaseModel):
+    """Response model for cache statistics endpoint."""
+    caches: Dict[str, Any]
+    aggregate: Dict[str, Any]
+    timestamp: str
+    feature_flags: Dict[str, Any]
+
+
+@app.get("/api/v1/cache/stats", response_model=CacheStatsResponse)
+async def cache_stats():
+    """Return aggregated statistics for all registered caches.
+
+    Includes per-cache metrics plus aggregate totals and feature flag states.
+    """
+    stats = get_cache_registry_stats()
+    flags = {
+        "ENABLE_RESULT_CACHE": os.getenv("ENABLE_RESULT_CACHE", "true"),
+        "ENABLE_CONTEXT_MANAGER": os.getenv("ENABLE_CONTEXT_MANAGER", "true"),
+    }
+    return CacheStatsResponse(
+        caches=stats["caches"],
+        aggregate=stats["aggregate"],
+        timestamp=datetime.utcnow().isoformat() + "Z",
+        feature_flags=flags,
+    )
 
 
 class RefreshTokenRequest(BaseModel):

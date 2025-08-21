@@ -93,7 +93,7 @@ Documentation = "https://github.com/GaryOcean428/monkey-coder/docs"
 "Bug Tracker" = "https://github.com/GaryOcean428/monkey-coder/issues"
 
 [tool.setuptools.packages.find]
-where = ["."] 
+where = ["."]
 include = ["monkey_coder*"]
 exclude = ["tests*"]
 namespaces = false
@@ -175,3 +175,4 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+fail_under = 55

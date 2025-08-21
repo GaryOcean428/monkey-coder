@@ -13,12 +13,14 @@ Features:
 
 import asyncio
 import logging
+import os
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import numpy as np
 
 from ..monitoring.quantum_performance import execution_timer, inc_execution_error
+from ..cache.result_cache import ResultCache
 from .agent_executor import AgentExecutor
 from ..tools.web_search_tool import web_search_tool
 
@@ -56,6 +58,10 @@ class QuantumExecutor:
         self.quantum_states: List[QuantumState] = []
         self.entangled_tasks: Dict[str, List[str]] = {}
         self.measurement_history: List[Dict[str, Any]] = []
+        # Result cache (Phase 1): in-memory TTL+LRU; optional via env flag
+        # ENABLE_RESULT_CACHE=0 will disable usage
+        self._result_cache_enabled = os.getenv("ENABLE_RESULT_CACHE", "1") not in ("0", "false", "False")
+        self._result_cache = ResultCache(max_entries=512, default_ttl=180.0) if self._result_cache_enabled else None
 
     async def execute(self, task, parallel_futures: bool = True) -> Any:
         """
@@ -79,6 +85,16 @@ class QuantumExecutor:
         # Prepare quantum execution
         task_str = self._prepare_task(task)
 
+        # Result cache lookup (general key: provider/model independent)
+        if self._result_cache:
+            try:
+                cached = self._result_cache.get(task_str, persona="developer")
+                if cached:
+                    logger.info("Result cache hit for task")
+                    return cached
+            except Exception:  # pragma: no cover - cache must not break execution
+                pass
+
         if parallel_futures:
             # Quantum superposition: evaluate multiple approaches
             with execution_timer():
@@ -88,8 +104,28 @@ class QuantumExecutor:
             with execution_timer():
                 result = await self._classical_execution(task_str)
 
-        logger.info("Quantum execution completed with confidence: %.2f",
-                   result.get("confidence", 0))
+        logger.info(
+            "Quantum execution completed with confidence: %.2f",
+            result.get("confidence", 0),
+        )
+        # Store in result cache (both generic and provider/model scoped) if enabled
+        if self._result_cache:
+            try:
+                provider = result.get("provider")
+                model = result.get("model")
+                # Generic key
+                self._result_cache.set(task_str, persona="developer", value=result)
+                # Provider/model specific key (if available)
+                if provider and model:
+                    self._result_cache.set(
+                        task_str,
+                        persona="developer",
+                        value=result,
+                        provider=provider,
+                        model=model,
+                    )
+            except Exception:  # pragma: no cover
+                pass
         return result
 
     async def _quantum_superposition_execution(self, task: str) -> Dict[str, Any]:

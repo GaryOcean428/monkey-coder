@@ -53,12 +53,14 @@ html2text==2020.1.16
 python-dotenv==1.0.0
 
 # Core ML dependencies - PINNED versions for stability
-torch==2.7.1+cpu
+# Adjusted torch pin: 2.7.1+cpu not available; use stable 2.2.0+cpu
+torch==2.2.0+cpu
 transformers==4.39.0
 accelerate==1.2.0
 safetensors==0.4.3
 tokenizers==0.18.0  # Pinned to avoid version conflicts
 numpy==2.2.1
+sentence-transformers==2.6.1
 
 # Testing (exclude from production with --no-dev)
 pytest==8.2.0

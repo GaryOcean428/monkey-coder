@@ -1,7 +1,12 @@
 # RFC 0001: Caching & Performance Layer (Phase 2.4 Foundations)
 
 ## Status
-Draft (2025-08-21)
+Accepted (2025-08-21)
+
+### Decision Notes
+- Consensus reached to proceed with in-memory implementation first; distributed / semantic extensions explicitly deferred.
+- Success metrics (latency reduction ≥10% by Phase 3) will be revalidated after baseline benchmark harness lands.
+- Revisit extension readiness (Phase 5) before introducing Redis to avoid premature operational complexity.
 
 ## Context
 Phase 2.4 targets latency reduction, cost efficiency, and stability of model routing &
