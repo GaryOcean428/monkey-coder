@@ -118,8 +118,9 @@ class QuantumAdvancedRouter(AdvancedRouter):
                     "simple" if complexity_probe >= 0.2 else
                     "trivial"
                 )
-                cached = self._routing_cache.get(request.prompt, "unknown", complexity_bucket)
-                if cached:
+                if cached := self._routing_cache.get(
+                    request.prompt, "unknown", complexity_bucket
+                ):
                     return cached
             except Exception:  # pragma: no cover
                 pass
