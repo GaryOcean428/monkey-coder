@@ -25,6 +25,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import time
 from pathlib import Path
+from .streaming_endpoints import router as streaming_router
+from .streaming_execute import router as streaming_execute_router
 
 from ..core.orchestrator import MultiAgentOrchestrator
 from ..core.quantum_executor import QuantumExecutor
@@ -38,34 +40,33 @@ from ..models import (
     TaskStatus,
     ExecutionError,
 )
-from ..context.simple_manager import SimpleContextManager
+# Context Manager imports (feature-flagged)
+from ..context.simple_manager import SimpleContextManager  # existing lightweight manager
+try:
+    from ..context.context_manager import ContextManager as AdvancedContextManager  # heavy version
+except Exception:  # pragma: no cover - safe fallback
+    AdvancedContextManager = None
 from ..security import (
     get_api_key,
     verify_permissions,
     get_current_user,
-    create_access_token,
-    create_refresh_token,
-    verify_password,
-    hash_password,
     JWTUser,
     UserRole,
-    Permission,
-    get_user_permissions
 )
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
 from ..monitoring import MetricsCollector, BillingTracker
-from ..database import run_migrations, get_user_store
+from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from .routes import stripe_checkout
 from ..feedback_collector import FeedbackCollector
 from ..database.models import User
-from ..config.env_config import get_config, EnvironmentConfig
-from ..auth import get_api_key_manager, APIKeyManager
+from ..config.env_config import get_config
+from ..auth import get_api_key_manager
 
 # Import Railway-optimized logging first
-from ..logging_utils import setup_logging, get_performance_logger, monitor_api_calls
+from ..logging_utils import setup_logging, get_performance_logger
 
 # Configure Railway-optimized logging
 setup_logging()
@@ -109,7 +110,6 @@ async def lifespan(app: FastAPI):
         logger.error(f"Database migrations failed: {e}")
         # Continue startup even if migrations fail (for development)
 
-    import traceback
     # Initialize core components with health checks
     try:
         app.state.provider_registry = ProviderRegistry()
@@ -137,8 +137,22 @@ async def lifespan(app: FastAPI):
         logger.info("✅ APIKeyManager initialized successfully")
 
         # Initialize context manager for multi-turn conversations
-        app.state.context_manager = SimpleContextManager()
-        logger.info("✅ SimpleContextManager initialized successfully")
+        enable_context = os.getenv("ENABLE_CONTEXT_MANAGER", "true").lower() == "true"
+        context_mode = os.getenv("CONTEXT_MODE", "simple").lower()
+        if enable_context:
+            if context_mode == "advanced" and AdvancedContextManager is not None:
+                try:
+                    app.state.context_manager = AdvancedContextManager()
+                    logger.info("✅ AdvancedContextManager initialized")
+                except Exception as e:  # fallback gracefully
+                    logger.warning(f"AdvancedContextManager failed ({e}); falling back to SimpleContextManager")
+                    app.state.context_manager = SimpleContextManager()
+            else:
+                app.state.context_manager = SimpleContextManager()
+                logger.info("✅ SimpleContextManager initialized")
+        else:
+            app.state.context_manager = None
+            logger.info("ℹ️ Context management disabled (ENABLE_CONTEXT_MANAGER=false)")
 
         # Start periodic context cleanup task
         async def periodic_cleanup():
@@ -149,7 +163,7 @@ async def lifespan(app: FastAPI):
                     logger.info("Periodic context cleanup completed")
                 except Exception as e:
                     logger.error(f"Periodic context cleanup failed: {e}")
-        
+
         app.state.cleanup_task = asyncio.create_task(periodic_cleanup())
         logger.info("✅ Periodic context cleanup task started")
 
@@ -200,8 +214,6 @@ load_pricing_from_file()
 app.include_router(stripe_checkout.router, prefix="/api/v1/stripe", tags=["stripe"])
 
 # Mount streaming endpoints with /api prefix
-from .streaming_endpoints import router as streaming_router
-from .streaming_execute import router as streaming_execute_router
 app.include_router(streaming_router, prefix="/api")
 app.include_router(streaming_execute_router, prefix="/api")
 
@@ -538,7 +550,7 @@ async def logout(request: Request, response: Response) -> Dict[str, str]:
         current_user = None
         try:
             current_user = await get_current_user_from_cookie(request)
-        except:
+        except Exception:
             pass  # User might already be logged out
 
         # Logout using enhanced manager
@@ -657,7 +669,7 @@ async def execute_task(
 
         # Context Management Integration - Handle conversation history
         conversation_context = []
-        
+
         if request.context.session_id:
             try:
                 # Add user message to conversation
@@ -668,7 +680,7 @@ async def execute_task(
                     content=request.prompt,
                     metadata={"task_type": str(request.task_type), "task_id": request.task_id}
                 )
-                
+
                 # Get conversation context for better prompt understanding
                 conversation_context = await app.state.context_manager.get_conversation_context(
                     user_id=request.context.user_id,
@@ -676,7 +688,7 @@ async def execute_task(
                     include_system=True
                 )
                 logger.info(f"Loaded conversation context with {len(conversation_context)} messages")
-                
+
             except Exception as e:
                 logger.warning(f"Context management error (continuing without context): {e}")
                 # Continue execution without context rather than failing
@@ -720,11 +732,11 @@ async def execute_task(
                 await app.state.context_manager.add_message(
                     user_id=request.context.user_id,
                     session_id=request.context.session_id,
-                    role="assistant", 
+                    role="assistant",
                     content=str(assistant_content),
                     metadata={"execution_id": execution_id, "task_type": str(request.task_type)}
                 )
-                logger.info(f"Saved assistant response to conversation context")
+                logger.info("Saved assistant response to conversation context")
             except Exception as e:
                 logger.warning(f"Failed to save assistant response to context: {e}")
                 # Continue without failing the request
@@ -855,7 +867,8 @@ async def create_billing_portal_session(
 
         return BillingPortalSession(
             session_url=session_url,
-            customer_id=billing_customer.stripe_customer_id
+            customer_id=billing_customer.stripe_customer_id,
+            expires_at=None
         )
 
     except HTTPException:
@@ -1377,7 +1390,7 @@ async def get_conversation_history(
 
         # Get conversation history
         history = await app.state.context_manager.get_conversation_history(user_id, limit)
-        
+
         return {
             "user_id": user_id,
             "history": history,
@@ -1421,7 +1434,7 @@ async def get_session_context(
         context = await app.state.context_manager.get_conversation_context(
             user_id, session_id, include_system
         )
-        
+
         return {
             "session_id": session_id,
             "user_id": user_id,
@@ -1437,39 +1450,18 @@ async def get_session_context(
         raise HTTPException(status_code=500, detail="Failed to retrieve session context")
 
 
-@app.get("/api/v1/context/stats", response_model=Dict[str, Any])
-async def get_context_stats(
-    api_key: str = Depends(get_api_key),
-) -> Dict[str, Any]:
-    """
-    Get context manager statistics.
-
-    Args:
-        api_key: API key for authentication
-
-    Returns:
-        Dictionary with context statistics
-
-    Raises:
-        HTTPException: If stats retrieval fails
-    """
-    try:
-        # Verify permissions
-        await verify_permissions(api_key, "execute")
-
-        # Get context stats
-        stats = app.state.context_manager.get_stats()
-        
-        return {
-            "stats": stats,
-            "status": "active"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get context stats: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve context statistics")
+@app.get("/api/v1/context/stats")
+async def context_stats():
+    cm = getattr(app.state, "context_manager", None)
+    if not cm:
+        return {"enabled": False}
+    if hasattr(cm, "get_stats"):
+        try:
+            stats = cm.get_stats()
+        except Exception as e:  # pragma: no cover
+            return {"enabled": True, "mode": cm.__class__.__name__, "error": str(e)}
+        return {"enabled": True, "mode": cm.__class__.__name__, **stats}
+    return {"enabled": True, "mode": cm.__class__.__name__}
 
 
 @app.post("/api/v1/context/cleanup")
@@ -1496,7 +1488,7 @@ async def cleanup_context(
 
         # Schedule cleanup in background
         background_tasks.add_task(app.state.context_manager.cleanup_expired_sessions)
-        
+
         return {"message": "Cleanup scheduled successfully"}
 
     except HTTPException:

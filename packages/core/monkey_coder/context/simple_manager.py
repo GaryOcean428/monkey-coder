@@ -12,6 +12,24 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
+try:
+    # Metrics are optional; fall back gracefully
+    from ..monitoring.context_metrics import (
+        set_conversations,
+        set_messages,
+        inc_evictions,
+        inc_conversations,
+    )
+except Exception:  # pragma: no cover - metrics optional
+    def set_conversations(v: int):
+        pass
+    def set_messages(v: int):
+        pass
+    def inc_evictions(n: int = 1):
+        pass
+    def inc_conversations(n: int = 1):
+        pass
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,25 +87,25 @@ class SimpleConversation:
     def _maintain_context_window(self):
         """Maintain context window within token limits."""
         total_tokens = sum(msg.token_count for msg in self.messages)
-        
+
         if total_tokens <= self.max_context_tokens:
             return
 
         # Keep recent messages and system messages
         system_messages = [msg for msg in self.messages if msg.role == "system"]
         non_system_messages = [msg for msg in self.messages if msg.role != "system"]
-        
+
         # Keep most recent non-system messages
         kept_messages = []
         current_tokens = sum(msg.token_count for msg in system_messages)
-        
+
         for msg in reversed(non_system_messages):
             if current_tokens + msg.token_count <= self.max_context_tokens:
                 kept_messages.insert(0, msg)
                 current_tokens += msg.token_count
             else:
                 break
-        
+
         self.messages = system_messages + kept_messages
         logger.info(f"Context window maintained: {len(self.messages)} messages, {current_tokens} tokens")
 
@@ -101,16 +119,20 @@ class SimpleConversation:
 
 class SimpleContextManager:
     """Simple in-memory context manager for conversations."""
-    
+
     def __init__(self, session_timeout: timedelta = timedelta(hours=24)):
         self.conversations: Dict[str, SimpleConversation] = {}
         self.user_sessions: Dict[str, Dict[str, str]] = {}  # user_id -> {session_id: conversation_id}
         self.session_timeout = session_timeout
         self._lock = asyncio.Lock()
+        self._evictions = 0
+        # Initialize metrics baseline
+        set_conversations(0)
+        set_messages(0)
 
     async def get_or_create_conversation(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         session_id: str
     ) -> SimpleConversation:
         """Get or create a conversation for the user session."""
@@ -122,7 +144,7 @@ class SimpleContextManager:
                     conversation = self.conversations[conversation_id]
                     conversation.last_active = datetime.utcnow()
                     return conversation
-            
+
             # Create new conversation
             conversation_id = str(uuid.uuid4())
             conversation = SimpleConversation(
@@ -130,14 +152,16 @@ class SimpleContextManager:
                 user_id=user_id,
                 session_id=session_id
             )
-            
+
             self.conversations[conversation_id] = conversation
-            
+
             # Track user session mapping
             if user_id not in self.user_sessions:
                 self.user_sessions[user_id] = {}
             self.user_sessions[user_id][session_id] = conversation_id
-            
+
+            inc_conversations()
+            self._refresh_metrics_unlocked()
             logger.info(f"Created new conversation {conversation_id} for user {user_id}, session {session_id}")
             return conversation
 
@@ -151,7 +175,10 @@ class SimpleContextManager:
     ) -> SimpleMessage:
         """Add a message to the conversation."""
         conversation = await self.get_or_create_conversation(user_id, session_id)
-        return conversation.add_message(role, content, metadata)
+        msg = conversation.add_message(role, content, metadata)
+        # Refresh metrics asynchronously (schedule so we don't hold caller path)
+        self._refresh_metrics()
+        return msg
 
     async def get_conversation_context(
         self,
@@ -171,7 +198,7 @@ class SimpleContextManager:
         """Get recent conversations for a user."""
         async with self._lock:
             user_conversations = []
-            
+
             if user_id in self.user_sessions:
                 for session_id, conversation_id in self.user_sessions[user_id].items():
                     if conversation_id in self.conversations:
@@ -183,7 +210,7 @@ class SimpleContextManager:
                             "last_active": conv.last_active.isoformat(),
                             "message_count": len(conv.messages)
                         })
-            
+
             # Sort by last active and limit
             user_conversations.sort(key=lambda x: x["last_active"], reverse=True)
             return user_conversations[:limit]
@@ -193,11 +220,11 @@ class SimpleContextManager:
         async with self._lock:
             cutoff_time = datetime.utcnow() - self.session_timeout
             expired_conversations = []
-            
+
             for conversation_id, conversation in self.conversations.items():
                 if conversation.last_active < cutoff_time:
                     expired_conversations.append(conversation_id)
-            
+
             for conversation_id in expired_conversations:
                 conversation = self.conversations.pop(conversation_id, None)
                 if conversation:
@@ -208,9 +235,12 @@ class SimpleContextManager:
                         del self.user_sessions[user_id][session_id]
                         if not self.user_sessions[user_id]:
                             del self.user_sessions[user_id]
-            
+
             if expired_conversations:
+                self._evictions += len(expired_conversations)
+                inc_evictions(len(expired_conversations))
                 logger.info(f"Cleaned up {len(expired_conversations)} expired conversations")
+            self._refresh_metrics_unlocked()
 
     async def save_to_file(self, filepath: str):
         """Save conversations to file for persistence."""
@@ -220,7 +250,7 @@ class SimpleContextManager:
                 "user_sessions": self.user_sessions,
                 "saved_at": datetime.utcnow().isoformat()
             }
-            
+
             for conv_id, conversation in self.conversations.items():
                 data["conversations"][conv_id] = {
                     "id": conversation.id,
@@ -231,7 +261,7 @@ class SimpleContextManager:
                     "max_context_tokens": conversation.max_context_tokens,
                     "messages": [msg.to_dict() for msg in conversation.messages]
                 }
-            
+
             try:
                 with open(filepath, 'w') as f:
                     json.dump(data, f, indent=2)
@@ -244,15 +274,15 @@ class SimpleContextManager:
         if not Path(filepath).exists():
             logger.info(f"No existing conversation file found at {filepath}")
             return
-        
+
         try:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-            
+
             async with self._lock:
                 self.user_sessions = data.get("user_sessions", {})
                 conversations_data = data.get("conversations", {})
-                
+
                 for conv_id, conv_data in conversations_data.items():
                     conversation = SimpleConversation(
                         id=conv_data["id"],
@@ -262,7 +292,7 @@ class SimpleContextManager:
                         last_active=datetime.fromisoformat(conv_data["last_active"]),
                         max_context_tokens=conv_data.get("max_context_tokens", 4096)
                     )
-                    
+
                     # Restore messages
                     for msg_data in conv_data.get("messages", []):
                         message = SimpleMessage(
@@ -274,11 +304,11 @@ class SimpleContextManager:
                             token_count=msg_data.get("token_count", 0)
                         )
                         conversation.messages.append(message)
-                    
+
                     self.conversations[conv_id] = conversation
-                
+
                 logger.info(f"Loaded {len(self.conversations)} conversations from {filepath}")
-        
+
         except Exception as e:
             logger.error(f"Failed to load conversations from file: {e}")
 
@@ -286,14 +316,31 @@ class SimpleContextManager:
         """Get context manager statistics."""
         total_messages = sum(len(conv.messages) for conv in self.conversations.values())
         active_sessions = len(self.user_sessions)
-        
+
         return {
             "total_conversations": len(self.conversations),
             "total_messages": total_messages,
             "active_users": len(self.user_sessions),
             "active_sessions": active_sessions,
-            "memory_usage_mb": self._estimate_memory_usage()
+            "memory_usage_mb": self._estimate_memory_usage(),
+            "evictions": self._evictions
         }
+
+    def _refresh_metrics(self):
+        """Schedule async metrics refresh (non-blocking)."""
+        if self._lock.locked():
+            asyncio.create_task(self._refresh_metrics_async())
+        else:
+            asyncio.create_task(self._refresh_metrics_async())
+
+    async def _refresh_metrics_async(self):  # pragma: no cover - timing sensitive
+        async with self._lock:
+            self._refresh_metrics_unlocked()
+
+    def _refresh_metrics_unlocked(self):
+        total_messages = sum(len(c.messages) for c in self.conversations.values())
+        set_conversations(len(self.conversations))
+        set_messages(total_messages)
 
     def _estimate_memory_usage(self) -> float:
         """Estimate memory usage in MB."""
@@ -301,7 +348,7 @@ class SimpleContextManager:
         for conversation in self.conversations.values():
             for message in conversation.messages:
                 total_chars += len(message.content) + len(str(message.metadata))
-        
+
         # Rough estimation: chars * 2 bytes + overhead
         return (total_chars * 2 + len(self.conversations) * 1000) / (1024 * 1024)
 
