@@ -157,6 +157,46 @@ yarn global add monkey-coder-cli
    yarn workspace @monkey-coder/web dev
    ```
 
+### Python Dependency Management (uv)
+
+We now standardize on [uv](https://github.com/astral-sh/uv) for fast, reproducible Python dependency resolution.
+
+```bash
+# Install uv (one-time)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync environment (uses requirements.txt + pyproject metadata)
+./scripts/sync_python.sh
+
+# Run tests
+pytest -q
+```
+
+Key points:
+- `pyproject.toml` mirrors runtime dependencies from `requirements.txt`.
+- `scripts/sync_python.sh` will compile (best-effort) and sync with uv.
+- Add new dependencies in `pyproject.toml` (runtime) and optionally keep `requirements.txt` aligned until full migration.
+
+### Monorepo (Yarn Workspaces)
+
+The repository already uses Yarn 4 workspaces (declared in `package.json`). To run a script across all packages:
+
+```bash
+yarn workspaces foreach -A run build
+```
+
+To run a single package command:
+
+```bash
+yarn workspace monkey-coder-cli run dev
+```
+
+To add a dependency to a specific package (example for CLI):
+
+```bash
+yarn workspace monkey-coder-cli add chalk@^5.3.0
+```
+
 ## Published Packages
 
 ### 🐍 Python Packages

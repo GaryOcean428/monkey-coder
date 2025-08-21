@@ -1,0 +1,66 @@
+[project]
+name = "monkey-coder-core"
+version = "0.0.0"
+description = "Core orchestration engine for Monkey Coder"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [ { name = "Monkey Coder" } ]
+license = { text = "MIT" }
+
+# Mirror requirements.txt (runtime subset) - keep in sync
+dependencies = [
+  "fastapi>=0.104.0",
+  "uvicorn[standard]>=0.24.0",
+  "pydantic>=2.5.0",
+  "httpx>=0.25.0",
+  "python-multipart>=0.0.6",
+  "python-jose[cryptography]>=3.3.0",
+  "passlib[bcrypt]>=1.7.4",
+  "PyJWT[crypto]>=2.6.0",
+  "pyotp>=2.8.0",
+  "openai>=1.3.0",
+  "anthropic>=0.8.0",
+  "google-genai>=0.3.0",
+  "groq>=0.4.0",
+  "asyncpg>=0.29.0",
+  "aiomysql>=0.2.0",
+  "redis>=5.0.0",
+  "celery>=5.3.0",
+  "asyncio-mqtt>=0.13.0",
+  "prometheus-client>=0.19.0",
+  "sentry-sdk[fastapi]>=1.40.0",
+  "psutil>=5.9.0",
+  "stripe>=7.0.0",
+  "aiohttp>=3.9.0",
+  "sse-starlette>=1.6.0",
+  "click>=8.1.0",
+  "rich>=13.7.0",
+  "typer>=0.9.0",
+  "anyio>=4.0.0",
+  "PyYAML>=6.0.0",
+  "beautifulsoup4>=4.12.0",
+  "html2text>=2020.1.16",
+  "python-dotenv>=1.0.0",
+  "torch==2.7.1+cpu",
+  "transformers>=4.39.0",
+  "accelerate>=1.2.0",
+  "safetensors>=0.4.3",
+  "tokenizers>=0.14.0,<0.19.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.2.0",
+  "pytest-asyncio>=0.23.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+managed = true
+dev-dependencies = ["pytest>=8.2.0", "pytest-asyncio>=0.23.0"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
