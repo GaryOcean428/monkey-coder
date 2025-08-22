@@ -4,44 +4,49 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.13",
+      "python": "3.12",
       "node": "20"
     },
     "steps": {
       "setup": {
-        "description": "Setup Node.js environment and Yarn 4.9.2",
+        "description": "Force Yarn 4.9.2 clean install",
         "commands": [
-          "# Bypass Corepack - install Yarn directly via npm",
-          "npm install -g yarn@4.9.2",
-          "# Clean up any conflicting Yarn configs",
-          "rm -f .yarnrc 2>/dev/null || true",
-          "rm -rf .yarn/releases 2>/dev/null || true",
-          "# Verify Yarn version",
-          "yarn --version",
-          "# Set Yarn to use node-modules linker for Railway compatibility",
-          "yarn config set nodeLinker node-modules"
+          "echo '🔧 Starting Yarn 4.9.2 setup...'",
+          "rm -rf .yarnrc .yarn .pnp.* 2>/dev/null || true",
+          "echo '📦 Setting up Yarn 4.9.2 via corepack...'",
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn config set nodeLinker node-modules",
+          "echo '✅ Yarn version:'",
+          "yarn --version"
         ]
       },
       "web": {
         "description": "Build Next.js frontend for static export",
         "commands": [
+          "echo '🌐 Starting frontend build...'",
+          "yarn config set nodeLinker node-modules",
+          "echo '📚 Installing dependencies with extended timeout...'",
           "yarn install --immutable --network-timeout 300000",
-          "yarn workspace @monkey-coder/web build"
+          "echo '🏗️ Building Next.js frontend...'",
+          "yarn workspace @monkey-coder/web build",
+          "echo '✅ Frontend build completed'",
+          "ls -la packages/web/out/ | head -10"
         ],
-        "inputs": [
-          {"step": "setup"}
-        ]
+        "inputs": [{ "step": "setup" }]
       },
       "python": {
         "description": "Install Python dependencies",
         "commands": [
+          "echo '🐍 Starting Python dependency installation...'",
           "pip install --no-cache-dir --upgrade pip setuptools wheel",
+          "echo '📦 Installing requirements.txt...'",
           "pip install --no-cache-dir -r requirements.txt",
-          "cd packages/core && pip install --no-cache-dir -e ."
+          "echo '🔧 Installing core package...'",
+          "cd packages/core && pip install --no-cache-dir -e .",
+          "echo '✅ Python dependencies installed'"
         ],
-        "inputs": [
-          {"step": "web"}
-        ]
+        "inputs": [{ "step": "web" }]
       }
     }
   },
@@ -49,8 +54,6 @@
     "startCommand": "python run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
-    "inputs": [
-      {"step": "python"}
-    ]
+    "inputs": [{ "step": "python" }]
   }
 }
