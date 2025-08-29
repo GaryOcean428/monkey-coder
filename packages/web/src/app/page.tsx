@@ -5,6 +5,8 @@ import { Hero } from '@/components/marketing/hero'
 import { Features } from '@/components/marketing/features'
 import { PricingSection } from '@/components/marketing/pricing'
 import { Footer } from '@/components/marketing/footer'
+import { LiveCodeGenerator } from '@/components/demo/live-code-generator'
+import { EnterpriseMetricsDashboard } from '@/components/demo/enterprise-metrics-dashboard'
 
 export default function HomePage() {
   return (
@@ -15,6 +17,12 @@ export default function HomePage() {
 
         {/* Features Section */}
         <Features />
+
+        {/* Live Demo Section */}
+        <LiveCodeGenerator />
+
+        {/* Enterprise Dashboard */}
+        <EnterpriseMetricsDashboard />
 
         {/* Pricing Section */}
         <PricingSection />
