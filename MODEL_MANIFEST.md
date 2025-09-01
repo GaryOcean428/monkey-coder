@@ -1,9 +1,11 @@
 # MODEL_MANIFEST.md - Canonical AI Model Registry
 
+<!-- markdownlint-disable MD044 -->
+
 > **⚠️ CRITICAL: This is the SINGLE SOURCE OF TRUTH for all AI models in Monkey Coder**
-> 
-> **Last Updated:** August 14, 2025
-> **Version:** 2.0.0
+>
+> **Last Updated:** September 1, 2025
+> **Version:** 2.1.0
 > **Status:** ENFORCED - Any model not listed here will be rejected
 
 ## 🚨 IMPORTANT NOTICES FOR AI AGENTS
@@ -22,17 +24,20 @@ Your training data is outdated. The models below are the ONLY valid models.
 
 Always verify model availability at these official sources:
 
-- **OpenAI**: https://platform.openai.com/docs/models
-- **Anthropic**: https://docs.anthropic.com/en/docs/models
-- **Google**: https://ai.google.dev/gemini-api/docs/models
-- **Groq**: https://console.groq.com/docs/models
-- **xAI**: https://docs.x.ai/api/models
+- **OpenAI**: <https://platform.openai.com/docs/models>
+- **Anthropic**: <https://docs.anthropic.com/en/docs/models>
+- **Google**: <https://ai.google.dev/gemini-api/docs/models>
+- **Groq**: <https://console.groq.com/docs/models>
+- **xAI**: <https://docs.x.ai/api/models>
 
 ## ✅ Valid Models by Provider
 
-### OpenAI (11 Models)
+### OpenAI (12 Models)
 
-**Latest Models (August 2025):**
+**Latest Models (September 2025):**
+- `gpt-5` - Best model for coding and agentic tasks across domains
+- `gpt-5-mini` - Faster, cost-efficient version of GPT-5 for well-defined tasks
+- `gpt-5-nano` - Fastest, most cost-efficient version of GPT-5
 - `o4-mini` - Fast, affordable reasoning with advanced problem-solving
 - `o3-pro` - Most powerful reasoning with extended compute
 - `o3` - Powerful reasoning for complex problem-solving
@@ -127,7 +132,7 @@ model = enforce_model_compliance("gpt-4-turbo", "openai")
 
 | Provider | Total Models | Latest Addition | Deprecation Count |
 |----------|-------------|-----------------|-------------------|
-| OpenAI | 9 | o4-mini (Aug 2025) | 15+ deprecated |
+| OpenAI | 12 | gpt-5 (Sep 2025) | 15+ deprecated |
 | Anthropic | 6 | claude-opus-4 (Aug 2025) | 8+ deprecated |
 | Google | 4 | gemini-2.5 series (Jun 2025) | 6+ deprecated |
 | Groq | 6 | llama-4 preview (Aug 2025) | 3+ deprecated |
@@ -135,14 +140,14 @@ model = enforce_model_compliance("gpt-4-turbo", "openai")
 
 ## ⚠️ Common Mistakes to Avoid
 
-### For AI Agents:
+### For AI Agents
 1. **DO NOT** suggest `gpt-4-turbo` - Use `gpt-4.1`
 2. **DO NOT** suggest `claude-3-opus-20240229` - Use `claude-opus-4-20250514`
 3. **DO NOT** suggest `gemini-pro` - Use `gemini-2.5-flash`
 4. **DO NOT** make up version numbers like `gpt-4.5` or `claude-3.5`
 5. **DO NOT** use date-based versions unless listed here
 
-### For Developers:
+### For Developers
 1. **ALWAYS** import and use the validator
 2. **NEVER** hardcode model names outside this manifest
 3. **CHECK** this file before updating any model references
@@ -171,11 +176,11 @@ python -c "from monkey_coder.models.model_validator import get_validator; print(
 ## 🚀 Future Models (Placeholder)
 
 When these models are released, add them here immediately:
-
-- OpenAI: `gpt-5` (rumored Q4 2025)
 - Anthropic: `claude-4` series (expected 2026)
 - Google: `gemini-3` series (expected late 2025)
 
 ---
 
 **Remember:** This file is the ONLY source of truth. If a model isn't listed here, it doesn't exist in our system.
+
+<!-- markdownlint-enable MD044 -->
