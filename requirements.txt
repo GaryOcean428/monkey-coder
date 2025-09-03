@@ -297,7 +297,7 @@ tokenizers==0.15.2
     # via
     #   monkey-coder-core (pyproject.toml)
     #   transformers
-torch==2.2.0+cpu
+torch==2.2.0
     # via
     #   monkey-coder-core (pyproject.toml)
     #   accelerate
