@@ -4,7 +4,7 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.12",
+      "python": "3.13",
       "node": "20"
     },
     "steps": {
@@ -17,6 +17,7 @@
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
           "yarn config set nodeLinker node-modules",
+          "yarn config set network-timeout 600000",
           "echo '✅ Yarn version:'",
           "yarn --version"
         ]
@@ -26,10 +27,11 @@
         "commands": [
           "echo '🌐 Starting frontend build...'",
           "yarn config set nodeLinker node-modules",
+          "yarn config set network-timeout 600000",
           "echo '📚 Installing dependencies with extended timeout...'",
-          "yarn install --immutable --network-timeout 300000",
-          "echo '🏗️ Building Next.js frontend...'",
-          "yarn workspace @monkey-coder/web build",
+          "yarn install --immutable --network-timeout 600000 || yarn install --network-timeout 600000",
+          "echo '🏗️ Building Next.js frontend for static export...'",
+          "yarn workspace @monkey-coder/web export",
           "echo '✅ Frontend build completed'",
           "ls -la packages/web/out/ | head -10"
         ],
@@ -54,6 +56,8 @@
     "startCommand": "python run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
     "inputs": [{ "step": "python" }]
   }
 }
