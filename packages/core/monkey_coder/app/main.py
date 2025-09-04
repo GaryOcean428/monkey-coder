@@ -156,18 +156,22 @@ async def lifespan(app: FastAPI):
             app.state.context_manager = None
             logger.info("ℹ️ Context management disabled (ENABLE_CONTEXT_MANAGER=false)")
 
-        # Start periodic context cleanup task
-        async def periodic_cleanup():
-            while True:
-                try:
-                    await asyncio.sleep(3600)  # Run every hour
-                    await app.state.context_manager.cleanup_expired_sessions()
-                    logger.info("Periodic context cleanup completed")
-                except Exception as e:
-                    logger.error(f"Periodic context cleanup failed: {e}")
+        # Start periodic context cleanup task only if context manager is enabled
+        if enable_context and app.state.context_manager is not None:
+            async def periodic_cleanup():
+                while True:
+                    try:
+                        await asyncio.sleep(3600)  # Run every hour
+                        await app.state.context_manager.cleanup_expired_sessions()
+                        logger.info("Periodic context cleanup completed")
+                    except Exception as e:
+                        logger.error(f"Periodic context cleanup failed: {e}")
 
-        app.state.cleanup_task = asyncio.create_task(periodic_cleanup())
-        logger.info("✅ Periodic context cleanup task started")
+            app.state.cleanup_task = asyncio.create_task(periodic_cleanup())
+            logger.info("✅ Periodic context cleanup task started")
+        else:
+            app.state.cleanup_task = None
+            logger.info("ℹ️ Periodic context cleanup disabled (context manager not available)")
 
         # Initialize providers with timeout
         await app.state.provider_registry.initialize_all()
