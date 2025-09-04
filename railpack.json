@@ -4,7 +4,7 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.13",
+      "python": "3.12",
       "node": "20"
     },
     "steps": {
@@ -31,9 +31,9 @@
           "echo '📚 Installing dependencies with extended timeout...'",
           "yarn install --immutable --network-timeout 600000 || yarn install --network-timeout 600000",
           "echo '🏗️ Building Next.js frontend for static export...'",
-          "yarn workspace @monkey-coder/web export",
+          "yarn workspace @monkey-coder/web run export || yarn workspace @monkey-coder/web run build",
           "echo '✅ Frontend build completed'",
-          "ls -la packages/web/out/ | head -10"
+          "ls -la packages/web/out/ | head -10 || echo 'Note: out/ directory may not exist if build used different output'"
         ],
         "inputs": [{ "step": "setup" }]
       },
@@ -41,6 +41,7 @@
         "description": "Install Python dependencies",
         "commands": [
           "echo '🐍 Starting Python dependency installation...'",
+          "python --version",
           "pip install --no-cache-dir --upgrade pip setuptools wheel",
           "echo '📦 Installing requirements.txt...'",
           "pip install --no-cache-dir -r requirements.txt",
