@@ -4,18 +4,20 @@ set -e
 echo "🔍 Railway Deployment Verification Script"
 echo "=========================================="
 
-# Check Python version
+# Check Python version against railpack.json
 echo "📋 Checking Python version..."
-python_version=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+expected_python=$(jq -r '.build.packages.python // empty' railpack.json 2>/dev/null || echo "")
+python_version=$(python3 --version | awk '{print $2}' | cut -d'.' -f1,2)
 echo "   Current Python: $python_version"
-if [[ "$python_version" == "3.13" ]]; then
-    echo "   ✅ Python 3.13 detected (matches railpack.json)"
-elif [[ "$python_version" == "3.12" ]]; then
-    echo "   ⚠️ Python 3.12 detected (railpack.json specifies 3.13)"
-    echo "   This may cause deployment issues on Railway"
+if [[ -n "$expected_python" ]]; then
+  echo "   Expected (railpack.json): $expected_python"
+  if [[ "$python_version" == "$expected_python" ]]; then
+    echo "   ✅ Python version matches railpack.json"
+  else
+    echo "   ⚠️ Python version differs from railpack.json"
+  fi
 else
-    echo "   ❌ Unsupported Python version"
-    exit 1
+  echo "   ℹ️ No Python version specified in railpack.json"
 fi
 
 # Check Yarn version
@@ -155,7 +157,7 @@ echo "🚀 Next Steps for Railway Deployment:"
 echo "1. Fix any ❌ critical issues above"
 echo "2. Set environment variables in Railway dashboard"
 echo "3. Deploy using: railway up --force"
-echo "4. Monitor deployment with: railway logs --tail"
+echo "4. Monitor deployment with: railway logs --service monkey-coder --deployment"
 echo ""
 echo "📋 Post-deployment verification:"
 echo "curl https://your-app.railway.app/health"

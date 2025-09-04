@@ -53,9 +53,10 @@ Always verify model availability at these official sources:
 - ~~gpt-4~~ → Use `gpt-4.1`
 - ~~gpt-3.5-turbo~~ → Use `gpt-4.1-mini`
 
-### Anthropic (6 Models - Claude 3.5+ Only)
+### Anthropic (7 Models - Claude 4/3.5 Series)
 
 **Latest Models (August 2025):**
+- `claude-opus-4-1-20250805` - Next-gen Opus with improved reasoning and reliability
 - `claude-opus-4-20250514` - Most capable and intelligent model
 - `claude-sonnet-4-20250514` - High-performance with exceptional reasoning
 - `claude-3-7-sonnet-20250219` - High-performance with early extended thinking
@@ -103,6 +104,9 @@ Always verify model availability at these official sources:
 - `grok-3-mini-fast` - Ultra-fast responses
 - `grok-3-fast` - Balance of speed and capability
 
+**Specialized Code Models:**
+- `grok-code-fast-1` - Optimized for fast code generation and edits. See docs: <https://docs.x.ai/docs/models/grok-code-fast-1>
+
 ## 🔄 Model Update Protocol
 
 When new models are released:
@@ -133,7 +137,7 @@ model = enforce_model_compliance("gpt-4-turbo", "openai")
 | Provider | Total Models | Latest Addition | Deprecation Count |
 |----------|-------------|-----------------|-------------------|
 | OpenAI | 12 | gpt-5 (Sep 2025) | 15+ deprecated |
-| Anthropic | 6 | claude-opus-4 (Aug 2025) | 8+ deprecated |
+| Anthropic | 7 | claude-opus-4-1 (Aug 2025) | 8+ deprecated |
 | Google | 4 | gemini-2.5 series (Jun 2025) | 6+ deprecated |
 | Groq | 6 | llama-4 preview (Aug 2025) | 3+ deprecated |
 | xAI | 6 | grok-4-latest (Aug 2025) | 2+ deprecated |
@@ -164,6 +168,16 @@ python -c "from monkey_coder.models.model_validator import validate_model; print
 
 # Get all valid models
 python -c "from monkey_coder.models.model_validator import get_validator; print(get_validator().get_valid_models())"
+```
+
+## 💡 Usage Example: Select xAI Grok Code Fast 1 for code generation
+
+```python
+from monkey_coder.models.model_validator import enforce_model_compliance
+
+# Provider identifier: "grok" (xAI)
+model = enforce_model_compliance("grok-code-fast-1", "grok")
+print(model)  # -> "grok-code-fast-1" (validated and enforced)
 ```
 
 ## 📝 Notes

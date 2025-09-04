@@ -122,13 +122,13 @@ echo "registry=https://registry.npmjs.org/" > .npmrc
 
 ```bash
 # Check Railway service status
-railway logs -s monkey-coder --tail 300
+railway logs --service monkey-coder --deployment
 
 # Check service health
 railway status
 
 # Verify environment variables
-railway vars
+railway variables --service monkey-coder
 
 # Test health endpoint
 curl -v https://monkey-coder.up.railway.app/health
@@ -143,16 +143,16 @@ curl -v https://monkey-coder.up.railway.app/health
    railway up
 
    # Check for startup errors
-   railway logs --tail 100
+   railway logs --service monkey-coder --deployment
    ```
 
 2. **Missing Environment Variables:**
 
    ```bash
    # Set required variables
-   railway var set OPENAI_API_KEY=your_key_here
-   railway var set STRIPE_API_KEY=your_stripe_key
-   railway var set DATABASE_URL=your_db_url
+   railway variables set OPENAI_API_KEY=your_key_here
+   railway variables set STRIPE_API_KEY=your_stripe_key
+   railway variables set DATABASE_URL=your_db_url
    ```
 
 3. **Database Connection Issues:**
@@ -236,13 +236,13 @@ Deep dive into Railway service issues:
 
 ```bash
 # Get detailed service info
-railway status --JSON
+railway status --json
 
 # Check recent deployments
 railway deployments
 
 # Monitor live logs
-railway logs --tail 0 --follow
+railway logs --service monkey-coder --deployment
 
 # Check resource usage
 railway metrics
@@ -299,9 +299,9 @@ curl https://monkey-coder.up.railway.app/api/health
 
 ```json
 {
-  "healthcheck": {
-    "path": "/health",
-    "timeout": 100
+  "deploy": {
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 100
   }
 }
 ```

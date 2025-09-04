@@ -419,10 +419,12 @@ MODEL_REGISTRY = {
         # GPT-4.1 Family (Previous flagship models)
         "gpt-4.1",
         "gpt-4.1-mini",
+        "gpt-4.1-vision",
         "gpt-4.1-nano",
         # Reasoning models
         "o1",
         "o1-mini",
+        "o3-mini",
         "o3",
         "o3-pro",
         "o4-mini",
@@ -448,27 +450,27 @@ MODEL_REGISTRY = {
         "claude-3-7-sonnet-20250219",
         # Claude 3.5
         "claude-3-5-sonnet-20241022",
+        "claude-3-5-sonnet-20240620",
         "claude-3-5-haiku-20241022",
     ],
     ProviderType.GOOGLE: [
         # Gemini 2.5 Family
         "gemini-2.5-pro",
-        "models/gemini-2.5-flash",
-        "models/gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
         # Gemini 2.0 Family
-        "models/gemini-2.0-flash",
-        "models/gemini-2.0-flash-lite",
-        # Live models
-        "models/gemini-live-2.5-flash-preview",
-        "models/gemini-2.0-flash-live-001",
+        "gemini-2.0-flash",
     ],
     ProviderType.GROK: [
         # xAI Grok models
         "grok-4-latest",
+        "grok-4",
         "grok-3",
         "grok-3-mini",
         "grok-3-mini-fast",
         "grok-3-fast",
+        # Specialized code model
+        "grok-code-fast-1",
     ],
     ProviderType.GROQ: [
         # Llama models (excluding R1)
@@ -500,6 +502,13 @@ MODEL_ALIASES = {
     "gpt-4o-mini": "gpt-4.1-mini",
     "gpt-4": "gpt-4.1",
     "gpt-4-turbo": "gpt-4.1",
+    # Google prefixed IDs to canonical names
+    "models/gemini-2.5-flash": "gemini-2.5-flash",
+    "models/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
+    "models/gemini-2.0-flash": "gemini-2.0-flash",
+    # Some environments may still refer to these previews; normalize if encountered
+    "models/gemini-live-2.5-flash-preview": "gemini-2.5-flash",
+    "models/gemini-2.0-flash-live-001": "gemini-2.0-flash",
     "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",  # Non-default alias
     "claude-sonnet-4-0": "claude-opus-4-20250514",  # Alias for latest Claude 4 (Opus)
     "opus": "claude-opus-4-20250514",  # Alias for Opus/latest

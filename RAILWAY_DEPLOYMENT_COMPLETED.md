@@ -34,25 +34,26 @@
 
 ## 📋 Railway Configuration Status
 
-### Current railpack.json Configuration:
+### Current railpack.JSON Configuration
+
 ```json
 {
   "packages": {
-    "python": "3.13",     ✅ Correct
+    "Python": "3.12",     ✅ Correct
     "node": "20"          ✅ Correct
   },
   "steps": {
     "web": "yarn workspace @monkey-coder/web export",    ✅ Static export
-    "python": "pip install -r requirements.txt"         ✅ Fixed dependencies
+    "Python": "pip install -r requirements.txt"         ✅ Fixed dependencies
   },
   "deploy": {
-    "startCommand": "python run_server.py",             ✅ Correct entry point
+    "startCommand": "Python run_server.py",             ✅ Correct entry point
     "healthCheckPath": "/health"                         ✅ Endpoint exists
   }
 }
 ```
 
-### Environment Variables Ready:
+### Environment Variables Ready
 - ✅ **AI Provider Keys**: OpenAI, Anthropic, Google, Groq templates
 - ✅ **Security Settings**: JWT secret, CORS origins, trusted hosts
 - ✅ **System Config**: NODE_ENV, PYTHONUNBUFFERED, logging settings
@@ -62,7 +63,8 @@
 
 ## 🚀 Deployment Commands
 
-### Immediate Deployment Steps:
+### Immediate Deployment Steps
+
 ```bash
 # 1. Upload environment variables to Railway dashboard
 # Use .env.railway.template as reference
@@ -71,14 +73,15 @@
 railway up --force
 
 # 3. Monitor deployment
-railway logs --tail --filter="error|failed|warning"
+railway logs --service monkey-coder --deployment
 
 # 4. Verify deployment
 curl https://your-app.railway.app/health
 curl https://your-app.railway.app/api/v1/capabilities
 ```
 
-### Pre-deployment Validation:
+### Pre-deployment Validation
+
 ```bash
 # Run verification script
 ./verify_railway_deployment.sh
@@ -91,9 +94,9 @@ curl https://your-app.railway.app/api/v1/capabilities
 ## 🔍 Deployment Verification Checklist
 
 ### ✅ **Build Configuration**
-- [x] Python 3.13 specified in railpack.json
+- [x] Python 3.13 specified in railpack.JSON
 - [x] Node.js 20 specified and available
-- [x] Yarn 4.9.2 configured via corepack
+- [x] yarn 4.9.2 configured via corepack
 - [x] Next.js static export (`packages/web/out/`) built and ready
 
 ### ✅ **Dependencies**
@@ -111,19 +114,19 @@ curl https://your-app.railway.app/api/v1/capabilities
 ### ✅ **Frontend**
 - [x] Next.js configured for static export (`output: 'export'`)
 - [x] 32 static files generated in `packages/web/out/`
-- [x] Critical files present: `index.html`, `_next/` directory
+- [x] Critical files present: `index.HTML`, `_next/` directory
 - [x] Static assets properly structured for Railway
 
 ---
 
 ## 📊 Performance Expectations
 
-### Response Time Targets:
+### Response Time Targets
 - **Health Check**: <100ms
 - **API Endpoints**: <500ms (95th percentile)
 - **Static Assets**: <200ms
 
-### Resource Usage:
+### Resource Usage
 - **Memory**: <70% of allocated (monitored)
 - **CPU**: <85% under normal load
 - **Startup Time**: <60 seconds on Railway
@@ -154,33 +157,37 @@ curl https://your-app.railway.app/api/v1/capabilities
 
 ## 🆘 Troubleshooting
 
-### Common Issues & Solutions:
+### Common Issues & Solutions
 
-#### Build Failures:
+#### Build Failures
+
 ```bash
 # Clear Railway cache and rebuild
 railway run railway cache:clear
 railway up --force
 ```
 
-#### Dependency Issues:
+#### Dependency Issues
+
 ```bash
 # Verify requirements.txt changes applied
 cat requirements.txt | grep torch
 # Should show: torch==2.2.0 (not torch==2.2.0+cpu)
 ```
 
-#### Health Check Failures:
+#### Health Check Failures
+
 ```bash
 # Test health endpoint locally
-python run_server.py &
+Python run_server.py &
 curl http://localhost:8000/health
 ```
 
-#### Environment Variable Issues:
+#### Environment Variable Issues
+
 ```bash
 # Verify Railway environment
-railway variables list
+railway variables --service monkey-coder
 # Ensure all critical variables from template are set
 ```
 
@@ -197,4 +204,6 @@ railway variables list
 
 **Final Status**: ✅ **READY FOR RAILWAY DEPLOYMENT**
 
-All critical issues identified in the original failure analysis have been resolved. The deployment pipeline is now properly configured for Railway's Python 3.13 environment with comprehensive monitoring and verification capabilities.
+All critical issues identified in the original failure analysis have been resolved.
+The deployment pipeline is now properly configured for Railway's Python 3.13 environment
+with comprehensive monitoring and verification capabilities.
