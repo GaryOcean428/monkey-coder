@@ -42,8 +42,8 @@ dependencies = [
   "html2text>=2020.1.16",
   "python-dotenv>=1.0.0",
   # Torch pin adjusted: previous 2.7.1+cpu does not exist yet, causing uv resolution failure.
-  # Use a known stable CPU wheel version; keep pin exact so uv compile is deterministic.
-  "torch==2.2.0+cpu",
+  # Use a known stable version; keep pin exact so uv compile is deterministic.
+  "torch==2.2.0",
   "transformers>=4.39.0",
   "accelerate>=1.2.0",
   "safetensors>=0.4.3",

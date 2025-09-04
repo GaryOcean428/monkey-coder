@@ -46,19 +46,19 @@
 **Quick Start Tutorial:**
 
 ```bash
-# 1. Installation
+## 1. Installation
 npm install -g monkey-coder-cli
 
-# 2. Authentication
+## 2. Authentication
 monkey auth login
 
-# 3. Your first code generation
+## 3. Your first code generation
 monkey implement "Create a REST API for a todo application with user authentication"
 
-# 4. Code analysis
+## 4. Code analysis
 monkey analyze --file ./src/API/todos.py
 
-# 5. Interactive chat mode
+## 5. Interactive chat mode
 monkey chat
 > Help me optimize this database query
 ```

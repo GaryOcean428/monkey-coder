@@ -11,13 +11,13 @@ deployment surfaces and developer expectations, but risk drift if both are manua
 
 ## Decision
 1. `pyproject.toml` (tool.uv section) is the single authoritative source for Python dependency
-	specifications (top-level direct deps + optional groups).
+   specifications (top-level direct deps + optional groups).
 2. `requirements.txt` is treated as a compiled, derived artifact produced by
-	`uv pip compile pyproject.toml -o requirements.txt` (or `scripts/check_python_deps_sync.sh --fix`).
+   `uv pip compile pyproject.toml -o requirements.txt` (or `scripts/check_python_deps_sync.sh --fix`).
 3. Direct edits to `requirements.txt` are prohibited; CI will fail if drift is detected.
 4. `requirements.in` will be phased out after a 2-week deprecation window (kept read-only meantime).
 5. Documentation (README + CONTRIBUTING) will point contributors to modify only `pyproject.toml`
-	and run the sync script locally before committing.
+   and run the sync script locally before committing.
 
 ## Rationale
 - Eliminates dual maintenance overhead and inconsistent resolutions.

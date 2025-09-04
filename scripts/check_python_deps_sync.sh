@@ -17,8 +17,8 @@ TMP_REQ=$(mktemp)
 trap 'rm -f "$TMP_REQ"' EXIT
 
 # Export current lock / resolution to pinned requirements
-# Include PyTorch CPU index for torch dependencies with +cpu suffix
-uv pip compile pyproject.toml --extra-index-url https://download.pytorch.org/whl/cpu --quiet -o "$TMP_REQ" || {
+# Use standard PyPI index to avoid platform-specific suffixes that break deployment
+uv pip compile pyproject.toml --quiet -o "$TMP_REQ" || {
   echo "Failed to compile dependencies via uv" >&2
   exit 3
 }
