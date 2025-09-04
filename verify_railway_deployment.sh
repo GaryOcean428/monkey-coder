@@ -21,22 +21,29 @@ fi
 # Check Yarn version
 echo ""
 echo "📋 Checking Yarn version..."
+ensure_yarn() {
+  if command -v corepack &> /dev/null; then
+    corepack enable >/dev/null 2>&1 || true
+    corepack prepare yarn@4.9.2 --activate
+    return 0
+  fi
+  echo "   ❌ corepack not available; cannot provision Yarn 4.9.2 automatically"
+  return 1
+}
 if command -v yarn &> /dev/null; then
-    yarn_version=$(yarn --version)
-    echo "   Current Yarn: $yarn_version"
-    if [[ "$yarn_version" == "4.9.2" ]]; then
-        echo "   ✅ Yarn 4.9.2 detected (matches railpack.json)"
-    else
-        echo "   ⚠️ Yarn $yarn_version detected (railpack.json expects 4.9.2)"
-        echo "   Setting up Yarn 4.9.2 via corepack..."
-        corepack enable
-        corepack prepare yarn@4.9.2 --activate
-        echo "   ✅ Yarn 4.9.2 activated"
-    fi
+  yarn_version=$(yarn --version)
+  echo "   Current Yarn: $yarn_version"
+  if [[ "$yarn_version" != "4.9.2" ]]; then
+    echo "   ⚠️ Yarn $yarn_version detected (expected 4.9.2). Activating via corepack..."
+    ensure_yarn || exit 1
+  else
+    echo "   ✅ Yarn 4.9.2 detected (matches railpack.json)"
+  fi
 else
-    echo "   ❌ Yarn not found"
-    exit 1
+  echo "   ⚠️ Yarn not found. Activating Yarn 4.9.2 via corepack..."
+  ensure_yarn || exit 1
 fi
+echo "   ✅ Yarn $(yarn --version) active"
 
 # Check Node version
 echo ""
@@ -54,25 +61,32 @@ fi
 echo ""
 echo "📋 Checking frontend build..."
 if [ -d "packages/web/out" ]; then
-    file_count=$(ls -1 packages/web/out | wc -l)
-    echo "   ✅ Frontend build found with $file_count files"
-    
-    # Check for critical files
-    if [ -f "packages/web/out/index.html" ]; then
-        echo "   ✅ index.html found"
-    else
-        echo "   ❌ index.html missing"
-    fi
-    
-    if [ -d "packages/web/out/_next" ]; then
-        echo "   ✅ _next directory found"
-    else
-        echo "   ❌ _next directory missing"
-    fi
-else
-    echo "   ❌ Frontend build directory not found"
-    echo "   Run: yarn workspace @monkey-coder/web export"
+  file_count=$(ls -1 "packages/web/out" | wc -l)
+  echo "   ✅ Frontend build found with $file_count files"
+
+  missing=0
+  if [ -f "packages/web/out/index.html" ]; then
+    echo "   ✅ index.html found"
+  else
+    echo "   ❌ index.html missing"
+    missing=1
+  fi
+
+  if [ -d "packages/web/out/_next" ]; then
+    echo "   ✅ _next directory found"
+  else
+    echo "   ❌ _next directory missing"
+    missing=1
+  fi
+
+  if [ "$missing" -eq 1 ]; then
+    echo "   ❌ Frontend build incomplete. Rebuild with: yarn workspace @monkey-coder/web export"
     exit 1
+  fi
+else
+  echo "   ❌ Frontend build directory not found"
+  echo "   Run: yarn workspace @monkey-coder/web export"
+  exit 1
 fi
 
 # Validate railpack.json syntax
@@ -111,6 +125,7 @@ python3 -c "import fastapi; print('   ✅ FastAPI available')" 2>/dev/null || ec
 python3 -c "import uvicorn; print('   ✅ Uvicorn available')" 2>/dev/null || echo "   ❌ Uvicorn not available" 
 python3 -c "import pydantic; print('   ✅ Pydantic available')" 2>/dev/null || echo "   ❌ Pydantic not available"
 python3 -c "import numpy; print('   ✅ NumPy available')" 2>/dev/null || echo "   ❌ NumPy not available"
+python3 -c "import torch; print('   ✅ PyTorch available')" 2>/dev/null || echo "   ❌ PyTorch not available"
 
 # Check health endpoint structure
 echo ""
