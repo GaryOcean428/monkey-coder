@@ -56,8 +56,7 @@ from ..security import (
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
 from ..monitoring import quantum_performance
-from ..monitoring import BillingTracker as BillingTracker  # type: ignore
-from ..monitoring import MetricsCollector as MetricsCollector  # type: ignore
+from .. import monitoring as parent_monitoring
 from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
@@ -127,10 +126,10 @@ async def lifespan(app: FastAPI):
         app.state.persona_router = PersonaRouter()
         logger.info("✅ PersonaRouter initialized successfully")
 
-        app.state.metrics_collector = MetricsCollector()
+        app.state.metrics_collector = parent_monitoring.MetricsCollector()
         logger.info("✅ MetricsCollector initialized successfully")
 
-        app.state.billing_tracker = BillingTracker()
+        app.state.billing_tracker = parent_monitoring.BillingTracker()
         logger.info("✅ BillingTracker initialized successfully")
 
         app.state.feedback_collector = FeedbackCollector()
