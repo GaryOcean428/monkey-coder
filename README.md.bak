@@ -11,7 +11,6 @@ project, restructured for better developer
 **Every commit to main automatically publishes updated packages!** Users always get the latest features and fixes immediately.
 
 [![Auto-Publish](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml/badge.svg)](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml)
-[![Railway Deployment](https://img.shields.io/badge/Railway-healthy-brightgreen?style=flat-square&logo=railway)](https://coder.fastmonkey.au/health)
 [![npm: CLI](https://img.shields.io/npm/v/monkey-coder-cli)](https://www.npmjs.com/package/monkey-coder-cli)
 [![npm: SDK](https://img.shields.io/npm/v/monkey-coder-sdk)](https://www.npmjs.com/package/monkey-coder-sdk)
 [![PyPI: Core](https://img.shields.io/pypi/v/monkey-coder-core)](https://pypi.org/project/monkey-coder-core/)
@@ -686,51 +685,6 @@ railway up
 - Yarn 4.9.2 workspace build support
 - Next.js static export served via FastAPI
 - Unified single-service architecture
-
-### Deployment Health Monitoring
-
-The deployment includes comprehensive health monitoring and verification:
-
-#### Automated Health Checks
-```bash
-# Run comprehensive deployment verification
-./verify_railway_deployment.sh
-
-# Test local deployment
-./verify_railway_deployment.sh --local
-
-# Set up monitoring tools
-./railway_monitoring_setup.sh
-```
-
-#### Health Endpoints
-- **Primary**: [/health](https://coder.fastmonkey.au/health) - JSON health status
-- **Kubernetes-style**: [/healthz](https://coder.fastmonkey.au/healthz) - Alternative endpoint
-- **Readiness**: [/health/readiness](https://coder.fastmonkey.au/health/readiness) - Service readiness
-- **Comprehensive**: [/health/comprehensive](https://coder.fastmonkey.au/health/comprehensive) - Detailed system status
-
-#### Monitoring Features
-- ✅ **Automated verification** via GitHub Actions
-- 📊 **Real-time health monitoring** with response time tracking
-- 🔔 **Webhook notifications** for deployment status changes
-- 📈 **Prometheus metrics** at `/metrics` endpoint
-- 🏷️ **Status badges** for deployment health
-- 🔍 **Pre/post deployment hooks** for validation
-
-#### Railway CLI Commands
-```bash
-# Check deployment logs
-railway logs --service monkey-coder --tail
-
-# Monitor deployment status
-railway status
-
-# Force redeploy with new configuration
-railway up --force
-
-# Check environment variables
-railway variables
-```
 
 ### Local Development with Railway
 
