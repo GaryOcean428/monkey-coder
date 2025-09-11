@@ -18,9 +18,10 @@
       "frontend": {
         "commands": [
           "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate", 
-          "yarn install --immutable",
-          "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, continuing with API-only mode'"
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn --version",
+          "yarn install --immutable || yarn install",
+          "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, API-only mode will be used'"
         ],
         "inputs": [{ "step": "install" }]
       }
