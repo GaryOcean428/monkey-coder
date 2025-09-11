@@ -77,6 +77,30 @@ typing-extensions==4.12.2
 numpy==2.1.2
 # Note: Added minimal numpy for basic mathematical operations
 
+# Core ML and AI dependencies required for application startup
+qwen-agent==0.0.29
+aiosqlite==0.21.0
+tqdm==4.67.1
+annotated-types==0.7.0
+
+# Required for ML processing (lightweight versions)
+joblib==1.5.2
+threadpoolctl==3.6.0
+
+# Required for text processing and tokenization
+tiktoken==0.11.0
+regex==2025.9.1
+
+# Additional required dependencies found during testing
+websocket-client==1.8.0
+jsonlines==4.0.0
+json5==0.12.1
+eval-type-backport==0.2.2
+typing-inspection==0.4.1
+
+# Required for dashscope integration (Qwen models)
+dashscope==1.24.4
+
 # File and data handling
 python-dateutil==2.9.0.post0
 six==1.17.0
