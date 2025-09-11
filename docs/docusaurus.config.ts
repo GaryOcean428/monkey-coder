@@ -72,16 +72,18 @@ const config: Config = {
   themes: ['@docusaurus/theme-live-codeblock'],
 
   plugins: [
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'roadmap',
-        path: 'roadmap',
-        routeBasePath: 'roadmap',
-        sidebarPath: require.resolve('./sidebars.roadmap.ts'),
-        editUrl: 'https://github.com/GaryOcean428/monkey-coder/tree/main/docs/roadmap/',
-      },
-    ],
+    // Temporarily disabled roadmap plugin due to MDX compilation errors with angle brackets
+    // TODO: Fix roadmap MDX files and re-enable
+    // [
+    //   '@docusaurus/plugin-content-docs',
+    //   {
+    //     id: 'roadmap',
+    //     path: 'roadmap',
+    //     routeBasePath: 'roadmap',
+    //     sidebarPath: require.resolve('./sidebars.roadmap.ts'),
+    //     editUrl: 'https://github.com/GaryOcean428/monkey-coder/tree/main/docs/roadmap/',
+    //   },
+    // ],
   ],
 
   themeConfig: {
@@ -100,13 +102,14 @@ const config: Config = {
           position: 'left',
           label: 'Docs',
         },
-        {
-          type: 'doc',
-          docId: 'index',
-          docsPluginId: 'roadmap',
-          position: 'left',
-          label: 'Roadmap',
-        },
+        // Temporarily disabled roadmap link due to disabled roadmap plugin
+        // {
+        //   type: 'doc',
+        //   docId: 'index',
+        //   docsPluginId: 'roadmap',
+        //   position: 'left',
+        //   label: 'Roadmap',
+        // },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/GaryOcean428/monkey-coder',
