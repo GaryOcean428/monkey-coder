@@ -15,6 +15,14 @@
           "cd packages/core && pip install --no-cache-dir -e ."
         ]
       },
+      "validate": {
+        "commands": [
+          "echo 'Testing imports for Railway deployment validation...'",
+          "python -c 'import sys; sys.path.insert(0, \".\"); sys.path.insert(0, \"packages/core\"); from monkey_coder.app.main import app; print(\"✅ FastAPI app import successful\")'",
+          "python -c 'import sys; sys.path.insert(0, \".\"); sys.path.insert(0, \"packages/core\"); from monkey_coder.app.main import HealthResponse; print(\"✅ Health response model import successful\")'"
+        ],
+        "inputs": [{ "step": "install" }]
+      },
       "frontend": {
         "commands": [
           "corepack enable",
@@ -23,7 +31,7 @@
           "yarn install --immutable || yarn install",
           "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, API-only mode will be used'"
         ],
-        "inputs": [{ "step": "install" }]
+        "inputs": [{ "step": "validate" }]
       }
     }
   },
