@@ -38,13 +38,13 @@
         "inputs": [{ "step": "setup" }]
       },
       "python": {
-        "description": "Install Python dependencies",
+        "description": "Install Python dependencies (deployment-optimized)",
         "commands": [
           "echo '🐍 Starting Python dependency installation...'",
           "python --version",
           "pip install --no-cache-dir --upgrade pip setuptools wheel",
-          "echo '📦 Installing requirements.txt...'",
-          "pip install --no-cache-dir -r requirements.txt",
+          "echo '📦 Installing deployment requirements (memory-optimized)...'",
+          "pip install --no-cache-dir -r requirements-deploy.txt",
           "echo '🔧 Installing core package...'",
           "cd packages/core && pip install --no-cache-dir -e .",
           "echo '✅ Python dependencies installed'"

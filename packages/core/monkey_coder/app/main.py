@@ -29,7 +29,14 @@ from .streaming_endpoints import router as streaming_router
 from .streaming_execute import router as streaming_execute_router
 
 from ..core.orchestrator import MultiAgentOrchestrator
-from ..core.quantum_executor import QuantumExecutor
+# Make quantum import optional for deployment (requires heavy ML dependencies)
+try:
+    from ..core.quantum_executor import QuantumExecutor
+    QUANTUM_AVAILABLE = True
+except ImportError:
+    QUANTUM_AVAILABLE = False
+    import warnings
+    warnings.warn("QuantumExecutor not available - ML dependencies not installed", ImportWarning)
 from ..core.persona_router import PersonaRouter
 from ..providers import ProviderRegistry
 from ..models import (
@@ -55,7 +62,18 @@ from ..security import (
 )
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
-from ..monitoring import quantum_performance
+# Make quantum monitoring optional for deployment
+try:
+    from ..monitoring import quantum_performance
+    QUANTUM_MONITORING_AVAILABLE = True
+except ImportError:
+    QUANTUM_MONITORING_AVAILABLE = False
+    # Create dummy quantum_performance for fallback
+    class DummyQuantumPerformance:
+        @staticmethod
+        def get_summary():
+            return {"status": "disabled", "reason": "ML dependencies not available"}
+    quantum_performance = DummyQuantumPerformance()
 from .. import monitoring as parent_monitoring
 from ..database import run_migrations
 from ..pricing import PricingMiddleware, load_pricing_from_file
@@ -120,8 +138,13 @@ async def lifespan(app: FastAPI):
         app.state.orchestrator = MultiAgentOrchestrator(provider_registry=app.state.provider_registry)
         logger.info("✅ MultiAgentOrchestrator initialized successfully")
 
-        app.state.quantum_executor = QuantumExecutor(provider_registry=app.state.provider_registry)
-        logger.info("✅ QuantumExecutor initialized successfully")
+        # Initialize QuantumExecutor only if available
+        if QUANTUM_AVAILABLE:
+            app.state.quantum_executor = QuantumExecutor(provider_registry=app.state.provider_registry)
+            logger.info("✅ QuantumExecutor initialized successfully")
+        else:
+            app.state.quantum_executor = None
+            logger.info("ℹ️ QuantumExecutor disabled (ML dependencies not available)")
 
         app.state.persona_router = PersonaRouter()
         logger.info("✅ PersonaRouter initialized successfully")
@@ -888,10 +911,14 @@ async def execute_task(
             request, persona_context
         )
 
-        # Execute via quantum executor (Gary8D integration)
-        execution_result = await app.state.quantum_executor.execute(
-            orchestration_result, parallel_futures=True
-        )
+        # Execute via quantum executor (Gary8D integration) if available
+        if app.state.quantum_executor is not None:
+            execution_result = await app.state.quantum_executor.execute(
+                orchestration_result, parallel_futures=True
+            )
+        else:
+            # Fallback to orchestration result if quantum executor not available
+            execution_result = orchestration_result
 
         # Prepare response
         response = ExecuteResponse(

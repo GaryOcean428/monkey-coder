@@ -9,6 +9,14 @@ __version__ = "1.0.0"
 
 from .generator import CodeGenerator
 from .analyzer import CodeAnalyzer
-from . import quantum
 
-__all__ = ["CodeGenerator", "CodeAnalyzer", "quantum"]
+# Make quantum import optional for deployment (requires heavy ML dependencies)
+try:
+    from . import quantum
+    __all__ = ["CodeGenerator", "CodeAnalyzer", "quantum"]
+except ImportError:
+    # Continue without quantum module if ML dependencies are not available
+    # This allows deployment with lighter requirements-deploy.txt
+    import warnings
+    warnings.warn("Quantum module not available - ML dependencies not installed", ImportWarning)
+    __all__ = ["CodeGenerator", "CodeAnalyzer"]
