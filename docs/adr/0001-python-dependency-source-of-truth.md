@@ -32,7 +32,7 @@ deployment surfaces and developer expectations, but risk drift if both are manua
 ## Alternatives Considered
 - Solely using `requirements.txt`: Limits modern build backends and dependency grouping.
 - Solely using `pyproject.toml` (dropping `requirements.txt`): Breaks some existing deploy scripts
-	and third-party integration expectations today.
+  and third-party integration expectations today.
 - Maintaining `requirements.in` + compile: Adds an unnecessary layer now that `pyproject.toml` is canonical.
 
 ## Implementation Plan
@@ -41,7 +41,7 @@ deployment surfaces and developer expectations, but risk drift if both are manua
 3. (Planned) Create CI job: run drift check (fail on differences), then run tests.
 4. (Planned) Update README + add CONTRIBUTING section referencing this ADR.
 5. (Planned) After deprecation date, delete `requirements.in` (unless still needed by external
-	consumers) and update this ADR to Accepted.
+  consumers) and update this ADR to Accepted.
 
 ## Acceptance Criteria
 - CI fails on deliberate divergence between `pyproject.toml` and `requirements.txt`.
