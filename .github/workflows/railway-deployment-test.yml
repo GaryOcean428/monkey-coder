@@ -1,0 +1,186 @@
+name: 🚂 Railway Deployment Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Deployment URL to test'
+        required: false
+        default: 'https://coder.fastmonkey.au'
+
+jobs:
+  deployment-health-check:
+    name: Railway Deployment Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl jq
+
+    - name: Set deployment URL
+      run: |
+        if [ -n "${{ github.event.inputs.deployment_url }}" ]; then
+          echo "DEPLOYMENT_URL=${{ github.event.inputs.deployment_url }}" >> $GITHUB_ENV
+        else
+          echo "DEPLOYMENT_URL=https://coder.fastmonkey.au" >> $GITHUB_ENV
+        fi
+
+    - name: Wait for deployment to be ready
+      run: |
+        echo "Waiting for deployment to be ready..."
+        for i in {1..30}; do
+          if curl -f -s "$DEPLOYMENT_URL/health" > /dev/null; then
+            echo "Deployment is ready!"
+            break
+          fi
+          echo "Attempt $i: Waiting for deployment..."
+          sleep 10
+        done
+
+    - name: Run Railway deployment verification
+      run: |
+        chmod +x ./verify_railway_deployment.sh
+        ./verify_railway_deployment.sh
+      env:
+        DEPLOYMENT_URL: ${{ env.DEPLOYMENT_URL }}
+        TIMEOUT: 45
+
+    - name: Test specific health endpoints
+      run: |
+        echo "Testing health endpoints..."
+        
+        # Test /health endpoint
+        echo "✅ Testing /health endpoint:"
+        curl -f -s "$DEPLOYMENT_URL/health" | jq .
+        
+        # Test /healthz endpoint
+        echo "✅ Testing /healthz endpoint:"
+        curl -f -s "$DEPLOYMENT_URL/healthz" | jq .
+        
+        # Test /health/readiness endpoint
+        echo "✅ Testing /health/readiness endpoint:"
+        curl -f -s "$DEPLOYMENT_URL/health/readiness" | jq .
+        
+        # Test API docs
+        echo "✅ Testing API documentation:"
+        curl -f -s -I "$DEPLOYMENT_URL/api/docs"
+        
+        # Test metrics endpoint
+        echo "✅ Testing metrics endpoint:"
+        curl -f -s "$DEPLOYMENT_URL/metrics" | head -10
+
+    - name: Performance benchmarking
+      run: |
+        echo "Running performance tests..."
+        
+        # Test response times
+        for i in {1..5}; do
+          start_time=$(date +%s%N)
+          curl -f -s "$DEPLOYMENT_URL/health" > /dev/null
+          end_time=$(date +%s%N)
+          duration=$((($end_time - $start_time) / 1000000))
+          echo "Health endpoint response time: ${duration}ms"
+        done
+
+    - name: Test deployment status badges
+      run: |
+        echo "Testing deployment status..."
+        
+        # Create status badge data
+        if curl -f -s "$DEPLOYMENT_URL/health" | jq -r '.status' | grep -q "healthy"; then
+          echo "DEPLOYMENT_STATUS=healthy" >> $GITHUB_ENV
+          echo "BADGE_COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "DEPLOYMENT_STATUS=unhealthy" >> $GITHUB_ENV
+          echo "BADGE_COLOR=red" >> $GITHUB_ENV
+        fi
+
+    - name: Create deployment status summary
+      if: always()
+      run: |
+        echo "## 🚂 Railway Deployment Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment URL:** $DEPLOYMENT_URL" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ **Status:** All health checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Result:** Deployment is ready for production traffic" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Status:** Health checks failed" >> $GITHUB_STEP_SUMMARY
+          echo "🔧 **Result:** Deployment issues detected - review logs" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Quick Links" >> $GITHUB_STEP_SUMMARY
+        echo "- [Health Check]($DEPLOYMENT_URL/health)" >> $GITHUB_STEP_SUMMARY
+        echo "- [API Documentation]($DEPLOYMENT_URL/api/docs)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Metrics]($DEPLOYMENT_URL/metrics)" >> $GITHUB_STEP_SUMMARY
+
+  notify-deployment-status:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: deployment-health-check
+    if: always()
+
+    steps:
+    - name: Set status variables
+      run: |
+        if [ "${{ needs.deployment-health-check.result }}" == "success" ]; then
+          echo "STATUS=✅ Healthy" >> $GITHUB_ENV
+          echo "COLOR=28a745" >> $GITHUB_ENV
+        else
+          echo "STATUS=❌ Unhealthy" >> $GITHUB_ENV
+          echo "COLOR=d73a49" >> $GITHUB_ENV
+        fi
+
+    - name: Update deployment status badge
+      run: |
+        echo "Deployment status: $STATUS"
+        echo "Badge color: $COLOR"
+        # This could be used to update a status badge service
+        # For example, shields.io endpoint badges
+
+  railway-logs-check:
+    name: Railway Logs Analysis
+    runs-on: ubuntu-latest
+    if: failure()
+
+    steps:
+    - name: Analyze potential deployment issues
+      run: |
+        echo "## 🔍 Deployment Troubleshooting Guide" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "If the deployment verification failed, check these common issues:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Railway CLI Commands" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "# Check deployment logs" >> $GITHUB_STEP_SUMMARY
+        echo "railway logs --service monkey-coder --tail" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Monitor deployment status" >> $GITHUB_STEP_SUMMARY
+        echo "railway status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Force redeploy" >> $GITHUB_STEP_SUMMARY
+        echo "railway up --force" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Check environment variables" >> $GITHUB_STEP_SUMMARY
+        echo "railway variables" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Common Issues" >> $GITHUB_STEP_SUMMARY
+        echo "- **Health endpoint not responding:** Check if the server started correctly" >> $GITHUB_STEP_SUMMARY
+        echo "- **Static assets missing:** Verify Next.js build completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- **API endpoints failing:** Check environment variables and provider configurations" >> $GITHUB_STEP_SUMMARY
+        echo "- **Performance issues:** Review resource allocation and optimize queries" >> $GITHUB_STEP_SUMMARY

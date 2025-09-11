@@ -4,7 +4,7 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.12",
+      "python": "3.13",
       "node": "20"
     },
     "steps": {
