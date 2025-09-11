@@ -11,7 +11,7 @@ project, restructured for better developer
 **Every commit to main automatically publishes updated packages!** Users always get the latest features and fixes immediately.
 
 [![Auto-Publish](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml/badge.svg)](https://github.com/GaryOcean428/monkey-coder/actions/workflows/auto-publish.yml)
-[![Railway Deployment](https://img.shields.io/badge/Railway-healthy-brightgreen?style=flat-square&logo=railway)](https://coder.fastmonkey.au/health)
+[[![Railway Deployment](https://img.shields.io/badge/Railway-healthy-brightgreen?style=flat-square![Railway Deployment](https://img.shields.io/badge/Railway-healthy-brightgreen?style=flat-square&logo=railway)](https://coder.fastmonkey.au/health)logo=railway)](https://coder.fastmonkey.au/health)
 [![npm: CLI](https://img.shields.io/npm/v/monkey-coder-cli)](https://www.npmjs.com/package/monkey-coder-cli)
 [![npm: SDK](https://img.shields.io/npm/v/monkey-coder-sdk)](https://www.npmjs.com/package/monkey-coder-sdk)
 [![PyPI: Core](https://img.shields.io/pypi/v/monkey-coder-core)](https://pypi.org/project/monkey-coder-core/)
