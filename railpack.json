@@ -45,9 +45,13 @@
           "pip install --no-cache-dir --upgrade pip setuptools wheel",
           "echo '📦 Installing deployment requirements (memory-optimized)...'",
           "pip install --no-cache-dir -r requirements-deploy.txt",
-          "echo '🔧 Installing core package...'",
+          "echo '🔧 Installing core package in editable mode...'",
           "cd packages/core && pip install --no-cache-dir -e .",
-          "echo '✅ Python dependencies installed'"
+          "echo '✅ Python dependencies installed'",
+          "echo '🧪 Testing imports...'",
+          "python -c 'import monkey_coder; print(\"Core package imported successfully\")'",
+          "python -c 'from monkey_coder.app.main import app; print(\"FastAPI app imported successfully\")'",
+          "echo '✅ Import tests passed'"
         ],
         "inputs": [{ "step": "web" }]
       }

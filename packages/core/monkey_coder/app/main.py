@@ -149,11 +149,41 @@ async def lifespan(app: FastAPI):
         app.state.persona_router = PersonaRouter()
         logger.info("✅ PersonaRouter initialized successfully")
 
-        app.state.metrics_collector = parent_monitoring.MetricsCollector()
-        logger.info("✅ MetricsCollector initialized successfully")
+        # Initialize monitoring components with graceful failure handling
+        try:
+            app.state.metrics_collector = parent_monitoring.MetricsCollector()
+            logger.info("✅ MetricsCollector initialized successfully")
+        except AttributeError:
+            logger.warning("⚠️ MetricsCollector not available - using placeholder")
+            # Create a placeholder metrics collector
+            class PlaceholderMetricsCollector:
+                def start_execution(self, request): return "placeholder"
+                def complete_execution(self, execution_id, response): pass
+                def record_error(self, execution_id, error): pass
+                def record_http_request(self, method, endpoint, status, duration): pass
+                def get_prometheus_metrics(self): return "# Metrics collector not available\n"
+            app.state.metrics_collector = PlaceholderMetricsCollector()
 
-        app.state.billing_tracker = parent_monitoring.BillingTracker()
-        logger.info("✅ BillingTracker initialized successfully")
+        try:
+            app.state.billing_tracker = parent_monitoring.BillingTracker()
+            logger.info("✅ BillingTracker initialized successfully")
+        except AttributeError:
+            logger.warning("⚠️ BillingTracker not available - using placeholder")
+            # Create a placeholder billing tracker
+            class PlaceholderBillingTracker:
+                async def track_usage(self, api_key, usage): pass
+                async def get_usage(self, api_key, start_date, end_date, granularity): 
+                    return type('obj', (object,), {
+                        'api_key_hash': 'placeholder',
+                        'period': 'N/A',
+                        'total_requests': 0,
+                        'total_tokens': 0,
+                        'total_cost': 0.0,
+                        'provider_breakdown': {},
+                        'execution_stats': {},
+                        'rate_limit_status': {}
+                    })()
+            app.state.billing_tracker = PlaceholderBillingTracker()
 
         app.state.feedback_collector = FeedbackCollector()
         logger.info("✅ FeedbackCollector initialized successfully")
@@ -447,11 +477,20 @@ class RefreshTokenRequest(BaseModel):
 async def health_check():
     """
     Health check endpoint optimized for Railway deployment.
+    
+    This endpoint provides comprehensive health status including:
+    - System resource metrics (memory, CPU)
+    - Component initialization status
+    - Dependency availability
+    - Performance metrics for Railway monitoring
+    
+    Returns 200 OK even during partial initialization to prevent
+    Railway deployment failures during startup phase.
     """
     from datetime import datetime
     import psutil
 
-    # Get system metrics
+    # Get system metrics safely
     try:
         process = psutil.Process()
         memory_mb = round(process.memory_info().rss / 1024 / 1024, 2)
@@ -460,15 +499,53 @@ async def health_check():
         memory_mb = 0
         cpu_percent = 0
 
-    # Check component health
-    components = {
-        "orchestrator": "active" if hasattr(app.state, 'orchestrator') else "inactive",
-        "quantum_executor": "active" if hasattr(app.state, 'quantum_executor') else "inactive",
-        "persona_router": "active" if hasattr(app.state, 'persona_router') else "inactive",
-        "provider_registry": "active" if hasattr(app.state, 'provider_registry') else "inactive",
-    }
+    # Check component health with graceful degradation
+    components = {}
+    
+    # Core components that should be available
+    essential_components = [
+        ("orchestrator", "orchestrator"),
+        ("quantum_executor", "quantum_executor"), 
+        ("persona_router", "persona_router"),
+        ("provider_registry", "provider_registry")
+    ]
+    
+    for component_name, state_attr in essential_components:
+        try:
+            if hasattr(app.state, state_attr) and getattr(app.state, state_attr) is not None:
+                components[component_name] = "active"
+            else:
+                components[component_name] = "initializing"
+        except Exception:
+            components[component_name] = "initializing"
+    
+    # Optional components that may not be available
+    optional_components = [
+        ("metrics_collector", "metrics_collector"),
+        ("billing_tracker", "billing_tracker"),
+        ("context_manager", "context_manager"),
+        ("api_key_manager", "api_key_manager")
+    ]
+    
+    for component_name, state_attr in optional_components:
+        try:
+            if hasattr(app.state, state_attr) and getattr(app.state, state_attr) is not None:
+                components[component_name] = "active"
+            else:
+                components[component_name] = "optional"
+        except Exception:
+            components[component_name] = "optional"
 
-    # Log health check for monitoring
+    # Determine overall health status
+    essential_active = all(
+        components.get(comp, "inactive") == "active" 
+        for comp, _ in essential_components
+    )
+    
+    # Report as healthy if essential components are active, or if we're still initializing
+    health_status = "healthy" if essential_active else "initializing"
+
+    # Log health check for monitoring with enhanced metrics
     performance_logger.logger.info(
         "Health check performed",
         extra={'extra_fields': {
@@ -476,12 +553,15 @@ async def health_check():
             'memory_mb': memory_mb,
             'cpu_percent': cpu_percent,
             'components': components,
-            'qwen_agent_available': 'qwen_agent' in globals()
+            'essential_components_active': essential_active,
+            'health_status': health_status,
+            'qwen_agent_available': 'qwen_agent' in globals(),
+            'startup_phase': not essential_active
         }}
     )
 
     return HealthResponse(
-        status="healthy",
+        status=health_status,
         version="2.0.0",  # Updated to Phase 2.0
         timestamp=datetime.utcnow().isoformat(),
         components=components
