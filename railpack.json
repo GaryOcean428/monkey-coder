@@ -9,7 +9,11 @@
     "commands": [
       "pip install --no-cache-dir --upgrade pip setuptools wheel",
       "pip install --no-cache-dir -r requirements-deploy.txt",
-      "cd packages/core && pip install --no-cache-dir -e ."
+      "cd packages/core && pip install --no-cache-dir -e .",
+      "corepack enable",
+      "corepack prepare yarn@4.9.2 --activate",
+      "yarn install --immutable || yarn install",
+      "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, API-only mode will be used'"
     ]
   },
   "deploy": {
