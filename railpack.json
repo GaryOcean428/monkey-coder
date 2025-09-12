@@ -1,38 +1,20 @@
 {
   "$schema": "https://schema.railpack.com",
-  "version": "1",
+  "provider": "python",
+  "packages": {
+    "python": "3.12",
+    "node": "20"
+  },
   "build": {
-    "provider": "python",
-    "packages": {
-      "python": "3.12",
-      "node": "20"
-    },
-    "steps": {
-      "install": {
-        "commands": [
-          "pip install --no-cache-dir --upgrade pip setuptools wheel",
-          "pip install --no-cache-dir -r requirements-deploy.txt",
-          "cd packages/core && pip install --no-cache-dir -e ."
-        ]
-      },
-      "frontend": {
-        "commands": [
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn --version",
-          "yarn install --immutable || yarn install",
-          "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, API-only mode will be used'"
-        ],
-        "inputs": [{ "step": "install" }]
-      }
-    }
+    "commands": [
+      "pip install --no-cache-dir --upgrade pip setuptools wheel",
+      "pip install --no-cache-dir -r requirements-deploy.txt",
+      "cd packages/core && pip install --no-cache-dir -e ."
+    ]
   },
   "deploy": {
     "startCommand": "python run_server.py",
     "healthCheckPath": "/health",
-    "healthCheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "inputs": [{ "step": "frontend" }]
+    "healthCheckTimeout": 300
   }
 }
