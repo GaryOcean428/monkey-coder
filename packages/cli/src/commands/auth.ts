@@ -46,6 +46,14 @@ export function createAuthCommand(config: ConfigManager): Command {
     .option('--password <password>', 'Password (not recommended, use interactive mode)')
     .action(async (options) => {
       try {
+        // Provide guidance to users about accounts and subscriptions
+        console.log(chalk.cyan('🐒 Welcome to Monkey Coder!'));
+        console.log(chalk.gray('\nTo use Monkey Coder, you need:'));
+        console.log(chalk.yellow('  ✓ An account at: https://coder.fastmonkey.au'));
+        console.log(chalk.yellow('  ✓ An active subscription plan'));
+        console.log(chalk.gray('\nIf you don\'t have an account yet, visit the website first.'));
+        console.log(chalk.gray('If you have an API key, use: "monkey config set apiKey YOUR_KEY"\n'));
+        
         const client = new MonkeyCoderAPIClient(config.getBaseUrl());
         
         // Get credentials
@@ -179,13 +187,18 @@ export function createAuthCommand(config: ConfigManager): Command {
   auth
     .command('status')
     .description('Check authentication status')
-    .action(async () => {
+    .option('--api-key <key>', 'API key for authentication')
+    .action(async (options) => {
       try {
-        const apiKey = config.getApiKey();
+        const apiKey = options.apiKey || config.getApiKey();
         
         if (!apiKey) {
           console.log(chalk.yellow('❌ Not authenticated'));
-          console.log(chalk.gray('\nRun "monkey auth login" to authenticate.'));
+          console.log(chalk.gray('\nTo get started:'));
+          console.log(chalk.cyan('  1. Visit: https://coder.fastmonkey.au'));
+          console.log(chalk.cyan('  2. Create an account and choose a subscription plan'));
+          console.log(chalk.cyan('  3. Run: "monkey auth login" to authenticate'));
+          console.log(chalk.gray('\nAlternatively, use an API key: "monkey config set apiKey YOUR_KEY"'));
           return;
         }
 
@@ -288,7 +301,11 @@ export async function requireAuth(config: ConfigManager): Promise<void> {
   
   if (!apiKey) {
     console.error(chalk.red('❌ Authentication required'));
-    console.log(chalk.gray('\nPlease run "monkey auth login" to authenticate.'));
+    console.log(chalk.gray('\nTo access Monkey Coder:'));
+    console.log(chalk.cyan('  1. Visit: https://coder.fastmonkey.au'));
+    console.log(chalk.cyan('  2. Create an account and subscribe to a plan'));
+    console.log(chalk.cyan('  3. Run: "monkey auth login" to authenticate'));
+    console.log(chalk.gray('\nFor API access, use: "monkey config set apiKey YOUR_KEY"'));
     process.exit(1);
   }
 
