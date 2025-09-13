@@ -279,3 +279,5 @@ scripts/test-docker-build.sh
 !services/sandbox/Dockerfile
 !services/sandbox/docker/**
 # Temporary deployment validation files
+# Smoke test results
+smoke_test_results.json
