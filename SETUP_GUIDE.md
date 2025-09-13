@@ -100,18 +100,17 @@ monkey chat
 
 ## 🔑 Authentication Options
 
-### 1. Web-Based Login (Hosted Service)
+### 1. Web-Based Subscription Flow (Recommended for New Users)
 - Go to https://coder.fastmonkey.au
-- Create an account or login
-- Get your API key from the dashboard
-- Use it with: `monkey config set apiKey "your-key"`
+- Create an account and choose a subscription plan
+- Return to CLI and use: `monkey auth login --email your@email.com --password yourpassword`
 
-### 2. CLI Login (Hosted Service)
+### 2. CLI Login (For Existing Subscribers)
 ```bash
 monkey auth login --email your@email.com --password yourpassword
 ```
 
-### 3. Direct API Key (Any Service)
+### 3. Direct API Key (For API Integration)
 ```bash
 monkey config set apiKey "your-api-key"
 ```
@@ -121,6 +120,8 @@ monkey config set apiKey "your-api-key"
 export MONKEY_CODER_API_KEY="your-key"
 export MONKEY_CODER_BASE_URL="https://coder.fastmonkey.au"
 ```
+
+**Note**: You need an active subscription to use Monkey Coder. The CLI will guide you to the subscription process if you're not authenticated.
 
 ## 📁 Configuration Storage
 
