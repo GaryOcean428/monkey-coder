@@ -116,12 +116,12 @@ export function SiteHeader() {
 
       {/* Mobile menu */}
       <div className={cn('lg:hidden', mobileMenuOpen ? 'block' : 'hidden')}>
-        <div className="fixed inset-0 z-50" />
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
         <div 
           id="mobile-menu" 
           role="dialog" 
           aria-modal="true" 
-          className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-background px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10" 
+          className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-background px-6 py-6 shadow-xl ring-1 ring-gray-900/10 dark:ring-gray-100/10" 
           tabIndex={-1}
         >
           <div className="flex items-center justify-between">
