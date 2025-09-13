@@ -1,0 +1,16 @@
+{
+    "timestamp": "2025-09-13T07:08:07Z",
+    "backend_url": "http://localhost:8000",
+    "frontend_url": "http://localhost:3000",
+    "results": {
+        "backend": false,
+        "frontend": false,
+        "cli": false,
+        "integration": false
+    },
+    "summary": {
+        "total_suites": 4,
+        "passed_suites": 0,
+        "success_rate": 0
+    }
+}
