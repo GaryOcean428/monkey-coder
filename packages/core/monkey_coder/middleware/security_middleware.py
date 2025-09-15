@@ -197,13 +197,16 @@ class DynamicCSPMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         # Build CSP from environment variables with enhanced Google Fonts support
+        script_src = self.config.get('csp_script_src', "'self' 'unsafe-inline' 'unsafe-eval'")
+        img_src = self.config.get('csp_img_src', "'self' data: https: blob:")
+        
         csp_directives = [
             f"default-src {self.config['csp_default_src']}",
             f"font-src {self.config['csp_font_src']}",
             f"style-src {self.config['csp_style_src']}",
             f"connect-src {self.config['csp_connect_src']}",
-            f"script-src {self.config.get('csp_script_src', \"'self' 'unsafe-inline' 'unsafe-eval'\")}",
-            f"img-src {self.config.get('csp_img_src', \"'self' data: https: blob:\")}",
+            f"script-src {script_src}",
+            f"img-src {img_src}",
             "media-src 'self' data: blob:",
             "object-src 'none'",
             "base-uri 'self'",

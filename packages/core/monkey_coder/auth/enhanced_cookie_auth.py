@@ -427,10 +427,10 @@ class EnhancedAuthManager:
             new_user = await User.create(
                 username=username,
                 email=email,
-                name=name,
+                full_name=name,  # Use full_name instead of name
                 password_hash=password_hash,
                 is_developer=(plan in ["pro", "enterprise"]),
-                subscription_tier=plan
+                subscription_plan=plan  # Use subscription_plan instead of subscription_tier
             )
 
             if not new_user:
