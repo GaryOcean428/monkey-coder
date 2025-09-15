@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-09-15T08:05:01.600112+00:00",
+  "config": {
+    "runs": 2,
+    "parallel": true,
+    "task": "Refactor a Python function for clarity"
+  },
+  "metrics": {
+    "execution_latencies_ms": [
+      298.9990299998908,
+      0.02187000006870221
+    ],
+    "mean_latency_ms": 149.51044999997976,
+    "p95_latency_ms": 0.02187000006870221,
+    "cache_hits": 0,
+    "cache_misses": 0
+  },
+  "runs": [
+    {
+      "latency_ms": 298.9990299998908,
+      "cache_hits": 0,
+      "cache_misses": 0,
+      "result_confidence": 0.0
+    },
+    {
+      "latency_ms": 0.02187000006870221,
+      "cache_hits": 0,
+      "cache_misses": 0,
+      "result_confidence": 0.0
+    }
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "commit": "090683bdf5fab4f3f6ca469622cbe9c0c4151b75"
+  }
+}
