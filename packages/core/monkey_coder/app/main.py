@@ -993,6 +993,99 @@ async def logout(request: Request, response: Response) -> Dict[str, str]:
         raise HTTPException(status_code=500, detail="Logout failed")
 
 
+@app.get("/api/v1/environment/mcp-status")
+async def get_mcp_environment_status(
+    api_key: str = Depends(get_api_key),
+) -> Dict[str, Any]:
+    """
+    Get MCP-enhanced environment status and variable resolution information.
+    
+    This endpoint provides information about how environment variables are
+    being resolved using MCP servers, Railway service discovery, and production defaults.
+    Helps debug production configuration issues and validates that localhost
+    references are properly avoided.
+    
+    Args:
+        api_key: API key for authentication
+        
+    Returns:
+        Dictionary with MCP environment status and variable information
+    """
+    try:
+        await verify_permissions(api_key, "system:read")
+        
+        # Try to get MCP environment manager status
+        try:
+            from ..config.mcp_env_manager import mcp_env_manager
+            
+            # Get variable summary
+            variable_summary = mcp_env_manager.get_variable_summary()
+            
+            # Get production readiness validation
+            production_validation = mcp_env_manager.validate_production_readiness()
+            
+            # Get resolved variables (without sensitive values)
+            resolved_variables = {}
+            for key, var in mcp_env_manager.get_all_variables().items():
+                # Mask sensitive values
+                if any(sensitive in key.upper() for sensitive in ['PASSWORD', 'SECRET', 'KEY', 'TOKEN']):
+                    display_value = "***MASKED***" if var.value else None
+                else:
+                    display_value = var.value
+                    
+                resolved_variables[key] = {
+                    "value": display_value,
+                    "source": var.source,
+                    "priority": var.priority,
+                    "description": var.description
+                }
+            
+            response_data = {
+                "mcp_enabled": True,
+                "variable_summary": variable_summary,
+                "production_validation": production_validation,
+                "resolved_variables": resolved_variables,
+                "railway_info": {
+                    "environment": os.getenv('RAILWAY_ENVIRONMENT'),
+                    "project": os.getenv('RAILWAY_PROJECT_NAME'),
+                    "public_domain": os.getenv('RAILWAY_PUBLIC_DOMAIN'),
+                    "service_id": os.getenv('RAILWAY_SERVICE_ID')
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            return JSONResponse(content=response_data, status_code=200)
+            
+        except ImportError:
+            # MCP environment manager not available
+            return JSONResponse(
+                content={
+                    "mcp_enabled": False,
+                    "reason": "MCP environment manager not available",
+                    "fallback_mode": True,
+                    "railway_info": {
+                        "environment": os.getenv('RAILWAY_ENVIRONMENT'),
+                        "project": os.getenv('RAILWAY_PROJECT_NAME'),
+                        "public_domain": os.getenv('RAILWAY_PUBLIC_DOMAIN')
+                    },
+                    "basic_variables": {
+                        "DATABASE_URL": "***CONFIGURED***" if os.getenv('DATABASE_URL') else "NOT SET",
+                        "NEXT_PUBLIC_API_URL": os.getenv('NEXT_PUBLIC_API_URL', 'DEFAULT'),
+                        "RAILWAY_ENVIRONMENT": os.getenv('RAILWAY_ENVIRONMENT', 'NOT SET')
+                    },
+                    "timestamp": datetime.utcnow().isoformat()
+                },
+                status_code=200
+            )
+            
+    except Exception as e:
+        logger.error(f"MCP environment status check failed: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Environment status check failed: {str(e)}"}, 
+            status_code=500
+        )
+
+
 @app.get("/api/v1/auth/debug")
 async def debug_auth_config():
     """
@@ -1573,6 +1666,9 @@ async def get_system_capabilities(
 
             "features": [
                 "environment_configuration_management",
+                "mcp_enhanced_variable_resolution",
+                "railway_service_discovery",
+                "production_localhost_avoidance",
                 "persona_aware_routing_with_validation",
                 "single_word_input_enhancement",
                 "edge_case_prompt_handling",
@@ -1587,6 +1683,16 @@ async def get_system_capabilities(
             ],
 
             "recent_enhancements": [
+                {
+                    "feature": "MCP Environment Management",
+                    "description": "Enhanced environment variable resolution using MCP servers and Railway service discovery",
+                    "status": "implemented"
+                },
+                {
+                    "feature": "Production Localhost Avoidance",
+                    "description": "Intelligent defaults that avoid localhost references in production environments",
+                    "status": "implemented"
+                },
                 {
                     "feature": "Environment Configuration",
                     "description": "Centralized environment variable management with validation",
