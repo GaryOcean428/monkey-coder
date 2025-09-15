@@ -329,12 +329,24 @@ class FrontendManager:
     </div>
 
     <div class="status">
-        <strong>Status:</strong> API server running, frontend build in progress
+        <strong>Status:</strong> ✅ API server is running successfully!
+        <br><br>
+        <strong>Note:</strong> The web UI is not available at this URL.
+        <br>
+        To use Monkey Coder, please use the CLI tool or API endpoints below.
     </div>
 
     <div class="links">
         <a href="/api/docs" class="link">📖 API Documentation</a>
         <a href="/api/health" class="link">🔍 Health Check</a>
+        <a href="https://github.com/GaryOcean428/monkey-coder" class="link">📚 GitHub Repository</a>
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
+        <h3>Quick Start:</h3>
+        <p>Install the CLI tool:</p>
+        <pre style="background: #000; color: #0f0; padding: 10px; border-radius: 3px;">npm install -g monkey-coder-cli</pre>
+        <p>Or use the API directly with your preferred HTTP client.</p>
     </div>
 </body>
 </html>"""
@@ -343,8 +355,11 @@ class FrontendManager:
 
             # Create a basic 404 page
             (self.out_dir / "404.html").write_text(fallback_html.replace(
-                "API server running, frontend build in progress",
-                "Page not found - redirecting to API documentation"
+                "✅ API server is running successfully!",
+                "404 - Page not found"
+            ).replace(
+                "The web UI is not available at this URL.",
+                "The page you're looking for doesn't exist."
             ), encoding="utf-8")
 
             self.logger.info("⚠️ Created fallback frontend with basic navigation")
