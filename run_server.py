@@ -13,9 +13,8 @@ import platform
 import subprocess
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any
 import signal
-import time
 
 # Third-party imports
 try:
@@ -96,12 +95,12 @@ class SystemInfo:
         print("🚀 Starting Monkey Coder Server")
         print("=" * 60)
 
-        print(f"\n🐍 Python Environment:")
+        print("\n🐍 Python Environment:")
         py = info["python_version"]
         print(f"  • Version:      {py['version']} ({py['implementation']})")
         print(f"  • Executable:   {py['executable']}")
 
-        print(f"\n💻 System Information:")
+        print("\n💻 System Information:")
         sys_info = info["system"]
         print(f"  • OS:           {sys_info['system']} {sys_info['release']}")
         print(f"  • Architecture: {sys_info['architecture']}")
@@ -109,14 +108,14 @@ class SystemInfo:
         if sys_info['processor'] != "Unknown":
             print(f"  • Processor:    {sys_info['processor']}")
 
-        print(f"\n🌐 Server Configuration:")
+        print("\n🌐 Server Configuration:")
         print(f"  • Host:         {config.host}")
         print(f"  • Port:         {config.port}")
         print(f"  • Environment:  {config.environment}")
         print(f"  • Log Level:    {config.log_level}")
 
         env = info["environment"]
-        print(f"\n📁 Environment:")
+        print("\n📁 Environment:")
         print(f"  • Working Dir:  {env['workdir']}")
         print(f"  • Railway Env:  {env['railway_env']}")
         print(f"  • Node Env:     {env['node_env']}")
