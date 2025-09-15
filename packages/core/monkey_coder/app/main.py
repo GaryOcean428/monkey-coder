@@ -2239,10 +2239,31 @@ if serve_frontend and static_dir:
             from fastapi.responses import FileResponse
             return FileResponse(str(favicon_path))
 
-    # Mount the main static files with fallback to index.html for SPA routing
-    # This MUST be last to act as a catch-all for SPA routing
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-    logger.info(f"✅ Frontend served from: {static_dir}")
+    # Create a custom catch-all handler for SPA routing that doesn't interfere with API routes
+    # We'll add this as a fallback route after all API routes are registered
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve SPA for non-API routes."""
+        # Don't catch API routes
+        if full_path.startswith("api/") or full_path.startswith("v1/"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+
+        # Try to serve the exact file first
+        file_path = static_dir / full_path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+
+        # For SPA routing, always return index.html for non-file paths
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(str(index_path))
+
+        # If no index.html, return 404
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    logger.info(f"✅ Frontend served from: {static_dir} with SPA routing")
 else:
     logger.warning(f"❌ Static directory not found in any of: {[str(p) for p in static_dir_options]}. Frontend will not be served.")
 
