@@ -182,12 +182,23 @@ class FrontendManager:
             self.logger.warning("⚠️ Frontend build directory not found")
             return False
 
-        html_files = list(self.out_dir.glob("*.html"))
-        total_files = len(list(self.out_dir.glob("*")))
-
-        if not html_files:
-            self.logger.warning("⚠️ Frontend build directory exists but contains no HTML files")
+        # Check for index.html specifically
+        index_path = self.out_dir / "index.html"
+        if not index_path.exists():
+            self.logger.warning("⚠️ Frontend build directory exists but missing index.html")
             return False
+
+        # Check if it's the fallback HTML (contains "frontend build in progress")
+        try:
+            content = index_path.read_text(encoding='utf-8')
+            if "frontend build in progress" in content:
+                self.logger.warning("⚠️ Found fallback HTML, not actual build")
+                return False
+        except Exception as e:
+            self.logger.warning(f"⚠️ Could not read index.html: {e}")
+
+        html_files = list(self.out_dir.glob("*.html"))
+        total_files = len(list(self.out_dir.glob("**/*")))
 
         self.logger.info(f"✅ Frontend build found: {total_files} files including {[f.name for f in html_files[:3]]}")
         return True
@@ -289,6 +300,12 @@ class FrontendManager:
     def _create_fallback_frontend(self) -> bool:
         """Create minimal fallback frontend when build fails."""
         try:
+            # Check if there's already an index.html - don't overwrite it!
+            index_path = self.out_dir / "index.html"
+            if index_path.exists():
+                self.logger.info("✅ index.html already exists, skipping fallback creation")
+                return True
+
             self.out_dir.mkdir(parents=True, exist_ok=True)
 
             fallback_html = """<!DOCTYPE html>
