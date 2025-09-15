@@ -1,10 +1,10 @@
 {
-  "export_timestamp": 1757923249.4802463,
+  "export_timestamp": 1757923490.512691,
   "time_window": null,
   "metrics": {
     "execution_time": [
       {
-        "timestamp": 1757923249.4795973,
+        "timestamp": 1757923490.5124338,
         "metric_type": "execution_time",
         "value": 0.42,
         "metadata": {
@@ -14,7 +14,7 @@
         "tags": {}
       },
       {
-        "timestamp": 1757923249.479648,
+        "timestamp": 1757923490.5124583,
         "metric_type": "execution_time",
         "value": 0.38,
         "metadata": {
@@ -26,7 +26,7 @@
     ],
     "quality_score": [
       {
-        "timestamp": 1757923249.4796681,
+        "timestamp": 1757923490.512469,
         "metric_type": "quality_score",
         "value": 0.88,
         "metadata": {
@@ -35,7 +35,7 @@
         "tags": {}
       },
       {
-        "timestamp": 1757923249.4796844,
+        "timestamp": 1757923490.5124762,
         "metric_type": "quality_score",
         "value": 0.84,
         "metadata": {
@@ -46,7 +46,7 @@
     ],
     "cache_performance": [
       {
-        "timestamp": 1757923249.4796963,
+        "timestamp": 1757923490.512481,
         "metric_type": "cache_performance",
         "value": 1.0,
         "metadata": {
@@ -55,7 +55,7 @@
         "tags": {}
       },
       {
-        "timestamp": 1757923249.479713,
+        "timestamp": 1757923490.5124876,
         "metric_type": "cache_performance",
         "value": 0.0,
         "metadata": {
@@ -109,7 +109,7 @@
         }
       }
     },
-    "last_updated": 1757923249.4802353
+    "last_updated": 1757923490.512689
   },
   "counters": {
     "execution_time_count": 2,
