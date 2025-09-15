@@ -2,16 +2,28 @@
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.12",
+    "python": "3.13",
     "node": "20"
   },
   "build": {
+    "cache": {
+      "paths": [
+        "/app/venv/lib/python3.13/site-packages",
+        "/root/.cache/yarn",
+        "node_modules",
+        "packages/web/.next"
+      ]
+    },
     "commands": [
-      "echo '🐒 Starting Monkey Coder build process...'",
-      "pip install --no-cache-dir --upgrade pip setuptools wheel",
-      "pip install --no-cache-dir -r requirements-deploy.txt",
-      "cd packages/core && pip install --no-cache-dir -e .",
-      "echo '📦 Python dependencies installed successfully'",
+      "echo '🐒 Starting Monkey Coder build process with Railway railpack optimization...'",
+      "echo 'Python executable location:' $(which python)",
+      "echo 'Virtual environment location:' ${VIRTUAL_ENV:-'Not detected'}",
+      "echo 'Installing Python dependencies in virtual environment...'",
+      "/app/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel",
+      "/app/venv/bin/pip install --no-cache-dir -r requirements-deploy.txt",
+      "cd packages/core && /app/venv/bin/pip install --no-cache-dir -e .",
+      "echo '📦 Python dependencies installed successfully in /app/venv'",
+      "echo 'Setting up Node.js package manager...'",
       "corepack enable",
       "corepack prepare yarn@4.9.2 --activate",
       "echo '🔧 Yarn 4.9.2 configured'",
@@ -52,14 +64,36 @@
       "  echo '❌ Frontend build failed during deployment - will attempt runtime build'",
       "  echo 'This is not fatal, the server will try to build at startup'",
       "fi",
-      "echo '🚀 Build process completed'"
+      "echo 'Creating virtual environment activation script...'",
+      "cat > /app/start_server.sh << 'EOF'",
+      "#!/bin/bash",
+      "set -e",
+      "echo '🚀 Starting Monkey Coder with virtual environment activation...'",
+      "echo 'Activating virtual environment at /app/venv'",
+      "source /app/venv/bin/activate",
+      "echo 'Virtual environment activated successfully'",
+      "echo 'Python executable:' $(which python)",
+      "echo 'Python version:' $(python --version)",
+      "echo 'Uvicorn location:' $(which uvicorn)",
+      "echo 'Starting server with uvicorn...'",
+      "cd /app",
+      "/app/venv/bin/python run_server.py",
+      "EOF",
+      "chmod +x /app/start_server.sh",
+      "echo '✅ Virtual environment activation script created at /app/start_server.sh'",
+      "echo '🚀 Railpack build process completed successfully'"
     ]
   },
   "deploy": {
-    "startCommand": "python run_server.py",
+    "startCommand": "/app/start_server.sh",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "restartPolicyMaxRetries": 3,
+    "environment": {
+      "VIRTUAL_ENV": "/app/venv",
+      "PATH": "/app/venv/bin:$PATH",
+      "PYTHONPATH": "/app:/app/packages/core"
+    }
   }
 }
