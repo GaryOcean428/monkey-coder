@@ -3,6 +3,8 @@
  * Replaces localStorage with httpOnly cookies for better security
  */
 
+import { apiFetch, handleApiResponse, API_CONFIG } from '../config/api';
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -25,29 +27,12 @@ export interface AuthResponse {
  * Uses httpOnly cookies for token storage (server-side)
  */
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-  
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
+  const response = await apiFetch('/api/v1/auth/login', {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    credentials: 'include', // Important for httpOnly cookies
     body: JSON.stringify({ email, password }),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Login failed' }));
-    throw new Error(error.detail || 'Login failed');
-  }
-
-  const result = await response.json();
-
-  // Store user info in memory/state only (no sensitive tokens)
-  // The actual tokens are stored in httpOnly cookies by the server
-  return result;
+  return handleApiResponse<AuthResponse>(response);
 }
 
 /**
@@ -60,26 +45,12 @@ export async function signup(data: {
   password: string;
   plan?: string;
 }): Promise<AuthResponse> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-  
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/signup`, {
+  const response = await apiFetch('/api/v1/auth/signup', {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    credentials: 'include', // Important for httpOnly cookies
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Signup failed' }));
-    throw new Error(error.detail || 'Signup failed');
-  }
-
-  const result = await response.json();
-  return result;
+  return handleApiResponse<AuthResponse>(response);
 }
 
 /**
@@ -87,17 +58,11 @@ export async function signup(data: {
  * Clears httpOnly cookies on server-side
  */
 export async function logout(): Promise<void> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-  
-  const response = await fetch(`${apiBaseUrl}/api/v1/auth/logout`, {
+  const response = await apiFetch('/api/v1/auth/logout', {
     method: 'POST',
-    headers: { 
-      'Accept': 'application/json'
-    },
-    credentials: 'include', // Important for httpOnly cookies
   });
 
+  // Logout should succeed even if server returns an error
   if (!response.ok) {
     console.error('Logout failed');
   }
@@ -113,22 +78,13 @@ export async function getUserStatus(): Promise<{
   session_expires?: string;
 }> {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-                      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-    
-    const response = await fetch(`${apiBaseUrl}/api/v1/auth/status`, {
-      headers: { 
-        'Accept': 'application/json'
-      },
-      credentials: 'include', // Important for httpOnly cookies
-    });
+    const response = await apiFetch('/api/v1/auth/status');
 
     if (!response.ok) {
       return { authenticated: false };
     }
 
-    const result = await response.json();
-    return result;
+    return handleApiResponse(response);
   } catch (error) {
     console.error('Failed to get user status:', error);
     return { authenticated: false };
@@ -140,24 +96,15 @@ export async function getUserStatus(): Promise<{
  */
 export async function refreshToken(): Promise<AuthResponse | null> {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
-                      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-    
-    const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
+    const response = await apiFetch('/api/v1/auth/refresh', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      credentials: 'include', // Important for httpOnly cookies
     });
 
     if (!response.ok) {
       return null;
     }
 
-    const result = await response.json();
-    return result;
+    return handleApiResponse<AuthResponse>(response);
   } catch (error) {
     console.error('Token refresh failed:', error);
     return null;
