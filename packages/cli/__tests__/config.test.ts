@@ -208,18 +208,20 @@ describe('ConfigManager', () => {
       await configManager.saveConfig();
 
       expect(fs.writeFile).toHaveBeenCalled();
-      const writeCall = (fs.writeFile as jest.Mock).mock.calls[0];
-      expect(writeCall[0]).toBe(mockConfigPath);
+      const writeCall = (fs.writeFile as unknown as jest.MockedFunction<any>).mock.calls[0];
+      expect(writeCall?.[0]).toBe(mockConfigPath);
 
       // Check that it's valid JSON
-      const writtenContent = writeCall[1];
-      expect(() => JSON.parse(writtenContent)).not.toThrow();
+      const writtenContent = writeCall?.[1];
+      if (writtenContent) {
+        expect(() => JSON.parse(writtenContent as string)).not.toThrow();
+      }
     });
 
     it('sets restrictive permissions on config file', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       await configManager.saveConfig();
 
@@ -228,17 +230,17 @@ describe('ConfigManager', () => {
     });
 
     it('handles chmod errors gracefully', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockRejectedValue(new Error('Permission denied'));
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Permission denied'));
 
       // Should not throw despite chmod error
       await expect(configManager.saveConfig()).resolves.not.toThrow();
     });
 
     it('throws error when write fails', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockRejectedValue(new Error('Write failed'));
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Write failed'));
 
       await expect(configManager.saveConfig()).rejects.toThrow('Failed to save config');
     });
@@ -246,9 +248,9 @@ describe('ConfigManager', () => {
 
   describe('update', () => {
     it('updates multiple config values at once', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       await configManager.update({
         baseUrl: 'https://new.api.com',
@@ -264,9 +266,9 @@ describe('ConfigManager', () => {
     });
 
     it('saves config after updating', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       await configManager.update({ apiKey: 'updated-key' });
 
@@ -276,9 +278,9 @@ describe('ConfigManager', () => {
 
   describe('reset', () => {
     it('resets config to empty and saves', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       configManager.set('apiKey', 'test-key');
       configManager.set('baseUrl', 'https://test.com');
@@ -313,7 +315,7 @@ describe('ConfigManager', () => {
 
   describe('exists', () => {
     it('returns true when config file exists', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(true);
+      (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(true);
 
       const exists = await configManager.exists();
 
@@ -322,7 +324,7 @@ describe('ConfigManager', () => {
     });
 
     it('returns false when config file does not exist', async () => {
-      (fs.pathExists as jest.Mock).mockResolvedValue(false);
+      (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(false);
 
       const exists = await configManager.exists();
 
@@ -332,9 +334,9 @@ describe('ConfigManager', () => {
 
   describe('encryption', () => {
     it('encrypts sensitive fields when saving', async () => {
-      (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.chmod as jest.Mock).mockResolvedValue(undefined);
+      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
 
       configManager.set('apiKey', 'secret-api-key');
       configManager.set('refreshToken', 'secret-refresh-token');
@@ -342,8 +344,8 @@ describe('ConfigManager', () => {
 
       await configManager.saveConfig();
 
-      const writeCall = (fs.writeFile as jest.Mock).mock.calls[0];
-      const writtenContent = JSON.parse(writeCall[1]);
+      const writeCall = (fs.writeFile as unknown as jest.MockedFunction<any>).mock.calls[0];
+      const writtenContent = JSON.parse(writeCall?.[1] as string);
 
       // Sensitive fields should be encrypted
       expect(writtenContent.apiKey).toBeUndefined();

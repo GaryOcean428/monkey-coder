@@ -201,7 +201,7 @@ describe('Utils Module', () => {
     it('truncates long text with ellipsis', () => {
       const text = 'This is a very long text that needs to be truncated';
       const result = truncateText(text, 20);
-      expect(result).toBe('This is a very lon...');
+      expect(result).toBe('This is a very lo...');
       expect(result.length).toBe(20);
     });
 
