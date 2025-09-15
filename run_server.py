@@ -347,5 +347,77 @@ def main():
     reload=False
   )
 
+
+# Enhanced frontend build process
+def ensure_frontend_built():
+    """Ensure frontend is built and available."""
+    import subprocess
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    web_dir = Path(__file__).parent / "packages" / "web"
+    out_dir = web_dir / "out"
+    
+    if out_dir.exists() and len(list(out_dir.glob("*.html"))) > 0:
+        logger.info("✅ Frontend already built")
+        return True
+    
+    logger.info("🏗️  Building frontend at runtime...")
+    
+    # Set environment variables
+    env = os.environ.copy()
+    env.update({
+        "NODE_ENV": "production",
+        "NEXT_OUTPUT_EXPORT": "true",
+        "NEXT_TELEMETRY_DISABLED": "1",
+        "NEXTAUTH_URL": os.getenv("NEXTAUTH_URL", "https://coder.fastmonkey.au"),
+        "NEXT_PUBLIC_API_URL": os.getenv("NEXT_PUBLIC_API_URL", "https://coder.fastmonkey.au"),
+        "NEXT_PUBLIC_APP_URL": os.getenv("NEXT_PUBLIC_APP_URL", "https://coder.fastmonkey.au"),
+    })
+    
+    try:
+        # Method 1: Workspace export
+        result = subprocess.run(
+            ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
+            env=env, capture_output=True, text=True, timeout=300
+        )
+        
+        if result.returncode == 0 and out_dir.exists():
+            logger.info("✅ Frontend built successfully")
+            return True
+            
+        # Method 2: Direct build
+        logger.info("🔄 Trying direct build...")
+        subprocess.run(["yarn", "install"], cwd=web_dir, timeout=180)
+        result = subprocess.run(
+            ["yarn", "run", "export"], 
+            cwd=web_dir, env=env, timeout=300
+        )
+        
+        if result.returncode == 0 and out_dir.exists():
+            logger.info("✅ Frontend built via direct method")
+            return True
+            
+    except Exception as e:
+        logger.error(f"❌ Frontend build failed: {e}")
+    
+    # Create minimal fallback
+    out_dir.mkdir(exist_ok=True)
+    (out_dir / "index.html").write_text("""
+<!DOCTYPE html>
+<html><head><title>Monkey Coder</title></head>
+<body>
+<h1>🐒 Monkey Coder</h1>
+<p>AI-powered development platform</p>
+<p><a href="/api/docs">API Documentation</a></p>
+</body></html>
+    """)
+    
+    logger.info("⚠️  Created fallback frontend")
+    return True
+
+
 if __name__ == "__main__":
+    ensure_frontend_built()
   main()

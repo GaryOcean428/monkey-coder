@@ -1,488 +1,152 @@
 {
-  "timestamp": "2025-09-15T08:26:50.584301",
-  "overall_status": "critical",
-  "ready_for_deployment": false,
-  "checks": {
-    "logging": {
-      "json_logging": false,
-      "sentry_integration": false,
-      "security_audit": true,
-      "performance_logging": true,
-      "log_level": "INFO"
+  "timestamp": 1757926968.566725,
+  "base_url": "https://coder.fastmonkey.au",
+  "test_results": {
+    "/": {
+      "url": "https://coder.fastmonkey.au/",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.474947,
+      "content_length": 2466,
+      "content_type": "text/html; charset=utf-8",
+      "description": "Main page",
+      "indicators": {
+        "is_fastapi_docs": true,
+        "is_next_app": false,
+        "has_monkey_coder": true,
+        "is_error_page": false,
+        "has_api_endpoints": true,
+        "has_static_assets": false
+      }
     },
-    "database": {
-      "status": "healthy",
-      "details": {
-        "health": {
-          "status": "healthy",
-          "timestamp": 285.789102264,
-          "pool_stats": {
-            "size": 5,
-            "min_size": 5,
-            "max_size": 20,
-            "idle_connections": 5,
-            "is_closing": false
-          },
-          "connection_test": true,
-          "error": null
-        },
-        "pool_config": {
-          "min_size": 5,
-          "max_size": 20,
-          "max_overflow": 40,
-          "timeout": 30
-        },
-        "database_configured": true
-      },
-      "issues": []
+    "/api/docs": {
+      "url": "https://coder.fastmonkey.au/api/docs",
+      "status_code": 200,
+      "success": true,
+      "response_time": 0.42948,
+      "content_length": 945,
+      "content_type": "text/html; charset=utf-8",
+      "description": "API documentation",
+      "indicators": {
+        "is_fastapi_docs": true,
+        "is_next_app": false,
+        "has_monkey_coder": true,
+        "is_error_page": false,
+        "has_api_endpoints": true,
+        "has_static_assets": false
+      }
     },
-    "secrets": {
-      "status": "critical",
-      "configured_secrets": 1,
-      "missing_secrets": 21,
-      "validation_errors": 0,
-      "categories": {
-        "ai_providers": [
-          {
-            "name": "OpenAI API Key",
-            "env_var": "OPENAI_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Anthropic API Key",
-            "env_var": "ANTHROPIC_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Google API Key",
-            "env_var": "GOOGLE_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Groq API Key",
-            "env_var": "GROQ_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Grok API Key",
-            "env_var": "GROK_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Perplexity API Key",
-            "env_var": "PERPLEXITY_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "XAI API Key",
-            "env_var": "XAI_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Qwen API Key",
-            "env_var": "QWEN_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Moonshot API Key",
-            "env_var": "MOONSHOT_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "OpenRouter API Key",
-            "env_var": "OPENROUTER_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "HuggingFace API Key",
-            "env_var": "HUGGINGFACE_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Tavily API Key",
-            "env_var": "TAVILY_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "Serper API Key",
-            "env_var": "SERPER_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          }
-        ],
-        "security": [
-          {
-            "name": "JWT Secret Key",
-            "env_var": "JWT_SECRET_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "jwt_secret"
-          },
-          {
-            "name": "CSRF Secret Key",
-            "env_var": "CSRF_SECRET_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "encryption_key"
-          },
-          {
-            "name": "Cookie Secret Key",
-            "env_var": "COOKIE_SECRET_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "encryption_key"
-          },
-          {
-            "name": "Session Secret Key",
-            "env_var": "SESSION_SECRET_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "encryption_key"
-          }
-        ],
-        "infrastructure": [
-          {
-            "name": "Database URL",
-            "env_var": "DATABASE_URL",
-            "configured": true,
-            "key_prefix": "postgresql...",
-            "validation_errors": [],
-            "secret_type": "database_url"
-          },
-          {
-            "name": "Redis URL",
-            "env_var": "REDIS_URL",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "database_url"
-          },
-          {
-            "name": "Sentry DSN",
-            "env_var": "SENTRY_DSN",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          }
-        ],
-        "external_services": [
-          {
-            "name": "Stripe API Key",
-            "env_var": "STRIPE_API_KEY",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          },
-          {
-            "name": "GitHub Token",
-            "env_var": "GITHUB_TOKEN",
-            "configured": false,
-            "key_prefix": null,
-            "validation_errors": [],
-            "secret_type": "api_key"
-          }
-        ]
-      },
-      "issues": [
-        "Many secrets missing (21)",
-        "No AI provider API keys configured"
-      ]
+    "/api/v1/health": {
+      "url": "https://coder.fastmonkey.au/api/v1/health",
+      "status_code": 404,
+      "success": false,
+      "response_time": 0.207541,
+      "content_length": 22,
+      "content_type": "application/json",
+      "description": "Health endpoint",
+      "indicators": {
+        "is_fastapi_docs": false,
+        "is_next_app": false,
+        "has_monkey_coder": false,
+        "is_error_page": true,
+        "has_api_endpoints": false,
+        "has_static_assets": false
+      }
     },
-    "ai_providers": {
-      "status": "error",
-      "providers": {
-        "openai": {
-          "configured": false,
-          "key_length": 0
-        },
-        "anthropic": {
-          "configured": false,
-          "key_length": 0
-        },
-        "google": {
-          "configured": false,
-          "key_length": 0
-        },
-        "groq": {
-          "configured": false,
-          "key_length": 0
-        },
-        "grok": {
-          "configured": false,
-          "key_length": 0
-        }
-      },
-      "issues": [
-        "No AI provider API keys configured"
-      ]
+    "/_next/static/css/": {
+      "url": "https://coder.fastmonkey.au/_next/static/css/",
+      "status_code": 404,
+      "success": false,
+      "response_time": 0.34571,
+      "content_length": 22,
+      "content_type": "application/json",
+      "description": "Static CSS assets",
+      "indicators": {
+        "is_fastapi_docs": false,
+        "is_next_app": false,
+        "has_monkey_coder": false,
+        "is_error_page": true,
+        "has_api_endpoints": false,
+        "has_static_assets": false
+      }
     },
-    "production": {
-      "status": "healthy",
-      "health_checks": {
-        "system": {
-          "status": "healthy",
-          "memory_usage_percent": 13.2,
-          "cpu_usage_percent": 0.0,
-          "disk_usage_percent": 73.72,
-          "warnings": []
-        },
-        "database": {
-          "status": "healthy",
-          "url_configured": true,
-          "pool_stats": {
-            "size": 5,
-            "min_size": 5,
-            "max_size": 20,
-            "idle_connections": 5,
-            "is_closing": false
-          },
-          "connection_test": true,
-          "response_time_ms": null,
-          "error": null
-        },
-        "ai_providers": {
-          "status": "error",
-          "configured_providers": 0,
-          "total_providers": 5,
-          "providers": {
-            "openai": {
-              "status": "not_configured"
-            },
-            "anthropic": {
-              "status": "not_configured"
-            },
-            "google": {
-              "status": "not_configured"
-            },
-            "groq": {
-              "status": "not_configured"
-            },
-            "grok": {
-              "status": "not_configured"
-            }
-          }
-        },
-        "components": {
-          "status": "healthy",
-          "components": {
-            "orchestrator": "active",
-            "quantum_executor": "active",
-            "persona_router": "active",
-            "provider_registry": "active",
-            "context_manager": "active"
-          }
-        },
-        "secrets": {
-          "status": "critical",
-          "configured_secrets": 1,
-          "missing_secrets": 21,
-          "validation_errors": 0,
-          "categories": {
-            "ai_providers": {
-              "configured": 0,
-              "total": 13,
-              "errors": 0
-            },
-            "security": {
-              "configured": 0,
-              "total": 4,
-              "errors": 0
-            },
-            "infrastructure": {
-              "configured": 1,
-              "total": 3,
-              "errors": 0
-            },
-            "external_services": {
-              "configured": 0,
-              "total": 2,
-              "errors": 0
-            }
-          },
-          "recommendations": [
-            "Configure 21 missing secrets for full functionality",
-            "No AI provider API keys configured - service will not function"
-          ]
-        }
-      },
-      "uptime": 1.1e-05,
-      "issues": [
-        "ai_providers health check failed"
-      ]
+    "/static/": {
+      "url": "https://coder.fastmonkey.au/static/",
+      "status_code": 404,
+      "success": false,
+      "response_time": 0.169561,
+      "content_length": 22,
+      "content_type": "application/json",
+      "description": "Static assets",
+      "indicators": {
+        "is_fastapi_docs": false,
+        "is_next_app": false,
+        "has_monkey_coder": false,
+        "is_error_page": true,
+        "has_api_endpoints": false,
+        "has_static_assets": false
+      }
     },
-    "monitoring": {
-      "status": "healthy",
-      "features": {
-        "logging": {
-          "log_level": "INFO",
-          "json_logs": false,
-          "performance_logs": false
-        },
-        "sentry": {
-          "configured": false,
-          "environment": "development"
-        },
-        "rate_limiting": {
-          "per_minute": "50",
-          "burst": "10",
-          "enabled": true
-        }
-      },
-      "issues": []
-    },
-    "security": {
-      "status": "error",
-      "security_features": {
-        "jwt": {
-          "configured": false,
-          "length": 0
-        },
-        "cors": {
-          "configured": false,
-          "origins": []
-        },
-        "sessions": {
-          "max_sessions": "5",
-          "timeout_minutes": "30",
-          "jwt_expire_minutes": "400"
-        }
-      },
-      "issues": [
-        "JWT_SECRET_KEY not configured"
-      ]
-    },
-    "railway": {
-      "status": "healthy",
-      "railway_config": {
-        "environment_vars": {
-          "PORT": null,
-          "RAILWAY_ENVIRONMENT": null,
-          "RAILWAY_PUBLIC_DOMAIN": null,
-          "RAILWAY_PRIVATE_DOMAIN": null
-        },
-        "host": "0.0.0.0",
-        "railpack_exists": true,
-        "railpack_config": {
-          "$schema": "https://schema.railpack.com",
-          "provider": "python",
-          "packages": {
-            "python": "3.12",
-            "node": "20"
-          },
-          "build": {
-            "commands": [
-              "echo '\ud83d\udc12 Starting Monkey Coder build process...'",
-              "pip install --no-cache-dir --upgrade pip setuptools wheel",
-              "pip install --no-cache-dir -r requirements-deploy.txt",
-              "cd packages/core && pip install --no-cache-dir -e .",
-              "echo '\ud83d\udce6 Python dependencies installed successfully'",
-              "corepack enable",
-              "corepack prepare yarn@4.9.2 --activate",
-              "echo '\ud83d\udd27 Yarn 4.9.2 configured'",
-              "yarn install --immutable || yarn install",
-              "echo '\ud83d\udce6 Node dependencies installed'",
-              "echo '\ud83c\udfd7\ufe0f Building frontend with comprehensive environment setup...'",
-              "export NEXT_OUTPUT_EXPORT=true",
-              "export NODE_ENV=production",
-              "export NEXT_TELEMETRY_DISABLED=1",
-              "export NEXTAUTH_URL=${NEXTAUTH_URL:-https://coder.fastmonkey.au}",
-              "export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-railway-build-secret-$(date +%s)}",
-              "export NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://coder.fastmonkey.au}",
-              "export NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://coder.fastmonkey.au}",
-              "export DATABASE_URL=${DATABASE_URL:-postgresql://railway.internal:5432/railway}",
-              "export STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY:-pk_test_placeholder}",
-              "export STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_placeholder}",
-              "export STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}",
-              "echo 'Environment variables configured for build'",
-              "echo 'Attempting frontend build...'",
-              "yarn workspace @monkey-coder/web run export || {",
-              "  echo '\u26a0\ufe0f Workspace export failed, trying alternative method...'",
-              "  cd packages/web && yarn run export || {",
-              "    echo '\u26a0\ufe0f Alternative export failed, trying simple build...'",
-              "    cd packages/web && yarn run build && {",
-              "      echo 'Build completed, checking output...'",
-              "      if [ -d .next ]; then",
-              "        echo 'Copying .next to out directory...'",
-              "        cp -r .next out 2>/dev/null || echo 'Copy failed, continuing...'",
-              "      fi",
-              "    } || echo '\u274c All build methods failed'",
-              "  }",
-              "}",
-              "if [ -d packages/web/out ] && [ \"$(ls -A packages/web/out 2>/dev/null)\" ]; then",
-              "  echo '\u2705 Frontend build completed successfully'",
-              "  ls -la packages/web/out/ | head -10",
-              "  echo \"Frontend assets count: $(find packages/web/out -type f | wc -l) files\"",
-              "else",
-              "  echo '\u274c Frontend build failed during deployment - will attempt runtime build'",
-              "  echo 'This is not fatal, the server will try to build at startup'",
-              "fi",
-              "echo '\ud83d\ude80 Build process completed'"
-            ]
-          },
-          "deploy": {
-            "startCommand": "python run_server.py",
-            "healthCheckPath": "/health",
-            "healthCheckTimeout": 300,
-            "restartPolicyType": "ON_FAILURE",
-            "restartPolicyMaxRetries": 3
-          }
-        }
-      },
-      "issues": []
+    "/favicon.ico": {
+      "url": "https://coder.fastmonkey.au/favicon.ico",
+      "status_code": 404,
+      "success": false,
+      "response_time": 0.171614,
+      "content_length": 22,
+      "content_type": "application/json",
+      "description": "Favicon",
+      "indicators": {
+        "is_fastapi_docs": false,
+        "is_next_app": false,
+        "has_monkey_coder": false,
+        "is_error_page": true,
+        "has_api_endpoints": false,
+        "has_static_assets": false
+      }
     }
   },
+  "analysis": {
+    "deployment_type": "api_only",
+    "frontend_status": "missing",
+    "backend_status": "working",
+    "issues": [
+      "Frontend static files not found - showing FastAPI docs instead"
+    ],
+    "recommendations": [
+      "Set NEXT_OUTPUT_EXPORT=true in Railway environment",
+      "Ensure frontend build process completes successfully",
+      "Verify packages/web/out directory is generated"
+    ]
+  },
+  "readiness": {
+    "health_check": false,
+    "api_accessible": false,
+    "database_connected": false,
+    "environment_configured": false,
+    "capabilities_available": false,
+    "static_files_ratio": 1.0
+  },
   "recommendations": [
-    "Configure additional AI provider API keys for redundancy",
-    "Configure JWT_SECRET_KEY for secure authentication",
-    "Configure Sentry DSN for production error tracking"
+    "\ud83d\udd27 CRITICAL: Set environment variables in Railway dashboard:",
+    "   - NEXT_OUTPUT_EXPORT=true",
+    "   - NEXTAUTH_URL=https://coder.fastmonkey.au",
+    "   - NEXT_PUBLIC_API_URL=https://coder.fastmonkey.au",
+    "   - NODE_ENV=production",
+    "",
+    "\ud83d\udd27 Verify Railway build configuration:",
+    "   - Build Method should be 'Railpack' (not Nixpacks)",
+    "   - Check build logs for frontend export errors",
+    "",
+    "\ud83d\udd27 Alternative quick fix:",
+    "   - Change Railway start command to: node run_unified.js",
+    "   - This bypasses static export and runs Next.js server directly",
+    "\ud83d\udd27 Backend API not responding - check FastAPI server status"
   ],
-  "critical_issues": [
-    "ai_providers: No AI provider API keys configured",
-    "security: JWT_SECRET_KEY not configured"
-  ],
-  "warnings": []
+  "summary": {
+    "overall_status": "api_only",
+    "frontend_working": false,
+    "backend_working": true,
+    "needs_environment_setup": true,
+    "critical_issues": 1
+  }
 }
