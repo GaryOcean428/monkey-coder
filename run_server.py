@@ -33,7 +33,7 @@ def check_frontend():
 def build_frontend_if_missing():
   """
   Build the frontend if the static assets are missing.
-  This is a fallback for when Railway deployment doesn't build the frontend.
+  This is a robust fallback for when Railway deployment doesn't build the frontend.
   """
   base_dir = Path(__file__).parent
   web_dir = base_dir / "packages" / "web"
@@ -51,82 +51,153 @@ def build_frontend_if_missing():
     return False
   
   try:
-    # Set environment variables for production build
+    # Set comprehensive environment variables for production build
     env = os.environ.copy()
+    
+    # Generate a unique secret if none provided
+    import secrets
+    random_secret = secrets.token_hex(32)
+    
     env.update({
       'NEXT_OUTPUT_EXPORT': 'true',
       'NODE_ENV': 'production',
+      'NEXT_TELEMETRY_DISABLED': '1',
       'NEXTAUTH_URL': env.get('NEXTAUTH_URL', 'https://coder.fastmonkey.au'),
-      'NEXTAUTH_SECRET': env.get('NEXTAUTH_SECRET', 'fallback-secret-change-in-production'),
+      'NEXTAUTH_SECRET': env.get('NEXTAUTH_SECRET', f'runtime-secret-{random_secret}'),
       'NEXT_PUBLIC_API_URL': env.get('NEXT_PUBLIC_API_URL', 'https://coder.fastmonkey.au'),
       'NEXT_PUBLIC_APP_URL': env.get('NEXT_PUBLIC_APP_URL', 'https://coder.fastmonkey.au'),
-      'DATABASE_URL': env.get('DATABASE_URL', ''),  # Empty to prevent build errors
+      'DATABASE_URL': env.get('DATABASE_URL', 'postgresql://localhost:5432/placeholder'),
+      'STRIPE_PUBLIC_KEY': env.get('STRIPE_PUBLIC_KEY', 'pk_test_placeholder'),
+      'STRIPE_SECRET_KEY': env.get('STRIPE_SECRET_KEY', 'sk_test_placeholder'),
+      'STRIPE_WEBHOOK_SECRET': env.get('STRIPE_WEBHOOK_SECRET', 'whsec_placeholder'),
     })
     
-    # Step 1: Enable Corepack and prepare Yarn 4.9.2
     logger.info("🔧 Setting up package manager...")
-    subprocess.run(["corepack", "enable"], check=True, cwd=base_dir)
-    subprocess.run(["corepack", "prepare", "yarn@4.9.2", "--activate"], check=True, cwd=base_dir)
+    # Step 1: Enable Corepack and prepare Yarn 4.9.2
+    try:
+      subprocess.run(["corepack", "enable"], check=True, cwd=base_dir, timeout=30)
+      subprocess.run(["corepack", "prepare", "yarn@4.9.2", "--activate"], check=True, cwd=base_dir, timeout=60)
+      logger.info("✅ Package manager setup completed")
+    except subprocess.TimeoutExpired:
+      logger.error("❌ Package manager setup timed out")
+      return False
+    except subprocess.CalledProcessError as e:
+      logger.error(f"❌ Package manager setup failed: {e}")
+      return False
     
-    # Step 2: Install dependencies
+    # Step 2: Install dependencies with timeout and retries
     logger.info("📦 Installing dependencies...")
-    result = subprocess.run(
-      ["yarn", "install", "--immutable"],
-      check=False,  # Don't fail if lockfile is not immutable
-      cwd=base_dir,
-      env=env,
-      capture_output=True,
-      text=True
-    )
-    
-    if result.returncode != 0:
-      logger.warning("⚠️ Immutable install failed, trying standard install...")
-      subprocess.run(["yarn", "install"], check=True, cwd=base_dir, env=env)
-    
-    # Step 3: Build the frontend with export
-    logger.info("🏗️ Building frontend with static export...")
-    result = subprocess.run(
-      ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
-      check=False,  # Don't fail immediately
-      cwd=base_dir,
-      env=env,
-      capture_output=True,
-      text=True
-    )
-    
-    if result.returncode != 0:
-      logger.error(f"❌ Frontend build failed with exit code {result.returncode}")
-      logger.error(f"STDOUT: {result.stdout}")
-      logger.error(f"STDERR: {result.stderr}")
-      
-      # Try alternative build method
-      logger.info("🔄 Trying alternative build method...")
+    for attempt in range(2):
       try:
-        # Change to web directory and build directly
-        subprocess.run(["yarn", "build"], check=True, cwd=web_dir, env=env)
-        logger.info("✅ Alternative build succeeded")
+        result = subprocess.run(
+          ["yarn", "install", "--immutable"],
+          check=False,
+          cwd=base_dir,
+          env=env,
+          capture_output=True,
+          text=True,
+          timeout=300  # 5 minute timeout
+        )
+        
+        if result.returncode != 0:
+          logger.warning(f"⚠️ Immutable install failed (attempt {attempt + 1}), trying standard install...")
+          result = subprocess.run(
+            ["yarn", "install"],
+            check=True,
+            cwd=base_dir,
+            env=env,
+            timeout=300
+          )
+        
+        logger.info("✅ Dependencies installed successfully")
+        break
+        
+      except subprocess.TimeoutExpired:
+        logger.error(f"❌ Dependency installation timed out (attempt {attempt + 1})")
+        if attempt == 1:  # Last attempt
+          return False
       except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Alternative build also failed: {e}")
+        logger.error(f"❌ Dependency installation failed (attempt {attempt + 1}): {e}")
+        if attempt == 1:  # Last attempt
+          return False
+    
+    # Step 3: Build the frontend with export and comprehensive error handling
+    logger.info("🏗️ Building frontend with static export...")
+    try:
+      result = subprocess.run(
+        ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
+        check=False,
+        cwd=base_dir,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=600  # 10 minute timeout for build
+      )
+      
+      if result.returncode != 0:
+        logger.error(f"❌ Frontend workspace build failed with exit code {result.returncode}")
+        logger.error(f"STDOUT: {result.stdout[-1000:] if result.stdout else 'No stdout'}")  # Last 1000 chars
+        logger.error(f"STDERR: {result.stderr[-1000:] if result.stderr else 'No stderr'}")
+        
+        # Try alternative build method - direct build in web directory
+        logger.info("🔄 Trying alternative build method in web directory...")
+        try:
+          alt_env = env.copy()
+          result = subprocess.run(
+            ["yarn", "run", "export"],
+            check=True,
+            cwd=web_dir,
+            env=alt_env,
+            timeout=600
+          )
+          logger.info("✅ Alternative build method succeeded")
+        except subprocess.CalledProcessError as e:
+          logger.error(f"❌ Alternative build also failed: {e}")
+          return False
+        except subprocess.TimeoutExpired:
+          logger.error("❌ Alternative build timed out")
+          return False
+      else:
+        logger.info("✅ Frontend build completed successfully")
+    
+    except subprocess.TimeoutExpired:
+      logger.error("❌ Frontend build timed out after 10 minutes")
+      return False
+    
+    # Step 4: Verify the build output with detailed logging
+    if web_out_dir.exists():
+      try:
+        html_files = list(web_out_dir.glob("*.html"))
+        all_files = list(web_out_dir.glob('*'))
+        total_files = len(all_files)
+        
+        logger.info(f"✅ Build successful! Generated {total_files} files")
+        logger.info(f"   HTML files: {[f.name for f in html_files[:5]]}")
+        logger.info(f"   Other files: {[f.name for f in all_files if f.suffix != '.html'][:5]}")
+        
+        # Check for critical files
+        index_html = web_out_dir / "index.html"
+        if index_html.exists():
+          logger.info(f"✅ Critical file exists: index.html ({index_html.stat().st_size} bytes)")
+        else:
+          logger.warning("⚠️ index.html not found in build output")
+        
+        return True
+        
+      except Exception as e:
+        logger.error(f"❌ Error verifying build output: {e}")
         return False
     else:
-      logger.info("✅ Frontend build completed successfully")
-    
-    # Verify the build output
-    if web_out_dir.exists():
-      files = list(web_out_dir.glob("*.html"))
-      total_files = len(list(web_out_dir.glob('*')))
-      logger.info(f"✅ Build successful! Generated {total_files} files including: {[f.name for f in files[:5]]}")
-      return True
-    else:
       logger.error("❌ Build completed but output directory not found")
+      logger.info(f"   Expected: {web_out_dir}")
+      logger.info(f"   Web dir contents: {list(web_dir.iterdir()) if web_dir.exists() else 'Web dir not found'}")
       return False
       
-  except subprocess.CalledProcessError as e:
-    logger.error(f"❌ Frontend build failed: {e}")
-    logger.error(f"Command: {e.cmd}")
-    return False
   except Exception as e:
     logger.error(f"❌ Unexpected error during frontend build: {e}")
+    logger.error(f"   Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"   Traceback: {traceback.format_exc()}")
     return False
 
 def main():
