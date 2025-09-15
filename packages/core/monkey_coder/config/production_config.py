@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from .env_config import get_config, EnvironmentConfig
+from .secrets_config import get_secrets_manager, validate_production_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class ProductionConfigManager:
         - AI provider availability
         - Component status
         - Performance metrics
+        - Secrets health and security status
         """
         health_status = {
             "status": "healthy",
@@ -102,6 +104,13 @@ class ProductionConfigManager:
             health_status["checks"]["components"] = await self._check_components_health()
         except Exception as e:
             health_status["checks"]["components"] = {"status": "error", "error": str(e)}
+            health_status["status"] = "degraded"
+            
+        # Secrets security health check
+        try:
+            health_status["checks"]["secrets"] = await self._check_secrets_health()
+        except Exception as e:
+            health_status["checks"]["secrets"] = {"status": "error", "error": str(e)}
             health_status["status"] = "degraded"
             
         return health_status
@@ -153,7 +162,7 @@ class ProductionConfigManager:
             }
             
     async def _check_database_health(self) -> Dict[str, Any]:
-        """Check database connectivity and performance."""
+        """Check database connectivity and performance with Railway optimizations."""
         if not self.config.database.url:
             return {
                 "status": "not_configured",
@@ -161,12 +170,19 @@ class ProductionConfigManager:
             }
             
         try:
-            # This would normally test actual database connection
-            # For now, return configured status
+            # Import here to avoid circular imports
+            from ..database.connection import get_database_health
+            
+            # Get comprehensive database health information
+            db_health = await get_database_health()
+            
             return {
-                "status": "healthy",
+                "status": "healthy" if db_health["connection_test"] else "degraded",
                 "url_configured": True,
-                "pool_size": self.config.database.pool_size
+                "pool_stats": db_health.get("pool_stats", {}),
+                "connection_test": db_health["connection_test"],
+                "response_time_ms": db_health.get("response_time_ms"),
+                "error": db_health.get("error")
             }
         except Exception as e:
             return {
@@ -314,6 +330,42 @@ class ProductionConfigManager:
             ])
             
         return validation
+        
+    async def _check_secrets_health(self) -> Dict[str, Any]:
+        """Check secrets security and configuration health."""
+        try:
+            secrets_manager = get_secrets_manager()
+            secrets_health = secrets_manager.get_secrets_health_report()
+            
+            return {
+                "status": secrets_health["overall_status"],
+                "configured_secrets": secrets_health["configured_secrets"],
+                "missing_secrets": secrets_health["missing_secrets"],
+                "validation_errors": secrets_health["validation_errors"],
+                "categories": {
+                    category: {
+                        "configured": len([s for s in secrets if s["configured"]]),
+                        "total": len(secrets),
+                        "errors": sum(len(s["validation_errors"]) for s in secrets)
+                    }
+                    for category, secrets in secrets_health["categories"].items()
+                },
+                "recommendations": secrets_health["recommendations"][:3]  # Top 3 recommendations
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e)
+            }
+        
+    def get_secrets_rotation_schedule(self) -> Dict[str, Any]:
+        """Get API key rotation strategy for production security."""
+        try:
+            secrets_manager = get_secrets_manager()
+            return secrets_manager.get_rotation_strategy()
+        except Exception as e:
+            logger.error(f"Failed to get rotation strategy: {e}")
+            return {"error": str(e)}
 
 
 # Global production config instance

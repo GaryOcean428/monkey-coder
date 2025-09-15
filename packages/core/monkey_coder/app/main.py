@@ -587,6 +587,50 @@ async def comprehensive_health_check():
     )
 
 
+@app.get("/health/secrets")
+async def secrets_health_check():
+    """
+    Secrets security health check for production monitoring.
+    
+    Returns detailed status of API keys, credentials, and security configuration
+    without exposing sensitive values.
+    """
+    from ..config.production_config import get_production_config
+    from ..config.secrets_config import validate_production_secrets
+    
+    try:
+        secrets_health = validate_production_secrets()
+        prod_config = get_production_config()
+        rotation_strategy = prod_config.get_secrets_rotation_schedule()
+        
+        response_data = {
+            "secrets_health": secrets_health,
+            "rotation_strategy": {
+                "schedule": rotation_strategy.get("rotation_schedule", {}),
+                "next_recommended_rotation": "Within 30 days for any keys over 60 days old"
+            },
+            "security_recommendations": secrets_health.get("recommendations", [])
+        }
+        
+        # Determine overall security status
+        status_code = 200
+        if secrets_health["overall_status"] == "critical":
+            status_code = 503
+        elif secrets_health["overall_status"] == "warning":
+            status_code = 200  # Warning is still operational
+        
+        return JSONResponse(
+            content=response_data,
+            status_code=status_code
+        )
+        
+    except Exception as e:
+        return JSONResponse(
+            content={"error": f"Secrets health check failed: {str(e)}"},
+            status_code=500
+        )
+
+
 @app.get("/health/readiness")
 async def readiness_check():
     """
