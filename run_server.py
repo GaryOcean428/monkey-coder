@@ -241,7 +241,20 @@ def build_frontend_if_missing():
           logger.info("✅ Alternative build method succeeded")
         except subprocess.CalledProcessError as e:
           logger.error(f"❌ Alternative build also failed: {e}")
-          return False
+          # Try one more fallback - simple next build
+          logger.info("🔄 Trying simple next build fallback...")
+          try:
+            result = subprocess.run(
+              ["yarn", "run", "build"],
+              check=True,
+              cwd=web_dir,
+              env=alt_env,
+              timeout=600
+            )
+            logger.info("✅ Simple build method succeeded")
+          except subprocess.CalledProcessError as e2:
+            logger.error(f"❌ All build methods failed: {e2}")
+            return False
         except subprocess.TimeoutExpired:
           logger.error("❌ Alternative build timed out")
           return False
@@ -276,10 +289,23 @@ def build_frontend_if_missing():
         logger.error(f"❌ Error verifying build output: {e}")
         return False
     else:
-      logger.error("❌ Build completed but output directory not found")
-      logger.info(f"   Expected: {web_out_dir}")
-      logger.info(f"   Web dir contents: {list(web_dir.iterdir()) if web_dir.exists() else 'Web dir not found'}")
-      return False
+      # Check if build went to .next directory instead
+      next_dir = web_dir / ".next"
+      if next_dir.exists():
+        logger.warning("⚠️ Build output found in .next directory, copying to out...")
+        try:
+          import shutil
+          shutil.copytree(next_dir, web_out_dir, dirs_exist_ok=True)
+          logger.info("✅ Copied build output to out directory")
+          return True
+        except Exception as e:
+          logger.error(f"❌ Failed to copy build output: {e}")
+          return False
+      else:
+        logger.error("❌ Build completed but output directory not found")
+        logger.info(f"   Expected: {web_out_dir}")
+        logger.info(f"   Web dir contents: {list(web_dir.iterdir()) if web_dir.exists() else 'Web dir not found'}")
+        return False
       
   except Exception as e:
     logger.error(f"❌ Unexpected error during frontend build: {e}")
