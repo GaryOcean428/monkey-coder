@@ -392,6 +392,102 @@ class EnhancedAuthManager:
                 message="Authentication failed"
             )
 
+    async def create_user(
+        self,
+        username: str,
+        name: str,
+        email: str,
+        password: str,
+        plan: str = "free"
+    ) -> AuthResult:
+        """
+        Create a new user account and return authentication tokens.
+
+        Args:
+            username: Unique username for the account
+            name: Full name of the user
+            email: User email address
+            password: User password
+            plan: Subscription plan (free, pro, enterprise)
+
+        Returns:
+            AuthResult: Authentication result with tokens and user info
+
+        Raises:
+            Exception: If user creation fails
+        """
+        try:
+            from ..database.models import User
+            import hashlib
+            
+            # Hash the password
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            
+            # Create user in database
+            new_user = await User.create(
+                username=username,
+                email=email,
+                name=name,
+                password_hash=password_hash,
+                is_developer=(plan in ["pro", "enterprise"]),
+                subscription_tier=plan
+            )
+
+            if not new_user:
+                return AuthResult(
+                    success=False,
+                    method=AuthMethod.COOKIE,
+                    user=None,
+                    session_id=None,
+                    csrf_token=None,
+                    access_token=None,
+                    refresh_token=None,
+                    expires_at=None,
+                    message="Failed to create user account"
+                )
+
+            # Create JWT tokens
+            user_roles = [UserRole.USER]
+            if new_user.is_developer:
+                user_roles.append(UserRole.DEVELOPER)
+
+            jwt_user = JWTUser(
+                user_id=str(new_user.id),
+                email=new_user.email,
+                username=new_user.username,
+                roles=user_roles,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30)
+            )
+
+            access_token = create_access_token(jwt_user)
+            refresh_token = create_refresh_token(jwt_user)
+
+            return AuthResult(
+                success=True,
+                method=AuthMethod.COOKIE,
+                user=jwt_user,
+                session_id=self.generate_session_id(),
+                csrf_token=self.generate_csrf_token() if self.config.enable_csrf_protection else None,
+                access_token=access_token,
+                refresh_token=refresh_token,
+                expires_at=jwt_user.expires_at,
+                message="User created successfully"
+            )
+
+        except Exception as e:
+            logger.error(f"User creation failed: {str(e)}")
+            return AuthResult(
+                success=False,
+                method=AuthMethod.COOKIE,
+                user=None,
+                session_id=None,
+                csrf_token=None,
+                access_token=None,
+                refresh_token=None,
+                expires_at=None,
+                message=f"User creation failed: {str(e)}"
+            )
+
     async def authenticate_request(self, request: Request) -> AuthResult:
         """
         Authenticate a request using cookies or headers.

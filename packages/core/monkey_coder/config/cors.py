@@ -15,9 +15,11 @@ def get_cors_origins() -> List[str]:
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5675",
+        "http://localhost:8000",  # Added for API testing
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5675",
+        "http://127.0.0.1:8000",  # Added for API testing
         
         # Production domains
         "https://coder.fastmonkey.au",
@@ -65,7 +67,9 @@ CORS_CONFIG = {
         "Cache-Control",
         "X-Forwarded-For",
         "X-Forwarded-Proto",
-        "User-Agent"
+        "User-Agent",
+        "Cookie",  # Added for cookie auth
+        "Set-Cookie"  # Added for cookie auth
     ],
     "expose_headers": [
         "X-Total-Count",
@@ -73,7 +77,8 @@ CORS_CONFIG = {
         "X-Current-Page",
         "X-Rate-Limit-Remaining",
         "X-Process-Time",
-        "Set-Cookie"
+        "Set-Cookie",  # Important for authentication cookies
+        "X-CSRF-Token"  # For CSRF protection
     ],
     "max_age": 3600,  # Cache preflight requests for 1 hour
 }

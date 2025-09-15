@@ -25,15 +25,21 @@ export interface AuthResponse {
  * Uses httpOnly cookies for token storage (server-side)
  */
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch('/api/v1/auth/login', {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+  
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
     credentials: 'include', // Important for httpOnly cookies
     body: JSON.stringify({ email, password }),
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ detail: 'Login failed' }));
     throw new Error(error.detail || 'Login failed');
   }
 
@@ -54,15 +60,21 @@ export async function signup(data: {
   password: string;
   plan?: string;
 }): Promise<AuthResponse> {
-  const response = await fetch('/api/v1/auth/signup', {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+  
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/signup`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
     credentials: 'include', // Important for httpOnly cookies
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ detail: 'Signup failed' }));
     throw new Error(error.detail || 'Signup failed');
   }
 
@@ -75,8 +87,14 @@ export async function signup(data: {
  * Clears httpOnly cookies on server-side
  */
 export async function logout(): Promise<void> {
-  const response = await fetch('/api/v1/auth/logout', {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+  
+  const response = await fetch(`${apiBaseUrl}/api/v1/auth/logout`, {
     method: 'POST',
+    headers: { 
+      'Accept': 'application/json'
+    },
     credentials: 'include', // Important for httpOnly cookies
   });
 
@@ -95,7 +113,13 @@ export async function getUserStatus(): Promise<{
   session_expires?: string;
 }> {
   try {
-    const response = await fetch('/api/v1/auth/status', {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+    
+    const response = await fetch(`${apiBaseUrl}/api/v1/auth/status`, {
+      headers: { 
+        'Accept': 'application/json'
+      },
       credentials: 'include', // Important for httpOnly cookies
     });
 
@@ -116,9 +140,15 @@ export async function getUserStatus(): Promise<{
  */
 export async function refreshToken(): Promise<AuthResponse | null> {
   try {
-    const response = await fetch('/api/v1/auth/refresh', {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+                      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+    
+    const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       credentials: 'include', // Important for httpOnly cookies
     });
 
