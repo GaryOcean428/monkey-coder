@@ -245,7 +245,7 @@ class ProductionConfigManager:
         }
         
     def get_security_headers(self) -> Dict[str, str]:
-        """Get production security headers."""
+        """Get production security headers with Railway-optimized CSP."""
         headers = {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
@@ -256,13 +256,33 @@ class ProductionConfigManager:
         }
         
         if self.config.environment == "production":
-            headers["Content-Security-Policy"] = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline'; "
-                "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data:; "
-                "connect-src 'self'"
-            )
+            # Enhanced CSP with Google Fonts support and Railway compatibility
+            csp_directives = [
+                "default-src 'self' https://*.fastmonkey.au https://*.railway.app",
+                "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.fastmonkey.au",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.fastmonkey.au",
+                "img-src 'self' data: https: blob:",
+                "connect-src 'self' https://coder.fastmonkey.au wss://coder.fastmonkey.au https://*.railway.app",
+                "media-src 'self' data: blob:",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+                "frame-ancestors 'none'"
+            ]
+            headers["Content-Security-Policy"] = "; ".join(csp_directives)
+        else:
+            # Development CSP - more permissive
+            csp_directives = [
+                "default-src 'self'",
+                "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+                "img-src 'self' data: https:",
+                "connect-src 'self' ws: wss:",
+                "object-src 'none'"
+            ]
+            headers["Content-Security-Policy"] = "; ".join(csp_directives)
             
         return headers
         
