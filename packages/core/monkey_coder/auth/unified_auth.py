@@ -30,7 +30,6 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
-from itsdangerous import URLSafeTimedSerializer
 import redis.asyncio as redis
 
 from ..security import (
@@ -50,14 +49,33 @@ logger = logging.getLogger(__name__)
 # Configuration and Constants
 # =============================================================================
 
-# Security keys
+# Security keys with Railway support
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    # For Railway deployment, check alternative environment variable names
+    JWT_SECRET_KEY = os.getenv("RAILWAY_JWT_SECRET") or os.getenv("MONKEY_JWT_SECRET")
+    if not JWT_SECRET_KEY and os.getenv("RAILWAY_ENVIRONMENT") == "production":
+        logger.error("JWT_SECRET_KEY is required for production Railway deployment")
+        # Don't fall back to default in production
+    else:
+        JWT_SECRET_KEY = JWT_SECRET_KEY or secrets.token_urlsafe(32)
+        if not os.getenv("RAILWAY_ENVIRONMENT"):
+            logger.warning("Using temporary JWT secret for development")
+
 CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY", secrets.token_urlsafe(32))
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY", secrets.token_urlsafe(32))
 
-# Cookie configuration
+# Cookie configuration with Railway optimizations
 COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", "")
+# Auto-detect Railway production domain for cookies
+if not COOKIE_DOMAIN and os.getenv("RAILWAY_PUBLIC_DOMAIN"):
+    COOKIE_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() == "true"
+# Force secure cookies in Railway production
+if os.getenv("RAILWAY_ENVIRONMENT") == "production":
+    COOKIE_SECURE = True
+
 COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")
 
 # Cookie names (standardized)
@@ -74,16 +92,32 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 # Redis configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# Security headers
-SECURITY_HEADERS = {
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'",
-}
+# Security headers - use enhanced configuration from production_config
+def get_unified_auth_headers() -> Dict[str, str]:
+    """Get security headers for unified auth, integrating with production config."""
+    try:
+        from ..config.production_config import get_production_config
+        prod_config = get_production_config()
+        return prod_config.get_security_headers()
+    except Exception:
+        # Fallback headers if production config unavailable
+        return {
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "X-XSS-Protection": "1; mode=block",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            "Content-Security-Policy": (
+                "default-src 'self'; "
+                "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "img-src 'self' data: https:; "
+                "connect-src 'self' wss:; "
+                "object-src 'none'"
+            )
+        }
 
 # Initialize components
 security_bearer = HTTPBearer(auto_error=False)
@@ -437,35 +471,44 @@ class UnifiedAuthManager:
             )
 
     async def authenticate_request(self, request: Request) -> AuthResult:
-        """Authenticate request using cookies, headers, or API keys."""
+        """
+        Authenticate request using cookies, headers, or API keys.
+        Enhanced for Railway deployment with better error handling.
+        """
         
         # Try cookie authentication first (for web clients)
         session_id = request.cookies.get(self.config.session_id_cookie)
         if session_id:
-            if await self.validate_session(session_id, request):
-                session_data = await self.get_session(session_id)
-                if session_data:
-                    # Recreate JWTUser from session metadata
-                    jwt_user = JWTUser(
-                        user_id=session_data.user_id,
-                        username="", # Will be populated from DB if needed
-                        email="",
-                        roles=[UserRole(role) for role in session_data.metadata.get("roles", [])],
-                        permissions=[Permission(perm) for perm in session_data.metadata.get("permissions", [])],
-                        mfa_verified=session_data.metadata.get("mfa_verified", False),
-                        session_id=session_id,
-                        expires_at=session_data.expires_at
-                    )
-                    
-                    return AuthResult(
-                        success=True,
-                        method=AuthMethod.COOKIE,
-                        user=jwt_user,
-                        session_id=session_id,
-                        csrf_token=session_data.csrf_token,
-                        message="Authenticated via cookie",
-                        expires_at=session_data.expires_at
-                    )
+            try:
+                if await self.validate_session(session_id, request):
+                    session_data = await self.get_session(session_id)
+                    if session_data:
+                        # Recreate JWTUser from session metadata
+                        jwt_user = JWTUser(
+                            user_id=session_data.user_id,
+                            username="", # Will be populated from DB if needed
+                            email="",
+                            roles=[UserRole(role) for role in session_data.metadata.get("roles", [])],
+                            permissions=[Permission(perm) for perm in session_data.metadata.get("permissions", [])],
+                            mfa_verified=session_data.metadata.get("mfa_verified", False),
+                            session_id=session_id,
+                            expires_at=session_data.expires_at
+                        )
+                        
+                        logger.info(f"Cookie authentication successful for session: {session_id[:8]}...")
+                        
+                        return AuthResult(
+                            success=True,
+                            method=AuthMethod.COOKIE,
+                            user=jwt_user,
+                            session_id=session_id,
+                            csrf_token=session_data.csrf_token,
+                            message="Authenticated via cookie",
+                            expires_at=session_data.expires_at
+                        )
+            except Exception as e:
+                logger.warning(f"Cookie authentication failed: {e}")
+                # Continue to try other methods
         
         # Try bearer token authentication (for CLI/API)
         auth_header = request.headers.get("Authorization")
@@ -474,47 +517,135 @@ class UnifiedAuthManager:
             
             # Handle API keys
             if token.startswith("mk-"):
-                # TODO: Implement API key validation
-                return AuthResult(
-                    success=True,
-                    method=AuthMethod.API_KEY,
-                    user=JWTUser(
-                        user_id="api_user",
-                        username="api_user",
-                        email="",
-                        roles=[UserRole.API_USER],
-                        permissions=[Permission.CODE_EXECUTE, Permission.CODE_READ],
-                        mfa_verified=True,
-                        session_id=token[-8:]
-                    ),
-                    message="Authenticated via API key"
-                )
+                try:
+                    # Enhanced API key validation
+                    payload = verify_jwt_token(token)
+                    
+                    if payload and payload.get("type") == "api_key":
+                        user_id = payload.get("sub", "api_user")
+                        logger.info(f"API key authentication successful for: {user_id}")
+                        
+                        return AuthResult(
+                            success=True,
+                            method=AuthMethod.API_KEY,
+                            user=JWTUser(
+                                user_id=user_id,
+                                username=payload.get("username", "api_user"),
+                                email=payload.get("email", ""),
+                                roles=[UserRole.DEVELOPER],  # API keys get developer access
+                                permissions=[Permission.CODE_EXECUTE, Permission.CODE_READ, Permission.BILLING_READ],
+                                mfa_verified=True,
+                                session_id=payload.get("session_id", token[-8:])
+                            ),
+                            message="Authenticated via API key",
+                            access_token=token,
+                            expires_at=datetime.fromtimestamp(payload.get("exp", 0), timezone.utc) if payload.get("exp") else None
+                        )
+                    else:
+                        logger.warning(f"Invalid API key format or payload: {token[:10]}...")
+                        
+                except Exception as e:
+                    logger.warning(f"API key validation failed: {e}")
+                    # Continue to try other methods
             
             # Handle JWT tokens
             try:
                 payload = verify_jwt_token(token)
-                user_id = payload.get("sub")
-                if user_id:
-                    jwt_user = JWTUser(
-                        user_id=user_id,
-                        username=payload.get("username", ""),
-                        email=payload.get("email", ""),
-                        roles=[UserRole(role) for role in payload.get("roles", [])],
-                        permissions=[Permission(perm) for perm in payload.get("permissions", [])],
-                        mfa_verified=payload.get("mfa_verified", False),
-                        session_id=payload.get("session_id"),
-                        expires_at=datetime.fromtimestamp(payload.get("exp", 0), timezone.utc)
+                
+                if not payload:
+                    logger.warning("JWT token verification returned empty payload")
+                    return AuthResult(
+                        success=False,
+                        method=AuthMethod.BEARER_TOKEN,
+                        message="Invalid token format"
                     )
+                
+                # Enhanced JWT validation
+                token_type = payload.get("type", "access")
+                exp = payload.get("exp")
+                user_id = payload.get("sub")
+                
+                if token_type != "access":
+                    logger.warning(f"Invalid JWT token type: {token_type}")
+                    return AuthResult(
+                        success=False,
+                        method=AuthMethod.BEARER_TOKEN,
+                        message="Invalid token type"
+                    )
+                
+                if not user_id:
+                    logger.warning("JWT token missing user ID (sub claim)")
+                    return AuthResult(
+                        success=False,
+                        method=AuthMethod.BEARER_TOKEN,
+                        message="Invalid token: missing user ID"
+                    )
+                
+                if exp and datetime.fromtimestamp(exp, timezone.utc) < datetime.now(timezone.utc):
+                    logger.warning(f"JWT token expired for user: {user_id}")
+                    return AuthResult(
+                        success=False,
+                        method=AuthMethod.BEARER_TOKEN,
+                        message="Token expired"
+                    )
+                
+                jwt_user = JWTUser(
+                    user_id=user_id,
+                    username=payload.get("username", ""),
+                    email=payload.get("email", ""),
+                    roles=[UserRole(role) for role in payload.get("roles", [])],
+                    permissions=[Permission(perm) for perm in payload.get("permissions", [])],
+                    mfa_verified=payload.get("mfa_verified", False),
+                    session_id=payload.get("session_id"),
+                    expires_at=datetime.fromtimestamp(exp, timezone.utc) if exp else None
+                )
+                
+                logger.info(f"JWT authentication successful for user: {user_id}")
+                
+                return AuthResult(
+                    success=True,
+                    method=AuthMethod.BEARER_TOKEN,
+                    user=jwt_user,
+                    message="Authenticated via bearer token",
+                    access_token=token,
+                    expires_at=jwt_user.expires_at
+                )
+                
+            except Exception as e:
+                logger.warning(f"JWT token validation failed: {e}")
+                # Log additional context for Railway debugging
+                if os.getenv("RAILWAY_ENVIRONMENT") == "production":
+                    logger.error(f"Production JWT validation failed. Token: {token[:10]}... Error: {str(e)}")
+        
+        # Try API key from headers or query params (alternative method)
+        api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
+        if api_key and api_key.startswith("mk-"):
+            try:
+                payload = verify_jwt_token(api_key)
+                if payload and payload.get("type") == "api_key":
+                    user_id = payload.get("sub", "api_user")
+                    logger.info(f"Header/Query API key authentication successful for: {user_id}")
                     
                     return AuthResult(
                         success=True,
-                        method=AuthMethod.BEARER_TOKEN,
-                        user=jwt_user,
-                        message="Authenticated via bearer token",
-                        expires_at=jwt_user.expires_at
+                        method=AuthMethod.API_KEY,
+                        user=JWTUser(
+                            user_id=user_id,
+                            username=payload.get("username", "api_user"),
+                            email=payload.get("email", ""),
+                            roles=[UserRole.DEVELOPER],
+                            permissions=[Permission.CODE_EXECUTE, Permission.CODE_READ, Permission.BILLING_READ],
+                            mfa_verified=True,
+                            session_id=payload.get("session_id", api_key[-8:])
+                        ),
+                        message="Authenticated via API key header",
+                        access_token=api_key,
+                        expires_at=datetime.fromtimestamp(payload.get("exp", 0), timezone.utc) if payload.get("exp") else None
                     )
             except Exception as e:
-                logger.warning(f"JWT token validation failed: {e}")
+                logger.warning(f"Header/Query API key validation failed: {e}")
+        
+        logger.warning(f"Authentication failed - no valid credentials found in request from {request.client.host if request.client else 'unknown'}")
         
         return AuthResult(
             success=False,
