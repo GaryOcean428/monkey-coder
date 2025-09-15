@@ -417,6 +417,15 @@ class LoginRequest(BaseModel):
     password: str = Field(..., description="User password")
 
 
+class SignupRequest(BaseModel):
+    """Signup request model."""
+    username: str = Field(..., description="Username for the account")
+    name: str = Field(..., description="Full name of the user")
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password", min_length=8)
+    plan: Optional[str] = Field("free", description="Subscription plan (free, pro, enterprise)")
+
+
 class AuthResponse(BaseModel):
     """Authentication response model."""
     access_token: str = Field(..., description="JWT access token")
@@ -814,6 +823,90 @@ async def login(request: LoginRequest, response: Response, background_tasks: Bac
     except Exception as e:
         logger.error(f"Login failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
+@app.post("/api/v1/auth/signup", response_model=AuthResponse)
+async def signup(request: SignupRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
+    """
+    User signup endpoint with enhanced authentication.
+
+    Args:
+        request: Signup credentials and user information
+        response: FastAPI response object
+        background_tasks: Background tasks for async operations
+
+    Returns:
+        AuthResponse with tokens and user information
+
+    Raises:
+        HTTPException: If signup fails or user already exists
+    """
+    try:
+        # Check if user already exists
+        existing_user = await User.get_by_email(request.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists"
+            )
+
+        # Create new user using enhanced manager
+        auth_result = await enhanced_auth_manager.create_user(
+            username=request.username,
+            name=request.name,
+            email=request.email,
+            password=request.password,
+            plan=request.plan or "free"
+        )
+
+        if not auth_result.success or not auth_result.user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=auth_result.message or "Failed to create user account"
+            )
+
+        if not auth_result.access_token or not auth_result.refresh_token or not auth_result.session_id:
+            raise HTTPException(status_code=500, detail="Signup failed to generate tokens")
+
+        # Set cookies using enhanced manager
+        enhanced_auth_manager.set_auth_cookies(
+            response=response,
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
+            session_id=auth_result.session_id,
+            csrf_token=auth_result.csrf_token
+        )
+
+        # Get created user details
+        user = await User.get_by_id(auth_result.user.user_id)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found after creation")
+
+        # Set credits and subscription tier
+        credits = 10000 if user.is_developer else 100
+        subscription_tier = request.plan or "free"
+
+        return AuthResponse(
+            access_token=auth_result.access_token,
+            refresh_token=auth_result.refresh_token,
+            user={
+                "id": auth_result.user.user_id,
+                "email": auth_result.user.email,
+                "name": auth_result.user.username,
+                "credits": credits,
+                "subscription_tier": subscription_tier,
+                "is_developer": user.is_developer,
+                "roles": [r.value for r in auth_result.user.roles]
+            },
+            expires_at=auth_result.expires_at.isoformat() if auth_result.expires_at else None
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Signup failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create account")
 
 
 @app.get("/api/v1/auth/status", response_model=UserStatusResponse)

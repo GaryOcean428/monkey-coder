@@ -139,30 +139,40 @@ def get_railway_security_config() -> Dict[str, str]:
     """
     Get Railway-specific security configuration from environment variables.
     
+    Enhanced to allow Google Fonts and fix CSP issues while maintaining security.
+    
     Returns:
         Dict of security configuration values
     """
     return {
         "csp_font_src": os.getenv(
             "CSP_FONT_SRC", 
-            "https://fonts.gstatic.com https://fonts.googleapis.com 'self' data:"
+            "'self' data: https://fonts.gstatic.com https://fonts.googleapis.com"
         ),
         "csp_style_src": os.getenv(
             "CSP_STYLE_SRC",
-            "'self' 'unsafe-inline' https://fonts.googleapis.com https://*.fastmonkey.au"
+            "'self' 'unsafe-inline' https://fonts.googleapis.com https://*.fastmonkey.au https://*.railway.app"
         ),
         "csp_default_src": os.getenv(
             "CSP_DEFAULT_SRC",
-            "'self' https://*.fastmonkey.au https://*.railway.app"
+            "'self' https://*.fastmonkey.au https://*.railway.app blob: data:"
         ),
         "csp_connect_src": os.getenv(
             "CSP_CONNECT_SRC",
-            "'self' https://coder.fastmonkey.au wss://coder.fastmonkey.au https://*.railway.app"
+            "'self' https://coder.fastmonkey.au wss://coder.fastmonkey.au https://*.railway.app https://*.railway.internal"
+        ),
+        "csp_script_src": os.getenv(
+            "CSP_SCRIPT_SRC",
+            "'self' 'unsafe-inline' 'unsafe-eval' https://*.fastmonkey.au https://*.railway.app"
+        ),
+        "csp_img_src": os.getenv(
+            "CSP_IMG_SRC",
+            "'self' data: https: blob:"
         ),
         "cors_allow_credentials": os.getenv("CORS_ALLOW_CREDENTIALS", "true").lower() == "true",
         "cors_allowed_headers": os.getenv(
             "CORS_ALLOWED_HEADERS",
-            "Content-Type,Authorization,X-Requested-With,Accept,Origin,Cache-Control"
+            "Content-Type,Authorization,X-Requested-With,Accept,Origin,Cache-Control,X-CSRF-Token"
         ),
         "cors_allowed_methods": os.getenv(
             "CORS_ALLOWED_METHODS",
@@ -186,19 +196,20 @@ class DynamicCSPMiddleware(BaseHTTPMiddleware):
         """Apply dynamic CSP headers based on environment configuration."""
         response = await call_next(request)
         
-        # Build CSP from environment variables
+        # Build CSP from environment variables with enhanced Google Fonts support
         csp_directives = [
             f"default-src {self.config['csp_default_src']}",
             f"font-src {self.config['csp_font_src']}",
             f"style-src {self.config['csp_style_src']}",
             f"connect-src {self.config['csp_connect_src']}",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-            "img-src 'self' data: https: blob:",
+            f"script-src {self.config.get('csp_script_src', \"'self' 'unsafe-inline' 'unsafe-eval'\")}",
+            f"img-src {self.config.get('csp_img_src', \"'self' data: https: blob:\")}",
             "media-src 'self' data: blob:",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
-            "frame-ancestors 'none'"
+            "frame-ancestors 'none'",
+            "upgrade-insecure-requests"
         ]
         
         # Add CSP violation reporting endpoint
@@ -206,6 +217,11 @@ class DynamicCSPMiddleware(BaseHTTPMiddleware):
         if environment == "production":
             csp_directives.append("report-uri /csp-report")
         
-        response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
+        # Set relaxed CSP for development, strict for production
+        if environment == "development":
+            # More permissive CSP for development
+            response.headers["Content-Security-Policy-Report-Only"] = "; ".join(csp_directives)
+        else:
+            response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
         
         return response
