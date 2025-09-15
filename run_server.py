@@ -420,4 +420,4 @@ def ensure_frontend_built():
 
 if __name__ == "__main__":
     ensure_frontend_built()
-  main()
+    main()
