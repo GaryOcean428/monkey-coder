@@ -1,423 +1,450 @@
+#!/usr/bin/env python3
+"""
+Monkey Coder Server Runner
+
+This module handles the startup, frontend build verification, and server launch
+for the Monkey Coder application. Designed for Railway deployment with fallback
+support for local development.
+"""
+
 import os
 import sys
+import platform
 import subprocess
-import uvicorn
 import logging
 from pathlib import Path
+from typing import Dict, Any, Optional, Tuple
+import signal
+import time
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Import MCP-enhanced environment manager
+# Third-party imports
 try:
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "packages", "core"))
-    from monkey_coder.config.mcp_env_manager import get_production_database_url, get_production_api_url, get_mcp_variable
-    MCP_ENV_AVAILABLE = True
-    logger.info("✅ MCP environment manager available")
-except ImportError as e:
-    logger.warning(f"⚠️ MCP environment manager not available: {e}")
-    MCP_ENV_AVAILABLE = False
+    import uvicorn
+except ImportError:
+    print("❌ Error: uvicorn not found. Install with: pip install uvicorn")
+    sys.exit(1)
 
-def check_frontend():
-  """Check if the Next.js frontend build exists."""
-  base_dir = Path(__file__).parent
-  web_out_dir = base_dir / "packages" / "web" / "out"
-  
-  print(f"🔍 Checking for frontend build at: {web_out_dir}")
-  print(f"   Base directory: {base_dir}")
-  print(f"   Directory exists: {web_out_dir.exists()}")
-  
-  if web_out_dir.exists():
-    print("✅ Frontend assets found at:", web_out_dir)
-    # List some files to confirm
-    files = list(web_out_dir.glob("*.html"))[:5]
-    total_files = len(list(web_out_dir.glob('*')))
-    print(f"   Contains {total_files} files including: {[f.name for f in files]}")
-    return True
-  else:
-    print("⚠️ Frontend build directory not found.")
-    print("   Attempting to build frontend at runtime...")
-    return False
 
-def get_production_database_url():
-  """
-  Get production database URL using MCP environment variables or Railway defaults.
-  
-  Avoids localhost defaults which are not useful in production.
-  """
-  if MCP_ENV_AVAILABLE:
-    # Use MCP environment manager for intelligent variable resolution
-    from monkey_coder.config.mcp_env_manager import get_production_database_url as mcp_get_db_url
-    return mcp_get_db_url()
-  
-  # Fallback implementation when MCP is not available
-  # Primary: Use explicit environment variable
-  database_url = os.getenv('DATABASE_URL')
-  if database_url and database_url != 'postgresql://localhost:5432/placeholder':
-    return database_url
-  
-  # Secondary: Use Railway service references  
-  railway_db_host = os.getenv('RAILWAY_DB_HOST')
-  railway_db_port = os.getenv('RAILWAY_DB_PORT', '5432')
-  railway_db_name = os.getenv('RAILWAY_DB_NAME', 'railway')
-  railway_db_user = os.getenv('RAILWAY_DB_USER', 'postgres')
-  railway_db_password = os.getenv('RAILWAY_DB_PASSWORD', '')
-  
-  if railway_db_host:
-    return f"postgresql://{railway_db_user}:{railway_db_password}@{railway_db_host}:{railway_db_port}/{railway_db_name}"
-  
-  # Tertiary: Use Railway internal service discovery
-  return "postgresql://railway.internal:5432/railway"
+class ServerConfig:
+    """Configuration manager for server settings."""
 
-def get_production_api_url():
-  """
-  Get production API URL using Railway's public domain or MCP configuration.
-  
-  Avoids localhost defaults which are not useful in production.
-  """
-  if MCP_ENV_AVAILABLE:
-    # Use MCP environment manager for intelligent variable resolution
-    from monkey_coder.config.mcp_env_manager import get_production_api_url as mcp_get_api_url
-    return mcp_get_api_url()
-  
-  # Fallback implementation when MCP is not available
-  # Primary: Use explicit environment variable
-  api_url = os.getenv('NEXT_PUBLIC_API_URL')
-  if api_url and not api_url.startswith('http://localhost'):
-    return api_url
-  
-  # Secondary: Use Railway public domain
-  railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
-  if railway_domain:
-    return f"https://{railway_domain}"
-  
-  # Tertiary: Use Railway static URL pattern
-  railway_env = os.getenv('RAILWAY_ENVIRONMENT')
-  railway_project = os.getenv('RAILWAY_PROJECT_NAME', 'monkey-coder')
-  if railway_env:
-    return f"https://{railway_project}-{railway_env}.railway.app"
-  
-  # Default: Use coder.fastmonkey.au (configured production domain)
-  return "https://coder.fastmonkey.au"
-def build_frontend_if_missing():
-  """
-  Build the frontend if the static assets are missing.
-  This is a robust fallback for when Railway deployment doesn't build the frontend.
-  Enhanced with MCP-based environment variable management to avoid localhost in production.
-  """
-  base_dir = Path(__file__).parent
-  web_dir = base_dir / "packages" / "web"
-  web_out_dir = web_dir / "out"
-  
-  if web_out_dir.exists():
-    logger.info("✅ Frontend assets already exist, skipping build")
-    return True
-    
-  logger.info("🔨 Frontend missing; attempting to build at runtime...")
-  
-  # Check if web directory exists
-  if not web_dir.exists():
-    logger.error(f"❌ Web directory not found at: {web_dir}")
-    return False
-  
-  try:
-    # Set comprehensive environment variables for production build
-    env = os.environ.copy()
-    
-    # Generate a unique secret if none provided
-    import secrets
-    random_secret = secrets.token_hex(32)
-    
-    # Use MCP-based environment variable management
-    production_api_url = get_production_api_url()
-    production_database_url = get_production_database_url()
-    
-    # Get additional variables using MCP if available
-    if MCP_ENV_AVAILABLE:
-      stripe_public_key = get_mcp_variable('STRIPE_PUBLIC_KEY', 'pk_test_placeholder')
-      stripe_secret_key = get_mcp_variable('STRIPE_SECRET_KEY', 'sk_test_placeholder')
-      stripe_webhook_secret = get_mcp_variable('STRIPE_WEBHOOK_SECRET', 'whsec_placeholder')
-    else:
-      stripe_public_key = env.get('STRIPE_PUBLIC_KEY', 'pk_test_placeholder')
-      stripe_secret_key = env.get('STRIPE_SECRET_KEY', 'sk_test_placeholder')
-      stripe_webhook_secret = env.get('STRIPE_WEBHOOK_SECRET', 'whsec_placeholder')
-    
-    env.update({
-      'NEXT_OUTPUT_EXPORT': 'true',
-      'NODE_ENV': 'production',
-      'NEXT_TELEMETRY_DISABLED': '1',
-      'NEXTAUTH_URL': env.get('NEXTAUTH_URL', production_api_url),
-      'NEXTAUTH_SECRET': env.get('NEXTAUTH_SECRET', f'runtime-secret-{random_secret}'),
-      'NEXT_PUBLIC_API_URL': env.get('NEXT_PUBLIC_API_URL', production_api_url),
-      'NEXT_PUBLIC_APP_URL': env.get('NEXT_PUBLIC_APP_URL', production_api_url),
-      'DATABASE_URL': env.get('DATABASE_URL', production_database_url),
-      'STRIPE_PUBLIC_KEY': stripe_public_key,
-      'STRIPE_SECRET_KEY': stripe_secret_key,
-      'STRIPE_WEBHOOK_SECRET': stripe_webhook_secret,
-    })
-    
-    logger.info(f"🔧 Environment configured with API URL: {production_api_url}")
-    logger.info(f"🔧 Database URL configured: {production_database_url.split('@')[0]}@***")  # Hide credentials
-    
-    logger.info("🔧 Setting up package manager...")
-    # Step 1: Enable Corepack and prepare Yarn 4.9.2
-    try:
-      subprocess.run(["corepack", "enable"], check=True, cwd=base_dir, timeout=30)
-      subprocess.run(["corepack", "prepare", "yarn@4.9.2", "--activate"], check=True, cwd=base_dir, timeout=60)
-      logger.info("✅ Package manager setup completed")
-    except subprocess.TimeoutExpired:
-      logger.error("❌ Package manager setup timed out")
-      return False
-    except subprocess.CalledProcessError as e:
-      logger.error(f"❌ Package manager setup failed: {e}")
-      return False
-    
-    # Step 2: Install dependencies with timeout and retries
-    logger.info("📦 Installing dependencies...")
-    for attempt in range(2):
-      try:
-        result = subprocess.run(
-          ["yarn", "install", "--immutable"],
-          check=False,
-          cwd=base_dir,
-          env=env,
-          capture_output=True,
-          text=True,
-          timeout=300  # 5 minute timeout
-        )
-        
-        if result.returncode != 0:
-          logger.warning(f"⚠️ Immutable install failed (attempt {attempt + 1}), trying standard install...")
-          result = subprocess.run(
-            ["yarn", "install"],
-            check=True,
-            cwd=base_dir,
-            env=env,
-            timeout=300
-          )
-        
-        logger.info("✅ Dependencies installed successfully")
-        break
-        
-      except subprocess.TimeoutExpired:
-        logger.error(f"❌ Dependency installation timed out (attempt {attempt + 1})")
-        if attempt == 1:  # Last attempt
-          return False
-      except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Dependency installation failed (attempt {attempt + 1}): {e}")
-        if attempt == 1:  # Last attempt
-          return False
-    
-    # Step 3: Build the frontend with export and comprehensive error handling
-    logger.info("🏗️ Building frontend with static export...")
-    try:
-      result = subprocess.run(
-        ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
-        check=False,
-        cwd=base_dir,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=600  # 10 minute timeout for build
-      )
-      
-      if result.returncode != 0:
-        logger.error(f"❌ Frontend workspace build failed with exit code {result.returncode}")
-        logger.error(f"STDOUT: {result.stdout[-1000:] if result.stdout else 'No stdout'}")  # Last 1000 chars
-        logger.error(f"STDERR: {result.stderr[-1000:] if result.stderr else 'No stderr'}")
-        
-        # Try alternative build method - direct build in web directory
-        logger.info("🔄 Trying alternative build method in web directory...")
+    def __init__(self):
+        self.port = self._get_port()
+        self.host = "0.0.0.0"
+        self.log_level = os.getenv("LOG_LEVEL", "info").lower()
+        self.environment = os.getenv("RAILWAY_ENVIRONMENT", "development")
+        self.is_production = self.environment == "production"
+
+    def _get_port(self) -> int:
+        """Get port from environment with proper validation."""
+        port_str = os.getenv("PORT", "8000")
         try:
-          alt_env = env.copy()
-          result = subprocess.run(
-            ["yarn", "run", "export"],
-            check=True,
-            cwd=web_dir,
-            env=alt_env,
-            timeout=600
-          )
-          logger.info("✅ Alternative build method succeeded")
-        except subprocess.CalledProcessError as e:
-          logger.error(f"❌ Alternative build also failed: {e}")
-          # Try one more fallback - simple next build
-          logger.info("🔄 Trying simple next build fallback...")
-          try:
-            result = subprocess.run(
-              ["yarn", "run", "build"],
-              check=True,
-              cwd=web_dir,
-              env=alt_env,
-              timeout=600
+            port = int(port_str)
+            if not (1 <= port <= 65535):
+                raise ValueError(f"Port must be between 1-65535, got {port}")
+            return port
+        except ValueError as e:
+            logging.warning(f"Invalid PORT value '{port_str}': {e}. Using default 8000")
+            return 8000
+
+    @property
+    def frontend_urls(self) -> Dict[str, str]:
+        """Get frontend URL configuration."""
+        base_url = os.getenv("NEXT_PUBLIC_APP_URL", "https://coder.fastmonkey.au")
+        return {
+            "NEXTAUTH_URL": os.getenv("NEXTAUTH_URL", base_url),
+            "NEXT_PUBLIC_API_URL": os.getenv("NEXT_PUBLIC_API_URL", base_url),
+            "NEXT_PUBLIC_APP_URL": base_url,
+        }
+
+
+class SystemInfo:
+    """System information collector and logger."""
+
+    @staticmethod
+    def collect() -> Dict[str, Any]:
+        """Collect comprehensive system and environment information."""
+        return {
+            "python_version": {
+                "version": platform.python_version(),
+                "implementation": platform.python_implementation(),
+                "compiler": platform.python_compiler(),
+                "executable": sys.executable,
+            },
+            "system": {
+                "system": platform.system(),
+                "release": platform.release(),
+                "machine": platform.machine(),
+                "processor": platform.processor() or "Unknown",
+                "architecture": platform.architecture()[0],
+            },
+            "environment": {
+                "workdir": str(Path.cwd()),
+                "railway_env": os.getenv("RAILWAY_ENVIRONMENT", "local"),
+                "node_env": os.getenv("NODE_ENV", "development"),
+                "path_entries": len(os.environ.get("PATH", "").split(os.pathsep)),
+                "pythonpath_entries": len(os.environ.get("PYTHONPATH", "").split(os.pathsep)),
+            },
+        }
+
+    @staticmethod
+    def log_startup_banner(config: ServerConfig):
+        """Log formatted system information and startup banner."""
+        info = SystemInfo.collect()
+
+        print("\n" + "=" * 60)
+        print("🚀 Starting Monkey Coder Server")
+        print("=" * 60)
+
+        print(f"\n🐍 Python Environment:")
+        py = info["python_version"]
+        print(f"  • Version:      {py['version']} ({py['implementation']})")
+        print(f"  • Executable:   {py['executable']}")
+
+        print(f"\n💻 System Information:")
+        sys_info = info["system"]
+        print(f"  • OS:           {sys_info['system']} {sys_info['release']}")
+        print(f"  • Architecture: {sys_info['architecture']}")
+        print(f"  • Machine:      {sys_info['machine']}")
+        if sys_info['processor'] != "Unknown":
+            print(f"  • Processor:    {sys_info['processor']}")
+
+        print(f"\n🌐 Server Configuration:")
+        print(f"  • Host:         {config.host}")
+        print(f"  • Port:         {config.port}")
+        print(f"  • Environment:  {config.environment}")
+        print(f"  • Log Level:    {config.log_level}")
+
+        env = info["environment"]
+        print(f"\n📁 Environment:")
+        print(f"  • Working Dir:  {env['workdir']}")
+        print(f"  • Railway Env:  {env['railway_env']}")
+        print(f"  • Node Env:     {env['node_env']}")
+
+        print("=" * 60 + "\n")
+
+
+class MCPEnvironmentManager:
+    """Manager for MCP (Model Context Protocol) environment integration."""
+
+    def __init__(self):
+        self.available = False
+        self.logger = logging.getLogger(f"{__name__}.MCPEnvironmentManager")
+        self._initialize()
+
+    def _initialize(self):
+        """Initialize MCP environment manager if available."""
+        try:
+            # Add core package to path for MCP imports
+            base_dir = Path(__file__).parent
+            core_path = base_dir / "packages" / "core"
+            if core_path.exists():
+                sys.path.insert(0, str(core_path))
+
+            from monkey_coder.config.mcp_env_manager import (
+                get_production_database_url,
+                get_production_api_url,
+                get_mcp_variable
             )
-            logger.info("✅ Simple build method succeeded")
-          except subprocess.CalledProcessError as e2:
-            logger.error(f"❌ All build methods failed: {e2}")
-            return False
-        except subprocess.TimeoutExpired:
-          logger.error("❌ Alternative build timed out")
-          return False
-      else:
-        logger.info("✅ Frontend build completed successfully")
-    
-    except subprocess.TimeoutExpired:
-      logger.error("❌ Frontend build timed out after 10 minutes")
-      return False
-    
-    # Step 4: Verify the build output with detailed logging
-    if web_out_dir.exists():
-      try:
-        html_files = list(web_out_dir.glob("*.html"))
-        all_files = list(web_out_dir.glob('*'))
-        total_files = len(all_files)
-        
-        logger.info(f"✅ Build successful! Generated {total_files} files")
-        logger.info(f"   HTML files: {[f.name for f in html_files[:5]]}")
-        logger.info(f"   Other files: {[f.name for f in all_files if f.suffix != '.html'][:5]}")
-        
-        # Check for critical files
-        index_html = web_out_dir / "index.html"
-        if index_html.exists():
-          logger.info(f"✅ Critical file exists: index.html ({index_html.stat().st_size} bytes)")
-        else:
-          logger.warning("⚠️ index.html not found in build output")
-        
-        return True
-        
-      except Exception as e:
-        logger.error(f"❌ Error verifying build output: {e}")
-        return False
-    else:
-      # Check if build went to .next directory instead
-      next_dir = web_dir / ".next"
-      if next_dir.exists():
-        logger.warning("⚠️ Build output found in .next directory, copying to out...")
-        try:
-          import shutil
-          shutil.copytree(next_dir, web_out_dir, dirs_exist_ok=True)
-          logger.info("✅ Copied build output to out directory")
-          return True
+
+            # Store references for later use
+            self.get_database_url = get_production_database_url
+            self.get_api_url = get_production_api_url
+            self.get_variable = get_mcp_variable
+
+            self.available = True
+            self.logger.info("✅ MCP environment manager initialized")
+
+        except ImportError as e:
+            self.logger.warning(f"⚠️ MCP environment manager not available: {e}")
         except Exception as e:
-          logger.error(f"❌ Failed to copy build output: {e}")
-          return False
-      else:
-        logger.error("❌ Build completed but output directory not found")
-        logger.info(f"   Expected: {web_out_dir}")
-        logger.info(f"   Web dir contents: {list(web_dir.iterdir()) if web_dir.exists() else 'Web dir not found'}")
-        return False
-      
-  except Exception as e:
-    logger.error(f"❌ Unexpected error during frontend build: {e}")
-    logger.error(f"   Error type: {type(e).__name__}")
-    import traceback
-    logger.error(f"   Traceback: {traceback.format_exc()}")
-    return False
+            self.logger.error(f"❌ Failed to initialize MCP environment manager: {e}")
 
-def main():
-  # Check frontend exists and build if missing
-  frontend_exists = check_frontend()
-  
-  if not frontend_exists:
-    logger.info("🚀 Attempting to build frontend at runtime...")
-    build_success = build_frontend_if_missing()
-    if build_success:
-      logger.info("✅ Runtime frontend build completed successfully")
-    else:
-      logger.warning("⚠️ Runtime frontend build failed, continuing with API-only mode")
-  
-  # Ensure package path for Monkey Coder when running from /app
-  base_dir = os.path.dirname(os.path.abspath(__file__))
-  sys.path.insert(0, base_dir)
-  sys.path.insert(0, os.path.join(base_dir, "packages", "core"))
-  # Read PORT from env (Railway sets this). Default to 8000 for local dev.
-  port_str = os.getenv("PORT", "8000")
-  try:
-    port = int(port_str)
-  except ValueError:
-    # Fallback to default if non-integer provided
-    port = 8000
-
-  logger.info(f"🚀 Starting Monkey Coder server on {port}")
-  uvicorn.run(
-    "monkey_coder.app.main:app",
-    host="0.0.0.0",
-    port=port,
-    log_level="info",
-    reload=False
-  )
+    def is_available(self) -> bool:
+        """Check if MCP environment manager is available."""
+        return self.available
 
 
-# Enhanced frontend build process
-def ensure_frontend_built():
-    """Ensure frontend is built and available."""
-    import subprocess
-    import logging
-    from pathlib import Path
-    
-    logger = logging.getLogger(__name__)
-    web_dir = Path(__file__).parent / "packages" / "web"
-    out_dir = web_dir / "out"
-    
-    if out_dir.exists() and len(list(out_dir.glob("*.html"))) > 0:
-        logger.info("✅ Frontend already built")
+class FrontendManager:
+    """Manager for frontend build operations and verification."""
+
+    def __init__(self, config: ServerConfig):
+        self.config = config
+        self.logger = logging.getLogger(f"{__name__}.FrontendManager")
+        self.base_dir = Path(__file__).parent
+        self.web_dir = self.base_dir / "packages" / "web"
+        self.out_dir = self.web_dir / "out"
+
+    def check_build_exists(self) -> bool:
+        """Check if frontend build exists and contains files."""
+        self.logger.info(f"🔍 Checking for frontend build at: {self.out_dir}")
+
+        if not self.out_dir.exists():
+            self.logger.warning("⚠️ Frontend build directory not found")
+            return False
+
+        html_files = list(self.out_dir.glob("*.html"))
+        total_files = len(list(self.out_dir.glob("*")))
+
+        if not html_files:
+            self.logger.warning("⚠️ Frontend build directory exists but contains no HTML files")
+            return False
+
+        self.logger.info(f"✅ Frontend build found: {total_files} files including {[f.name for f in html_files[:3]]}")
         return True
-    
-    logger.info("🏗️  Building frontend at runtime...")
-    
-    # Set environment variables
-    env = os.environ.copy()
-    env.update({
-        "NODE_ENV": "production",
-        "NEXT_OUTPUT_EXPORT": "true",
-        "NEXT_TELEMETRY_DISABLED": "1",
-        "NEXTAUTH_URL": os.getenv("NEXTAUTH_URL", "https://coder.fastmonkey.au"),
-        "NEXT_PUBLIC_API_URL": os.getenv("NEXT_PUBLIC_API_URL", "https://coder.fastmonkey.au"),
-        "NEXT_PUBLIC_APP_URL": os.getenv("NEXT_PUBLIC_APP_URL", "https://coder.fastmonkey.au"),
-    })
-    
-    try:
-        # Method 1: Workspace export
+
+    def build_frontend(self) -> bool:
+        """Build the frontend application with multiple fallback strategies."""
+        if self.check_build_exists():
+            self.logger.info("✅ Frontend already built, skipping build process")
+            return True
+
+        self.logger.info("🏗️ Building frontend at runtime...")
+
+        # Prepare build environment
+        env = self._prepare_build_environment()
+
+        # Try multiple build strategies
+        strategies = [
+            ("workspace", self._build_via_workspace),
+            ("direct", self._build_via_direct),
+        ]
+
+        for strategy_name, build_func in strategies:
+            try:
+                self.logger.info(f"🔄 Attempting {strategy_name} build strategy...")
+                if build_func(env):
+                    self.logger.info(f"✅ Frontend built successfully via {strategy_name}")
+                    return True
+            except Exception as e:
+                self.logger.warning(f"⚠️ {strategy_name} build failed: {e}")
+                continue
+
+        # Create fallback if all strategies fail
+        return self._create_fallback_frontend()
+
+    def _prepare_build_environment(self) -> Dict[str, str]:
+        """Prepare environment variables for frontend build."""
+        env = os.environ.copy()
+        build_vars = {
+            "NODE_ENV": "production",
+            "NEXT_OUTPUT_EXPORT": "true",
+            "NEXT_TELEMETRY_DISABLED": "1",
+            **self.config.frontend_urls
+        }
+        env.update(build_vars)
+        return env
+
+    def _build_via_workspace(self, env: Dict[str, str]) -> bool:
+        """Build frontend using Yarn workspace command."""
         result = subprocess.run(
             ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
-            env=env, capture_output=True, text=True, timeout=300
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=self.base_dir
         )
-        
-        if result.returncode == 0 and out_dir.exists():
-            logger.info("✅ Frontend built successfully")
-            return True
-            
-        # Method 2: Direct build
-        logger.info("🔄 Trying direct build...")
-        subprocess.run(["yarn", "install"], cwd=web_dir, timeout=180)
-        result = subprocess.run(
-            ["yarn", "run", "export"], 
-            cwd=web_dir, env=env, timeout=300
+
+        if result.returncode != 0:
+            self.logger.error(f"Workspace build failed: {result.stderr}")
+            return False
+
+        return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
+
+    def _build_via_direct(self, env: Dict[str, str]) -> bool:
+        """Build frontend using direct commands in web directory."""
+        if not self.web_dir.exists():
+            self.logger.error(f"Web directory not found: {self.web_dir}")
+            return False
+
+        # Install dependencies first
+        install_result = subprocess.run(
+            ["yarn", "install"],
+            cwd=self.web_dir,
+            timeout=180,
+            capture_output=True,
+            text=True
         )
-        
-        if result.returncode == 0 and out_dir.exists():
-            logger.info("✅ Frontend built via direct method")
-            return True
-            
-    except Exception as e:
-        logger.error(f"❌ Frontend build failed: {e}")
-    
-    # Create minimal fallback
-    out_dir.mkdir(exist_ok=True)
-    (out_dir / "index.html").write_text("""
-<!DOCTYPE html>
-<html><head><title>Monkey Coder</title></head>
+
+        if install_result.returncode != 0:
+            self.logger.error(f"Dependencies installation failed: {install_result.stderr}")
+            return False
+
+        # Build the frontend
+        build_result = subprocess.run(
+            ["yarn", "run", "export"],
+            cwd=self.web_dir,
+            env=env,
+            timeout=300,
+            capture_output=True,
+            text=True
+        )
+
+        if build_result.returncode != 0:
+            self.logger.error(f"Direct build failed: {build_result.stderr}")
+            return False
+
+        return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
+
+    def _create_fallback_frontend(self) -> bool:
+        """Create minimal fallback frontend when build fails."""
+        try:
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+
+            fallback_html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkey Coder - AI Development Platform</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .link { text-decoration: none; padding: 10px 20px; background: #007acc; color: white; border-radius: 5px; }
+        .status { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
 <body>
-<h1>🐒 Monkey Coder</h1>
-<p>AI-powered development platform</p>
-<p><a href="/api/docs">API Documentation</a></p>
-</body></html>
-    """)
-    
-    logger.info("⚠️  Created fallback frontend")
-    return True
+    <div class="header">
+        <h1>🐒 Monkey Coder</h1>
+        <p>AI-powered development platform</p>
+    </div>
+
+    <div class="status">
+        <strong>Status:</strong> API server running, frontend build in progress
+    </div>
+
+    <div class="links">
+        <a href="/api/docs" class="link">📖 API Documentation</a>
+        <a href="/api/health" class="link">🔍 Health Check</a>
+    </div>
+</body>
+</html>"""
+
+            (self.out_dir / "index.html").write_text(fallback_html, encoding="utf-8")
+
+            # Create a basic 404 page
+            (self.out_dir / "404.html").write_text(fallback_html.replace(
+                "API server running, frontend build in progress",
+                "Page not found - redirecting to API documentation"
+            ), encoding="utf-8")
+
+            self.logger.info("⚠️ Created fallback frontend with basic navigation")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"❌ Failed to create fallback frontend: {e}")
+            return False
+
+
+class ServerRunner:
+    """Main server runner orchestrating all components."""
+
+    def __init__(self):
+        self.config = ServerConfig()
+        self.mcp_manager = MCPEnvironmentManager()
+        self.frontend_manager = FrontendManager(self.config)
+        self.logger = self._setup_logging()
+
+        # Register signal handlers for graceful shutdown
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+
+    def _setup_logging(self) -> logging.Logger:
+        """Setup structured logging configuration."""
+        logging.basicConfig(
+            level=getattr(logging, self.config.log_level.upper()),
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        return logging.getLogger(__name__)
+
+    def _signal_handler(self, signum, frame):
+        """Handle graceful shutdown signals."""
+        self.logger.info(f"🔄 Received signal {signum}, initiating graceful shutdown...")
+        # Add any cleanup logic here if needed
+        sys.exit(0)
+
+    def _setup_python_path(self):
+        """Setup Python path for package imports."""
+        base_dir = Path(__file__).parent.absolute()
+        paths_to_add = [
+            str(base_dir),
+            str(base_dir / "packages" / "core"),
+        ]
+
+        for path in paths_to_add:
+            if path not in sys.path:
+                sys.path.insert(0, path)
+
+        self.logger.debug(f"Added paths to sys.path: {paths_to_add}")
+
+    def _validate_environment(self) -> bool:
+        """Validate that required environment components are available."""
+        try:
+            # Check if core application exists
+            core_path = Path(__file__).parent / "packages" / "core" / "monkey_coder" / "app" / "main.py"
+            if not core_path.exists():
+                self.logger.error(f"❌ Core application not found at: {core_path}")
+                return False
+
+            self.logger.info("✅ Environment validation passed")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"❌ Environment validation failed: {e}")
+            return False
+
+    def run(self) -> int:
+        """Main execution method."""
+        try:
+            # Display startup information
+            SystemInfo.log_startup_banner(self.config)
+
+            # Setup environment
+            self._setup_python_path()
+
+            # Validate environment
+            if not self._validate_environment():
+                return 1
+
+            # Handle frontend building
+            if not self.frontend_manager.build_frontend():
+                self.logger.warning("⚠️ Frontend build failed, continuing with API-only mode")
+
+            # Log MCP availability
+            if self.mcp_manager.is_available():
+                self.logger.info("🔌 MCP environment manager ready")
+
+            # Start the server
+            self.logger.info(f"🚀 Starting uvicorn server on {self.config.host}:{self.config.port}")
+
+            uvicorn.run(
+                "monkey_coder.app.main:app",
+                host=self.config.host,
+                port=self.config.port,
+                log_level=self.config.log_level,
+                reload=False,  # Disable reload in production
+                access_log=not self.config.is_production,  # Reduce logs in production
+            )
+
+            return 0
+
+        except KeyboardInterrupt:
+            self.logger.info("🔄 Server stopped by user")
+            return 0
+        except Exception as e:
+            self.logger.error(f"❌ Server startup failed: {e}")
+            return 1
+
+
+def main() -> int:
+    """Entry point for the server runner."""
+    runner = ServerRunner()
+    return runner.run()
 
 
 if __name__ == "__main__":
-    ensure_frontend_built()
-    main()
+    sys.exit(main())

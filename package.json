@@ -74,6 +74,9 @@
     "react-dom": "^18.2.0",
     "webpack": "^5.101.0"
   },
+  "peerDependencies": {
+    "acorn": "^8.15.0"
+  },
   "engines": {
     "node": ">=20.0.0"
   },

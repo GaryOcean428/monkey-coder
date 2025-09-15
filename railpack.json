@@ -2,13 +2,13 @@
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
+    "python": "3.12",
     "node": "20"
   },
   "build": {
     "cache": {
       "paths": [
-        "/app/venv/lib/python3.13/site-packages",
+        "/app/venv/lib/python3.12/site-packages",
         "/root/.cache/yarn",
         "node_modules",
         "packages/web/.next"

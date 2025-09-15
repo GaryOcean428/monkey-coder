@@ -310,7 +310,59 @@ curl https://monkey-coder.up.railway.app/api/health
 3. **Test locally before deploying**
 4. **Monitor deployment logs**
 
-### Issue H6: Docker Buildx Build Failures with yarn
+### Issue H6: Asyncio Context Manager Initialization Error
+
+**Symptoms:**
+- Railway deployment fails with "NameError: name 'asyncio' is not defined"
+- Build completes successfully but application startup fails
+- Error occurs during FastAPI lifespan context manager initialization
+- Traceback shows error in main.py around asyncio.create_task() call
+
+**Root Cause:**
+The periodic context cleanup task was being created unconditionally using `asyncio.create_task()`, but when context management is disabled (ENABLE_CONTEXT_MANAGER=false), the `app.state.context_manager` is set to `None`. This causes the cleanup task to attempt to call methods on a None object during initialization.
+
+**Solution:**
+Add proper conditional logic to only create the asyncio task when context management is enabled:
+
+```python
+# Fixed code in packages/core/monkey_coder/app/main.py
+# Start periodic context cleanup task only if context manager is enabled
+if enable_context and app.state.context_manager is not None:
+    async def periodic_cleanup():
+        while True:
+            try:
+                await asyncio.sleep(3600)  # Run every hour
+                await app.state.context_manager.cleanup_expired_sessions()
+                logger.info("Periodic context cleanup completed")
+            except Exception as e:
+                logger.error(f"Periodic context cleanup failed: {e}")
+
+    app.state.cleanup_task = asyncio.create_task(periodic_cleanup())
+    logger.info("✅ Periodic context cleanup task started")
+else:
+    app.state.cleanup_task = None
+    logger.info("ℹ️ Periodic context cleanup disabled (context manager not available)")
+```
+
+**Verification:**
+
+```bash
+# Test the fix locally
+python run_server.py
+
+# Check Railway deployment
+railway up
+curl https://your-domain.railway.app/health
+
+# Should return: {"status":"healthy","components":{"orchestrator":"active",...}}
+```
+
+**Prevention:**
+- Always check if dependencies are initialized before creating async tasks
+- Use conditional logic when creating background tasks that depend on optional services
+- Test with different environment variable configurations (context manager enabled/disabled)
+
+### Issue H7: Docker Buildx Build Failures with yarn
 
 **Symptoms:**
 - Docker Buildx build fails with "Couldn't find the node_modules state file - running an install might help"
