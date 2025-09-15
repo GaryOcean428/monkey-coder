@@ -283,50 +283,45 @@ middleware_config = get_config()
 enable_pricing = middleware_config._get_env_bool("ENABLE_PRICING_MIDDLEWARE", True)
 app.add_middleware(PricingMiddleware, enabled=enable_pricing)
 
+# Add enhanced security middleware with Railway optimizations
+from ..middleware.security_middleware import EnhancedSecurityMiddleware, CSPViolationReporter
+enable_security_headers = middleware_config._get_env_bool("ENABLE_SECURITY_HEADERS", True)
+if enable_security_headers:
+    app.add_middleware(EnhancedSecurityMiddleware, enable_csp=True, enable_cors_headers=True)
+    app.add_middleware(CSPViolationReporter)  # For monitoring CSP violations
+
 # Add other middleware with environment-aware configuration
-# Normalize comma-separated env values (trim spaces, drop empties) and ensure Railway internal domain is allowed
+# Use CORS_CONFIG from cors.py for proper credential handling
+from ..config.cors import CORS_CONFIG
+# Use improved CORS configuration with Railway support
 if middleware_config.environment == "production":
-    allowed_origins = [
-        o.strip() for o in middleware_config._get_env("CORS_ORIGINS", "").split(",")
-        if o.strip()
-    ]
+    # Production: use CORS_CONFIG for proper credential handling
+    cors_config = CORS_CONFIG.copy()
+    
+    # Ensure Railway's internal routing is permitted
     allowed_hosts = [
         h.strip() for h in middleware_config._get_env("TRUSTED_HOSTS", "").split(",")
         if h.strip()
     ]
-
-    # Ensure Railway's internal routing is permitted by TrustedHostMiddleware
     if not any("railway.internal" in h for h in allowed_hosts):
         allowed_hosts.append("*.railway.internal")
-
-    # If CORS_ORIGINS is empty in production, fall back to public domain (if present)
-    if not allowed_origins:
-        public_domain = middleware_config._get_env("RAILWAY_PUBLIC_DOMAIN", "").strip()
-        if public_domain:
-            # Include both https and http for local testing through Railway domain
-            allowed_origins = [
-                f"https://{public_domain}",
-                f"http://{public_domain}",
-                "https://coder.fastmonkey.au",
-                "http://coder.fastmonkey.au"
-            ]
-        else:
-            # Safe fallback to Railway domains
-            allowed_origins = [
-                "https://aetheros-production.up.railway.app",
-                "https://coder.fastmonkey.au"
-            ]
+        
+    # Add Railway public domain to CORS origins if not already present
+    public_domain = middleware_config._get_env("RAILWAY_PUBLIC_DOMAIN", "").strip()
+    if public_domain:
+        cors_config["allow_origins"].extend([
+            f"https://{public_domain}",
+            f"http://{public_domain}"
+        ])
 else:
-    # Development: keep permissive defaults
-    allowed_origins = ["*"]
+    # Development: keep permissive defaults but use CORS_CONFIG structure
+    cors_config = CORS_CONFIG.copy()
+    cors_config["allow_origins"] = ["*"]
     allowed_hosts = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **cors_config
 )
 
 app.add_middleware(
@@ -903,6 +898,96 @@ async def logout(request: Request, response: Response) -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Logout failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Logout failed")
+
+
+@app.get("/api/v1/auth/debug")
+async def debug_auth_config():
+    """
+    Enhanced authentication debug endpoint for production monitoring.
+    
+    Returns detailed status of authentication configuration, CORS settings,
+    CSP headers, and security middleware without exposing sensitive values.
+    """
+    from ..config.cors import get_cors_origins
+    from ..middleware.security_middleware import get_railway_security_config
+    
+    try:
+        # Test database connection
+        def test_db_connection():
+            try:
+                from ..database.connection import test_database_connection
+                return asyncio.run(test_database_connection())
+            except Exception:
+                return False
+        
+        # Test Redis connection  
+        def test_redis_connection():
+            try:
+                import redis
+                redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                r = redis.from_url(redis_url)
+                r.ping()
+                return True
+            except Exception:
+                return False
+        
+        # Get security configuration
+        security_config = get_railway_security_config()
+        cors_origins = get_cors_origins()
+        
+        # Check JWT configuration
+        jwt_configured = bool(os.getenv("JWT_SECRET_KEY"))
+        jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+        
+        response_data = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "authentication": {
+                "jwt_configured": jwt_configured,
+                "jwt_algorithm": jwt_algorithm,
+                "jwt_expire_minutes": os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"),
+                "mfa_enabled": os.getenv("MFA_ENABLED", "false").lower() == "true"
+            },
+            "database": {
+                "connected": test_db_connection(),
+                "url_configured": bool(os.getenv("DATABASE_URL"))
+            },
+            "redis": {
+                "connected": test_redis_connection(),
+                "url_configured": bool(os.getenv("REDIS_URL"))
+            },
+            "cors": {
+                "allowed_origins_count": len(cors_origins),
+                "allow_credentials": security_config["cors_allow_credentials"],
+                "sample_origins": cors_origins[:3] if cors_origins else [],
+                "railway_domain": os.getenv("RAILWAY_PUBLIC_DOMAIN", "not_set")
+            },
+            "csp": {
+                "font_sources": security_config["csp_font_src"],
+                "style_sources": security_config["csp_style_src"],
+                "connect_sources": security_config["csp_connect_src"],
+                "default_sources": security_config["csp_default_src"]
+            },
+            "environment": {
+                "railway_environment": os.getenv("RAILWAY_ENVIRONMENT", "unknown"),
+                "enable_security_headers": os.getenv("ENABLE_SECURITY_HEADERS", "true"),
+                "enable_cors": os.getenv("ENABLE_CORS", "true"),
+                "debug_mode": os.getenv("DEBUG", "false").lower() == "true"
+            },
+            "middleware": {
+                "pricing_enabled": bool(os.getenv("ENABLE_PRICING_MIDDLEWARE", "true")),
+                "security_headers_enabled": bool(os.getenv("ENABLE_SECURITY_HEADERS", "true")),
+                "csp_violation_reporting": bool(os.getenv("RAILWAY_ENVIRONMENT") == "production")
+            }
+        }
+        
+        return JSONResponse(content=response_data, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"Auth debug endpoint failed: {str(e)}")
+        return JSONResponse(
+            content={"error": f"Debug check failed: {str(e)}"}, 
+            status_code=500
+        )
 
 
 @app.post("/api/v1/auth/refresh", response_model=AuthResponse)
