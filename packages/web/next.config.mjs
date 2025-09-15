@@ -11,6 +11,23 @@ const createConfig = (isDev) => {
   // Allow forcing static export via environment variable
   const forceStaticExport = process.env.NEXT_OUTPUT_EXPORT === 'true'
   
+  // Set environment variable defaults to prevent build failures
+  if (!process.env.NEXTAUTH_URL) {
+    process.env.NEXTAUTH_URL = 'https://coder.fastmonkey.au'
+  }
+  if (!process.env.NEXTAUTH_SECRET) {
+    process.env.NEXTAUTH_SECRET = `nextjs-build-secret-${Date.now()}`
+  }
+  if (!process.env.NEXT_PUBLIC_API_URL) {
+    process.env.NEXT_PUBLIC_API_URL = 'https://coder.fastmonkey.au'
+  }
+  if (!process.env.NEXT_PUBLIC_APP_URL) {
+    process.env.NEXT_PUBLIC_APP_URL = 'https://coder.fastmonkey.au'
+  }
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = 'postgresql://localhost:5432/placeholder'
+  }
+  
   return {
     reactStrictMode: true,
     // Use export mode for local/unified deployment, standalone for Railway multi-service
