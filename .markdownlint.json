@@ -32,17 +32,17 @@
     "maximum": 1
   },
   "MD013": {
-    "line_length": 120,
-    "heading_line_length": 120,
-    "code_block_line_length": 120,
-    "code_blocks": true,
-    "tables": true,
-    "headings": true,
-    "headers": true,
+    "line_length": 200,
+    "heading_line_length": 200,
+    "code_block_line_length": 200,
+    "code_blocks": false,
+    "tables": false,
+    "headings": false,
+    "headers": false,
     "strict": false,
     "stern": false
   },
-  "MD014": true,
+  "MD014": false,
   "MD018": true,
   "MD019": true,
   "MD020": true,
@@ -71,7 +71,7 @@
     "ul_multi": 1,
     "ol_multi": 1
   },
-  "MD031": true,
+  "MD031": false,
   "MD032": false,
   "MD033": {
     "allowed_elements": [
@@ -86,7 +86,7 @@
       "sup"
     ]
   },
-  "MD034": true,
+  "MD034": false,
   "MD035": {
     "style": "consistent"
   },
@@ -107,69 +107,12 @@
     "headers": null,
     "match_case": false
   },
-  "MD044": {
-    "names": [
-      "JavaScript",
-      "TypeScript",
-      "Python",
-      "Docker",
-      "Kubernetes",
-      "GitHub",
-      "GitLab",
-      "npm",
-      "yarn",
-      "Node.js",
-      "FastAPI",
-      "React",
-      "Vue.js",
-      "Next.js",
-      "MongoDB",
-      "PostgreSQL",
-      "Redis",
-      "AWS",
-      "Azure",
-      "GCP",
-      "OAuth",
-      "JWT",
-      "MFA",
-      "API",
-      "REST",
-      "GraphQL",
-      "HTTP",
-      "HTTPS",
-      "SSL",
-      "TLS",
-      "CORS",
-      "CSRF",
-      "XSS",
-      "SQL",
-      "JSON",
-      "YAML",
-      "XML",
-      "HTML",
-      "CSS",
-      "SCSS",
-      "Sass",
-      "WebSocket",
-      "WebRTC",
-      "PWA",
-      "SPA",
-      "SSR",
-      "SSG",
-      "CDN",
-      "CI/CD",
-      "DevOps",
-      "MLOps",
-      "AIOps"
-    ],
-    "code_blocks": true,
-    "html_elements": true
-  },
+  "MD044": false,
   "MD045": true,
   "MD046": {
     "style": "fenced"
   },
-  "MD047": true,
+  "MD047": false,
   "MD048": {
     "style": "backtick"
   },

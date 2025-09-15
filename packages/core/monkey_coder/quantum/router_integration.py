@@ -455,3 +455,12 @@ def create_dqn_router_bridge(
         collect_training_data=collect_training_data,
         **kwargs
     )
+
+
+# Alias for backward compatibility
+QuantumRouterIntegration = DQNRouterBridge
+
+# Convenience constructor
+def create_quantum_router_integration(**kwargs) -> QuantumRouterIntegration:
+    """Create QuantumRouterIntegration for backward compatibility."""
+    return create_dqn_router_bridge(**kwargs)
