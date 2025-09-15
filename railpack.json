@@ -7,13 +7,28 @@
   },
   "build": {
     "commands": [
+      "echo '🐒 Starting Monkey Coder build process...'",
       "pip install --no-cache-dir --upgrade pip setuptools wheel",
       "pip install --no-cache-dir -r requirements-deploy.txt",
       "cd packages/core && pip install --no-cache-dir -e .",
+      "echo '📦 Python dependencies installed successfully'",
       "corepack enable",
       "corepack prepare yarn@4.9.2 --activate",
+      "echo '🔧 Yarn 4.9.2 configured'",
       "yarn install --immutable || yarn install",
-      "yarn workspace @monkey-coder/web run export || echo 'Frontend build failed, API-only mode will be used'"
+      "echo '📦 Node dependencies installed'",
+      "echo '🏗️ Building frontend with environment variables...'",
+      "export NEXT_OUTPUT_EXPORT=true",
+      "export NODE_ENV=production", 
+      "export NEXTAUTH_URL=${NEXTAUTH_URL:-https://coder.fastmonkey.au}",
+      "export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-development-secret-change-in-production}",
+      "export NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://coder.fastmonkey.au}",
+      "export NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://coder.fastmonkey.au}",
+      "export DATABASE_URL=${DATABASE_URL:-}",
+      "export NEXT_TELEMETRY_DISABLED=1",
+      "yarn workspace @monkey-coder/web run export && echo '✅ Frontend build completed successfully' || echo '⚠️ Frontend build failed, runtime fallback will be used'",
+      "ls -la packages/web/out/ || echo '⚠️ No frontend output directory found'",
+      "echo '🚀 Build process completed'"
     ]
   },
   "deploy": {
