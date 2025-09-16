@@ -4,15 +4,13 @@ Pytest configuration and fixtures for the routing system tests.
 
 import pytest
 import sys
-import os
 from pathlib import Path
 
 # Add the package root to the Python path
 package_root = Path(__file__).parent.parent
 sys.path.insert(0, str(package_root))
 
-# Test configuration
-pytest_plugins = []
+# (pytest_plugins moved to project root conftest to satisfy pytest deprecation)
 
 
 @pytest.fixture
@@ -37,7 +35,7 @@ def slash_commands():
     """Fixture providing slash command test cases."""
     return {
         "/dev": "developer",
-        "/arch": "architect", 
+        "/arch": "architect",
         "/security": "security_analyst",
         "/test": "tester",
         "/docs": "technical_writer",
@@ -72,3 +70,8 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "persona: mark test as persona selection test"
     )
+
+
+# pytest.ini configuration
+def pytest_addoption(parser):
+    parser.addini("asyncio_mode", "auto")

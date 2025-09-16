@@ -2249,24 +2249,32 @@ if serve_frontend and static_dir:
             from fastapi.responses import FileResponse
             return FileResponse(str(favicon_path))
 
-    # Create a custom catch-all handler for SPA routing that doesn't interfere with API routes
-    # We'll add this as a fallback route after all API routes are registered
+    # Diagnostic endpoint (defined BEFORE catch-all so it isn't shadowed)
+    @app.get("/frontend-status", tags=["system"])
+    async def frontend_status():  # pragma: no cover - simple diagnostic
+        data = getattr(app.state, 'frontend_build', {"served": False})
+        return JSONResponse(data)
+
+    # Create a custom catch-all handler for SPA routing that doesn't interfere with API or diagnostic routes
     from fastapi.responses import FileResponse
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve SPA for non-API routes."""
-        # Don't catch API routes
-        if full_path.startswith("api/") or full_path.startswith("v1/"):
+        # Don't catch API or diagnostic routes
+        if full_path.startswith("api/") or full_path.startswith("v1/") or full_path == "frontend-status":
             raise HTTPException(status_code=404, detail="API endpoint not found")
+        # If for some reason static_dir disappeared, 404
+        if static_dir is None:
+            raise HTTPException(status_code=404, detail="Static directory unavailable")
 
         # Try to serve the exact file first
-        file_path = static_dir / full_path
+        file_path = static_dir / full_path  # type: ignore[operator]
         if file_path.exists() and file_path.is_file():
             return FileResponse(str(file_path))
 
         # For SPA routing, always return index.html for non-file paths
-        index_path = static_dir / "index.html"
+        index_path = static_dir / "index.html"  # type: ignore[operator]
         if index_path.exists():
             return FileResponse(str(index_path))
 
@@ -2274,6 +2282,25 @@ if serve_frontend and static_dir:
         raise HTTPException(status_code=404, detail="Page not found")
 
     logger.info(f"✅ Frontend served from: {static_dir} with SPA routing")
+    # Store frontend build diagnostics for external monitoring
+    try:
+        import hashlib
+        index_file = static_dir / "index.html"
+        index_hash = None
+        if index_file.exists():
+            with index_file.open('rb') as f:
+                index_hash = hashlib.sha256(f.read()).hexdigest()
+        app.state.frontend_build = {
+            "served": True,
+            "static_dir": str(static_dir),
+            "index_hash": index_hash,
+            "has_next": (static_dir / '_next').exists(),
+            "files": sum(1 for _ in static_dir.rglob('*')),
+            "timestamp": datetime.utcnow().isoformat() + 'Z'
+        }
+    except Exception as e:  # pragma: no cover - non-critical path
+        logger.warning(f"Could not record frontend build metadata: {e}")
+        app.state.frontend_build = {"served": True, "static_dir": str(static_dir)}
 else:
     logger.warning(f"❌ Static directory not found in any of: {[str(p) for p in static_dir_options]}. Frontend will not be served.")
 
@@ -2330,6 +2357,15 @@ else:
         </body>
         </html>
         """)
+    # Record fallback state
+    app.state.frontend_build = {"served": False, "reason": "static_dir_not_found", "checked_paths": [str(p) for p in static_dir_options]}
+
+if not (serve_frontend and static_dir):
+    # When frontend not served, still expose diagnostic endpoint (not defined above)
+    @app.get("/frontend-status", tags=["system"])
+    async def frontend_status():  # pragma: no cover - simple diagnostic
+        data = getattr(app.state, 'frontend_build', {"served": False})
+        return JSONResponse(data)
 
 
 if __name__ == "__main__":
