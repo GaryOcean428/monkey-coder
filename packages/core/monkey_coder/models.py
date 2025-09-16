@@ -420,25 +420,17 @@ MODEL_REGISTRY = {
         "gpt-4.1",
         "gpt-4.1-mini",
         "gpt-4.1-vision",
-        "gpt-4.1-nano",
         # Reasoning models
+        "o4-mini",
+        "o3-pro",
+        "o3",
+        "o3-mini",
         "o1",
         "o1-mini",
-        "o3-mini",
-        "o3",
-        "o3-pro",
-        "o4-mini",
-        "o3-deep-research",
-        "o4-mini-deep-research",
-        # Search models (not in manifest - commented out)
-        # "gpt-4o-search-preview",  # Not in manifest
-        # "gpt-4o-mini-search-preview",  # Not in manifest
-        # Specialized
-        "codex-mini-latest",
         # Legacy (deprecated - DO NOT USE)
-        # "gpt-4o",  # Use gpt-4.1 instead
-        # "gpt-4o-mini",  # Use gpt-4.1-mini instead
-        # "chatgpt-4o-latest",  # Use gpt-4.1 instead
+        # "gpt-4-turbo",  # Use gpt-4.1 instead
+        # "gpt-4",  # Use gpt-4.1 instead
+        # "gpt-3.5-turbo",  # Use gpt-4.1-mini instead
     ],
     ProviderType.ANTHROPIC: [
         # Claude 4.1 Family (Latest and most capable)
@@ -482,9 +474,6 @@ MODEL_REGISTRY = {
         "moonshotai/kimi-k2-instruct",
         # Qwen model
         "qwen/qwen3-32b",
-    # Groq GPT-OSS family (OpenAI GPT-OSS models hosted by Groq)
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
     ],
 }
 
@@ -498,10 +487,12 @@ CROSS_PROVIDER_MODELS = {
 # Model aliases for backward compatibility
 # Maps old names to new approved names
 MODEL_ALIASES = {
-    "gpt-4o": "gpt-4.1",
-    "gpt-4o-mini": "gpt-4.1-mini",
-    "gpt-4": "gpt-4.1",
+    # OpenAI aliases
     "gpt-4-turbo": "gpt-4.1",
+    "gpt-4": "gpt-4.1",
+    "gpt-3.5-turbo": "gpt-4.1-mini",
+    "gpt-4o": "gpt-4.1",  # Legacy compatibility
+    "gpt-4o-mini": "gpt-4.1-mini",  # Legacy compatibility
     # Google prefixed IDs to canonical names
     "models/gemini-2.5-flash": "gemini-2.5-flash",
     "models/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
@@ -509,17 +500,17 @@ MODEL_ALIASES = {
     # Some environments may still refer to these previews; normalize if encountered
     "models/gemini-live-2.5-flash-preview": "gemini-2.5-flash",
     "models/gemini-2.0-flash-live-001": "gemini-2.0-flash",
-    "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",  # Non-default alias
-    "claude-sonnet-4-0": "claude-opus-4-20250514",  # Alias for latest Claude 4 (Opus)
-    "opus": "claude-opus-4-20250514",  # Alias for Opus/latest
-    "claude-4-latest": "claude-opus-4-20250514",  # General latest
-    # GPT-5 dated variants resolve to unversioned latest names
-    "gpt-5-2025-08-07": "gpt-5",
-    "gpt-5-mini-2025-08-07": "gpt-5-mini",
-    "gpt-5-nano-2025-08-07": "gpt-5-nano",
-    # Claude Opus 4.1 unversioned aliases
-    "claude-opus-4-1": "claude-opus-4-1-20250805",
-    "claude-opus-4.1": "claude-opus-4-1-20250805",
+    # Anthropic aliases
+    "claude-3-opus-20240229": "claude-opus-4-20250514",  # Old Opus -> new Opus 4
+    "claude-3-sonnet-20240229": "claude-sonnet-4-20250514",  # Old Sonnet -> new Sonnet 4
+    "claude-2.1": "claude-3-5-haiku-20241022",  # Claude 2 -> Haiku
+    "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",  # Latest alias
+    "claude-opus-4-1": "claude-opus-4-1-20250805",  # Unversioned alias
+    "claude-opus-4.1": "claude-opus-4-1-20250805",  # Alternate format
+    # Google aliases
+    "gemini-pro": "gemini-2.5-flash",
+    "gemini-1.5-pro": "gemini-2.5-pro",
+    "gemini-pro-vision": "gemini-2.5-pro",
 }
 
 # New resolve_model function

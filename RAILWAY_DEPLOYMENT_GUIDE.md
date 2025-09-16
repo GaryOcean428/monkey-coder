@@ -123,6 +123,59 @@ curl https://your-railway-domain.railway.app/api/docs
 railway logs --service monkey-coder | grep "Virtual environment"
 ```
 
+### 🔐 Strict Frontend Build Verification (Option A)
+
+As of the strict build configuration (Option A), the deployment will **abort** if the Next.js static
+export is missing either `index.html` or the `/_next` asset directory. This prevents silently
+deploying the minimal API-only fallback page.
+
+Key behaviors now enforced in `railpack.json`:
+
+1. Build attempts the workspace export, then alternative methods (unchanged).
+2. After build, a strict verification step runs:
+  - Checks for `packages/web/out/index.html`
+  - Checks for `packages/web/out/_next/`
+  - Computes and logs a SHA-256 hash of `index.html` for traceability.
+3. Copies the verified build to `/app/out` as an additional fallback search path used by
+  `monkey_coder.app.main`.
+4. If verification fails, the build exits with status 1 so Railway does not deploy an incomplete
+  frontend.
+
+Sample log lines you should see on success:
+
+```bash
+🔍 Verifying frontend build integrity (strict mode)...
+✅ Frontend verification passed: index.html + _next present
+🔐 index.html sha256: <hash>
+📁 Copied build to /app/out (fallback path)
+```
+
+If you instead see:
+
+```bash
+❌ Frontend verification failed: missing index.html or _next directory
+Aborting build to prevent deploying API-only fallback (Option A strict mode).
+```
+
+Resolve the underlying Next.js build error locally:
+
+```bash
+yarn workspace @monkey-coder/web run export
+```
+
+Then redeploy.
+
+#### Overriding (Not Recommended)
+If you intentionally want an API-only deployment (e.g., backend microservice scenario), you can
+temporarily disable strict mode by editing `railpack.json` to remove the `exit 1` block—this is
+discouraged for production.
+
+#### Environment Variable Note
+Ensure `SERVE_FRONTEND` is not set to a falsey value (`false`, `0`, `no`) unless you explicitly want
+to disable static file serving.
+
+---
+
 ## 📊 Performance Improvements
 
 ### Build Time Optimization
@@ -228,7 +281,7 @@ export PYTHONPATH="/app:/app/packages/core:$PYTHONPATH"
 
 ### Issue Resolution
 - ✅ Virtual environment path resolution failures - **RESOLVED**
-- ✅ Uvicorn command not found errors - **RESOLVED**  
+- ✅ Uvicorn command not found errors - **RESOLVED**
 - ✅ Python package import failures - **RESOLVED**
 - ✅ Inconsistent deployment environments - **RESOLVED**
 - ✅ Build cache optimization - **IMPLEMENTED**
@@ -250,4 +303,6 @@ export PYTHONPATH="/app:/app/packages/core:$PYTHONPATH"
 
 ---
 
-**Note**: This configuration addresses the critical virtual environment path resolution issues identified by @GaryOcean428 and provides a robust foundation for Railway deployments with proper railpack optimization.
+**Note**: This configuration addresses the critical virtual environment path resolution issues
+identified by @GaryOcean428 and provides a robust foundation for Railway deployments with proper
+railpack optimization.

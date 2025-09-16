@@ -23,6 +23,8 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from ..middleware.security_middleware import EnhancedSecurityMiddleware, CSPViolationReporter
+from ..config.cors import CORS_CONFIG
 import time
 from pathlib import Path
 from .streaming_endpoints import router as streaming_router
@@ -172,7 +174,7 @@ async def lifespan(app: FastAPI):
             # Create a placeholder billing tracker
             class PlaceholderBillingTracker:
                 async def track_usage(self, api_key, usage): pass
-                async def get_usage(self, api_key, start_date, end_date, granularity): 
+                async def get_usage(self, api_key, start_date, end_date, granularity):
                     return type('obj', (object,), {
                         'api_key_hash': 'placeholder',
                         'period': 'N/A',
@@ -284,20 +286,17 @@ enable_pricing = middleware_config._get_env_bool("ENABLE_PRICING_MIDDLEWARE", Tr
 app.add_middleware(PricingMiddleware, enabled=enable_pricing)
 
 # Add enhanced security middleware with Railway optimizations
-from ..middleware.security_middleware import EnhancedSecurityMiddleware, CSPViolationReporter
 enable_security_headers = middleware_config._get_env_bool("ENABLE_SECURITY_HEADERS", True)
 if enable_security_headers:
     app.add_middleware(EnhancedSecurityMiddleware, enable_csp=True, enable_cors_headers=True)
     app.add_middleware(CSPViolationReporter)  # For monitoring CSP violations
 
 # Add other middleware with environment-aware configuration
-# Use CORS_CONFIG from cors.py for proper credential handling
-from ..config.cors import CORS_CONFIG
 # Use improved CORS configuration with Railway support
 if middleware_config.environment == "production":
     # Production: use CORS_CONFIG for proper credential handling
     cors_config = CORS_CONFIG.copy()
-    
+
     # Ensure Railway's internal routing is permitted
     allowed_hosts = [
         h.strip() for h in middleware_config._get_env("TRUSTED_HOSTS", "").split(",")
@@ -305,7 +304,7 @@ if middleware_config.environment == "production":
     ]
     if not any("railway.internal" in h for h in allowed_hosts):
         allowed_hosts.append("*.railway.internal")
-        
+
     # Add Railway public domain to CORS origins if not already present
     public_domain = middleware_config._get_env("RAILWAY_PUBLIC_DOMAIN", "").strip()
     if public_domain:
@@ -481,13 +480,13 @@ class RefreshTokenRequest(BaseModel):
 async def health_check():
     """
     Health check endpoint optimized for Railway deployment.
-    
+
     This endpoint provides comprehensive health status including:
     - System resource metrics (memory, CPU)
     - Component initialization status
     - Dependency availability
     - Performance metrics for Railway monitoring
-    
+
     Returns 200 OK even during partial initialization to prevent
     Railway deployment failures during startup phase.
     """
@@ -505,15 +504,15 @@ async def health_check():
 
     # Check component health with graceful degradation
     components = {}
-    
+
     # Core components that should be available
     essential_components = [
         ("orchestrator", "orchestrator"),
-        ("quantum_executor", "quantum_executor"), 
+        ("quantum_executor", "quantum_executor"),
         ("persona_router", "persona_router"),
         ("provider_registry", "provider_registry")
     ]
-    
+
     for component_name, state_attr in essential_components:
         try:
             if hasattr(app.state, state_attr) and getattr(app.state, state_attr) is not None:
@@ -522,7 +521,7 @@ async def health_check():
                 components[component_name] = "initializing"
         except Exception:
             components[component_name] = "initializing"
-    
+
     # Optional components that may not be available
     optional_components = [
         ("metrics_collector", "metrics_collector"),
@@ -530,7 +529,7 @@ async def health_check():
         ("context_manager", "context_manager"),
         ("api_key_manager", "api_key_manager")
     ]
-    
+
     for component_name, state_attr in optional_components:
         try:
             if hasattr(app.state, state_attr) and getattr(app.state, state_attr) is not None:
@@ -542,10 +541,10 @@ async def health_check():
 
     # Determine overall health status
     essential_active = all(
-        components.get(comp, "inactive") == "active" 
+        components.get(comp, "inactive") == "active"
         for comp, _ in essential_components
     )
-    
+
     # Report as healthy if essential components are active, or if we're still initializing
     health_status = "healthy" if essential_active else "initializing"
 
@@ -595,18 +594,18 @@ async def comprehensive_health_check():
 async def secrets_health_check():
     """
     Secrets security health check for production monitoring.
-    
+
     Returns detailed status of API keys, credentials, and security configuration
     without exposing sensitive values.
     """
     from ..config.production_config import get_production_config
     from ..config.secrets_config import validate_production_secrets
-    
+
     try:
         secrets_health = validate_production_secrets()
         prod_config = get_production_config()
         rotation_strategy = prod_config.get_secrets_rotation_schedule()
-        
+
         response_data = {
             "secrets_health": secrets_health,
             "rotation_strategy": {
@@ -615,19 +614,19 @@ async def secrets_health_check():
             },
             "security_recommendations": secrets_health.get("recommendations", [])
         }
-        
+
         # Determine overall security status
         status_code = 200
         if secrets_health["overall_status"] == "critical":
             status_code = 503
         elif secrets_health["overall_status"] == "warning":
             status_code = 200  # Warning is still operational
-        
+
         return JSONResponse(
             content=response_data,
             status_code=status_code
         )
-        
+
     except Exception as e:
         return JSONResponse(
             content={"error": f"Secrets health check failed: {str(e)}"},
@@ -999,31 +998,31 @@ async def get_mcp_environment_status(
 ) -> Dict[str, Any]:
     """
     Get MCP-enhanced environment status and variable resolution information.
-    
+
     This endpoint provides information about how environment variables are
     being resolved using MCP servers, Railway service discovery, and production defaults.
     Helps debug production configuration issues and validates that localhost
     references are properly avoided.
-    
+
     Args:
         api_key: API key for authentication
-        
+
     Returns:
         Dictionary with MCP environment status and variable information
     """
     try:
         await verify_permissions(api_key, "system:read")
-        
+
         # Try to get MCP environment manager status
         try:
             from ..config.mcp_env_manager import mcp_env_manager
-            
+
             # Get variable summary
             variable_summary = mcp_env_manager.get_variable_summary()
-            
+
             # Get production readiness validation
             production_validation = mcp_env_manager.validate_production_readiness()
-            
+
             # Get resolved variables (without sensitive values)
             resolved_variables = {}
             for key, var in mcp_env_manager.get_all_variables().items():
@@ -1032,14 +1031,14 @@ async def get_mcp_environment_status(
                     display_value = "***MASKED***" if var.value else None
                 else:
                     display_value = var.value
-                    
+
                 resolved_variables[key] = {
                     "value": display_value,
                     "source": var.source,
                     "priority": var.priority,
                     "description": var.description
                 }
-            
+
             response_data = {
                 "mcp_enabled": True,
                 "variable_summary": variable_summary,
@@ -1053,9 +1052,9 @@ async def get_mcp_environment_status(
                 },
                 "timestamp": datetime.utcnow().isoformat()
             }
-            
+
             return JSONResponse(content=response_data, status_code=200)
-            
+
         except ImportError:
             # MCP environment manager not available
             return JSONResponse(
@@ -1077,11 +1076,11 @@ async def get_mcp_environment_status(
                 },
                 status_code=200
             )
-            
+
     except Exception as e:
         logger.error(f"MCP environment status check failed: {str(e)}")
         return JSONResponse(
-            content={"error": f"Environment status check failed: {str(e)}"}, 
+            content={"error": f"Environment status check failed: {str(e)}"},
             status_code=500
         )
 
@@ -1090,13 +1089,13 @@ async def get_mcp_environment_status(
 async def debug_auth_config():
     """
     Enhanced authentication debug endpoint for production monitoring.
-    
+
     Returns detailed status of authentication configuration, CORS settings,
     CSP headers, and security middleware without exposing sensitive values.
     """
     from ..config.cors import get_cors_origins
     from ..middleware.security_middleware import get_railway_security_config
-    
+
     try:
         # Test database connection
         def test_db_connection():
@@ -1105,8 +1104,8 @@ async def debug_auth_config():
                 return asyncio.run(test_database_connection())
             except Exception:
                 return False
-        
-        # Test Redis connection  
+
+        # Test Redis connection
         def test_redis_connection():
             try:
                 import redis
@@ -1116,15 +1115,15 @@ async def debug_auth_config():
                 return True
             except Exception:
                 return False
-        
+
         # Get security configuration
         security_config = get_railway_security_config()
         cors_origins = get_cors_origins()
-        
+
         # Check JWT configuration
         jwt_configured = bool(os.getenv("JWT_SECRET_KEY"))
         jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
-        
+
         response_data = {
             "timestamp": datetime.utcnow().isoformat(),
             "authentication": {
@@ -1165,13 +1164,13 @@ async def debug_auth_config():
                 "csp_violation_reporting": bool(os.getenv("RAILWAY_ENVIRONMENT") == "production")
             }
         }
-        
+
         return JSONResponse(content=response_data, status_code=200)
-        
+
     except Exception as e:
         logger.error(f"Auth debug endpoint failed: {str(e)}")
         return JSONResponse(
-            content={"error": f"Debug check failed: {str(e)}"}, 
+            content={"error": f"Debug check failed: {str(e)}"},
             status_code=500
         )
 
@@ -2214,6 +2213,17 @@ if serve_frontend:
             try:
                 contents = list(static_dir.iterdir())[:5]
                 logger.info(f"   Contains {len(list(static_dir.iterdir()))} items including: {[p.name for p in contents]}")
+                # Compute a fingerprint of index.html to correlate with build logs (if present)
+                index_path = static_dir / "index.html"
+                if index_path.exists():
+                    try:
+                        import hashlib
+                        with index_path.open('rb') as f:
+                            data = f.read()
+                        sha256 = hashlib.sha256(data).hexdigest()
+                        logger.info(f"   🔐 index.html sha256 fingerprint: {sha256}")
+                    except Exception as e:
+                        logger.warning(f"   Could not hash index.html: {e}")
             except Exception as e:
                 logger.warning(f"   Could not list directory contents: {e}")
             break

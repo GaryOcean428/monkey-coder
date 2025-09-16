@@ -281,4 +281,3 @@ scripts/test-docker-build.sh
 # Temporary deployment validation files
 # Smoke test results
 smoke_test_results.json
-packages/web/out/
