@@ -11,6 +11,11 @@ def test_frontend_status_shape():
     assert resp.status_code == 200
     data = resp.json()
     assert 'served' in data
+    assert 'metrics_active' in data
+    assert 'trusted_hosts' in data
+    # commit hash may or may not be present depending on environment
+    if 'commit' in data:
+        assert len(data['commit']) <= 12
     # If served true, expect basic keys
     if data['served']:
         for key in ['static_dir', 'index_hash', 'has_next', 'files']:

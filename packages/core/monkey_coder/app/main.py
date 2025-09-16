@@ -20,6 +20,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -95,6 +96,25 @@ setup_logging()
 logger = logging.getLogger(__name__)
 performance_logger = get_performance_logger("app_performance")
 
+# -------------------------------------------------------------
+# Host Validation Middleware (stricter than TrustedHost if set)
+# -------------------------------------------------------------
+class HostValidationMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: FastAPI, allowed_hosts: list[str]):
+        super().__init__(app)
+        self.allowed_hosts = [h.lower() for h in allowed_hosts if h]
+
+    async def dispatch(self, request: Request, call_next):  # pragma: no cover - thin wrapper
+        host = request.headers.get("host", "").split(":")[0].lower()
+        if self.allowed_hosts and "*" not in self.allowed_hosts:
+            if host not in self.allowed_hosts:
+                return JSONResponse({
+                    "error": "untrusted_host",
+                    "host": host,
+                    "allowed": self.allowed_hosts
+                }, status_code=421)
+        return await call_next(request)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -152,19 +172,26 @@ async def lifespan(app: FastAPI):
         logger.info("✅ PersonaRouter initialized successfully")
 
         # Initialize monitoring components with graceful failure handling
-        try:
-            app.state.metrics_collector = parent_monitoring.MetricsCollector()
-            logger.info("✅ MetricsCollector initialized successfully")
-        except AttributeError:
-            logger.warning("⚠️ MetricsCollector not available - using placeholder")
-            # Create a placeholder metrics collector
-            class PlaceholderMetricsCollector:
+        # Metrics collector initialization with robust guard
+        raw_mc = getattr(parent_monitoring, "MetricsCollector", None)
+        if callable(raw_mc):
+            try:
+                app.state.metrics_collector = raw_mc()
+                app.state.metrics_active = True
+                logger.info("✅ MetricsCollector initialized successfully")
+            except Exception as e:
+                logger.error(f"❌ MetricsCollector initialization failed: {e}")
+                app.state.metrics_active = False
+        else:
+            logger.warning("⚠️ MetricsCollector symbol missing or not callable - using placeholder")
+            class PlaceholderMetricsCollector:  # pragma: no cover - trivial
                 def start_execution(self, request): return "placeholder"
                 def complete_execution(self, execution_id, response): pass
                 def record_error(self, execution_id, error): pass
                 def record_http_request(self, method, endpoint, status, duration): pass
                 def get_prometheus_metrics(self): return "# Metrics collector not available\n"
             app.state.metrics_collector = PlaceholderMetricsCollector()
+            app.state.metrics_active = False
 
         try:
             app.state.billing_tracker = parent_monitoring.BillingTracker()
@@ -246,13 +273,16 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Monkey Coder Core...")
 
     # Cancel periodic cleanup task
-    if hasattr(app.state, 'cleanup_task'):
-        app.state.cleanup_task.cancel()
+    if hasattr(app.state, 'cleanup_task') and app.state.cleanup_task is not None:
         try:
-            await app.state.cleanup_task
-        except asyncio.CancelledError:
-            pass
-        logger.info("Periodic cleanup task cancelled")
+            app.state.cleanup_task.cancel()
+            try:
+                await app.state.cleanup_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("Periodic cleanup task cancelled")
+        except Exception as e:
+            logger.warning(f"Could not cancel cleanup task cleanly: {e}")
 
     await app.state.provider_registry.cleanup_all()
     logger.info("Shutdown complete")
@@ -329,7 +359,10 @@ app.add_middleware(
 )
 
 # Add Sentry middleware for error tracking
-app.add_middleware(SentryAsgiMiddleware)
+try:  # Some type checkers complain; runtime still fine
+    app.add_middleware(SentryAsgiMiddleware)  # type: ignore[arg-type]
+except Exception as e:  # pragma: no cover
+    logger.warning(f"Sentry middleware not added: {e}")
 
 # Add production security headers middleware
 @app.middleware("http")
@@ -407,6 +440,11 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="Application version")
     timestamp: str = Field(..., description="Current timestamp")
     components: Dict[str, str] = Field(..., description="Component status")
+    metrics_active: Optional[bool] = Field(None, description="Whether metrics collector initialized")
+    providers_ready: Optional[bool] = Field(None, description="Provider registry readiness")
+    frontend_served: Optional[bool] = Field(None, description="Whether static frontend was mounted")
+    frontend_index_hash: Optional[str] = Field(None, description="SHA256 fingerprint of index.html if present")
+    trusted_hosts: Optional[List[str]] = Field(None, description="Configured trusted hosts for Host validation")
 
 
 # Authentication Models
@@ -563,12 +601,39 @@ async def health_check():
         }}
     )
 
+    frontend_info = getattr(app.state, 'frontend_build', {})
+    trusted_hosts_env = os.getenv("TRUSTED_HOSTS", "*")
+    host_list = [h for h in trusted_hosts_env.replace(";", ",").split(",") if h]
     return HealthResponse(
         status=health_status,
         version="2.0.0",  # Updated to Phase 2.0
-        timestamp=datetime.utcnow().isoformat(),
-        components=components
+        timestamp=datetime.utcnow().isoformat() + 'Z',
+        components=components,
+        metrics_active=getattr(app.state, 'metrics_active', None),
+        providers_ready=components.get("provider_registry") == "active",
+        frontend_served=frontend_info.get("served"),
+        frontend_index_hash=frontend_info.get("index_hash"),
+        trusted_hosts=host_list
     )
+
+# ---------------- Environment Config Validator -----------------
+CRITICAL_SECRETS = ["DATABASE_URL", "JWT_SECRET_KEY", "OPENAI_API_KEY"]
+RECOMMENDED_SECRETS = ["SENTRY_DSN", "STRIPE_SECRET_KEY", "ANTHROPIC_API_KEY"]
+
+def validate_env_config():
+    missing_critical = [k for k in CRITICAL_SECRETS if not os.getenv(k)]
+    missing_recommended = [k for k in RECOMMENDED_SECRETS if not os.getenv(k)]
+    anomalies = [k for k in os.environ.keys() if k.startswith("NEXT_PUBLIC_") and k.endswith("SECRET")]
+    return {
+        "missing_critical": missing_critical,
+        "missing_recommended": missing_recommended,
+        "anomalies": anomalies,
+        "timestamp": datetime.utcnow().isoformat() + 'Z'
+    }
+
+@app.get("/health/env")
+async def env_health():  # pragma: no cover - simple diagnostic
+    return validate_env_config()
 
 
 @app.get("/health/comprehensive")
@@ -1053,36 +1118,30 @@ async def get_mcp_environment_status(
                 "timestamp": datetime.utcnow().isoformat()
             }
 
-            return JSONResponse(content=response_data, status_code=200)
+            return response_data
 
         except ImportError:
             # MCP environment manager not available
-            return JSONResponse(
-                content={
-                    "mcp_enabled": False,
-                    "reason": "MCP environment manager not available",
-                    "fallback_mode": True,
-                    "railway_info": {
-                        "environment": os.getenv('RAILWAY_ENVIRONMENT'),
-                        "project": os.getenv('RAILWAY_PROJECT_NAME'),
-                        "public_domain": os.getenv('RAILWAY_PUBLIC_DOMAIN')
-                    },
-                    "basic_variables": {
-                        "DATABASE_URL": "***CONFIGURED***" if os.getenv('DATABASE_URL') else "NOT SET",
-                        "NEXT_PUBLIC_API_URL": os.getenv('NEXT_PUBLIC_API_URL', 'DEFAULT'),
-                        "RAILWAY_ENVIRONMENT": os.getenv('RAILWAY_ENVIRONMENT', 'NOT SET')
-                    },
-                    "timestamp": datetime.utcnow().isoformat()
+            return {
+                "mcp_enabled": False,
+                "reason": "MCP environment manager not available",
+                "fallback_mode": True,
+                "railway_info": {
+                    "environment": os.getenv('RAILWAY_ENVIRONMENT'),
+                    "project": os.getenv('RAILWAY_PROJECT_NAME'),
+                    "public_domain": os.getenv('RAILWAY_PUBLIC_DOMAIN')
                 },
-                status_code=200
-            )
+                "basic_variables": {
+                    "DATABASE_URL": "***CONFIGURED***" if os.getenv('DATABASE_URL') else "NOT SET",
+                    "NEXT_PUBLIC_API_URL": os.getenv('NEXT_PUBLIC_API_URL', 'DEFAULT'),
+                    "RAILWAY_ENVIRONMENT": os.getenv('RAILWAY_ENVIRONMENT', 'NOT SET')
+                },
+                "timestamp": datetime.utcnow().isoformat()
+            }
 
     except Exception as e:
         logger.error(f"MCP environment status check failed: {str(e)}")
-        return JSONResponse(
-            content={"error": f"Environment status check failed: {str(e)}"},
-            status_code=500
-        )
+        return {"error": f"Environment status check failed: {str(e)}"}
 
 
 @app.get("/api/v1/auth/debug")
@@ -2252,7 +2311,13 @@ if serve_frontend and static_dir:
     # Diagnostic endpoint (defined BEFORE catch-all so it isn't shadowed)
     @app.get("/frontend-status", tags=["system"])
     async def frontend_status():  # pragma: no cover - simple diagnostic
-        data = getattr(app.state, 'frontend_build', {"served": False})
+        data = getattr(app.state, 'frontend_build', {"served": False}).copy()
+        data["metrics_active"] = getattr(app.state, 'metrics_active', False)
+        trusted_hosts_env = os.getenv("TRUSTED_HOSTS", "*")
+        data["trusted_hosts"] = [h for h in trusted_hosts_env.replace(";", ",").split(",") if h]
+        commit = os.getenv("GIT_COMMIT") or os.getenv("RAILWAY_GIT_COMMIT")
+        if commit:
+            data["commit"] = commit[:12]
         return JSONResponse(data)
 
     # Create a custom catch-all handler for SPA routing that doesn't interfere with API or diagnostic routes
@@ -2364,7 +2429,13 @@ if not (serve_frontend and static_dir):
     # When frontend not served, still expose diagnostic endpoint (not defined above)
     @app.get("/frontend-status", tags=["system"])
     async def frontend_status():  # pragma: no cover - simple diagnostic
-        data = getattr(app.state, 'frontend_build', {"served": False})
+        data = getattr(app.state, 'frontend_build', {"served": False}).copy()
+        data["metrics_active"] = getattr(app.state, 'metrics_active', False)
+        trusted_hosts_env = os.getenv("TRUSTED_HOSTS", "*")
+        data["trusted_hosts"] = [h for h in trusted_hosts_env.replace(";", ",").split(",") if h]
+        commit = os.getenv("GIT_COMMIT") or os.getenv("RAILWAY_GIT_COMMIT")
+        if commit:
+            data["commit"] = commit[:12]
         return JSONResponse(data)
 
 

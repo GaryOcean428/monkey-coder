@@ -233,6 +233,46 @@ Key feature flags:
 - `CONTEXT_MODE=simple|advanced`
 
 Planned flags (placeholders): `ENABLE_MODEL_SELECTOR`, `ENABLE_RESULT_CACHE`.
+
+### Railway Provisioning Orchestrator (Phase 1)
+
+The script `railway_provisioning_orchestrator.py` performs a local preflight before any Railway API or CLI interaction:
+
+What it validates now:
+- Required environment variables (presence vs defaults) for production deployment
+- Frontend static export integrity (`packages/web/out/index.html` + `_next` directory)
+- Generates `railway_provisioning_plan.json` with a readiness summary
+
+Run it:
+```bash
+python railway_provisioning_orchestrator.py
+```
+
+Exit codes:
+- `0` = Ready for remote provisioning
+- `1` = Missing required variables or frontend build invalid
+- `2` = Internal error
+
+Sample remediation (set missing env vars inline):
+```bash
+export NODE_ENV=production \
+    PYTHON_ENV=production \
+    NEXTAUTH_SECRET=$(python - <<'PY'\nimport secrets,string;print(''.join(secrets.choice(string.ascii_letters+string.digits) for _ in range(48)))\nPY) \
+    NEXTAUTH_URL=https://coder.fastmonkey.au \
+    NEXT_PUBLIC_API_URL=https://coder.fastmonkey.au \
+    NEXT_PUBLIC_APP_URL=https://coder.fastmonkey.au \
+    NEXT_OUTPUT_EXPORT=true \
+    NEXT_TELEMETRY_DISABLED=1
+```
+
+Then re-run the orchestrator. Once ready, future Phase 2 will integrate Railway MCP operations (listing projects, syncing env vars, triggering deployments) in an idempotent manner.
+
+Related tests:
+- `test_frontend_integrity.py` ensures exported assets exist (skips gracefully if absent locally)
+- `test_env_schema.py` guards the orchestrator’s environment schema
+
+Marker Strategy:
+- Advanced quantum Phase 2 tests are deferred and tagged with `@pytest.mark.quantum_phase2`; default CI excludes them.
 ```
 
 ## Published Packages
