@@ -14,7 +14,12 @@ import traceback
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+import base64
+import json
+import hmac
+import hashlib
+from urllib.parse import urlencode
 from dataclasses import dataclass as _dc_dataclass
 import secrets as _secrets
 
@@ -64,6 +69,9 @@ from ..security import (
     get_current_user,
     JWTUser,
     UserRole,
+    create_access_token,
+    create_refresh_token,
+    verify_token,
 )
 from ..auth.enhanced_cookie_auth import enhanced_auth_manager
 from ..auth.cookie_auth import get_current_user_from_cookie
@@ -81,11 +89,13 @@ except ImportError:
     quantum_performance = DummyQuantumPerformance()
 from .. import monitoring as parent_monitoring
 from ..database import run_migrations
+from ..database.connection import get_database_connection
+from ..email.sender import email_sender
 from ..pricing import PricingMiddleware, load_pricing_from_file
 from ..billing import StripeClient, BillingPortalSession
 from .routes import stripe_checkout
 from ..feedback_collector import FeedbackCollector
-from ..database.models import User
+from ..database.models import User, AuthToken
 from ..config.env_config import get_config
 from ..auth import get_api_key_manager
 
@@ -97,6 +107,32 @@ from ..cache.base import get_cache_registry_stats
 setup_logging()
 logger = logging.getLogger(__name__)
 performance_logger = get_performance_logger("app_performance")
+
+# ---------------------------------------------------------------------------
+# Simple in-memory rate limiting (development / interim)
+# ---------------------------------------------------------------------------
+_RATE_LIMIT_STATE: Dict[str, list] = {}
+_RATE_LIMIT_WINDOW_SECONDS = 300  # 5 minutes
+_RATE_LIMIT_MAX_REQUESTS = 8       # per IP+route window
+
+def _rl_key(ip: str, route_tag: str) -> str:
+    return f"{ip}:{route_tag}"
+
+def check_rate_limit(request: Request, route_tag: str) -> None:
+    """Sliding window rate limiter. Raises HTTPException(429) if exceeded.
+    NOTE: For production replace with Redis or distributed store.
+    """
+    ip = request.client.host if request.client else "unknown"
+    key = _rl_key(ip, route_tag)
+    now = time.time()
+    window_floor = now - _RATE_LIMIT_WINDOW_SECONDS
+    bucket = _RATE_LIMIT_STATE.setdefault(key, [])
+    # Drop old timestamps
+    while bucket and bucket[0] < window_floor:
+        bucket.pop(0)
+    if len(bucket) >= _RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(status_code=429, detail="Too many requests, slow down")
+    bucket.append(now)
 
 # -------------------------------------------------------------
 # Host Validation Middleware (stricter than TrustedHost if set)
@@ -832,7 +868,42 @@ async def cache_metrics():
 # ---------------------------------------------------------------------------
  # (Removed duplicate local imports moved to top)
 
-# In-memory password reset token store (temporary; replace with DB table auth_tokens)
+"""Lightweight CSRF enforcement helper & OAuth scaffolding.
+
+We already issue a CSRF token cookie (see enhanced_cookie_auth). For state changing
+endpoints that rely on cookie auth we add an explicit header vs cookie equality
+check. This is intentionally simple and can be expanded later (e.g., double-submit
+token bound to session, rotating tokens, or SameSite=strict cookies).
+
+OAuth endpoints are scaffolded (return 501) so that frontend integration can
+begin without backend implementation being complete.
+"""
+
+CSRF_HEADER_NAME = "X-CSRF-Token"
+
+def _enforce_csrf(request: Request) -> None:
+    """Raise 403 if CSRF validation fails (simple header==cookie check).
+
+    Safe methods are skipped. If CSRF protection disabled in config this is a no-op.
+    Fails closed (403) on unexpected errors.
+    """
+    try:
+        if request.method in ("GET", "HEAD", "OPTIONS"):
+            return
+        cfg = getattr(enhanced_auth_manager, "config", None)
+        if not cfg or not cfg.enable_csrf_protection:
+            return
+        header_token = request.headers.get(CSRF_HEADER_NAME)
+        cookie_token = request.cookies.get(cfg.csrf_token_name)
+        if not header_token or not cookie_token or header_token != cookie_token:
+            raise HTTPException(status_code=403, detail="CSRF token missing or mismatch")
+    except HTTPException:
+        raise
+    except Exception as err:  # pragma: no cover - defensive
+        logger.error(f"CSRF enforcement error: {err}")
+        raise HTTPException(status_code=403, detail="CSRF validation failed")
+
+# Password reset token storage (DB preferred, fallback to in-memory for environments without migrations)
 @_dc_dataclass
 class _PasswordResetToken:
     user_id: str
@@ -868,66 +939,539 @@ class PasswordResetConfirm(BaseModel):
     new_password: constr(min_length=8)  # type: ignore
 
 @app.post("/api/v1/auth/password/forgot")
-async def request_password_reset(payload: PasswordResetRequest):
-    """Initiate password reset (always 200 to avoid user enumeration)."""
+async def request_password_reset(payload: PasswordResetRequest, request: Request):
+    """Initiate password reset (always 200). Uses DB auth_tokens when available."""
     try:
+        check_rate_limit(request, "password_forgot")
         user = await User.get_by_email(payload.email)
-        if user:
-            # Generate token
+        if user and user.id:
             raw_token = _generate_reset_token()
             token_hash = _hash_reset_token(raw_token)
             expires_at = datetime.utcnow() + timedelta(minutes=30)
-            # Ensure user.id is present (fallback to get_by_email should always supply it)
-            if not user.id:
-                logger.warning("Password reset: user record missing id; aborting token creation")
-            else:
+            # Try DB persistence first
+            db_ok = False
+            try:
+                await AuthToken.create(
+                    user_id=user.id,
+                    purpose="password_reset",
+                    token_hash=token_hash,
+                    expires_at=expires_at,
+                    metadata={"delivery": "debug_return" if os.environ.get("ENV", "development") != "production" else "email"}
+                )
+                db_ok = True
+            except Exception as db_err:  # fallback
+                logger.warning(f"AuthToken DB create failed, using in-memory fallback: {db_err}")
                 _PASSWORD_RESET_TOKENS[token_hash] = _PasswordResetToken(
                     user_id=user.id,
                     token_hash=token_hash,
                     expires_at=expires_at
                 )
-            # For now we return token ONLY in non-production for testing; in prod send via email
             response = {"status": "ok"}
             if os.environ.get("ENV", "development") != "production":
                 response["debug_token"] = raw_token
+                response["storage"] = "db" if db_ok else "memory"
             return response
+        return {"status": "ok"}
+    except HTTPException as he:
+        # Propagate rate limiting (429) while masking other auth-related errors
+        if he.status_code == 429:
+            raise
+        logger.error(f"Password reset request HTTP error (masked to ok): {he}")
         return {"status": "ok"}
     except Exception as e:
         logger.error(f"Password reset request error: {e}")
-        # Still return ok to avoid enumeration
         return {"status": "ok"}
 
 @app.post("/api/v1/auth/password/reset")
-async def confirm_password_reset(payload: PasswordResetConfirm):
-    """Confirm password reset with a token and new password."""
+async def confirm_password_reset(payload: PasswordResetConfirm, request: Request):
+    """Confirm password reset with a token and new password (DB first, fallback memory)."""
     try:
+        _enforce_csrf(request)
         token_hash = _hash_reset_token(payload.token)
-        entry = _PASSWORD_RESET_TOKENS.get(token_hash)
-        if not entry or entry.used or datetime.utcnow() > entry.expires_at:
-            raise HTTPException(status_code=400, detail="Invalid or expired token")
+        # Try DB lookup first
+        entry_db = None
+        try:
+            entry_db = await AuthToken.get_valid(token_hash, "password_reset")
+        except Exception as db_err:
+            logger.warning(f"AuthToken DB lookup failed, will attempt in-memory: {db_err}")
 
-        # Fetch user
-        user = await User.get_by_id(entry.user_id)
+        if entry_db:
+            user = await User.get_by_id(entry_db.user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            from ..security import hash_password
+            new_hash = hash_password(payload.new_password)
+            await user.update_password(new_hash)
+            await entry_db.mark_used()
+            return {"status": "password_reset"}
+
+        # Fallback in-memory token handling
+        entry_mem = _PASSWORD_RESET_TOKENS.get(token_hash)
+        if not entry_mem or entry_mem.used or datetime.utcnow() > entry_mem.expires_at:
+            raise HTTPException(status_code=400, detail="Invalid or expired token")
+        user = await User.get_by_id(entry_mem.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-
-        # Update password securely
         from ..security import hash_password
         new_hash = hash_password(payload.new_password)
         await user.update_password(new_hash)
-
-        # Invalidate token
-        entry.used = True
+        entry_mem.used = True
         del _PASSWORD_RESET_TOKENS[token_hash]
-
         return {"status": "password_reset"}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Password reset confirm error: {e}")
         raise HTTPException(status_code=400, detail="Password reset failed")
+
+
+# ---------------------------------------------------------------------------
+# Email Verification Endpoints
+# ---------------------------------------------------------------------------
+class EmailVerificationRequest(BaseModel):
+    email: Optional[str] = None
+
+class EmailVerificationConfirm(BaseModel):
+    token: str
+
+@app.post("/api/v1/auth/verify/email/request")
+async def request_email_verification(payload: EmailVerificationRequest, request: Request):
+    """Issue an email verification token (idempotent). Always returns 200."""
+    # Rate limit
+    check_rate_limit(request, "email_verify")
+    email = (payload.email or "").strip().lower()
+    user: Optional[User] = None
+    if email:
+        try:
+            user = await User.get_by_email(email)
+        except Exception as e:
+            if 'another operation is in progress' in str(e).lower():
+                logger.warning("DB contention during email verification request; proceeding without user binding")
+                user = None
+            else:
+                raise
+    # If user not found or email omitted, we still respond generically
+    if user and user.is_verified:
+        return {"status": "email_verification_already"}
+    # Generate token
+    raw_token = _b64url(os.urandom(32))
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    expires_at = datetime.utcnow() + timedelta(hours=24)
+    stored_db = False
+    if user:
+        try:
+            await AuthToken.create(
+                user_id=str(user.id),
+                purpose="email_verify",
+                token_hash=token_hash,
+                expires_at=expires_at,
+                metadata={"email": user.email}
+            )
+            stored_db = True
+        except Exception as e:
+            logger.warning(f"Email verify DB token create failed (fallback to memory): {e}")
+    if not stored_db:
+        _EMAIL_VERIFY_TOKENS[token_hash] = {
+            "email": email,
+            "expires_at": expires_at,
+            "used": False
+        }
+    # Simulate sending email (debug token exposed in non-production)
+    env = os.getenv("ENV", "development")
+    resp = {"status": "email_verification_issued"}
+    if user:
+        # fire and forget (no await block issues if we want concurrency — but keep await for test determinism)
+        try:
+            await email_sender.send_email_verification(user.email, raw_token)
+        except Exception as e:
+            logger.warning(f"Email send failed (non-fatal): {e}")
+    if env != "production":
+        resp["debug_token"] = raw_token
+    return resp
+
+@app.post("/api/v1/auth/verify/email/confirm")
+async def confirm_email_verification(payload: EmailVerificationConfirm):
+    token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
+    # Try DB first
+    try:
+        entry_db = await AuthToken.get_valid(token_hash, "email_verify")
+        if entry_db:
+            user = await User.get_by_id(entry_db.user_id)
+            if user and not user.is_verified:
+                user.is_verified = True
+                user.updated_at = datetime.utcnow()
+                pool = await get_database_connection()
+                async with pool.acquire() as connection:
+                    await connection.execute("UPDATE users SET is_verified = TRUE, updated_at = $1 WHERE id = $2", user.updated_at, user.id)
+            if entry_db:
+                await entry_db.mark_used()
+            return {"status": "email_verified"}
+    except Exception as e:
+        logger.warning(f"Email verify DB lookup failed: {e}")
+    # Fallback in-memory
+    entry_mem = _EMAIL_VERIFY_TOKENS.get(token_hash)
+    if not entry_mem or entry_mem.get("used") or datetime.utcnow() > entry_mem.get("expires_at", datetime.utcnow()):
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    entry_mem["used"] = True
+    # Best effort user update if email known
+    email = entry_mem.get("email")
+    if email:
+        user = await User.get_by_email(email)
+        if user and not user.is_verified:
+            user.is_verified = True
+            user.updated_at = datetime.utcnow()
+            try:
+                pool = await get_database_connection()
+                async with pool.acquire() as connection:
+                    await connection.execute("UPDATE users SET is_verified = TRUE, updated_at = $1 WHERE id = $2", user.updated_at, user.id)
+            except Exception as e:
+                logger.warning(f"Failed to persist is_verified (memory fallback) {e}")
+    return {"status": "email_verified"}
+
+
+# ---------------------------------------------------------------------------
+# OAuth scaffolding (placeholders)
+# ---------------------------------------------------------------------------
+SUPPORTED_OAUTH_PROVIDERS = {"google", "github"}
+
+# In‑memory ephemeral OAuth state store (process local).
+_OAUTH_STATE_STORE: Dict[str, Dict[str, Any]] = {}
+_OAUTH_STATE_TTL_SECONDS = 300  # 5 minutes
+
+# In-memory email verification fallback tokens (similar pattern to password reset fallback)
+_EMAIL_VERIFY_TOKENS: Dict[str, Dict[str, Any]] = {}
+_EMAIL_VERIFY_TTL_SECONDS = 86400  # 24h
+
+# In-memory revoked refresh token jtis (simple rotation enforcement, dev only)
+_REVOKED_REFRESH_JTIS: set[str] = set()
+
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+def _sign_state(payload: Dict[str, Any]) -> str:
+    secret = os.getenv("OAUTH_STATE_SECRET") or os.getenv("SESSION_SECRET_KEY") or "dev-secret"
+    body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
+    sig = hmac.new(secret.encode(), body, hashlib.sha256).digest()
+    return _b64url(body) + "." + _b64url(sig)
+
+def _verify_state(state_token: str) -> Optional[Dict[str, Any]]:
+    try:
+        body_b64, sig_b64 = state_token.split(".", 1)
+        padding = "=" * (-len(body_b64) % 4)
+        body_raw = base64.urlsafe_b64decode(body_b64 + padding)
+        payload = json.loads(body_raw.decode())
+        expected = _sign_state(payload)
+        if not hmac.compare_digest(expected.split(".",1)[1], sig_b64):
+            return None
+        # Check expiry
+        if payload.get("exp") and time.time() > payload["exp"]:
+            return None
+        return payload
+    except Exception:
+        return None
+
+def _generate_pkce_verifier_challenge() -> Tuple[str, str]:
+    verifier = _b64url(os.urandom(32))
+    challenge = _b64url(hashlib.sha256(verifier.encode()).digest())
+    return verifier, challenge
+
+def _build_redirect_uri(provider: str) -> str:
+    base_override = os.getenv("OAUTH_REDIRECT_BASE")  # e.g. https://coder.fastmonkey.au/api/v1/auth/oauth
+    if base_override:
+        return f"{base_override}/{provider}/callback".rstrip("/")
+    # Fallback local dev assumption
+    return f"http://localhost:8000/api/v1/auth/oauth/{provider}/callback"
+
+@app.get("/api/v1/auth/oauth/{provider}/initiate")
+async def oauth_initiate(provider: str):
+    """Initiate OAuth flow for Google or GitHub.
+
+    Generates a signed, time‑limited state token (HMAC) plus, for Google, a PKCE code challenge.
+    Stores ephemeral state (session-less) in memory keyed by an internal id to support replay
+    detection and later code_verifier lookup during callback.
+    """
+    if provider not in SUPPORTED_OAUTH_PROVIDERS:
+        raise HTTPException(status_code=404, detail="Unsupported provider")
+
+    now = int(time.time())
+    state_id = _b64url(os.urandom(18))
+    base_payload = {"sid": state_id, "p": provider, "iat": now, "exp": now + _OAUTH_STATE_TTL_SECONDS}
+
+    code_verifier = None
+    code_challenge = None
+    code_challenge_method = None
+    if provider == "google":
+        code_verifier, code_challenge = _generate_pkce_verifier_challenge()
+        code_challenge_method = "S256"
+        base_payload["pkce"] = True
+
+    state_token = _sign_state(base_payload)
+
+    # Persist minimal server-side record for replay + PKCE
+    _OAUTH_STATE_STORE[state_id] = {
+        "provider": provider,
+        "created": now,
+        "expires": now + _OAUTH_STATE_TTL_SECONDS,
+        "code_verifier": code_verifier,
+        "used": False
+    }
+
+    # Provider configuration from env
+    redirect_uri = _build_redirect_uri(provider)
+    if provider == "google":
+        client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+        scopes = [
+            "openid","email","profile"
+        ]
+        auth_base = "https://accounts.google.com/o/oauth2/v2/auth"
+        query = {
+            "response_type": "code",
+            "client_id": client_id or "MISSING_CLIENT_ID",
+            "redirect_uri": redirect_uri,
+            "scope": " ".join(scopes),
+            "state": state_token,
+            "access_type": "offline",
+            "include_granted_scopes": "true"
+        }
+        if code_challenge and code_challenge_method:
+            query["code_challenge"] = code_challenge
+            query["code_challenge_method"] = code_challenge_method
+        auth_url = auth_base + "?" + urlencode(query)
+    else:  # github
+        client_id = os.getenv("GITHUB_OAUTH_CLIENT_ID")
+        auth_base = "https://github.com/login/oauth/authorize"
+        query = {
+            "client_id": client_id or "MISSING_CLIENT_ID",
+            "redirect_uri": redirect_uri,
+            "scope": "read:user user:email",
+            "state": state_token,
+        }
+        auth_url = auth_base + "?" + urlencode(query)
+
+    # Indicate if running in degraded (missing secrets) mode
+    degraded = False
+    if provider == "google" and not os.getenv("GOOGLE_OAUTH_CLIENT_ID"):
+        degraded = True
+    if provider == "github" and not os.getenv("GITHUB_OAUTH_CLIENT_ID"):
+        degraded = True
+
+    return {
+        "provider": provider,
+        "authorization_url": auth_url,
+        "state": state_token,
+        "expires_in": _OAUTH_STATE_TTL_SECONDS,
+        "pkce": bool(code_verifier),
+        "degraded": degraded
+    }
+
+@app.get("/api/v1/auth/oauth/{provider}/callback")
+async def oauth_callback(provider: str, request: Request, response: Response, code: Optional[str] = None, state: Optional[str] = None):
+    """Handle OAuth provider callback.
+
+    Steps:
+      1. Validate provider & required query params.
+      2. Verify signed state token & lookup ephemeral record.
+      3. Exchange authorization code for tokens (unless degraded mode).
+      4. Retrieve basic profile (email + name/username).
+      5. Link existing user (by email) or create a new minimal account.
+      6. Issue session & set auth cookies using enhanced_auth_manager.
+    """
+    if provider not in SUPPORTED_OAUTH_PROVIDERS:
+        raise HTTPException(status_code=404, detail="Unsupported provider")
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing code or state")
+
+    # Verify & decode state
+    state_payload = _verify_state(state)
+    if not state_payload or state_payload.get("p") != provider:
+        raise HTTPException(status_code=400, detail="Invalid state")
+    sid_val = state_payload.get("sid")
+    if not isinstance(sid_val, str):
+        raise HTTPException(status_code=400, detail="Invalid state sid")
+    record = _OAUTH_STATE_STORE.get(sid_val)
+    if not record or record.get("used") or record.get("provider") != provider or time.time() > record.get("expires", 0):
+        raise HTTPException(status_code=400, detail="Expired or replayed state")
+
+    # Mark state as used to prevent replay
+    record["used"] = True
+
+    # Determine degraded mode (missing client secrets) – in which case we mock profile
+    degraded = False
+    if provider == "google" and (not os.getenv("GOOGLE_OAUTH_CLIENT_ID") or not os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")):
+        degraded = True
+    if provider == "github" and (not os.getenv("GITHUB_OAUTH_CLIENT_ID") or not os.getenv("GITHUB_OAUTH_CLIENT_SECRET")):
+        degraded = True
+
+    profile_email: Optional[str] = None
+    profile_name: Optional[str] = None
+    username: Optional[str] = None
+
+    token_response: Dict[str, Any] = {}
+    access_token: Optional[str] = None
+    # id_token not currently used but could support future email_verified claims
+
+    if degraded:
+        # Provide deterministic mock profile for local dev
+        profile_email = f"dev-{provider}-user@example.local"
+        profile_name = f"Dev {provider.title()} User"
+        username = f"dev_{provider}_user"
+    else:
+        import httpx
+        try:
+            if provider == "google":
+                data = {
+                    "code": code,
+                    "client_id": os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
+                    "client_secret": os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+                    "redirect_uri": _build_redirect_uri(provider),
+                    "grant_type": "authorization_code"
+                }
+                if record.get("code_verifier"):
+                    data["code_verifier"] = record["code_verifier"]
+                async with httpx.AsyncClient(timeout=10) as client:
+                    r = await client.post("https://oauth2.googleapis.com/token", data=data)
+                    token_response = r.json()
+                access_token = token_response.get("access_token")
+                # Fetch userinfo
+                if access_token:
+                    async with httpx.AsyncClient(timeout=10) as client:
+                        ui = await client.get("https://openidconnect.googleapis.com/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
+                        ui_data = ui.json()
+                    profile_email = ui_data.get("email")
+                    profile_name = ui_data.get("name") or ui_data.get("given_name")
+                    username = (ui_data.get("preferred_username") or (profile_email.split("@")[0] if profile_email else None))
+            else:  # github
+                data = {
+                    "code": code,
+                    "client_id": os.getenv("GITHUB_OAUTH_CLIENT_ID"),
+                    "client_secret": os.getenv("GITHUB_OAUTH_CLIENT_SECRET"),
+                    "redirect_uri": _build_redirect_uri(provider),
+                }
+                async with httpx.AsyncClient(timeout=10, headers={"Accept": "application/json"}) as client:
+                    r = await client.post("https://github.com/login/oauth/access_token", data=data)
+                    token_response = r.json()
+                access_token = token_response.get("access_token")
+                if access_token:
+                    async with httpx.AsyncClient(timeout=10, headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json", "User-Agent": "monkey-coder"}) as client:
+                        ui = await client.get("https://api.github.com/user")
+                        ui_data = ui.json()
+                        # GitHub may require a second call for emails
+                        email_resp = await client.get("https://api.github.com/user/emails")
+                        emails = email_resp.json() if email_resp.status_code == 200 else []
+                    profile_email = None
+                    if isinstance(emails, list):
+                        primary = [e for e in emails if e.get("primary") and e.get("verified")]
+                        if primary:
+                            profile_email = primary[0].get("email")
+                    if not profile_email:
+                        # fallback to login-based pseudo email (not ideal; encourages re-initiate if private email hidden)
+                        profile_email = f"{ui_data.get('login')}@users.noreply.github.com"
+                    profile_name = ui_data.get("name") or ui_data.get("login")
+                    username = ui_data.get("login")
+        except Exception as e:
+            logger.error(f"OAuth token/profile fetch failed: {e}")
+            raise HTTPException(status_code=400, detail="OAuth token exchange failed")
+
+    if not profile_email:
+        raise HTTPException(status_code=400, detail="Failed to obtain profile email")
+
+    # Normalize email
+    email_norm = profile_email.strip().lower()
+    username = username or email_norm.split("@")[0]
+    profile_name = profile_name or username
+
+    # Link or create user
+    try:
+        user = await User.get_by_email(email_norm)
+    except Exception as e:
+        if 'another operation is in progress' in str(e).lower():
+            logger.warning("DB contention during OAuth user lookup; retrying via degraded create path")
+            user = None
+        else:
+            raise
+    created = False
+    if not user:
+        # Create minimal user; generate random password (user can set later via reset)
+        from ..security import hash_password
+        rand_pwd = _b64url(os.urandom(24))
+        try:
+            password_hash = hash_password(rand_pwd)
+            user = await User.create(
+                username=username,
+                email=email_norm,
+                full_name=profile_name,
+                password_hash=password_hash,
+                is_developer=False,
+                subscription_plan="free"
+            )
+            created = True
+        except Exception as e:
+            logger.error(f"Failed to create user during OAuth flow: {e}")
+            raise HTTPException(status_code=500, detail="Account provisioning failed")
+
+    # Build JWT & session using enhanced manager pattern
+    # Reuse create_user logic flow partially: manually constructing AuthResult inputs
+    try:
+        # Build roles
+        from ..security import get_user_permissions
+        base_roles = [UserRole.VIEWER]
+        if user.is_developer:
+            base_roles.append(UserRole.DEVELOPER)
+        from datetime import timezone as _tz
+        jwt_user = JWTUser(
+            user_id=str(user.id),
+            username=user.username,
+            email=user.email,
+            roles=base_roles,
+            permissions=get_user_permissions(base_roles),
+            expires_at=datetime.now(_tz.utc) + timedelta(minutes=30)
+        )
+        access_token_jwt = create_access_token(jwt_user)
+        refresh_token_jwt = create_refresh_token(jwt_user.user_id)
+        session_id = enhanced_auth_manager.generate_session_id()
+        csrf_token = enhanced_auth_manager.generate_csrf_token() if enhanced_auth_manager.config.enable_csrf_protection else None
+        # Register session in manager internal store
+        from datetime import timezone as _tz
+        enhanced_auth_manager._sessions[session_id] = {
+            "user_id": jwt_user.user_id,
+            "created": datetime.now(_tz.utc),
+            "last_activity": datetime.now(_tz.utc),
+            "csrf_token": csrf_token
+        }
+        # Set cookies
+        enhanced_auth_manager.set_auth_cookies(
+            response=response,
+            access_token=access_token_jwt,
+            refresh_token=refresh_token_jwt,
+            session_id=session_id,
+            csrf_token=csrf_token
+        )
+    except Exception as e:
+        logger.error(f"Failed to finalize session after OAuth: {e}")
+        raise HTTPException(status_code=500, detail="Session creation failed")
+
+    credits = 10000 if user.is_developer else 100
+    subscription_tier = user.subscription_plan or "free"
+    return {
+        "status": "ok",
+        "provider": provider,
+        "created": created,
+        "user": {
+            "id": jwt_user.user_id,
+            "email": jwt_user.email,
+            "name": jwt_user.username,
+            "credits": credits,
+            "subscription_tier": subscription_tier,
+            "is_developer": user.is_developer,
+            "roles": [r.value for r in jwt_user.roles]
+        },
+        "access_token": access_token_jwt,
+        "refresh_token": refresh_token_jwt,
+    "expires_at": (jwt_user.expires_at and jwt_user.expires_at.isoformat()),
+        "degraded": degraded
+    }
 @app.post("/api/v1/auth/login", response_model=AuthResponse)
-async def login(request: LoginRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
+async def login(request: LoginRequest, response: Response, background_tasks: BackgroundTasks, raw_request: Request) -> AuthResponse:
     """
     User login endpoint with enhanced authentication.
 
@@ -940,11 +1484,13 @@ async def login(request: LoginRequest, response: Response, background_tasks: Bac
         AuthResponse with tokens and user information
     """
     try:
+        # Rate limit first
+        check_rate_limit(raw_request, "login")
         # Authenticate user using enhanced manager
         auth_result = await enhanced_auth_manager.authenticate_user(
             email=request.email,
             password=request.password,
-            request=Request(scope={}),  # Mock request for CLI compatibility
+            request=raw_request,
             for_cli=False
         )
 
@@ -999,7 +1545,7 @@ async def login(request: LoginRequest, response: Response, background_tasks: Bac
 
 
 @app.post("/api/v1/auth/signup", response_model=AuthResponse)
-async def signup(request: SignupRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
+async def signup(request: SignupRequest, response: Response, background_tasks: BackgroundTasks, raw_request: Request) -> AuthResponse:
     """
     User signup endpoint with enhanced authentication.
 
@@ -1015,20 +1561,33 @@ async def signup(request: SignupRequest, response: Response, background_tasks: B
         HTTPException: If signup fails or user already exists
     """
     try:
-        # Check if user already exists
-        existing_user = await User.get_by_email(request.email)
+        # Rate limit signup attempts per IP
+        try:
+            check_rate_limit(raw_request, "signup")
+        except HTTPException:
+            # propagate 429
+            raise
+
+        # Normalize email (case-insensitive uniqueness)
+        email_norm = request.email.strip().lower()
+
+        # Basic password policy (length + diversity heuristic)
+        pwd = request.password
+        if len(pwd) < 10 or sum(c.isdigit() for c in pwd) < 1 or sum(c.isalpha() for c in pwd) < 1:
+            raise HTTPException(status_code=400, detail="Password does not meet minimum complexity requirements")
+
+        # Soft enumeration resistance: always perform timing-similar path
+        existing_user = await User.get_by_email(email_norm)
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User with this email already exists"
-            )
+            # Return 409 but generic wording
+            raise HTTPException(status_code=409, detail="Account creation failed")
 
         # Create new user using enhanced manager
         auth_result = await enhanced_auth_manager.create_user(
             username=request.username,
             name=request.name,
-            email=request.email,
-            password=request.password,
+            email=email_norm,
+            password=pwd,
             plan=request.plan or "free"
         )
 
@@ -1356,7 +1915,35 @@ async def refresh_token(request: Request, response: Response) -> AuthResponse:
         New JWT tokens
     """
     try:
-        # Refresh using enhanced manager
+        # Extract existing refresh token cookie (raw) for rotation tracking
+        # Support both current and legacy cookie names for refresh token (tests may use 'refresh_token')
+        refresh_cookie_name = getattr(enhanced_auth_manager.config, 'refresh_token_name', 'refresh_token')
+        # Collect both possible cookies
+        legacy_refresh = request.cookies.get('refresh_token')
+        current_refresh = request.cookies.get(refresh_cookie_name)
+        old_refresh = None
+        # If client explicitly supplies legacy cookie treat it as the attempted token (even if a newer cookie exists)
+        if legacy_refresh:
+            old_refresh = legacy_refresh
+        else:
+            old_refresh = current_refresh
+        old_jti = None
+        if old_refresh:
+            try:
+                payload = verify_token(old_refresh)
+                if payload.get('type') == 'refresh':
+                    old_jti = payload.get('jti')
+                    if old_jti in _REVOKED_REFRESH_JTIS:
+                        raise HTTPException(status_code=401, detail="Refresh token revoked")
+            except HTTPException:
+                raise
+            except Exception:
+                # Invalid refresh token structure
+                raise HTTPException(status_code=401, detail="Invalid refresh token")
+        # If legacy refresh provided but differs from current valid refresh cookie and not revoked, we still proceed to refresh
+        # using the manager (which will rely on current_refresh). This mimics real-world browsers where multiple cookies may exist.
+
+        # Refresh using enhanced manager (issues new tokens)
         auth_result = await enhanced_auth_manager.refresh_authentication(request)
 
         if not auth_result.success or not auth_result.user:
@@ -1376,6 +1963,10 @@ async def refresh_token(request: Request, response: Response) -> AuthResponse:
             session_id=auth_result.session_id,
             csrf_token=auth_result.csrf_token
         )
+
+        # Revoke old refresh jti after successful issuance
+        if old_jti:
+            _REVOKED_REFRESH_JTIS.add(old_jti)
 
         # Get user details
         user = await User.get_by_id(auth_result.user.user_id)

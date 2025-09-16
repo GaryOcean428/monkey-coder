@@ -1,6 +1,6 @@
 # Monkey Coder
 
-**AI-Powered Code Generation and Analysis Platform**
+## AI-Powered Code Generation and Analysis Platform
 
 > **Note**: This is a monorepo transformation of the original
 project, restructured for better developer
@@ -29,9 +29,136 @@ with:
 - 📚 **Comprehensive Documentation** with MkDocs
 - ⚡ **Auto-Publishing** on every commit for instant updates
 
+## 🔐 Authentication & Security Hardening (Recent Updates)
+
+The authentication subsystem has undergone a focused hardening pass. Key improvements now in place:
+
+Current Features:
+- Strong password hashing via bcrypt (legacy SHA256 hashes transparently migrated on successful login)
+- Password reset flow with database-backed token storage (`auth_tokens` table) and safe in-memory fallback
+- Reset tokens: single-use, hashed at rest, 30‑minute TTL, usage invalidation
+- Simple in-memory per-IP rate limiting (login & password reset request endpoints)
+- Lightweight CSRF enforcement helper (header `X-CSRF-Token` must match CSRF cookie when protection enabled)
+- Structured OAuth scaffolding endpoints (`/api/v1/auth/oauth/{provider}/initiate|callback`) for Google & GitHub (return 501 until wired)
+- Unified security roadmap embedded in code for continuity
+ - OAuth implementation (Google/GitHub) now active with signed state + PKCE (Google) and degraded mock mode if secrets absent
+ - Signup endpoint hardened with rate limiting, email normalization, password complexity policy, enumeration resistance
+ - Email verification flow (request + confirm) using `AuthToken` purpose `email_verify` with DB + in-memory fallback and dev debug token
+ - Refresh token rotation with in-memory revoked JTI tracking (development safeguard)
+
+New / Updated Endpoints:
+- POST `/api/v1/auth/password/forgot` – Always returns 200; issues reset token (debug token included in non-production)
+- POST `/api/v1/auth/password/reset` – Validates token (DB first, fallback memory), updates password
+- GET `/api/v1/auth/oauth/{provider}/initiate` – Placeholder for future OAuth initiation
+- GET `/api/v1/auth/oauth/{provider}/callback` – Placeholder for future OAuth callback handling
+ - GET `/api/v1/auth/oauth/{provider}/initiate` – Initiate OAuth (returns signed state, PKCE challenge for Google)
+ - GET `/api/v1/auth/oauth/{provider}/callback` – Completes OAuth (state validation, token exchange/profile fetch, session creation)
+
+Rate Limiting (current dev implementation):
+- Sliding window: 8 requests / 5 minutes per IP+route tag
+- Exceeding threshold returns HTTP 429 (not masked)
+
+CSRF Protection:
+- CSRF token issued alongside auth cookies when enabled
+- Enforcement helper performs header vs cookie equality on mutating endpoints (expandable to session-bound tokens)
+
+Password Reset Token Storage Strategy:
+1. Try persistent insert into `auth_tokens`
+2. On DB failure, fallback to in-memory store (process-local, dev-friendly)
+3. Confirmation prefers DB, falls back to in-memory if DB lookup fails
+
+Test Coverage Added:
+- DB token fallback & confirmation path
+- Rate limiting threshold enforcement (returns 429)
+
+Planned / Roadmap (Next Iteration Targets):
+- Email verification tokens (purpose=`email_verify`) and gated elevated actions
+- Production-grade distributed rate limiting (Redis or Postgres advisory locks)
+- Session persistence & refresh token rotation (eliminate pure in-memory sessions)
+- Full OAuth integration (Google / GitHub) + state & PKCE handling
+ - (Implemented) Full OAuth integration with state & PKCE (now moved to Current Features)
+- Brute force mitigation: adaptive backoff / IP+account lockout heuristics
+- Enhanced CSRF: session-bound HMAC or double-submit with rotating nonce
+- Email delivery pipeline (SES / Resend) replacing debug token exposure
+- Optional WebAuthn / passkey support for strong auth
+
+Future Enhancements (post-next roadmap item focus):
+- Distributed email dispatch queue (Redis / Postgres advisory locks)
+- Structured auth audit log (append-only with hash chain for tamper detection)
+- Adaptive anomaly detection on login/IP velocity
+- Policy engine integration (Rego/Cedar) for fine-grained authorization
+- Timezone-aware datetimes + Pydantic v2 ConfigDict migration
+
+Operational Notes:
+- Non-production environments expose `debug_token` for DX; ensure `ENV=production` to disable
+- Fallback paths log warnings to avoid silent security degradation
+
+See in-code roadmap comments in `monkey_coder/app/main.py` for authoritative task tracking.
+
+### OAuth Implementation Details
+
+Security measures:
+- HMAC-signed state token (sid, provider, iat, exp) using `OAUTH_STATE_SECRET` (fallback to `SESSION_SECRET_KEY` in dev)
+- Ephemeral in-memory state store with 5‑minute TTL and single-use replay protection
+- PKCE S256 for Google (code challenge + verifier persisted server-side) to mitigate code interception
+- Degraded mode: if provider client id/secret env vars are missing, endpoints still function with deterministic mock profiles for local DX but return `degraded=true`
+
+Environment variables (set for production):
+```bash
+GOOGLE_OAUTH_CLIENT_ID=... \
+GOOGLE_OAUTH_CLIENT_SECRET=... \
+GITHUB_OAUTH_CLIENT_ID=... \
+GITHUB_OAUTH_CLIENT_SECRET=... \
+OAUTH_REDIRECT_BASE=https://coder.fastmonkey.au/api/v1/auth/oauth \
+OAUTH_STATE_SECRET=long-random-hmac-key
+```
+
+State Token Format (base64url(body).base64url(hmac_sha256(body))):
+```
+{"sid":"<random>","p":"google|github","iat":<sec> ,"exp":<sec>}
+```
+
+Callback Flow Summary:
+1. Validate provider & presence of `code` + `state`
+2. Verify HMAC signature & TTL; enforce single-use (mark state consumed)
+3. Exchange code for tokens (skipped in degraded mode with mock profile)
+4. Fetch profile (Google OpenID userinfo / GitHub user + emails)
+5. Normalize email; create user if absent with random internal password
+6. Issue JWT access + refresh tokens & session cookies via enhanced manager
+
+### Signup Hardening
+
+### Email Verification
+
+Endpoints:
+- POST `/api/v1/auth/verify/email/request` – Idempotent; issues verification token (24h TTL); always 200
+- POST `/api/v1/auth/verify/email/confirm` – Consumes token; sets `is_verified=true`
+
+Characteristics:
+- Stores hashed token in `auth_tokens` (purpose=`email_verify`) or in-memory fallback
+- Debug token included when `ENV!=production` for local testing
+- Safe enumeration: unknown email or already verified both return 200 with generic status
+
+### Refresh Token Rotation (Dev In-Memory)
+
+- Each successful refresh revokes the previous refresh token JTI (in-memory set)
+- Reuse of an old refresh token returns 401
+- Future enhancement: persistent revocation list (Redis/Postgres)
+
+Policies enforced:
+- Rate limit: same in-memory limiter (8 req / 5 min per IP) applied to `POST /api/v1/auth/signup`
+- Email normalization: lowercased before uniqueness check
+- Password policy: minimum length 10, requires at least one alphabetic and one numeric character (extendable)
+- Enumeration resistance: duplicate email returns generic 409 "Account creation failed" message
+
+### Testing Additions
+
+- `test_oauth_flow.py` covers initiate (state + degraded mode), state tampering rejection, and successful callback session creation
+- `test_signup_rate_limit.py` ensures rate limiting triggers 429 and limits successful signups
+
 ## Monorepo Structure
 
-```
+```text
 monkey-coder/
 ├─ packages/
 │  ├─ cli/              # TypeScript CLI tools
@@ -67,11 +194,11 @@ specially designed function call format;
 1. ✨ Supporting long context understanding and generation with the context length of 256K tokens;
 2. ✨ Supporting 358 coding languages;
 
-```
+```text
 ['ABAP', 'ActionScript', 'Ada', 'Agda', 'Alloy', 'ApacheConf', 'AppleScript', 'Arc', 'Arduino', 'AsciiDoc', 'AspectJ', 'Assembly', 'Augeas', 'AutoHotkey', 'AutoIt', 'Awk', 'Batchfile', 'Befunge', 'Bison', 'BitBake', 'BlitzBasic', 'BlitzMax', 'Bluespec', 'Boo', 'Brainfuck', 'Brightscript', 'Bro', 'C', 'C#', 'C++', 'C2hs Haskell', 'CLIPS', 'CMake', 'COBOL', 'CSS', 'CSV', "Cap'n Proto", 'CartoCSS', 'Ceylon', 'Chapel', 'ChucK', 'Cirru', 'Clarion', 'Clean', 'Click', 'Clojure', 'CoffeeScript', 'ColdFusion', 'ColdFusion CFC', 'Common Lisp', 'Component Pascal', 'Coq', 'Creole', 'Crystal', 'Csound', 'Cucumber', 'Cuda', 'Cycript', 'Cython', 'D', 'DIGITAL Command Language', 'DM', 'DNS Zone', 'Darcs Patch', 'Dart', 'Diff', 'Dockerfile', 'Dogescript', 'Dylan', 'E', 'ECL', 'Eagle', 'Ecere Projects', 'Eiffel', 'Elixir', 'Elm', 'Emacs Lisp', 'EmberScript', 'Erlang', 'F#', 'FLUX', 'FORTRAN', 'Factor', 'Fancy', 'Fantom', 'Forth', 'FreeMarker', 'G-code', 'GAMS', 'GAP', 'GAS', 'GDScript', 'GLSL', 'Genshi', 'Gentoo Ebuild', 'Gentoo Eclass', 'Gettext Catalog', 'Glyph', 'Gnuplot', 'Go', 'Golo', 'Gosu', 'Grace', 'Gradle', 'Grammatical Framework', 'GraphQL', 'Graphviz (DOT)', 'Groff', 'Groovy', 'Groovy Server Pages', 'HCL', 'HLSL', 'HTML', 'HTML+Django', 'HTML+EEX', 'HTML+ERB', 'HTML+PHP', 'HTTP', 'Haml', 'Handlebars', 'Harbour', 'Haskell', 'Haxe', 'Hy', 'IDL', 'IGOR Pro', 'INI', 'IRC log', 'Idris', 'Inform 7', 'Inno Setup', 'Io', 'Ioke', 'Isabelle', 'J', 'JFlex', 'JSON', 'JSON5', 'JSONLD', 'JSONiq', 'JSX', 'Jade', 'Jasmin', 'Java', 'Java Server Pages', 'JavaScript', 'Julia', 'Jupyter Notebook', 'KRL', 'KiCad', 'Kit', 'Kotlin', 'LFE', 'LLVM', 'LOLCODE', 'LSL', 'LabVIEW', 'Lasso', 'Latte', 'Lean', 'Less', 'Lex', 'LilyPond', 'Linker Script', 'Liquid', 'Literate Agda', 'Literate CoffeeScript', 'Literate Haskell', 'LiveScript', 'Logos', 'Logtalk', 'LookML', 'Lua', 'M', 'M4', 'MAXScript', 'MTML', 'MUF', 'Makefile', 'Mako', 'Maple', 'Markdown', 'Mask', 'Mathematica', 'Matlab', 'Max', 'MediaWiki', 'Metal', 'MiniD', 'Mirah', 'Modelica', 'Module Management System', 'Monkey', 'MoonScript', 'Myghty', 'NSIS', 'NetLinx', 'NetLogo', 'Nginx', 'Nimrod', 'Ninja', 'Nit', 'Nix', 'Nu', 'NumPy', 'OCaml', 'ObjDump', 'Objective-C++', 'Objective-J', 'Octave', 'Omgrofl', 'Opa', 'Opal', 'OpenCL', 'OpenEdge ABL', 'OpenSCAD', 'Org', 'Ox', 'Oxygene', 'Oz', 'PAWN', 'PHP', 'POV-Ray SDL', 'Pan', 'Papyrus', 'Parrot', 'Parrot Assembly', 'Parrot Internal Representation', 'Pascal', 'Perl', 'Perl6', 'Pickle', 'PigLatin', 'Pike', 'Pod', 'PogoScript', 'Pony', 'PostScript', 'PowerShell', 'Processing', 'Prolog', 'Propeller Spin', 'Protocol Buffer', 'Public Key', 'Pure Data', 'PureBasic', 'PureScript', 'Python', 'Python traceback', 'QML', 'QMake', 'R', 'RAML', 'RDoc', 'REALbasic', 'RHTML', 'RMarkdown', 'Racket', 'Ragel in Ruby Host', 'Raw token data', 'Rebol', 'Red', 'Redcode', "Ren'Py", 'RenderScript', 'RobotFramework', 'Rouge', 'Ruby', 'Rust', 'SAS', 'SCSS', 'SMT', 'SPARQL', 'SQF', 'SQL', 'STON', 'SVG', 'Sage', 'SaltStack', 'Sass', 'Scala', 'Scaml', 'Scheme', 'Scilab', 'Self', 'Shell', 'ShellSession', 'Shen', 'Slash', 'Slim', 'Smali', 'Smalltalk', 'Smarty', 'Solidity', 'SourcePawn', 'Squirrel', 'Stan', 'Standard ML', 'Stata', 'Stylus', 'SuperCollider', 'Swift', 'SystemVerilog', 'TOML', 'TXL', 'Tcl', 'Tcsh', 'TeX', 'Tea', 'Text', 'Textile', 'Thrift', 'Turing', 'Turtle', 'Twig', 'TypeScript', 'Unified Parallel C', 'Unity3D Asset', 'Uno', 'UnrealScript', 'UrWeb', 'VCL', 'VHDL', 'Vala', 'Verilog', 'VimL', 'Visual Basic', 'Volt', 'Vue', 'Web Ontology Language', 'WebAssembly', 'WebIDL', 'X10', 'XC', 'XML', 'XPages', 'XProc', 'XQuery', 'XS', 'XSLT', 'Xojo', 'Xtend', 'YAML', 'YANG', 'Yacc', 'Zephir', 'Zig', 'Zimpl', 'desktop', 'eC', 'edn', 'fish', 'mupad', 'nesC', 'ooc', 'reStructuredText', 'wisp', 'xBase']
 ```
 
-3. ✨ Retain strengths in math and general capabilities from base model.
+1. ✨ Retain strengths in math and general capabilities from base model.
 
 > [!Important]
 >
@@ -269,11 +396,11 @@ Then re-run the orchestrator. Once ready, future Phase 2 will integrate Railway 
 
 Related tests:
 - `test_frontend_integrity.py` ensures exported assets exist (skips gracefully if absent locally)
-- `test_env_schema.py` guards the orchestrator’s environment schema
+- `test_env_schema.py` guards the orchestrator's environment schema
 
 Marker Strategy:
 - Advanced quantum Phase 2 tests are deferred and tagged with `@pytest.mark.quantum_phase2`; default CI excludes them.
-```
+```text
 
 ## Published Packages
 
@@ -501,7 +628,7 @@ print(f"Prompt: {input_text}\n\nGenerated text: {output_text}")
 <details>
 <summary>Prompt with Qwen Chat Web Dev </summary>
 
-```
+```text
 使用 three.js, cannon-es.js 生成一个震撼的3D建筑拆除演示。
 
 ## 场景设置：
@@ -545,18 +672,14 @@ print(f"Prompt: {input_text}\n\nGenerated text: {output_text}")
 
 </details>
 
-<p align="center">
-    <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo1.mp4">
-    <img src="assets/usage_demo_example1.png" width="400" />
-    </a>
-<p >
+<div align="center"><a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo1.mp4"><img src="assets/usage_demo_example1.png" width="400" alt="Demo 1 usage screenshot" /></a></div>
 
 ### Example: Multicolor and Interactive Animation
 
 <details>
 <summary>Prompt with Cline [act mode] </summary>
 
-```
+```text
 Create an amazing animation multicolor and interactive using p5js
 
 use this CDN:
@@ -567,7 +690,7 @@ https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo2.mp4">
-    <img src="assets/usage_demo_example2.png" width="400" />
+    <img src="assets/usage_demo_example2.png" width="400" alt="Multicolor Interactive Animation Demo" />
     </a>
 <p >
 
@@ -576,7 +699,7 @@ https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js
 <details>
 <summary>Prompt with Qwen Chat Web Dev </summary>
 
-```
+```text
 To create a 3D Google Earth, you need to load the terrain map correctly. You can use any online resource. The code is written into an HTML file.
 ```
 
@@ -584,7 +707,7 @@ To create a 3D Google Earth, you need to load the terrain map correctly. You can
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo3.mp4">
-    <img src="assets/usage_demo_example3.png" width="400" />
+    <img src="assets/usage_demo_example3.png" width="400" alt="3D Google Earth Demo" />
     </a>
 <p >
 
@@ -593,7 +716,7 @@ To create a 3D Google Earth, you need to load the terrain map correctly. You can
 <details>
 <summary> Prompt with Qwen-Code CLI </summary>
 
-```
+```text
 Create an interesting typing game with a keyboard in the lower middle of the screen and some famous articles in the upper middle. When the user types a word correctly, a cool reaction should be given to encourage him. Design a modern soft color scheme inspired by macarons. Come up with a very creative solution first, and then start writing code.
 The game should be able to support typing, and you need to neglect upcase and lowercase.
 ```
@@ -602,7 +725,7 @@ The game should be able to support typing, and you need to neglect upcase and lo
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo4.mp4">
-    <img src="assets/usage_demo_example4.png" width="400" />
+    <img src="assets/usage_demo_example4.png" width="400" alt="Typing Game Demo" />
     </a>
 <p >
 
@@ -611,7 +734,7 @@ The game should be able to support typing, and you need to neglect upcase and lo
 <details>
 <summary> Prompt with Qwen Chat Web Dev </summary>
 
-```
+```text
 Make a page in HTML that shows an animation of a ball bouncing in a rotating hypercube
 ```
 
@@ -619,7 +742,7 @@ Make a page in HTML that shows an animation of a ball bouncing in a rotating hyp
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo5.mp4">
-    <img src="assets/usage_demo_example5.png" width="400" />
+    <img src="assets/usage_demo_example5.png" width="400" alt="Bouncing Ball in Rotation Hypercube Demo" />
     </a>
 <p >
 
@@ -628,7 +751,7 @@ Make a page in HTML that shows an animation of a ball bouncing in a rotating hyp
 <details>
 <summary> Prompt with Cline [act mode] </summary>
 
-```
+```text
 write a web page to show the solar system simulation
 ```
 
@@ -636,7 +759,7 @@ write a web page to show the solar system simulation
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo6.mp4">
-    <img src="assets/usage_demo_example6.png" width="400" />
+    <img src="assets/usage_demo_example6.png" width="400" alt="Solar System Simulation Demo" />
     </a>
 <p >
 
@@ -645,7 +768,7 @@ write a web page to show the solar system simulation
 <details>
 <summary> Prompt with Cline [act mode] </summary>
 
-```
+```text
 Create a complete, single-file HTML game with CSS and JavaScript. The game is inspired by "Duet".
 
 Gameplay:
@@ -666,7 +789,7 @@ Animations should be very smooth.
 
 <p align="center">
     <a href="HTTPS://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-Coder/demo7.mp4">
-    <img src="assets/usage_demo_example7.png" width="400" />
+    <img src="assets/usage_demo_example7.png" width="400" alt="DUET Game Demo" />
     </a>
 <p >
 

@@ -5,14 +5,12 @@ This module defines the database models for storing usage events,
 billing information, and related data.
 """
 
-import asyncio
 import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-import asyncpg
 from pydantic import BaseModel, Field
 
 from .connection import get_database_connection
@@ -130,7 +128,7 @@ class UsageEvent(BaseModel):
                 SELECT * FROM usage_events
                 WHERE api_key_hash = $1
             """
-            params = [api_key_hash]
+            params: List[Any] = [api_key_hash]
 
             if start_date:
                 query += " AND created_at >= $2"
@@ -190,7 +188,7 @@ class UsageEvent(BaseModel):
                 FROM usage_events
                 WHERE api_key_hash = $1
             """
-            params = [api_key_hash]
+            params: List[Any] = [api_key_hash]
 
             if start_date:
                 query += " AND created_at >= $2"
@@ -538,3 +536,63 @@ class User(BaseModel):
             await connection.execute("""
                 UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3
             """, self.password_hash, self.updated_at, self.id)
+
+
+class AuthToken(BaseModel):
+    """Model representing an authentication/verification token (password reset, email verify)."""
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
+    user_id: str
+    purpose: str
+    token_hash: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    class Config:
+        json_encoders = {datetime: lambda v: v.isoformat(), UUID: str}
+
+    @classmethod
+    async def create(cls, **kwargs) -> "AuthToken":
+        token = cls(**kwargs)
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute(
+                """
+                INSERT INTO auth_tokens (id, user_id, purpose, token_hash, created_at, expires_at, used_at, metadata)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                """,
+                token.id, token.user_id, token.purpose, token.token_hash,
+                token.created_at, token.expires_at, token.used_at, json.dumps(token.metadata)
+            )
+        return token
+
+    @classmethod
+    async def get_valid(cls, token_hash: str, purpose: str) -> Optional["AuthToken"]:
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            row = await connection.fetchrow(
+                """
+                SELECT * FROM auth_tokens
+                WHERE token_hash = $1 AND purpose = $2 AND used_at IS NULL AND expires_at > NOW()
+                LIMIT 1
+                """, token_hash, purpose
+            )
+            if row:
+                data = dict(row)
+                if data.get('metadata'):
+                    data['metadata'] = json.loads(data['metadata'])
+                else:
+                    data['metadata'] = {}
+                return cls(**data)
+            return None
+
+    async def mark_used(self):
+        self.used_at = datetime.utcnow()
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute(
+                """
+                UPDATE auth_tokens SET used_at = $1 WHERE id = $2
+                """, self.used_at, self.id
+            )
