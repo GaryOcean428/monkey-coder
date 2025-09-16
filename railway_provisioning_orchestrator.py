@@ -42,6 +42,39 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger("railway_provisioning")
 
 
+def load_env_files() -> None:
+    """Best-effort load of env files (.env, .env.railway, .env.local).
+
+    This is intentionally minimal (not a full dotenv parser). Lines of the form
+    KEY=VALUE are exported if the key is not already in the environment.
+    Quotes are stripped. Comments (#) and blank lines skipped.
+    Precedence: existing os.environ wins over files.
+    """
+    candidate_files = [
+        Path('.env.railway'),
+        Path('.env'),
+        Path('.env.local'),
+        Path('.env.production'),
+    ]
+    for f in candidate_files:
+        if not f.exists():
+            continue
+        try:
+            for line in f.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' not in line:
+                    continue
+                key, val = line.split('=', 1)
+                key = key.strip()
+                if key and key not in os.environ:
+                    val = val.strip().strip('"').strip("'")
+                    os.environ[key] = val
+        except Exception as e:  # pragma: no cover
+            logger.warning(f"Failed parsing {f}: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
@@ -146,6 +179,8 @@ def check_frontend_integrity() -> FrontendIntegrityResult:
 
 
 def assess() -> ProvisioningAssessment:
+    # Load env files first (non-destructive for existing live vars)
+    load_env_files()
     env_results = check_environment()
     missing_required = [n for n, r in env_results.items() if r.required and not r.present]
     frontend = check_frontend_integrity()

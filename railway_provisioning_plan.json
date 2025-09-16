@@ -1,16 +1,7 @@
 {
   "version": 1,
-  "ready": false,
-  "missing_required": [
-    "NODE_ENV",
-    "PYTHON_ENV",
-    "NEXTAUTH_SECRET",
-    "NEXTAUTH_URL",
-    "NEXT_PUBLIC_API_URL",
-    "NEXT_PUBLIC_APP_URL",
-    "NEXT_OUTPUT_EXPORT",
-    "NEXT_TELEMETRY_DISABLED"
-  ],
+  "ready": true,
+  "missing_required": [],
   "frontend": {
     "present": true,
     "index_hash": "6d74f6ffce5c7785101dd75ccabc2caf54348f647658e6bac6ef6219e6055162",
@@ -20,19 +11,19 @@
   "environment": {
     "NODE_ENV": {
       "name": "NODE_ENV",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "production",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "PYTHON_ENV": {
       "name": "PYTHON_ENV",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "production",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "JWT_SECRET_KEY": {
       "name": "JWT_SECRET_KEY",
@@ -44,51 +35,51 @@
     },
     "NEXTAUTH_SECRET": {
       "name": "NEXTAUTH_SECRET",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "oAPe...germ",
       "required": true,
       "secret": true,
       "default_used": false
     },
     "NEXTAUTH_URL": {
       "name": "NEXTAUTH_URL",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "https://coder.fastmonkey.au",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "NEXT_PUBLIC_API_URL": {
       "name": "NEXT_PUBLIC_API_URL",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "https://coder.fastmonkey.au",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "NEXT_PUBLIC_APP_URL": {
       "name": "NEXT_PUBLIC_APP_URL",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "https://coder.fastmonkey.au",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "NEXT_OUTPUT_EXPORT": {
       "name": "NEXT_OUTPUT_EXPORT",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "true",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "NEXT_TELEMETRY_DISABLED": {
       "name": "NEXT_TELEMETRY_DISABLED",
-      "present": false,
-      "value_preview": null,
+      "present": true,
+      "value_preview": "1",
       "required": true,
       "secret": false,
-      "default_used": true
+      "default_used": false
     },
     "OPENAI_API_KEY": {
       "name": "OPENAI_API_KEY",
@@ -123,8 +114,5 @@
       "default_used": false
     }
   },
-  "recommendations": [
-    "Set all missing required environment variables before provisioning",
-    "Replace default fallbacks with explicit values for production consistency"
-  ]
+  "recommendations": []
 }
