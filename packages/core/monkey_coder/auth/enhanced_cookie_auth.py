@@ -7,6 +7,8 @@ This module provides a comprehensive authentication solution that:
 3. Provides secure token refresh and session management
 4. Implements proper security headers and CORS configuration
 5. Supports both web and CLI authentication scenarios
+6. (Planned) Bridge for external identity providers (Google/GitHub) via NextAuth
+    - Not yet implemented: no OAuth callback consumption / account linking logic present.
 """
 
 import logging
@@ -320,6 +322,24 @@ class EnhancedAuthManager:
                     message="Invalid email or password"
                 )
 
+            # --- Legacy password hash migration (sha256 -> bcrypt) ---
+            # If user.password_hash looks like a raw hex SHA256 (64 hex chars, no bcrypt prefix),
+            # verify by recomputing and then upgrade to bcrypt via security.hash_password.
+            try:
+                from ..security import hash_password
+                import re
+                import hashlib
+                raw_hash = user.password_hash
+                if raw_hash and re.fullmatch(r"[a-fA-F0-9]{64}", raw_hash):
+                    if hashlib.sha256(password.encode()).hexdigest() == raw_hash:
+                        # Rehash with bcrypt and update user record
+                        new_hash = hash_password(password)
+                        await user.update(password_hash=new_hash)
+                        logger.info(f"Upgraded legacy SHA256 password hash for user {user.email}")
+                # else assume already bcrypt / supported by passlib
+            except Exception as mig_e:  # pragma: no cover - non-critical path
+                logger.warning(f"Password migration check failed for {getattr(user,'email','?')}: {mig_e}")
+
             # Convert database user roles to UserRole enums
             user_roles = []
             for role_str in user.roles:
@@ -418,11 +438,13 @@ class EnhancedAuthManager:
         """
         try:
             from ..database.models import User
-            import hashlib
-            
-            # Hash the password
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
-            
+            # Use centralized secure password hashing (bcrypt via passlib) instead of insecure sha256.
+            # NOTE: Legacy accounts created before this change may still have a raw sha256 hash; migration is handled
+            # during authentication in authenticate_user (rehash path to be added separately if needed).
+            from ..security import hash_password
+
+            password_hash = hash_password(password)
+
             # Create user in database
             new_user = await User.create(
                 username=username,
@@ -447,20 +469,23 @@ class EnhancedAuthManager:
                 )
 
             # Create JWT tokens
-            user_roles = [UserRole.USER]
+            # Base role selection: system currently defines VIEWER / DEVELOPER / ADMIN / API_USER.
+            user_roles = [UserRole.VIEWER]
             if new_user.is_developer:
                 user_roles.append(UserRole.DEVELOPER)
 
+            from ..security import get_user_permissions
             jwt_user = JWTUser(
                 user_id=str(new_user.id),
                 email=new_user.email,
                 username=new_user.username,
                 roles=user_roles,
+                permissions=get_user_permissions(user_roles),
                 expires_at=datetime.now(timezone.utc) + timedelta(minutes=30)
             )
 
             access_token = create_access_token(jwt_user)
-            refresh_token = create_refresh_token(jwt_user)
+            refresh_token = create_refresh_token(jwt_user.user_id)
 
             return AuthResult(
                 success=True,

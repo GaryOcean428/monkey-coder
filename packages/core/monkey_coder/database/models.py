@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class UsageEvent(BaseModel):
     """
     Model for tracking API usage events.
-    
+
     This model stores detailed information about each API request
     for billing and analytics purposes.
     """
@@ -31,34 +31,34 @@ class UsageEvent(BaseModel):
     api_key_hash: str = Field(..., description="Hashed API key identifier")
     execution_id: str = Field(..., description="Execution identifier from task")
     task_type: str = Field(..., description="Type of task executed")
-    
+
     # Usage metrics
     tokens_input: int = Field(..., description="Input tokens consumed")
     tokens_output: int = Field(..., description="Output tokens generated")
     tokens_total: int = Field(..., description="Total tokens used")
-    
+
     # Provider and model information
     provider: str = Field(..., description="AI provider used")
     model: str = Field(..., description="Model used for execution")
     model_cost_input: float = Field(..., description="Cost per input token")
     model_cost_output: float = Field(..., description="Cost per output token")
-    
+
     # Calculated costs
     cost_input: float = Field(..., description="Input cost (tokens × price)")
     cost_output: float = Field(..., description="Output cost (tokens × price)")
     cost_total: float = Field(..., description="Total cost for this event")
-    
+
     # Execution metadata
     execution_time: float = Field(..., description="Execution time in seconds")
     status: str = Field(..., description="Execution status")
     error_message: Optional[str] = Field(None, description="Error message if failed")
-    
+
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # Additional metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional event metadata")
-    
+
     class Config:
         """Pydantic configuration."""
         json_encoders = {
@@ -70,15 +70,15 @@ class UsageEvent(BaseModel):
     async def create(cls, **kwargs) -> "UsageEvent":
         """
         Create a new usage event in the database.
-        
+
         Args:
             **kwargs: Usage event data
-            
+
         Returns:
             UsageEvent: Created usage event
         """
         event = cls(**kwargs)
-        
+
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             await connection.execute("""
@@ -100,10 +100,10 @@ class UsageEvent(BaseModel):
                 event.execution_time, event.status, event.error_message,
                 event.created_at, json.dumps(event.metadata)
             )
-        
+
         logger.info(f"Created usage event: {event.id}")
         return event
-    
+
     @classmethod
     async def get_usage_by_api_key(
         cls,
@@ -114,13 +114,13 @@ class UsageEvent(BaseModel):
     ) -> List["UsageEvent"]:
         """
         Get usage events for an API key.
-        
+
         Args:
             api_key_hash: Hashed API key
             start_date: Optional start date filter
             end_date: Optional end date filter
             limit: Maximum number of events to return
-            
+
         Returns:
             List[UsageEvent]: List of usage events
         """
@@ -131,23 +131,23 @@ class UsageEvent(BaseModel):
                 WHERE api_key_hash = $1
             """
             params = [api_key_hash]
-            
+
             if start_date:
                 query += " AND created_at >= $2"
                 params.append(start_date)
-                
+
                 if end_date:
                     query += " AND created_at <= $3"
                     params.append(end_date)
             elif end_date:
                 query += " AND created_at <= $2"
                 params.append(end_date)
-            
+
             query += " ORDER BY created_at DESC LIMIT $" + str(len(params) + 1)
             params.append(limit)
-            
+
             rows = await connection.fetch(query, *params)
-            
+
             events = []
             for row in rows:
                 event_data = dict(row)
@@ -156,9 +156,9 @@ class UsageEvent(BaseModel):
                 else:
                     event_data['metadata'] = {}
                 events.append(cls(**event_data))
-            
+
             return events
-    
+
     @classmethod
     async def get_usage_summary(
         cls,
@@ -168,19 +168,19 @@ class UsageEvent(BaseModel):
     ) -> Dict[str, Any]:
         """
         Get usage summary for an API key.
-        
+
         Args:
             api_key_hash: Hashed API key
             start_date: Optional start date filter
             end_date: Optional end date filter
-            
+
         Returns:
             Dict: Usage summary statistics
         """
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             query = """
-                SELECT 
+                SELECT
                     COUNT(*) as total_requests,
                     SUM(tokens_total) as total_tokens,
                     SUM(cost_total) as total_cost,
@@ -191,20 +191,20 @@ class UsageEvent(BaseModel):
                 WHERE api_key_hash = $1
             """
             params = [api_key_hash]
-            
+
             if start_date:
                 query += " AND created_at >= $2"
                 params.append(start_date)
-                
+
                 if end_date:
                     query += " AND created_at <= $3"
                     params.append(end_date)
             elif end_date:
                 query += " AND created_at <= $2"
                 params.append(end_date)
-            
+
             row = await connection.fetchrow(query, *params)
-            
+
             return {
                 "total_requests": row["total_requests"] or 0,
                 "total_tokens": row["total_tokens"] or 0,
@@ -219,26 +219,26 @@ class UsageEvent(BaseModel):
 class BillingCustomer(BaseModel):
     """
     Model for storing billing customer information.
-    
+
     This model links API keys to Stripe customers for billing.
     """
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()))
     api_key_hash: str = Field(..., description="Hashed API key identifier")
     stripe_customer_id: str = Field(..., description="Stripe customer ID")
-    
+
     # Customer metadata
     email: Optional[str] = Field(None, description="Customer email")
     name: Optional[str] = Field(None, description="Customer name")
     company: Optional[str] = Field(None, description="Customer company")
-    
+
     # Billing settings
     billing_interval: str = Field(default="monthly", description="Billing interval")
     is_active: bool = Field(default=True, description="Whether customer is active")
-    
+
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         """Pydantic configuration."""
         json_encoders = {
@@ -250,15 +250,15 @@ class BillingCustomer(BaseModel):
     async def create(cls, **kwargs) -> "BillingCustomer":
         """
         Create a new billing customer in the database.
-        
+
         Args:
             **kwargs: Customer data
-            
+
         Returns:
             BillingCustomer: Created customer
         """
         customer = cls(**kwargs)
-        
+
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             await connection.execute("""
@@ -276,18 +276,18 @@ class BillingCustomer(BaseModel):
                 customer.billing_interval, customer.is_active,
                 customer.created_at, customer.updated_at
             )
-        
+
         logger.info(f"Created billing customer: {customer.id}")
         return customer
-    
+
     @classmethod
     async def get_by_api_key_hash(cls, api_key_hash: str) -> Optional["BillingCustomer"]:
         """
         Get billing customer by API key hash.
-        
+
         Args:
             api_key_hash: Hashed API key
-            
+
         Returns:
             Optional[BillingCustomer]: Customer if found
         """
@@ -297,19 +297,19 @@ class BillingCustomer(BaseModel):
                 SELECT * FROM billing_customers
                 WHERE api_key_hash = $1 AND is_active = true
             """, api_key_hash)
-            
+
             if row:
                 return cls(**dict(row))
             return None
-    
+
     @classmethod
     async def get_by_stripe_customer_id(cls, stripe_customer_id: str) -> Optional["BillingCustomer"]:
         """
         Get billing customer by Stripe customer ID.
-        
+
         Args:
             stripe_customer_id: Stripe customer ID
-            
+
         Returns:
             Optional[BillingCustomer]: Customer if found
         """
@@ -319,7 +319,7 @@ class BillingCustomer(BaseModel):
                 SELECT * FROM billing_customers
                 WHERE stripe_customer_id = $1 AND is_active = true
             """, stripe_customer_id)
-            
+
             if row:
                 return cls(**dict(row))
             return None
@@ -328,35 +328,35 @@ class BillingCustomer(BaseModel):
 class User(BaseModel):
     """
     Model for user accounts and authentication.
-    
+
     This model stores user information for authentication and account management.
     """
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()), description="User ID")
     username: str = Field(..., description="Username")
     email: str = Field(..., description="User email address")
     password_hash: str = Field(..., description="Hashed password")
-    
+
     # User metadata
     full_name: Optional[str] = Field(None, description="User's full name")
     is_active: bool = Field(default=True, description="Whether user account is active")
     is_verified: bool = Field(default=False, description="Whether email is verified")
-    
+
     # Roles and permissions
     roles: List[str] = Field(default_factory=list, description="User roles")
     is_developer: bool = Field(default=False, description="Whether user has developer access")
-    
+
     # Subscription and billing
     subscription_plan: str = Field(default="hobby", description="User's subscription plan")
     api_key_hash: Optional[str] = Field(None, description="Associated API key hash")
-    
+
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = Field(None, description="Last login timestamp")
-    
+
     # Additional metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional user metadata")
-    
+
     class Config:
         """Pydantic configuration."""
         json_encoders = {
@@ -368,15 +368,15 @@ class User(BaseModel):
     async def create(cls, **kwargs) -> "User":
         """
         Create a new user in the database.
-        
+
         Args:
             **kwargs: User data
-            
+
         Returns:
             User: Created user
         """
         user = cls(**kwargs)
-        
+
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             await connection.execute("""
@@ -394,18 +394,18 @@ class User(BaseModel):
                 json.dumps(user.roles), user.is_developer, user.subscription_plan, user.api_key_hash,
                 user.created_at, user.updated_at, user.last_login, json.dumps(user.metadata)
             )
-        
+
         logger.info(f"Created user: {user.id} ({user.email})")
         return user
-    
+
     @classmethod
     async def get_by_id(cls, user_id: str) -> Optional["User"]:
         """
         Get user by ID.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             Optional[User]: User if found
         """
@@ -414,7 +414,7 @@ class User(BaseModel):
             row = await connection.fetchrow("""
                 SELECT * FROM users WHERE id = $1 AND is_active = true
             """, user_id)
-            
+
             if row:
                 user_data = dict(row)
                 if user_data.get('roles'):
@@ -427,15 +427,15 @@ class User(BaseModel):
                     user_data['metadata'] = {}
                 return cls(**user_data)
             return None
-    
+
     @classmethod
     async def get_by_email(cls, email: str) -> Optional["User"]:
         """
         Get user by email address.
-        
+
         Args:
             email: User email
-            
+
         Returns:
             Optional[User]: User if found
         """
@@ -444,7 +444,7 @@ class User(BaseModel):
             row = await connection.fetchrow("""
                 SELECT * FROM users WHERE email = $1 AND is_active = true
             """, email.lower())
-            
+
             if row:
                 user_data = dict(row)
                 if user_data.get('roles'):
@@ -457,15 +457,15 @@ class User(BaseModel):
                     user_data['metadata'] = {}
                 return cls(**user_data)
             return None
-    
+
     @classmethod
     async def get_by_username(cls, username: str) -> Optional["User"]:
         """
         Get user by username.
-        
+
         Args:
             username: Username
-            
+
         Returns:
             Optional[User]: User if found
         """
@@ -474,7 +474,7 @@ class User(BaseModel):
             row = await connection.fetchrow("""
                 SELECT * FROM users WHERE username = $1 AND is_active = true
             """, username)
-            
+
             if row:
                 user_data = dict(row)
                 if user_data.get('roles'):
@@ -487,21 +487,21 @@ class User(BaseModel):
                     user_data['metadata'] = {}
                 return cls(**user_data)
             return None
-    
+
     async def update_last_login(self) -> None:
         """Update the user's last login timestamp."""
         self.last_login = datetime.utcnow()
-        
+
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             await connection.execute("""
                 UPDATE users SET last_login = $1, updated_at = $2 WHERE id = $3
             """, self.last_login, datetime.utcnow(), self.id)
-    
+
     async def update(self, **kwargs) -> None:
         """
         Update user fields.
-        
+
         Args:
             **kwargs: Fields to update
         """
@@ -509,13 +509,13 @@ class User(BaseModel):
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        
+
         self.updated_at = datetime.utcnow()
-        
+
         pool = await get_database_connection()
         async with pool.acquire() as connection:
             await connection.execute("""
-                UPDATE users SET 
+                UPDATE users SET
                     username = $1, email = $2, password_hash = $3,
                     full_name = $4, is_active = $5, is_verified = $6,
                     roles = $7, is_developer = $8, subscription_plan = $9, api_key_hash = $10,
@@ -528,3 +528,13 @@ class User(BaseModel):
                 self.updated_at, self.last_login, json.dumps(self.metadata),
                 self.id
             )
+
+    async def update_password(self, new_hash: str) -> None:
+        """Convenience method to update password hash only."""
+        self.password_hash = new_hash
+        self.updated_at = datetime.utcnow()
+        pool = await get_database_connection()
+        async with pool.acquire() as connection:
+            await connection.execute("""
+                UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3
+            """, self.password_hash, self.updated_at, self.id)

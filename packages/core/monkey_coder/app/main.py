@@ -13,8 +13,10 @@ import asyncio
 import traceback
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from dataclasses import dataclass as _dc_dataclass
+import secrets as _secrets
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, status
@@ -23,7 +25,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr
 from ..middleware.security_middleware import EnhancedSecurityMiddleware, CSPViolationReporter
 from ..config.cors import CORS_CONFIG
 import time
@@ -817,6 +819,113 @@ async def cache_metrics():
 
 
 # Authentication Endpoints
+# ---------------------------------------------------------------------------
+# TODO (Auth Hardening Roadmap):
+# 1. Implement password reset flow:
+#    - POST /api/v1/auth/password/forgot  (accepts email, always 200, enqueue email)
+#    - POST /api/v1/auth/password/reset   (accepts token + new_password)
+#    Requires new tables: auth_tokens (purpose=password_reset, token_hash, expires_at, used_at)
+# 2. Implement email verification (purpose=email_verify) gating elevated actions.
+# 3. Replace in-memory sessions with persistent store (database or Redis) and refresh token rotation.
+# 4. Integrate OAuth (Google/GitHub) via NextAuth SSR route and backend token bridging endpoint.
+# 5. Enforce CSRF validation on state-changing endpoints or migrate fully to Authorization header for SPA.
+# ---------------------------------------------------------------------------
+ # (Removed duplicate local imports moved to top)
+
+# In-memory password reset token store (temporary; replace with DB table auth_tokens)
+@_dc_dataclass
+class _PasswordResetToken:
+    user_id: str
+    token_hash: str
+    expires_at: datetime
+    used: bool = False
+
+_PASSWORD_RESET_TOKENS: Dict[str, _PasswordResetToken] = {}
+
+def _hash_reset_token(token: str) -> str:
+    # Simple constant-time comparable hash (could switch to bcrypt/sha256 + pepper)
+    import hashlib
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+def _generate_reset_token() -> str:
+    return _secrets.token_urlsafe(32)
+
+class PasswordResetRequest(BaseModel):
+    email: str
+    @classmethod
+    def model_validate(cls, value):  # fallback for pydantic v2 custom quick validation
+        obj = super().model_validate(value)
+        # Minimal format check to avoid user enumeration difference
+        if '@' not in obj.email:
+            # Normalize invalid format to generic response path
+            obj.email = obj.email.strip().lower()
+        else:
+            obj.email = obj.email.strip().lower()
+        return obj
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: constr(min_length=8)  # type: ignore
+
+@app.post("/api/v1/auth/password/forgot")
+async def request_password_reset(payload: PasswordResetRequest):
+    """Initiate password reset (always 200 to avoid user enumeration)."""
+    try:
+        user = await User.get_by_email(payload.email)
+        if user:
+            # Generate token
+            raw_token = _generate_reset_token()
+            token_hash = _hash_reset_token(raw_token)
+            expires_at = datetime.utcnow() + timedelta(minutes=30)
+            # Ensure user.id is present (fallback to get_by_email should always supply it)
+            if not user.id:
+                logger.warning("Password reset: user record missing id; aborting token creation")
+            else:
+                _PASSWORD_RESET_TOKENS[token_hash] = _PasswordResetToken(
+                    user_id=user.id,
+                    token_hash=token_hash,
+                    expires_at=expires_at
+                )
+            # For now we return token ONLY in non-production for testing; in prod send via email
+            response = {"status": "ok"}
+            if os.environ.get("ENV", "development") != "production":
+                response["debug_token"] = raw_token
+            return response
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Password reset request error: {e}")
+        # Still return ok to avoid enumeration
+        return {"status": "ok"}
+
+@app.post("/api/v1/auth/password/reset")
+async def confirm_password_reset(payload: PasswordResetConfirm):
+    """Confirm password reset with a token and new password."""
+    try:
+        token_hash = _hash_reset_token(payload.token)
+        entry = _PASSWORD_RESET_TOKENS.get(token_hash)
+        if not entry or entry.used or datetime.utcnow() > entry.expires_at:
+            raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+        # Fetch user
+        user = await User.get_by_id(entry.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update password securely
+        from ..security import hash_password
+        new_hash = hash_password(payload.new_password)
+        await user.update_password(new_hash)
+
+        # Invalidate token
+        entry.used = True
+        del _PASSWORD_RESET_TOKENS[token_hash]
+
+        return {"status": "password_reset"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password reset confirm error: {e}")
+        raise HTTPException(status_code=400, detail="Password reset failed")
 @app.post("/api/v1/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest, response: Response, background_tasks: BackgroundTasks) -> AuthResponse:
     """
