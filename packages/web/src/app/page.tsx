@@ -7,6 +7,7 @@ import { PricingSection } from '@/components/marketing/pricing'
 import { Footer } from '@/components/marketing/footer'
 import { LiveCodeGenerator } from '@/components/demo/live-code-generator'
 import { EnterpriseMetricsDashboard } from '@/components/demo/enterprise-metrics-dashboard'
+import { ModelStatsSection } from '@/components/marketing/model-stats-section'
 
 export default function HomePage() {
   return (
@@ -55,44 +56,7 @@ export default function HomePage() {
         </section>
 
         {/* Stats Section */}
-        <section className="bg-primary/5 py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Building the Future of Development
-              </h2>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-                Join us on our journey to revolutionize how developers build software.
-              </p>
-            </div>
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
-              <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                <dt className="text-base leading-7 text-muted-foreground">
-                  AI Models Supported
-                </dt>
-                <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  5+
-                </dd>
-              </div>
-              <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                <dt className="text-base leading-7 text-muted-foreground">
-                  Code Generation
-                </dt>
-                <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  AI-Powered
-                </dd>
-              </div>
-              <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                <dt className="text-base leading-7 text-muted-foreground">
-                  Development Speed
-                </dt>
-                <dd className="order-first text-3xl font-semibold tracking-tight sm:text-5xl">
-                  10x
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </section>
+        <ModelStatsSection />
       </main>
 
       <Footer />
