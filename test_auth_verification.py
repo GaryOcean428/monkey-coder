@@ -31,7 +31,7 @@ def test_complete_auth_flow():
             f"{base_url}/api/v1/auth/login",
             json=login_data,
             headers={"Content-Type": "application/json"}
-        )
+        , timeout=30)
         
         if response.status_code == 200:
             login_result = response.json()
