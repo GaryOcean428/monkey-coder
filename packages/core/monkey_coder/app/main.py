@@ -234,7 +234,7 @@ async def lifespan(app: FastAPI):
         try:
             app.state.billing_tracker = parent_monitoring.BillingTracker()
             logger.info("✅ BillingTracker initialized successfully")
-        except AttributeError:
+        except (AttributeError, TypeError):
             logger.warning("⚠️ BillingTracker not available - using placeholder")
             # Create a placeholder billing tracker
             class PlaceholderBillingTracker:
