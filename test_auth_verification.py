@@ -103,7 +103,7 @@ def test_complete_auth_flow():
     print("\n3. Testing Development API Key Creation")
     print("-" * 42)
     try:
-        response = requests.post(f"{base_url}/api/v1/auth/keys/dev")
+        response = requests.post(f"{base_url}/api/v1/auth/keys/dev", timeout=30)
         
         if response.status_code == 200:
             key_result = response.json()
