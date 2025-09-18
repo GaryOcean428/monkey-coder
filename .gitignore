@@ -181,6 +181,7 @@ node_modules/
 # Next.js build output
 .next/
 packages/web/.next/
+packages/web/out/
 
 # Next.js cache and build artifacts
 .next/cache/

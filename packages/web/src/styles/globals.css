@@ -295,3 +295,18 @@
   border-color: rgba(108, 92, 231, 0.25);
   box-shadow: 0 1px 8px rgba(108, 92, 231, 0.15);
 }
+
+/* Neon badge effect */
+.dark .neon-badge {
+  border: 1px solid rgba(0, 206, 201, 0.3);
+  background: rgba(0, 206, 201, 0.1);
+  color: rgba(0, 206, 201, 0.9);
+  box-shadow: 0 0 6px rgba(0, 206, 201, 0.2);
+  transition: all 0.3s ease;
+}
+
+.dark .neon-badge:hover {
+  border-color: rgba(0, 206, 201, 0.5);
+  background: rgba(0, 206, 201, 0.15);
+  box-shadow: 0 0 10px rgba(0, 206, 201, 0.3);
+}

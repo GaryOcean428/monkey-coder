@@ -69,7 +69,7 @@ export function Hero() {
             From React components to complete APIs - build faster with AI assistance.
           </p>
 
-          <div className="mt-10 flex items-center justify-center gap-x-6 animate-fade-up animation-delay-200">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-4 animate-fade-up animation-delay-200">
             <Link href="/getting-started">
               <Button size="lg" className="gap-2">
                 <Terminal className="h-4 w-4" />
@@ -84,7 +84,17 @@ export function Hero() {
             </Link>
           </div>
 
-          <div className="mt-10 flex items-center justify-center gap-x-8 text-sm text-muted-foreground animate-fade-up animation-delay-300">
+          {/* Sign in for existing users */}
+          <div className="mt-6 text-center animate-fade-up animation-delay-300">
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
+                Sign in →
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-10 flex items-center justify-center gap-x-8 text-sm text-muted-foreground animate-fade-up animation-delay-400">
             <div className="flex items-center gap-2">
               <Code2 className="h-4 w-4" />
               <span>358+ languages</span>
