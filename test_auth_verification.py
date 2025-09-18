@@ -143,7 +143,7 @@ def test_complete_auth_flow():
     print("\n4. Testing Server Health")
     print("-" * 25)
     try:
-        response = requests.get(f"{base_url}/health")
+        response = requests.get(f"{base_url}/health", timeout=30)
         
         if response.status_code == 200:
             print("✅ Server health check passed")
