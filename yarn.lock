@@ -11196,6 +11196,8 @@ __metadata:
     search-insights: "npm:^2.17.3"
     typescript: "npm:^5.8.3"
     wait-on: "npm:^7.2.0"
+  peerDependencies:
+    acorn: ^8.15.0
   languageName: unknown
   linkType: soft
 
@@ -17584,6 +17586,8 @@ __metadata:
     ts-jest: "npm:^29.4.0"
     typescript: "npm:^5.8.3"
     webpack: "npm:^5.101.0"
+  peerDependencies:
+    acorn: ^8.15.0
   languageName: unknown
   linkType: soft
 
