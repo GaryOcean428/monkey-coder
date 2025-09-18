@@ -81,7 +81,7 @@ def test_complete_auth_flow():
         response = requests.get(
             f"{base_url}/api/v1/auth/status",
             headers={"Authorization": f"Bearer {access_token}"}
-        )
+        , timeout=30)
         
         if response.status_code == 200:
             status_result = response.json()
