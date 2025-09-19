@@ -107,7 +107,9 @@
     "environment": {
       "VIRTUAL_ENV": "/app/venv",
       "PATH": "/app/venv/bin:$PATH",
-      "PYTHONPATH": "/app:/app/packages/core"
+      "PYTHONPATH": "/app:/app/packages/core",
+      "ENABLE_A2A_SERVER": "true",
+      "A2A_PORT": "7702"
     }
   }
 }
