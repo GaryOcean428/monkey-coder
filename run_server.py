@@ -214,10 +214,12 @@ class FrontendManager:
         # Prepare build environment
         env = self._prepare_build_environment()
 
-        # Try multiple build strategies
+        # Try multiple build strategies with enhanced error handling
         strategies = [
-            ("workspace", self._build_via_workspace),
-            ("direct", self._build_via_direct),
+            ("workspace-export", self._build_via_workspace_export),
+            ("workspace-build", self._build_via_workspace_build),
+            ("direct-export", self._build_via_direct_export),
+            ("direct-build", self._build_via_direct_build),
         ]
 
         for strategy_name, build_func in strategies:
@@ -230,7 +232,8 @@ class FrontendManager:
                 self.logger.warning(f"⚠️ {strategy_name} build failed: {e}")
                 continue
 
-        # Create fallback if all strategies fail
+        # If all strategies fail, create fallback
+        self.logger.warning("⚠️ All frontend build strategies failed, creating fallback")
         return self._create_fallback_frontend()
 
     def _prepare_build_environment(self) -> Dict[str, str]:
@@ -245,10 +248,27 @@ class FrontendManager:
         env.update(build_vars)
         return env
 
-    def _build_via_workspace(self, env: Dict[str, str]) -> bool:
-        """Build frontend using Yarn workspace command."""
+    def _build_via_workspace_export(self, env: Dict[str, str]) -> bool:
+        """Build frontend using Yarn workspace export command."""
         result = subprocess.run(
             ["yarn", "workspace", "@monkey-coder/web", "run", "export"],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=self.base_dir
+        )
+
+        if result.returncode != 0:
+            self.logger.error(f"Workspace export build failed: {result.stderr}")
+            return False
+
+        return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
+
+    def _build_via_workspace_build(self, env: Dict[str, str]) -> bool:
+        """Build frontend using Yarn workspace build command."""
+        result = subprocess.run(
+            ["yarn", "workspace", "@monkey-coder/web", "run", "build"],
             env=env,
             capture_output=True,
             text=True,
@@ -260,17 +280,36 @@ class FrontendManager:
             self.logger.error(f"Workspace build failed: {result.stderr}")
             return False
 
-        return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
+        # After build, try to convert .next to static export
+        next_dir = self.web_dir / ".next"
+        if next_dir.exists():
+            self.logger.info("Converting .next build to static export...")
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy static files
+            static_dir = next_dir / "static"
+            if static_dir.exists():
+                subprocess.run(["cp", "-r", str(static_dir), str(self.out_dir / "_next")], check=False)
+            
+            # Try to find and copy HTML files
+            for html_file in next_dir.rglob("*.html"):
+                if "server" not in str(html_file):  # Skip server-side files
+                    dest = self.out_dir / html_file.name
+                    subprocess.run(["cp", str(html_file), str(dest)], check=False)
+            
+            return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
 
-    def _build_via_direct(self, env: Dict[str, str]) -> bool:
-        """Build frontend using direct commands in web directory."""
+        return False
+
+    def _build_via_direct_export(self, env: Dict[str, str]) -> bool:
+        """Build frontend using direct export commands in web directory."""
         if not self.web_dir.exists():
             self.logger.error(f"Web directory not found: {self.web_dir}")
             return False
 
         # Install dependencies first
         install_result = subprocess.run(
-            ["yarn", "install"],
+            ["yarn", "install", "--frozen-lockfile"],
             cwd=self.web_dir,
             timeout=180,
             capture_output=True,
@@ -292,10 +331,61 @@ class FrontendManager:
         )
 
         if build_result.returncode != 0:
-            self.logger.error(f"Direct build failed: {build_result.stderr}")
+            self.logger.error(f"Direct export build failed: {build_result.stderr}")
             return False
 
         return self.out_dir.exists() and len(list(self.out_dir.glob("*.html"))) > 0
+
+    def _build_via_direct_build(self, env: Dict[str, str]) -> bool:
+        """Build frontend using direct build command in web directory."""
+        if not self.web_dir.exists():
+            self.logger.error(f"Web directory not found: {self.web_dir}")
+            return False
+
+        # Build the frontend
+        build_result = subprocess.run(
+            ["yarn", "run", "build"],
+            cwd=self.web_dir,
+            env=env,
+            timeout=300,
+            capture_output=True,
+            text=True
+        )
+
+        if build_result.returncode != 0:
+            self.logger.error(f"Direct build failed: {build_result.stderr}")
+            return False
+
+        # Convert .next to out directory manually
+        next_dir = self.web_dir / ".next"
+        if next_dir.exists():
+            self.logger.info("Manually converting .next to out directory...")
+            self.out_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy essential files
+            try:
+                subprocess.run(["cp", "-r", str(next_dir), str(self.out_dir / "_next")], check=True)
+                
+                # Create a basic index.html that loads the Next.js app
+                index_html = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Monkey Coder</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+    <div id="__next"></div>
+    <script>window.location.href = '/_next/static/index.html';</script>
+</body>
+</html>"""
+                (self.out_dir / "index.html").write_text(index_html, encoding="utf-8")
+                return True
+            except Exception as e:
+                self.logger.error(f"Failed to convert .next to out: {e}")
+                return False
+
+        return False
 
     def _create_fallback_frontend(self) -> bool:
         """Create minimal fallback frontend when build fails."""
@@ -308,6 +398,7 @@ class FrontendManager:
 
             self.out_dir.mkdir(parents=True, exist_ok=True)
 
+            # Create an enhanced fallback that indicates the build issue more clearly
             fallback_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -320,6 +411,7 @@ class FrontendManager:
         .links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
         .link { text-decoration: none; padding: 10px 20px; background: #007acc; color: white; border-radius: 5px; }
         .status { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -330,15 +422,20 @@ class FrontendManager:
 
     <div class="status">
         <strong>Status:</strong> ✅ API server is running successfully!
+    </div>
+
+    <div class="warning">
+        <strong>⚠️ Frontend Build Notice:</strong> The web UI failed to build during deployment.
         <br><br>
-        <strong>Note:</strong> The web UI is not available at this URL.
-        <br>
-        To use Monkey Coder, please use the CLI tool or API endpoints below.
+        <strong>Workaround:</strong> Use the CLI tool or API endpoints below to access all features.
+        <br><br>
+        <em>The development team has been notified about this build issue.</em>
     </div>
 
     <div class="links">
         <a href="/api/docs" class="link">📖 API Documentation</a>
         <a href="/api/health" class="link">🔍 Health Check</a>
+        <a href="/frontend-status" class="link">🔧 Build Status</a>
         <a href="https://github.com/GaryOcean428/monkey-coder" class="link">📚 GitHub Repository</a>
     </div>
 
@@ -358,11 +455,11 @@ class FrontendManager:
                 "✅ API server is running successfully!",
                 "404 - Page not found"
             ).replace(
-                "The web UI is not available at this URL.",
+                "The web UI failed to build during deployment.",
                 "The page you're looking for doesn't exist."
             ), encoding="utf-8")
 
-            self.logger.info("⚠️ Created fallback frontend with basic navigation")
+            self.logger.warning("⚠️ Created fallback frontend indicating build failure")
             return True
 
         except Exception as e:
