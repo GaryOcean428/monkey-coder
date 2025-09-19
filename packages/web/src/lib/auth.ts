@@ -3,7 +3,7 @@
  * Replaces localStorage with httpOnly cookies for better security
  */
 
-import { apiFetch, handleApiResponse, API_CONFIG } from '../config/api';
+import { apiFetch, handleApiResponse } from '../config/api';
 
 export interface AuthUser {
   id: string;
