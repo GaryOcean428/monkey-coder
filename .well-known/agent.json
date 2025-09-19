@@ -1,0 +1,185 @@
+{
+  "name": "Monkey-Coder Agent",
+  "description": "Specialized Deep Agent for code generation, repository analysis, and testing with MCP integration",
+  "version": "1.0.0",
+  "author": "GaryOcean428",
+  "agent_type": "deep_agent",
+  "capabilities": [
+    "code_generation",
+    "code_analysis", 
+    "testing",
+    "repository_analysis",
+    "mcp_integration",
+    "quantum_execution"
+  ],
+  "skills": [
+    {
+      "name": "generate_code",
+      "description": "Generate code implementing a feature specification",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "string",
+            "description": "Feature specification or description of code to generate"
+          },
+          "context": {
+            "type": "object",
+            "description": "Optional context including files, language, style preferences",
+            "properties": {
+              "language": {
+                "type": "string",
+                "description": "Programming language (python, javascript, typescript, etc.)"
+              },
+              "style": {
+                "type": "string",
+                "description": "Code style preference (clean, comprehensive, optimized)"
+              },
+              "files": {
+                "type": "object",
+                "description": "Related files for context"
+              }
+            }
+          }
+        },
+        "required": ["spec"]
+      }
+    },
+    {
+      "name": "analyze_repo",
+      "description": "Analyze a repository or module for structure, issues, and improvements",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "description": "Path to repository or module to analyze"
+          },
+          "analysis_type": {
+            "type": "string",
+            "enum": ["structure", "issues", "improvements", "comprehensive"],
+            "description": "Type of analysis to perform",
+            "default": "comprehensive"
+          }
+        },
+        "required": ["repo_path"]
+      }
+    },
+    {
+      "name": "run_tests",
+      "description": "Execute tests and return results",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to test files or directory"
+          },
+          "test_framework": {
+            "type": "string",
+            "enum": ["pytest", "unittest", "jest", "auto"],
+            "description": "Test framework to use",
+            "default": "auto"
+          },
+          "options": {
+            "type": "object",
+            "description": "Additional test options",
+            "properties": {
+              "coverage": {
+                "type": "boolean",
+                "description": "Enable coverage reporting"
+              },
+              "verbose": {
+                "type": "boolean", 
+                "description": "Enable verbose output"
+              }
+            }
+          }
+        },
+        "required": ["path"]
+      }
+    }
+  ],
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "description": "Filesystem operations for reading and writing files",
+      "tools": ["read_file", "write_file", "list_directory", "create_directory"]
+    },
+    {
+      "name": "github", 
+      "description": "GitHub operations for repository management",
+      "tools": ["get_repository", "create_file", "get_file", "list_issues"]
+    }
+  ],
+  "endpoints": {
+    "a2a_server": {
+      "port": 7702,
+      "protocol": "a2a",
+      "description": "Agent-to-Agent communication server"
+    },
+    "agent_card": {
+      "path": "/.well-known/agent.json",
+      "method": "GET",
+      "description": "Agent capabilities and metadata"
+    }
+  },
+  "technology_stack": {
+    "runtime": "python",
+    "framework": "python-a2a",
+    "ai_providers": ["openai", "anthropic", "google", "groq"],
+    "mcp_protocol": "2024-11-05",
+    "quantum_execution": true
+  },
+  "deployment": {
+    "platform": "railway",
+    "config_file": "railpack.json",
+    "environment_variables": [
+      "A2A_PORT",
+      "OPENAI_API_KEY", 
+      "ANTHROPIC_API_KEY",
+      "GITHUB_TOKEN"
+    ]
+  },
+  "examples": [
+    {
+      "name": "Generate Python Function",
+      "skill": "generate_code",
+      "request": {
+        "spec": "Create a function that calculates the factorial of a number",
+        "context": {
+          "language": "python",
+          "style": "clean"
+        }
+      }
+    },
+    {
+      "name": "Analyze Repository",
+      "skill": "analyze_repo", 
+      "request": {
+        "repo_path": "./src",
+        "analysis_type": "comprehensive"
+      }
+    },
+    {
+      "name": "Run Tests",
+      "skill": "run_tests",
+      "request": {
+        "path": "./tests",
+        "test_framework": "pytest",
+        "options": {
+          "coverage": true,
+          "verbose": true
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "readme": "docs/monkey_coder_agent.md",
+    "api_reference": "docs/api/a2a_skills.md",
+    "deployment_guide": "docs/deployment.md",
+    "examples": "examples/"
+  },
+  "created_at": "2024-01-15T00:00:00Z",
+  "updated_at": "2024-01-15T00:00:00Z"
+}
