@@ -297,6 +297,33 @@ async def lifespan(app: FastAPI):
         await app.state.provider_registry.initialize_all()
         logger.info("✅ All providers initialized successfully")
 
+        # Initialize A2A server if enabled
+        enable_a2a = os.getenv("ENABLE_A2A_SERVER", "true").lower() == "true"
+        if enable_a2a:
+            try:
+                from ..a2a_server import MonkeyCoderA2AAgent
+                a2a_port = int(os.getenv("A2A_PORT", "7702"))
+                app.state.a2a_agent = MonkeyCoderA2AAgent(port=a2a_port)
+                await app.state.a2a_agent.initialize()
+                
+                # Start A2A server in background task
+                async def start_a2a_server():
+                    try:
+                        await app.state.a2a_agent.start()
+                    except Exception as e:
+                        logger.error(f"A2A server failed: {e}")
+                
+                app.state.a2a_task = asyncio.create_task(start_a2a_server())
+                logger.info(f"✅ A2A server initialized on port {a2a_port}")
+            except Exception as e:
+                logger.error(f"❌ A2A server initialization failed: {e}")
+                app.state.a2a_agent = None
+                app.state.a2a_task = None
+        else:
+            app.state.a2a_agent = None
+            app.state.a2a_task = None
+            logger.info("ℹ️ A2A server disabled (ENABLE_A2A_SERVER=false)")
+
     except Exception as e:
         logger.error(f"❌ Component initialization failed: {e}")
         traceback.print_exc()
@@ -321,6 +348,25 @@ async def lifespan(app: FastAPI):
             logger.info("Periodic cleanup task cancelled")
         except Exception as e:
             logger.warning(f"Could not cancel cleanup task cleanly: {e}")
+
+    # Stop A2A server
+    if hasattr(app.state, 'a2a_agent') and app.state.a2a_agent is not None:
+        try:
+            await app.state.a2a_agent.stop()
+            logger.info("A2A server stopped")
+        except Exception as e:
+            logger.warning(f"Could not stop A2A server cleanly: {e}")
+    
+    if hasattr(app.state, 'a2a_task') and app.state.a2a_task is not None:
+        try:
+            app.state.a2a_task.cancel()
+            try:
+                await app.state.a2a_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("A2A server task cancelled")
+        except Exception as e:
+            logger.warning(f"Could not cancel A2A task cleanly: {e}")
 
     await app.state.provider_registry.cleanup_all()
     logger.info("Shutdown complete")
@@ -2477,6 +2523,62 @@ async def get_system_capabilities(
     except Exception as e:
         logger.error(f"Capabilities retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve system capabilities")
+
+
+@app.get("/.well-known/agent.json", response_model=Dict[str, Any])
+async def get_agent_card() -> Dict[str, Any]:
+    """
+    Get agent card with A2A capabilities and metadata.
+    
+    This endpoint serves the agent card according to A2A protocol standards,
+    providing information about available skills, capabilities, and metadata.
+    
+    Returns:
+        Agent card with skills, capabilities, and connection information
+    """
+    try:
+        # Load agent card from file
+        import json
+        from pathlib import Path
+        
+        agent_card_path = Path(__file__).parent.parent.parent.parent / ".well-known" / "agent.json"
+        
+        if agent_card_path.exists():
+            with open(agent_card_path, 'r') as f:
+                agent_card = json.load(f)
+            
+            # Add dynamic information
+            agent_card["status"] = "active"
+            agent_card["updated_at"] = datetime.utcnow().isoformat() + "Z"
+            
+            # Add A2A server status if available
+            if hasattr(app.state, 'a2a_agent') and app.state.a2a_agent:
+                agent_card["a2a_server"] = {
+                    "status": "running",
+                    "port": app.state.a2a_agent.port,
+                    "mcp_clients": list(app.state.a2a_agent.mcp_clients.keys())
+                }
+            else:
+                agent_card["a2a_server"] = {
+                    "status": "not_running",
+                    "reason": "A2A server disabled or failed to initialize"
+                }
+            
+            return agent_card
+        else:
+            # Return basic agent card if file not found
+            return {
+                "name": "Monkey-Coder Agent",
+                "description": "Specialized Deep Agent for code generation and analysis",
+                "version": "1.0.0",
+                "status": "active",
+                "error": "Agent card file not found",
+                "updated_at": datetime.utcnow().isoformat() + "Z"
+            }
+            
+    except Exception as e:
+        logger.error(f"Agent card retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve agent card")
 
 
 # API Key Management Endpoints
