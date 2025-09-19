@@ -20,7 +20,12 @@ import {
   Code2,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Brain,
+  TrendingUp,
+  Target,
+  Zap,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -235,6 +240,7 @@ export default function DashboardPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="adaptive-context">Adaptive Context</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -454,6 +460,148 @@ export default function DashboardPage() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Adaptive Context Tab */}
+        <TabsContent value="adaptive-context" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Adaptive Development Context Engine</CardTitle>
+                  <CardDescription>Intelligent workspace that learns and adapts to your development patterns</CardDescription>
+                </div>
+                <Link href="/dashboard/adaptive-context">
+                  <Button>
+                    <Brain className="h-4 w-4 mr-2" />
+                    Open Full View
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="neon-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Productivity</p>
+                          <p className="text-2xl font-bold">85%</p>
+                        </div>
+                        <TrendingUp className="h-6 w-6 text-green-600" />
+                      </div>
+                      <Progress value={85} className="mt-2 h-1" />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="neon-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Focus</p>
+                          <p className="text-2xl font-bold">92%</p>
+                        </div>
+                        <Target className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <Progress value={92} className="mt-2 h-1" />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="neon-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Efficiency</p>
+                          <p className="text-2xl font-bold">78%</p>
+                        </div>
+                        <Zap className="h-6 w-6 text-yellow-600" />
+                      </div>
+                      <Progress value={78} className="mt-2 h-1" />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="neon-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Satisfaction</p>
+                          <p className="text-2xl font-bold">89%</p>
+                        </div>
+                        <Sparkles className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <Progress value={89} className="mt-2 h-1" />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="neon-card">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Brain className="h-5 w-5" />
+                        AI Model Performance
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="neon-badge">OpenAI</Badge>
+                            <span className="text-sm font-medium">GPT-4.1</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">94% success</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="neon-badge">Anthropic</Badge>
+                            <span className="text-sm font-medium">Claude Opus</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">97% success</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="neon-badge">Google</Badge>
+                            <span className="text-sm font-medium">Gemini 2.5 Pro</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">89% success</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="neon-card">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5" />
+                        Smart Recommendations
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="p-3 bg-muted rounded-lg">
+                          <h4 className="text-sm font-medium mb-1">Optimize Model Selection</h4>
+                          <p className="text-xs text-muted-foreground">Claude Opus shows 23% higher context relevance</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className="text-xs bg-green-100 text-green-800">High Impact</Badge>
+                            <Badge variant="outline" className="text-xs">87% confidence</Badge>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-muted rounded-lg">
+                          <h4 className="text-sm font-medium mb-1">Parallel Testing Pipeline</h4>
+                          <p className="text-xs text-muted-foreground">Your project complexity suggests parallel execution</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className="text-xs bg-yellow-100 text-yellow-800">Medium Impact</Badge>
+                            <Badge variant="outline" className="text-xs">74% confidence</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </CardContent>
           </Card>
