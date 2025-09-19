@@ -578,7 +578,7 @@ export default defineConfig({
 
 ### Common Error Pattern
 
-```
+```text
 "Install inputs must be an image or step input"
 "serviceA.PORT does not resolve"
 ```
@@ -620,7 +620,7 @@ INTERNAL_API=HTTP://${{backend.RAILWAY_PRIVATE_DOMAIN}}
 
 ### Common Error Pattern
 
-```
+```text
 Health check failed: service unavailable
 ```
 
@@ -659,7 +659,7 @@ def health():
 
 ### Common Error Pattern
 
-```
+```text
 Nixpacks unable to generate build plan
 Multiple services detected
 ```

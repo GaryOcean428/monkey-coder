@@ -4,20 +4,9 @@
  */
 
 import { createParser } from 'eventsource-parser';
-import fs from 'fs-extra';
-import path from 'path';
+
 import { ExecuteRequest, ExecuteResponse, StreamEvent } from './types.js';
 
-// Dynamic version loading from package.json
-function getPackageVersion(): string {
-  try {
-    const packageJsonPath = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    return packageJson.version || '1.0.0';
-  } catch {
-    return '1.0.0';
-  }
-}
 
 export class MonkeyCoderAPIClient {
   private baseUrl: string;
@@ -63,7 +52,7 @@ export class MonkeyCoderAPIClient {
       try {
         errorData = await response.json();
         console.log('DEBUG: Error response data:', JSON.stringify(errorData, null, 2));
-      } catch (e) {
+      } catch (_e) {
         console.log('DEBUG: Could not parse error response as JSON');
         errorData = {};
       }

@@ -10,10 +10,10 @@ Initial lightweight benchmarking harness for quantum execution performance.
 <!-- markdownlint-disable MD013 -->
 ```bash
 python benchmarks/benchmark_quantum.py \
-	--runs 10 \
-	--parallel true \
-	--task "Optimize a Python function for readability" \
-	--output benchmarks/results/BASELINE.JSON
+  --runs 10 \
+  --parallel true \
+  --task "Optimize a Python function for readability" \
+  --output benchmarks/results/BASELINE.json
 ```
 <!-- markdownlint-enable MD013 -->
 
