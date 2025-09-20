@@ -97,7 +97,7 @@
   "  echo 'DEBUG: Verifying copy operations:'",
   "  echo \"  /app/packages/web/out exists: $(ls -d /app/packages/web/out 2>/dev/null && echo 'Yes' || echo 'No')\"",
   "  echo \"  /app/out exists: $(ls -d /app/out 2>/dev/null && echo 'Yes' || echo 'No')\"",
-  "  echo \"  /app/packages/web/out/index.html: $(ls -la /app/packages/web/out/index.html 2>/dev/null || echo 'Missing')\"",,
+  "  echo \"  /app/packages/web/out/index.html: $(ls -la /app/packages/web/out/index.html 2>/dev/null || echo 'Missing')\"",
   "else",
   "  echo '⚠️ Frontend verification found no index.html'",
   "  echo '    Expected: packages/web/out/index.html'",
