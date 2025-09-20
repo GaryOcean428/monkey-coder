@@ -176,11 +176,31 @@ class FrontendManager:
 
     def check_build_exists(self) -> bool:
         """Check if frontend build exists and contains files."""
-        self.logger.info(f"🔍 Checking for frontend build at: {self.out_dir}")
-
-        if not self.out_dir.exists():
-            self.logger.warning("⚠️ Frontend build directory not found")
+        # Check multiple potential locations where the build might be
+        possible_locations = [
+            self.out_dir,  # /app/packages/web/out (primary)
+            Path("/app/out"),  # Railway build fallback location
+            Path("/app/packages/web/out"),  # Explicit absolute path
+        ]
+        
+        self.logger.info(f"🔍 Checking for frontend build in {len(possible_locations)} locations...")
+        for i, location in enumerate(possible_locations):
+            self.logger.info(f"   {i+1}. {location} - Exists: {location.exists()}")
+        
+        # Find the first existing location
+        existing_location = None
+        for location in possible_locations:
+            if location.exists():
+                existing_location = location
+                self.logger.info(f"✅ Found frontend build at: {existing_location}")
+                break
+        
+        if not existing_location:
+            self.logger.warning("⚠️ Frontend build directory not found in any location")
             return False
+        
+        # Update out_dir to the found location
+        self.out_dir = existing_location
 
         # Check for index.html specifically
         index_path = self.out_dir / "index.html"
