@@ -1,20 +1,20 @@
 {
-  "timestamp": "Mon Sep 15 10:29:55 UTC 2025",
+  "timestamp": "Sat Sep 20 08:22:57 UTC 2025",
   "total_tests": 7,
-  "passed_tests": 7,
-  "success_rate": 100.0,
+  "passed_tests": 5,
+  "success_rate": 71.42857142857143,
   "results": {
-    "railpack.json configuration": {
-      "passed": true,
-      "details": "All 4 required sections valid"
+    "Cache configuration": {
+      "passed": false,
+      "details": "Missing cache paths: ['/app/venv/lib/python3.13/site-packages']"
     },
     "Virtual environment script generation": {
       "passed": true,
       "details": "Script creation and activation commands found"
     },
-    "run_server.py syntax and structure": {
-      "passed": true,
-      "details": "All required functions and MCP integration present"
+    "run_server.py functions": {
+      "passed": false,
+      "details": "Missing functions: ['check_frontend', 'build_frontend_if_missing']"
     },
     "Deployment scripts": {
       "passed": true,
@@ -30,8 +30,8 @@
     },
     "Build optimization": {
       "passed": true,
-      "details": "4 cache paths, 4 optimization features"
+      "details": "3 cache paths, 4 optimization features"
     }
   },
-  "deployment_ready": true
+  "deployment_ready": false
 }
