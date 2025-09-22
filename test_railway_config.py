@@ -29,8 +29,8 @@ def test_railpack_configuration():
         # Validate critical elements
         checks = [
             ("build.provider", "python"),
-            ("build.packages.python", "3.12"),
-            ("build.packages.node", "20"),
+            ("build.packages.python", "3.12.11"),
+            ("build.packages.node", "22.11.0"),
             ("deploy.startCommand", "/app/.venv/bin/python /app/run_server.py"),
             ("deploy.healthCheckPath", "/health"),
             ("deploy.environment.VIRTUAL_ENV", "/app/.venv"),
