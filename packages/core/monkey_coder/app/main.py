@@ -103,6 +103,26 @@ from ..auth import get_api_key_manager
 from ..logging_utils import setup_logging, get_performance_logger
 from ..cache.base import get_cache_registry_stats
 
+# Import Railway monitoring and webhooks
+from ..monitoring.railway_webhooks import (
+    RailwayWebhookPayload, 
+    handle_railway_webhook, 
+    deployment_tracker, 
+    alert_manager,
+    verify_webhook_signature
+)
+from ..monitoring.health_dashboard import (
+    get_health_monitor, 
+    generate_dashboard_html
+)
+from ..monitoring.automated_rollback import (
+    get_rollback_manager,
+    RollbackReason
+)
+from ..monitoring.frontend_assets import (
+    get_frontend_monitor
+)
+
 # Configure Railway-optimized logging
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -806,6 +826,535 @@ async def readiness_check():
         content={"status": "ready", "timestamp": datetime.utcnow().isoformat()},
         status_code=200
     )
+
+
+# ---------------------------------------------------------------------------
+# Railway Deployment Webhooks and Monitoring
+# ---------------------------------------------------------------------------
+
+@app.post("/api/v1/railway/webhook")
+async def railway_webhook_handler(
+    request: Request, 
+    background_tasks: BackgroundTasks
+):
+    """
+    Handle Railway deployment webhooks for monitoring and alerting.
+    
+    Processes deployment status updates, tracks metrics, and triggers alerts
+    for deployment failures or health check issues.
+    """
+    try:
+        # Get raw payload for signature verification
+        raw_payload = await request.body()
+        
+        # Verify webhook signature if secret is configured
+        signature = request.headers.get("X-Railway-Signature", "")
+        webhook_secret = os.getenv("RAILWAY_WEBHOOK_SECRET", "")
+        
+        if webhook_secret and not verify_webhook_signature(
+            raw_payload.decode(), signature, webhook_secret
+        ):
+            logger.warning("Invalid Railway webhook signature")
+            raise HTTPException(status_code=401, detail="Invalid signature")
+        
+        # Parse payload
+        payload_data = json.loads(raw_payload)
+        payload = RailwayWebhookPayload(**payload_data)
+        
+        # Process webhook
+        result = await handle_railway_webhook(payload, background_tasks)
+        
+        # Check for automated rollback
+        if payload.deployment:
+            deployment_id = payload.deployment.get("id", "")
+            rollback_manager = get_rollback_manager()
+            
+            # Add rollback monitoring task
+            background_tasks.add_task(
+                rollback_manager.monitor_deployment,
+                deployment_tracker.deployments.get(deployment_id)
+            )
+        
+        logger.info(f"Railway webhook processed: {payload.type}")
+        return result
+        
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in Railway webhook payload")
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+    except Exception as e:
+        logger.error(f"Railway webhook processing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/metrics")
+async def railway_deployment_metrics(hours: int = 24):
+    """
+    Get Railway deployment metrics and statistics.
+    
+    Returns deployment success rates, average startup times,
+    and failure analysis for the specified time period.
+    """
+    try:
+        success_rate = deployment_tracker.get_success_rate(hours=hours)
+        startup_times = deployment_tracker.get_average_startup_time(hours=hours)
+        
+        # Get recent deployments for analysis
+        recent_deployments = [
+            {
+                "deployment_id": d.deployment_id,
+                "status": d.status.value,
+                "start_time": d.start_time.isoformat(),
+                "end_time": d.end_time.isoformat() if d.end_time else None,
+                "duration": d.deployment_duration,
+                "health_check_passed": d.health_check_passed,
+                "health_check_duration": d.health_check_duration
+            }
+            for d in list(deployment_tracker.deployments.values())[-10:]  # Last 10 deployments
+        ]
+        
+        return {
+            "success_rate": success_rate,
+            "startup_times": startup_times,
+            "recent_deployments": recent_deployments,
+            "query_period_hours": hours,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get Railway metrics: {e}")
+        raise HTTPException(status_code=500, detail=f"Metrics retrieval failed: {str(e)}")
+
+
+@app.post("/api/v1/railway/health-check")
+async def railway_health_check_callback(
+    deployment_id: str,
+    duration: float,
+    passed: bool,
+    background_tasks: BackgroundTasks
+):
+    """
+    Record health check results for Railway deployments.
+    
+    This endpoint is called by deployment scripts to record
+    health check timing and success status.
+    """
+    try:
+        # Update deployment metrics with health check results
+        if deployment_id in deployment_tracker.deployments:
+            metrics = deployment_tracker.deployments[deployment_id]
+            metrics.health_check_passed = passed
+            metrics.health_check_duration = duration
+            deployment_tracker._save_metrics()
+            
+            # Check for alerts
+            if duration > 30 or not passed:
+                background_tasks.add_task(
+                    alert_manager.check_health_failure, 
+                    deployment_id, 
+                    duration
+                )
+        
+        return {
+            "status": "recorded",
+            "deployment_id": deployment_id,
+            "health_check_passed": passed,
+            "duration": duration
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to record health check: {e}")
+        raise HTTPException(status_code=500, detail=f"Health check recording failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/dashboard", response_class=HTMLResponse)
+async def railway_health_dashboard():
+    """
+    Railway health monitoring dashboard.
+    
+    Provides a web-based dashboard for monitoring deployment health,
+    component status, and performance metrics.
+    """
+    try:
+        # Get or initialize health monitor
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        monitor = get_health_monitor(deployment_url)
+        
+        # Perform immediate health check
+        await monitor.check_all_components()
+        
+        # Get dashboard data
+        dashboard_data = monitor.get_dashboard_data()
+        
+        # Generate HTML dashboard
+        html_content = generate_dashboard_html(dashboard_data)
+        
+        return HTMLResponse(content=html_content)
+        
+    except Exception as e:
+        logger.error(f"Failed to generate health dashboard: {e}")
+        raise HTTPException(status_code=500, detail=f"Dashboard generation failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/dashboard/data")
+async def railway_dashboard_data():
+    """
+    Get Railway dashboard data as JSON.
+    
+    Returns the same data as the dashboard but in JSON format
+    for API consumption or custom dashboard implementations.
+    """
+    try:
+        # Get or initialize health monitor
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        monitor = get_health_monitor(deployment_url)
+        
+        # Perform immediate health check
+        await monitor.check_all_components()
+        
+        # Return dashboard data
+        return monitor.get_dashboard_data()
+        
+    except Exception as e:
+        logger.error(f"Failed to get dashboard data: {e}")
+        raise HTTPException(status_code=500, detail=f"Dashboard data retrieval failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/dashboard/component/{component_name}/history")
+async def component_health_history(component_name: str, hours: int = 1):
+    """
+    Get health history for a specific component.
+    
+    Returns detailed health check history for monitoring trends
+    and diagnosing intermittent issues.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        monitor = get_health_monitor(deployment_url)
+        
+        history = monitor.get_component_history(component_name, hours)
+        
+        return {
+            "component_name": component_name,
+            "history": history,
+            "query_period_hours": hours,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get component history: {e}")
+        raise HTTPException(status_code=500, detail=f"Component history retrieval failed: {str(e)}")
+
+
+@app.post("/api/v1/railway/monitoring/start")
+async def start_health_monitoring():
+    """
+    Start continuous health monitoring.
+    
+    Begins automated health checking of all components
+    with configurable intervals and alerting.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        monitor = get_health_monitor(deployment_url)
+        
+        await monitor.start_monitoring()
+        
+        return {
+            "status": "monitoring_started",
+            "deployment_url": deployment_url,
+            "monitoring_interval": monitor.monitoring_interval,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to start monitoring: {e}")
+        raise HTTPException(status_code=500, detail=f"Monitoring start failed: {str(e)}")
+
+
+@app.post("/api/v1/railway/monitoring/stop")
+async def stop_health_monitoring():
+    """
+    Stop continuous health monitoring.
+    
+    Stops the automated health checking background task.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        monitor = get_health_monitor(deployment_url)
+        
+        await monitor.stop_monitoring()
+        
+        return {
+            "status": "monitoring_stopped",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to stop monitoring: {e}")
+        raise HTTPException(status_code=500, detail=f"Monitoring stop failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/rollback/status")
+async def rollback_status():
+    """
+    Get automated rollback system status and configuration.
+    
+    Returns rollback settings, recent rollback history,
+    and system health for rollback capability.
+    """
+    try:
+        rollback_manager = get_rollback_manager()
+        stats = rollback_manager.get_rollback_stats(hours=24)
+        
+        return {
+            "rollback_system": {
+                "enabled": rollback_manager.rollback_enabled,
+                "startup_timeout": rollback_manager.startup_timeout,
+                "health_check_timeout": rollback_manager.health_check_timeout,
+                "crash_threshold": rollback_manager.crash_threshold,
+                "crash_window": rollback_manager.crash_window
+            },
+            "statistics": stats,
+            "api_configured": rollback_manager.api_token is not None,
+            "project_id": rollback_manager.project_id,
+            "service_id": rollback_manager.service_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get rollback status: {e}")
+        raise HTTPException(status_code=500, detail=f"Rollback status retrieval failed: {str(e)}")
+
+
+@app.post("/api/v1/railway/rollback/manual")
+async def manual_rollback(
+    current_deployment_id: str,
+    target_deployment_id: str = None,
+    reason: str = "manual_trigger"
+):
+    """
+    Trigger a manual rollback to a previous deployment.
+    
+    Allows manual rollback when automated rollback is not triggered
+    or when specific deployment targeting is needed.
+    """
+    try:
+        rollback_manager = get_rollback_manager()
+        
+        # Find target deployment if not specified
+        if not target_deployment_id:
+            target_deployment_id = await rollback_manager.find_previous_stable_deployment(current_deployment_id)
+            if not target_deployment_id:
+                raise HTTPException(
+                    status_code=404, 
+                    detail="No stable deployment found for rollback"
+                )
+        
+        # Convert reason string to enum
+        rollback_reason = RollbackReason.MANUAL_TRIGGER
+        if reason in RollbackReason._value2member_map_:
+            rollback_reason = RollbackReason(reason)
+        
+        # Execute rollback
+        rollback_event = await rollback_manager.execute_rollback(
+            current_deployment_id,
+            target_deployment_id,
+            rollback_reason
+        )
+        
+        return {
+            "rollback_initiated": True,
+            "rollback_event": rollback_event.to_dict(),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Manual rollback failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Manual rollback failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/rollback/history")
+async def rollback_history(hours: int = 24):
+    """
+    Get rollback history and statistics.
+    
+    Returns detailed rollback events, success rates,
+    and analysis for the specified time period.
+    """
+    try:
+        rollback_manager = get_rollback_manager()
+        
+        # Get recent rollback events
+        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        recent_events = [
+            event.to_dict() for event in rollback_manager.rollback_history
+            if event.timestamp >= cutoff
+        ]
+        
+        # Get statistics
+        stats = rollback_manager.get_rollback_stats(hours=hours)
+        
+        return {
+            "rollback_events": recent_events,
+            "statistics": stats,
+            "query_period_hours": hours,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get rollback history: {e}")
+        raise HTTPException(status_code=500, detail=f"Rollback history retrieval failed: {str(e)}")
+
+
+@app.post("/api/v1/railway/rollback/configure")
+async def configure_rollback(
+    enabled: bool = True,
+    startup_timeout: int = 300,
+    health_check_timeout: int = 30,
+    crash_threshold: int = 3,
+    crash_window: int = 600
+):
+    """
+    Configure automated rollback system parameters.
+    
+    Updates rollback thresholds and behavior settings
+    for fine-tuning automated rollback triggers.
+    """
+    try:
+        rollback_manager = get_rollback_manager()
+        
+        # Update configuration
+        rollback_manager.rollback_enabled = enabled
+        rollback_manager.startup_timeout = startup_timeout
+        rollback_manager.health_check_timeout = health_check_timeout
+        rollback_manager.crash_threshold = crash_threshold
+        rollback_manager.crash_window = crash_window
+        
+        # Save configuration to environment or config file
+        config_file = "data/rollback_config.json"
+        os.makedirs(os.path.dirname(config_file), exist_ok=True)
+        
+        config = {
+            "enabled": enabled,
+            "startup_timeout": startup_timeout,
+            "health_check_timeout": health_check_timeout,
+            "crash_threshold": crash_threshold,
+            "crash_window": crash_window,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        
+        with open(config_file, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        return {
+            "configuration_updated": True,
+            "config": config,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to configure rollback: {e}")
+        raise HTTPException(status_code=500, detail=f"Rollback configuration failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/frontend/status")
+async def frontend_asset_status():
+    """
+    Get frontend asset availability and health status.
+    
+    Returns comprehensive frontend asset monitoring data including
+    file availability, response times, and integrity checks.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        frontend_path = os.getenv("FRONTEND_OUT_PATH", "/app/packages/web/out")
+        
+        monitor = get_frontend_monitor(deployment_url, frontend_path)
+        
+        # Perform asset check
+        health_check = await monitor.comprehensive_asset_check()
+        
+        # Get detailed asset information
+        asset_details = monitor.get_asset_details()
+        
+        # Get availability trend
+        availability_trend = monitor.get_availability_trend(hours=6)
+        
+        return {
+            "health_check": health_check.to_dict(),
+            "asset_details": asset_details,
+            "availability_trend": availability_trend,
+            "deployment_url": deployment_url,
+            "frontend_path": frontend_path,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get frontend status: {e}")
+        raise HTTPException(status_code=500, detail=f"Frontend status retrieval failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/frontend/assets")
+async def frontend_asset_details():
+    """
+    Get detailed frontend asset information.
+    
+    Returns per-asset details including sizes, checksums,
+    and availability status for monitoring and debugging.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        frontend_path = os.getenv("FRONTEND_OUT_PATH", "/app/packages/web/out")
+        
+        monitor = get_frontend_monitor(deployment_url, frontend_path)
+        
+        return monitor.get_asset_details()
+        
+    except Exception as e:
+        logger.error(f"Failed to get asset details: {e}")
+        raise HTTPException(status_code=500, detail=f"Asset details retrieval failed: {str(e)}")
+
+
+@app.get("/api/v1/railway/frontend/verify")
+async def verify_frontend_assets():
+    """
+    Verify frontend asset integrity and availability.
+    
+    Performs immediate verification of all critical frontend assets
+    and returns success/failure status for deployment validation.
+    """
+    try:
+        deployment_url = os.getenv("RAILWAY_DEPLOYMENT_URL", "https://coder.fastmonkey.au")
+        frontend_path = os.getenv("FRONTEND_OUT_PATH", "/app/packages/web/out")
+        
+        monitor = get_frontend_monitor(deployment_url, frontend_path)
+        
+        # Perform comprehensive check
+        health_check = await monitor.comprehensive_asset_check()
+        
+        # Determine if verification passed
+        verification_passed = (
+            health_check.overall_status in ["healthy", "degraded"] and
+            len(health_check.critical_assets_missing) == 0
+        )
+        
+        return {
+            "verification_passed": verification_passed,
+            "overall_status": health_check.overall_status,
+            "assets_checked": health_check.assets_checked,
+            "assets_available": health_check.assets_available,
+            "critical_assets_missing": health_check.critical_assets_missing,
+            "warnings": health_check.warnings,
+            "avg_response_time": health_check.avg_response_time,
+            "total_size_mb": health_check.total_size_mb,
+            "timestamp": health_check.timestamp.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Frontend verification failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Frontend verification failed: {str(e)}")
 
 
 @app.get("/api/v1/production/validate")
