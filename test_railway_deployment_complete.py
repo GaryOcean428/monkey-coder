@@ -74,10 +74,10 @@ class RailwayDeploymentTester:
             
             # Test virtual environment paths in build commands
             build_commands = config.get('build', {}).get('commands', [])
-            venv_commands = [cmd for cmd in build_commands if '/app/venv/bin/' in str(cmd)]
+            venv_commands = [cmd for cmd in build_commands if '/app/.venv/bin/' in str(cmd)]
             
             if not venv_commands:
-                self.log_test_result("Virtual environment paths", False, "No /app/venv/bin/ paths found in build commands")
+                self.log_test_result("Virtual environment paths", False, "No /app/.venv/bin/ paths found in build commands")
                 return
             
             # Test start command
@@ -89,7 +89,7 @@ class RailwayDeploymentTester:
             # Test cache configuration
             cache_config = config.get('build', {}).get('cache', {})
             cache_paths = cache_config.get('paths', [])
-            expected_cache_paths = ['/app/venv/lib/python3.13/site-packages', 'node_modules']
+            expected_cache_paths = ['/app/.venv/lib/python3.12/site-packages', 'node_modules']
             
             missing_cache_paths = [path for path in expected_cache_paths if path not in cache_paths]
             if missing_cache_paths:
@@ -122,7 +122,7 @@ class RailwayDeploymentTester:
                 if isinstance(cmd, str):
                     if 'start_server.sh' in cmd and 'cat >' in cmd:
                         script_generation_found = True
-                    if 'source /app/venv/bin/activate' in cmd:
+                    if 'source /app/.venv/bin/activate' in cmd:
                         activation_commands_found = True
             
             if not script_generation_found:
@@ -284,7 +284,7 @@ class RailwayDeploymentTester:
             cache_paths = cache_config.get('paths', [])
             
             optimization_indicators = [
-                '/app/venv/lib/python3.13/site-packages',  # Python package cache
+                '/app/.venv/lib/python3.12/site-packages',  # Python package cache
                 'node_modules',  # Node.js package cache
                 '/root/.cache/yarn',  # Yarn cache
                 'packages/web/.next'  # Next.js build cache
