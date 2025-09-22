@@ -15,8 +15,8 @@ detect_environment() {
     elif [ -n "$RAILWAY_PROJECT_NAME" ]; then
         echo "✅ Railway project detected: $RAILWAY_PROJECT_NAME"
         return 0
-    elif [ -d "/app/venv" ]; then
-        echo "✅ Railway virtual environment detected at /app/venv"
+    elif [ -d "/app/.venv" ]; then
+        echo "✅ Railway virtual environment detected at /app/.venv"
         return 0
     else
         echo "ℹ️ Local development environment detected"
@@ -26,7 +26,7 @@ detect_environment() {
 
 # Function to set up virtual environment paths
 setup_venv_paths() {
-    local venv_path="/app/venv"
+    local venv_path="/app/.venv"
     
     if [ -d "$venv_path" ]; then
         echo "🔧 Setting up Railway virtual environment paths..."
@@ -109,11 +109,11 @@ set -e
 echo "🚀 Starting Monkey Coder with Railway optimization..."
 
 # Activate virtual environment if it exists
-if [ -d "/app/venv" ]; then
+if [ -d "/app/.venv" ]; then
     echo "🔧 Activating Railway virtual environment..."
-    source /app/venv/bin/activate
-    export VIRTUAL_ENV="/app/venv"
-    export PATH="/app/venv/bin:$PATH"
+    source /app/.venv/bin/activate
+    export VIRTUAL_ENV="/app/.venv"
+    export PATH="/app/.venv/bin:$PATH"
     echo "✅ Virtual environment activated"
 else
     echo "ℹ️ Using system Python environment"
@@ -137,8 +137,8 @@ echo "✅ FastAPI app import successful"
 
 # Start the server
 echo "🌟 Starting Monkey Coder server..."
-if [ -f "/app/venv/bin/python" ]; then
-    /app/venv/bin/python /app/run_server.py
+if [ -f "/app/.venv/bin/python" ]; then
+    /app/.venv/bin/python /app/run_server.py
 else
     python /app/run_server.py
 fi

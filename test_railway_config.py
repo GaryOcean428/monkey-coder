@@ -28,13 +28,13 @@ def test_railpack_configuration():
         
         # Validate critical elements
         checks = [
-            ("provider", "python"),
-            ("packages.python", "3.13"),
-            ("packages.node", "20"),
-            ("deploy.startCommand", "/app/start_server.sh"),
+            ("build.provider", "python"),
+            ("build.packages.python", "3.12"),
+            ("build.packages.node", "20"),
+            ("deploy.startCommand", "/app/.venv/bin/python /app/run_server.py"),
             ("deploy.healthCheckPath", "/health"),
-            ("deploy.environment.VIRTUAL_ENV", "/app/venv"),
-            ("deploy.environment.PATH", "/app/venv/bin:$PATH"),
+            ("deploy.environment.VIRTUAL_ENV", "/app/.venv"),
+            ("deploy.environment.PATH", "/app/.venv/bin:$PATH"),
             ("deploy.environment.PYTHONPATH", "/app:/app/packages/core"),
         ]
         
@@ -56,8 +56,8 @@ def test_railpack_configuration():
                 all_passed = False
         
         # Check build commands for virtual environment usage
-        build_commands = config.get("build", {}).get("commands", [])
-        venv_commands = [cmd for cmd in build_commands if "/app/venv/bin" in str(cmd)]
+        build_commands = config.get("build", {}).get("steps", {}).get("install", {}).get("commands", [])
+        venv_commands = [cmd for cmd in build_commands if "/app/.venv/bin" in str(cmd)]
         
         print(f"\n🔧 Virtual environment commands found: {len(venv_commands)}")
         for cmd in venv_commands[:3]:  # Show first 3
@@ -74,7 +74,7 @@ def test_railpack_configuration():
         for path in cache_paths:
             print(f"   • {path}")
         
-        if "/app/venv/lib/python3.13/site-packages" in cache_paths:
+        if "/app/.venv/lib/python3.12/site-packages" in cache_paths:
             print("✅ Python packages cache configured")
         else:
             print("⚠️ Python packages cache not configured")
@@ -98,23 +98,8 @@ def test_start_script():
         
         start_command = config.get("deploy", {}).get("startCommand", "")
         
-        if start_command == "/app/start_server.sh":
-            print("✅ Start command correctly configured: /app/start_server.sh")
-            
-            # Check if the script content is created in build commands
-            build_commands = config.get("build", {}).get("commands", [])
-            script_creation_found = False
-            
-            for cmd in build_commands:
-                if "start_server.sh" in str(cmd) and "cat >" in str(cmd):
-                    script_creation_found = True
-                    break
-            
-            if script_creation_found:
-                print("✅ Start script creation found in build commands")
-            else:
-                print("⚠️ Start script creation not found in build commands")
-                
+        if start_command == "/app/.venv/bin/python /app/run_server.py":
+            print("✅ Start command correctly configured: /app/.venv/bin/python /app/run_server.py")
             return True
         else:
             print(f"❌ Incorrect start command: {start_command}")
@@ -138,8 +123,8 @@ def test_environment_variables():
         env_vars = config.get("deploy", {}).get("environment", {})
         
         required_vars = {
-            "VIRTUAL_ENV": "/app/venv",
-            "PATH": "/app/venv/bin:$PATH",
+            "VIRTUAL_ENV": "/app/.venv",
+            "PATH": "/app/.venv/bin:$PATH",
             "PYTHONPATH": "/app:/app/packages/core"
         }
         

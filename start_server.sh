@@ -5,9 +5,9 @@ echo "🚀 Starting Monkey Coder Server"
 echo "================================"
 
 # Activate virtual environment if it exists
-if [ -f "/app/venv/bin/activate" ]; then
-    echo "📦 Activating virtual environment at /app/venv"
-    source /app/venv/bin/activate
+if [ -f "/app/.venv/bin/activate" ]; then
+    echo "📦 Activating virtual environment at /app/.venv"
+    source /app/.venv/bin/activate
 elif [ -f ".venv/bin/activate" ]; then
     echo "📦 Activating local virtual environment"
     source .venv/bin/activate

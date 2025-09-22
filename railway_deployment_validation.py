@@ -46,7 +46,7 @@ def validate_virtual_environment():
         logger.warning("⚠️ No VIRTUAL_ENV detected in environment")
     
     # Check for Railway railpack virtual environment
-    railway_venv = Path("/app/venv")
+    railway_venv = Path("/app/.venv")
     if railway_venv.exists():
         logger.info(f"✅ Railway virtual environment found at: {railway_venv}")
         
@@ -120,7 +120,7 @@ def validate_uvicorn_accessibility():
     
     # Try to find uvicorn in different locations
     uvicorn_paths = [
-        "/app/venv/bin/uvicorn",
+        "/app/.venv/bin/uvicorn",
         "uvicorn",
         subprocess.run(["which", "uvicorn"], capture_output=True, text=True).stdout.strip()
     ]
@@ -251,7 +251,7 @@ def validate_railpack_configuration():
         logger.info("✅ railpack.json is valid JSON")
         
         # Check essential configuration elements
-        required_keys = ['provider', 'packages', 'build', 'deploy']
+        required_keys = ['version', 'metadata', 'build', 'deploy']
         for key in required_keys:
             if key in config:
                 logger.info(f"✅ Configuration key present: {key}")
@@ -259,18 +259,18 @@ def validate_railpack_configuration():
                 logger.error(f"❌ Missing configuration key: {key}")
                 return False
         
-        # Check provider
-        if config.get('provider') == 'python':
+        # Check provider under build section
+        if config.get('build', {}).get('provider') == 'python':
             logger.info("✅ Provider is correctly set to 'python'")
         else:
-            logger.error(f"❌ Provider should be 'python', got: {config.get('provider')}")
+            logger.error(f"❌ Provider should be 'python', got: {config.get('build', {}).get('provider')}")
             return False
         
         # Check start command
         start_command = config.get('deploy', {}).get('startCommand')
         if start_command:
             logger.info(f"✅ Start command: {start_command}")
-            if '/app/start_server.sh' in start_command or '/app/venv/bin/' in start_command:
+            if '/app/start_server.sh' in start_command or '/app/.venv/bin/' in start_command:
                 logger.info("✅ Start command uses virtual environment path")
             else:
                 logger.warning("⚠️ Start command may not use virtual environment path")
