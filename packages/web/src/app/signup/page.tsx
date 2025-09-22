@@ -4,12 +4,22 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { FormField } from '@/components/ui/form-field'
+import { FormStatus, useFormStatus } from '@/components/ui/form-status'
+import { PasswordStrengthIndicator } from '@/components/ui/password-strength'
 import { Label } from '@/components/ui/label'
-import { ArrowRight, Loader2 } from 'lucide-react'
-import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { 
+  validateEmail, 
+  validateUsername, 
+  validatePassword, 
+  validateConfirmPassword,
+  validateName,
+  checkEmailAvailability,
+  checkUsernameAvailability
+} from '@/lib/validation'
 import * as z from 'zod'
 
 const signupSchema = z.object({
@@ -27,44 +37,48 @@ type SignupFormData = z.infer<typeof signupSchema>
 
 export default function SignupPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const formStatus = useFormStatus()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   })
 
-  const onSubmit = async (data: SignupFormData) => {
-    setIsLoading(true)
+  const watchedPassword = watch('password')
+  const watchedEmail = watch('email')
+  const watchedUsername = watch('username')
+
+  const onSubmit = async (_data: SignupFormData) => {
+    formStatus.setSubmitting('Creating your account...')
+    
     try {
       // TODO: Signup endpoint not yet implemented in backend
       // For now, show a message that signup is coming soon
-      alert('Signup functionality is coming soon! Please check back later.')
       
-      // In production, this would call:
-      // const response = await fetch('/api/v1/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     username: data.username,
-      //     name: data.name,
-      //     email: data.email,
-      //     password: data.password,
-      //     plan: selectedPlan || 'hobby',
-      //   }),
-      // })
+      // Simulate API delay for realistic UX
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // For demo purposes, redirect to login
-      router.push('/login')
+      formStatus.setSuccess(
+        'Account created successfully!',
+        'Please check your email to verify your account.'
+      )
+      
+      // For demo purposes, redirect to login after success message
+      setTimeout(() => {
+        router.push('/login')
+      }, 3000)
+      
     } catch (error) {
       console.error('Signup error:', error)
-      alert('Signup is not yet available. Please try again later.')
-    } finally {
-      setIsLoading(false)
+      formStatus.setError(
+        'Signup failed',
+        'Unable to create account. Please try again.'
+      )
     }
   }
 
@@ -122,87 +136,107 @@ export default function SignupPage() {
             </div>
           </div>
 
+          {/* Form Status */}
+          <FormStatus 
+            status={formStatus.status}
+            message={formStatus.message}
+            details={formStatus.details}
+            className="mb-6"
+            autoHideSuccess={8000}
+            onStatusChange={formStatus.updateStatus}
+          />
+
           {/* Signup Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="garyocean"
-                {...register('username')}
-                className="mt-1"
-              />
-              {errors.username && (
-                <p className="text-sm text-destructive mt-1">{errors.username.message}</p>
-              )}
-            </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              id="username"
+              label="Username"
+              placeholder="garyocean"
+              {...register('username')}
+              error={errors.username?.message}
+              success={!!(watchedUsername && !errors.username && watchedUsername.length >= 3)}
+              helperText="Choose a unique username (3-20 characters)"
+              onValidation={async (value) => {
+                const basicError = validateUsername(value)
+                if (basicError) return basicError
+                return await checkUsernameAvailability(value)
+              }}
+              required
+            />
 
-            <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                placeholder="John Doe"
-                {...register('name')}
-                className="mt-1"
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
-              )}
-            </div>
+            <FormField
+              id="name"
+              label="Full Name"
+              placeholder="John Doe"
+              {...register('name')}
+              error={errors.name?.message}
+              success={!!(watchedEmail && !errors.name)}
+              helperText="Your real name as you'd like it displayed"
+              onValidation={(value) => validateName(value, "Full name")}
+              required
+            />
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
-                className="mt-1"
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
-              )}
-            </div>
+            <FormField
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              {...register('email')}
+              error={errors.email?.message}
+              success={!!(watchedEmail && !errors.email && watchedEmail.includes('@'))}
+              helperText="We'll send you a verification email"
+              onValidation={async (value) => {
+                const basicError = validateEmail(value)
+                if (basicError) return basicError
+                return await checkEmailAvailability(value)
+              }}
+              required
+            />
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
+            <div className="space-y-4">
+              <FormField
                 id="password"
+                label="Password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Create a strong password"
                 {...register('password')}
-                className="mt-1"
+                error={errors.password?.message}
+                showPasswordToggle
+                helperText="Must be at least 8 characters with mixed case, numbers, and symbols"
+                onValidation={validatePassword}
+                required
               />
-              {errors.password && (
-                <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+              
+              {/* Password Strength Indicator */}
+              {watchedPassword && (
+                <PasswordStrengthIndicator 
+                  password={watchedPassword}
+                  className="mt-3"
+                />
               )}
             </div>
 
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                {...register('confirmPassword')}
-                className="mt-1"
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
-              )}
-            </div>
+            <FormField
+              id="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm your password"
+              {...register('confirmPassword')}
+              error={errors.confirmPassword?.message}
+              success={!!(watchedPassword && watch('confirmPassword') && watchedPassword === watch('confirmPassword'))}
+              showPasswordToggle
+              onValidation={(value) => validateConfirmPassword(watchedPassword || '', value)}
+              required
+            />
 
             <Button
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isLoading || !selectedPlan}
+              disabled={formStatus.status === 'submitting' || !selectedPlan}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
+              {formStatus.status === 'submitting' ? (
+                'Creating account...'
               ) : (
                 <>
                   {selectedPlan === 'pro' ? 'Continue to payment' : 'Create free account'}
