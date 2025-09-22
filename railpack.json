@@ -11,7 +11,7 @@
     },
     "cache": {
       "paths": [
-        "/app/venv/lib/python3.12/site-packages",
+        "/app/.venv/lib/python3.12/site-packages",
         "/root/.cache/yarn",
         "node_modules",
         "packages/web/.next",
@@ -21,11 +21,15 @@
     "steps": {
       "install": {
         "commands": [
-          "echo '🐒 Installing Python dependencies...'",
-          "/app/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel",
-          "/app/venv/bin/pip install --no-cache-dir -r requirements-deploy.txt",
-          "cd packages/core && /app/venv/bin/pip install --no-cache-dir -e .",
-          "echo '📦 Python dependencies installed'"
+          "echo '🐒 Installing Python dependencies with correct venv path...'",
+          "/app/.venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install --no-cache-dir -r requirements-deploy.txt",
+          "cd packages/core && /app/.venv/bin/pip install --no-cache-dir -e .",
+          "echo '📦 Python dependencies installed successfully'",
+          "echo 'Verifying Python installation:'",
+          "/app/.venv/bin/python --version",
+          "echo 'Verifying pip packages:'",
+          "/app/.venv/bin/pip list | head -10"
         ]
       },
       "build": {
@@ -46,20 +50,23 @@
           "[ -f packages/web/out/index.html ] && echo '✅ Frontend build verified' || (echo '❌ Frontend build failed' && exit 1)",
           "mkdir -p /app/packages/web && cp -r packages/web/out /app/packages/web/",
           "echo '📁 Frontend assets copied to runtime location'",
+          "echo '🔍 Final verification of build artifacts:'",
+          "echo 'Python executable:' $(ls -la /app/.venv/bin/python)",
+          "echo 'Frontend index.html:' $(ls -la /app/packages/web/out/index.html 2>/dev/null || echo 'Missing')",
           "echo '🚀 Build completed successfully'"
         ]
       }
     }
   },
   "deploy": {
-    "startCommand": "/app/venv/bin/python /app/run_server.py",
+    "startCommand": "/app/.venv/bin/python /app/run_server.py",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "environment": {
-      "VIRTUAL_ENV": "/app/venv",
-      "PATH": "/app/venv/bin:$PATH",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:$PATH",
       "PYTHONPATH": "/app:/app/packages/core"
     }
   }
