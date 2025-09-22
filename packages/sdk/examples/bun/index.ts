@@ -10,7 +10,8 @@ import { MonkeyCoderClient, createCodeReviewRequest, createFileData } from '@mon
 async function main() {
   // Initialize the client with Bun-optimized settings
   const client = new MonkeyCoderClient({
-    baseURL: process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
+    baseURL: process.env.MONKEY_CODER_BASE_URL || 
+      (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:8000'),
     apiKey: process.env.MONKEY_CODER_API_KEY,
     timeout: 60000, // 1 minute for code review
     retries: 2,

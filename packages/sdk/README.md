@@ -154,7 +154,7 @@ createCodeReviewRequest(
 ```python
 @dataclass
 class MonkeyCoderClientConfig:
-    base_url: str = "http://localhost:8000"
+    base_url: str = "https://your-domain.railway.app"  # Use your Railway deployment URL
     api_key: Optional[str] = None
     timeout: float = 300.0
     retries: int = 3

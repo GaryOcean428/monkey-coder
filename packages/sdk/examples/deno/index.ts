@@ -9,7 +9,8 @@
 import { MonkeyCoderClient, createDocumentationRequest, createFileData } from '@monkey-coder/sdk';
 
 const client = new MonkeyCoderClient({
-  baseURL: Deno.env.get('MONKEY_CODER_BASE_URL') || 'http://localhost:8000',
+  baseURL: Deno.env.get('MONKEY_CODER_BASE_URL') || 
+    (Deno.env.get('RAILWAY_PUBLIC_DOMAIN') ? `https://${Deno.env.get('RAILWAY_PUBLIC_DOMAIN')}` : 'http://localhost:8000'),
   apiKey: Deno.env.get('MONKEY_CODER_API_KEY'),
   retries: 1,
   timeout: 50000, // 50 seconds
