@@ -9,7 +9,8 @@ import { MonkeyCoderClient, createCodeGenerationRequest } from '@monkey-coder/sd
 async function main() {
   // Initialize the client
   const client = new MonkeyCoderClient({
-    baseURL: process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
+    baseURL: process.env.MONKEY_CODER_BASE_URL || 
+      (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:8000'),
     apiKey: process.env.MONKEY_CODER_API_KEY,
     retries: 3,
     timeout: 30000, // 30 seconds

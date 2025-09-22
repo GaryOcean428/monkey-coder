@@ -46,7 +46,9 @@ def main():
     
     # Initialize the client
     config = MonkeyCoderClientConfig(
-        base_url=os.getenv('MONKEY_CODER_BASE_URL', 'http://localhost:8000'),
+        base_url=os.getenv('MONKEY_CODER_BASE_URL', 
+                         f"https://{os.getenv('RAILWAY_PUBLIC_DOMAIN')}" if os.getenv('RAILWAY_PUBLIC_DOMAIN') 
+                         else 'http://localhost:8000'),
         api_key=os.getenv('MONKEY_CODER_API_KEY'),
         timeout=60.0,  # 1 minute
         retries=3,
