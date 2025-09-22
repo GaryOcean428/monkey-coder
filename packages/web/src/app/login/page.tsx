@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { FormField } from '@/components/ui/form-field'
+import { FormStatus, useFormStatus } from '@/components/ui/form-status'
+import { ArrowRight } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { validateEmail } from '@/lib/validation'
 import * as z from 'zod'
 
 const loginSchema = z.object({
@@ -20,18 +20,22 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const formStatus = useFormStatus()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
+  const watchedEmail = watch('email')
+
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
+    formStatus.setSubmitting('Signing you in...')
+    
     try {
       const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
@@ -48,13 +52,21 @@ export default function LoginPage() {
       // Store auth token (in production, use secure httpOnly cookies)
       localStorage.setItem('authToken', result.token)
 
-      // Redirect to dashboard
-      router.push('/dashboard')
+      formStatus.setSuccess(
+        'Login successful!', 
+        'Redirecting to your dashboard...'
+      )
+
+      // Redirect after showing success message briefly
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1500)
     } catch (error) {
       console.error('Login error:', error)
-      alert('Invalid email or password. Please try again.')
-    } finally {
-      setIsLoading(false)
+      formStatus.setError(
+        'Login failed',
+        'Please check your email and password and try again.'
+      )
     }
   }
 
@@ -71,47 +83,50 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register('email')}
-                className="mt-1"
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
-              )}
-            </div>
+          {/* Form Status */}
+          <FormStatus 
+            status={formStatus.status}
+            message={formStatus.message}
+            details={formStatus.details}
+            className="mb-6"
+            autoHideSuccess={5000}
+            onStatusChange={formStatus.updateStatus}
+          />
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className="mt-1"
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-              )}
-            </div>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="your@email.com"
+              {...register('email')}
+              error={errors.email?.message}
+              success={!!(watchedEmail && !errors.email && watchedEmail.includes('@'))}
+              helperText="Enter your registered email address"
+              onValidation={validateEmail}
+              required
+            />
+
+            <FormField
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="Enter your password"
+              {...register('password')}
+              error={errors.password?.message}
+              showPasswordToggle
+              required
+            />
 
             <Button
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isLoading}
+              disabled={formStatus.status === 'submitting'}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
+              {formStatus.status === 'submitting' ? (
+                'Signing in...'
               ) : (
                 <>
                   Sign in

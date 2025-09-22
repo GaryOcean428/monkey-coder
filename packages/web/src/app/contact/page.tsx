@@ -2,39 +2,63 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormField } from '@/components/ui/form-field'
+import { FormStatus, useFormStatus } from '@/components/ui/form-status'
 import { Mail, MessageSquare, Phone } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
-import { toast } from 'react-hot-toast'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { validateEmail, validateName, validateSubject } from '@/lib/validation'
+import * as z from 'zod'
+
+const contactSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  subject: z.string().min(5, 'Subject must be at least 5 characters'),
+  message: z.string().min(10, 'Message must be at least 10 characters'),
+})
+
+type ContactFormData = z.infer<typeof contactSchema>
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+  const formStatus = useFormStatus()
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const watchedName = watch('name')
+  const watchedEmail = watch('email')
+  const watchedSubject = watch('subject')
+  const watchedMessage = watch('message')
 
-    // Simulate form submission
-    setTimeout(() => {
-      toast.success('Thank you for your message! We\'ll get back to you soon.')
-      setFormData({ name: '', email: '', subject: '', message: '' })
-      setIsSubmitting(false)
-    }, 1000)
-  }
+  const onSubmit = async (_data: ContactFormData) => {
+    formStatus.setSubmitting('Sending your message...')
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
+    try {
+      // Simulate form submission with realistic delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      formStatus.setSuccess(
+        'Message sent successfully!',
+        'Thank you for contacting us. We\'ll get back to you within 24 hours.'
+      )
+      
+      // Reset form after success
+      reset()
+    } catch (error) {
+      console.error('Contact form error:', error)
+      formStatus.setError(
+        'Failed to send message',
+        'There was an error sending your message. Please try again.'
+      )
+    }
   }
 
   return (
@@ -87,62 +111,84 @@ export default function ContactPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Your name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="your@email.com"
-                  />
-                </div>
-              </div>
+            {/* Form Status */}
+            <FormStatus 
+              status={formStatus.status}
+              message={formStatus.message}
+              details={formStatus.details}
+              className="mb-6"
+              autoHideSuccess={8000}
+              onStatusChange={formStatus.updateStatus}
+            />
 
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  id="name"
+                  label="Name"
+                  placeholder="Your name"
+                  {...register('name')}
+                  error={errors.name?.message}
+                  success={!!(watchedName && !errors.name && watchedName.length >= 2)}
+                  helperText="Your full name"
+                  onValidation={(value) => validateName(value, "Name")}
                   required
-                  placeholder="How can we help?"
+                />
+                
+                <FormField
+                  id="email"
+                  label="Email"
+                  type="email"
+                  placeholder="your@email.com"
+                  {...register('email')}
+                  error={errors.email?.message}
+                  success={!!(watchedEmail && !errors.email && watchedEmail.includes('@'))}
+                  helperText="We'll use this to respond to you"
+                  onValidation={validateEmail}
+                  required
                 />
               </div>
 
+              <FormField
+                id="subject"
+                label="Subject"
+                placeholder="How can we help?"
+                {...register('subject')}
+                error={errors.subject?.message}
+                success={!!(watchedSubject && !errors.subject && watchedSubject.length >= 5)}
+                helperText="Brief description of your inquiry"
+                onValidation={validateSubject}
+                required
+              />
+
               <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
+                <label htmlFor="message" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Message *
+                </label>
                 <textarea
                   id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
+                  {...register('message')}
                   rows={6}
                   className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="Tell us more about your inquiry..."
                 />
+                {errors.message && (
+                  <p className="text-sm text-destructive">{errors.message.message}</p>
+                )}
+                {watchedMessage && (
+                  <p className="text-xs text-muted-foreground">
+                    {watchedMessage.length}/2000 characters
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-4">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                <Button 
+                  type="submit" 
+                  disabled={formStatus.status === 'submitting'}
+                  className="min-w-[120px]"
+                >
+                  {formStatus.status === 'submitting' ? 'Sending...' : 'Send Message'}
                 </Button>
                 <Link href="/">
                   <Button variant="outline">Cancel</Button>
