@@ -115,7 +115,7 @@ yarn docs:validate-links
 
 ### Key Technologies
 - Frontend: TypeScript 5.8.3, Commander.js, Chalk, Ora (CLI); Next.js 15.2.3, React 18.2.0 (Web)
-- Backend: Python 3.13, FastAPI, Pydantic, asyncio
+- Backend: Python 3.12.11, FastAPI, Pydantic, asyncio
 - AI Integration: OpenAI, Anthropic, Google GenAI, Groq, Qwen-Agent
 - Infrastructure: Railway deployment with railpack.json, Sentry monitoring ^9.42.0
 - Testing: Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
@@ -380,7 +380,7 @@ The project uses a simplified railpack.json configuration with runtime frontend 
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
+    "python": "3.12.11",
     "node": "20"
   },
   "deploy": {
