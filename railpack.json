@@ -30,23 +30,22 @@
       "description": "Install Node.js dependencies"
     },
     { 
-      "command": "timeout 600 yarn workspace @monkey-coder/web build || echo 'Frontend build failed, using fallback'",
+      "command": "yarn workspace @monkey-coder/web build",
       "dependsOn": ["packages/web/"],
       "output": "packages/web/out",
-      "description": "Build frontend with timeout"
+      "description": "Build frontend"
     }
   ],
   "deploy": {
     "command": "/app/.venv/bin/python /app/run_server.py",
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "healthcheck": {
+      "path": "/health",
+      "interval": "30s",
+      "timeout": "5s"
+    }
   },
   "environment": {
     "NODE_ENV": "production",
-    "PYTHON_ENV": "production",
-    "PYTHONUNBUFFERED": "1",
-    "NEXT_TELEMETRY_DISABLED": "1"
+    "PYTHON_ENV": "production"
   }
 }
