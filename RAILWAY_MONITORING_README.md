@@ -8,15 +8,15 @@ The Railway monitoring system provides real-time tracking of deployment health, 
 
 ## Features Implemented
 
-### ✅ 1. Railway Deployment Webhooks
+### ✅ 1. Railway Deployment Tracking
 - **Location**: `packages/core/monkey_coder/monitoring/railway_webhooks.py`
 - **Endpoints**: `/api/v1/railway/webhook`, `/api/v1/railway/metrics`
 - **Functionality**:
   - Tracks deployment success/failure rates
   - Monitors container startup times
   - Records deployment metrics and history
-  - Webhook signature verification for security
-  - Real-time alerting via Slack/Discord webhooks
+  - Email notifications for deployment events
+  - Real-time alerting via email notifications
 
 ### ✅ 2. Health Check Monitoring Dashboard
 - **Location**: `packages/core/monkey_coder/monitoring/health_dashboard.py`
@@ -63,7 +63,7 @@ The Railway monitoring system provides real-time tracking of deployment health, 
   - End-to-end monitoring system setup
   - Health check validation
   - API endpoint testing
-  - Webhook configuration
+  - Email configuration
   - Status badge generation
 
 ## API Endpoints
@@ -102,14 +102,17 @@ The Railway monitoring system provides real-time tracking of deployment health, 
 ### Environment Variables
 
 ```bash
-# Required for webhook functionality
+# Required for email functionality
+RESEND_API_KEY=your_resend_api_key
 RAILWAY_TOKEN=your_railway_api_token
 RAILWAY_PROJECT_ID=your_project_id
 RAILWAY_SERVICE_ID=your_service_id
 
-# Webhook configuration
-RAILWAY_WEBHOOK_URL=https://hooks.slack.com/your/webhook/url
-RAILWAY_WEBHOOK_SECRET=your_webhook_secret
+# Email configuration
+NOTIFICATION_EMAIL_FROM=notifications@your-domain.com
+ADMIN_NOTIFICATION_EMAILS=admin@your-domain.com,dev@your-domain.com
+ENQUIRY_NOTIFICATION_EMAILS=support@your-domain.com
+ROLLBACK_NOTIFICATION_EMAILS=devops@your-domain.com,admin@your-domain.com
 
 # Deployment configuration
 RAILWAY_DEPLOYMENT_URL=https://your-app.railway.app
@@ -130,7 +133,7 @@ The monitoring system stores configuration in `data/monitoring_config.json`:
 ```json
 {
     "deployment_url": "https://coder.fastmonkey.au",
-    "webhook_url": "your_webhook_url",
+    "email_notifications_configured": true,
     "health_check_timeout": 30,
     "startup_timeout": 300,
     "monitoring_enabled": true,
@@ -153,8 +156,8 @@ The monitoring system stores configuration in `data/monitoring_config.json`:
 # Run the comprehensive monitoring setup
 ./railway_monitoring_setup.sh
 
-# With custom webhook URL
-RAILWAY_WEBHOOK_URL=https://hooks.slack.com/... ./railway_monitoring_setup.sh
+# With custom email notifications
+RESEND_API_KEY=re_... ./railway_monitoring_setup.sh
 
 # With custom deployment URL
 ./railway_monitoring_setup.sh --url https://my-app.railway.app
@@ -217,7 +220,7 @@ The web-based dashboard provides:
 
 ## Alerting and Notifications
 
-The system sends webhook notifications for:
+The system sends email notifications for:
 - Deployment failures
 - Health check failures
 - Crash loops detected

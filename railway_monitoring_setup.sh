@@ -526,15 +526,15 @@ OPTIONS:
     --startup-timeout SEC   Startup timeout in seconds (default: 300)
 
 ENVIRONMENT VARIABLES:
-    RAILWAY_WEBHOOK_URL     Webhook URL for notifications
+    RESEND_API_KEY          Resend API key for email notifications
     RAILWAY_DEPLOYMENT_URL  Deployment URL to monitor
 
 EXAMPLES:
     # Basic monitoring setup
     $0
 
-    # Setup with custom webhook
-    RAILWAY_WEBHOOK_URL=https://hooks.slack.com/... $0
+    # Setup with custom email notifications
+    RESEND_API_KEY=re_... $0
 
     # Setup with custom deployment URL
     $0 --url https://my-app.railway.app

@@ -3074,6 +3074,125 @@ async def get_system_capabilities(
         raise HTTPException(status_code=500, detail="Failed to retrieve system capabilities")
 
 
+from pydantic import BaseModel as PydanticBaseModel, Field
+
+class EnquiryRequest(PydanticBaseModel):
+    """Request model for enquiry submission."""
+    name: str = Field(..., description="Name of the person making the enquiry")
+    email: str = Field(..., description="Email address for response")
+    subject: str = Field(..., description="Subject of the enquiry")
+    message: str = Field(..., description="Message content")
+
+
+@app.post("/api/v1/enquiry", response_model=Dict[str, Any])
+async def submit_enquiry(
+    enquiry: EnquiryRequest,
+    request: Request,
+) -> Dict[str, Any]:
+    """
+    Submit an enquiry for support or general questions.
+    
+    This endpoint accepts enquiry submissions and sends email notifications
+    to configured admin/support email addresses. No authentication required
+    for accessibility.
+    
+    Args:
+        enquiry: Enquiry details including name, email, subject, and message
+        request: FastAPI request object for IP tracking
+    
+    Returns:
+        Confirmation of enquiry submission
+    """
+    try:
+        # Rate limiting for enquiries
+        check_rate_limit(request, "enquiry")
+        
+        # Basic validation
+        if len(enquiry.message.strip()) < 10:
+            raise HTTPException(status_code=400, detail="Message must be at least 10 characters long")
+        
+        if len(enquiry.subject.strip()) < 3:
+            raise HTTPException(status_code=400, detail="Subject must be at least 3 characters long")
+        
+        # Prepare enquiry data
+        enquiry_data = {
+            "name": enquiry.name,
+            "email": enquiry.email,
+            "subject": enquiry.subject,
+            "message": enquiry.message,
+            "timestamp": datetime.utcnow().isoformat(),
+            "ip_address": request.client.host if request.client else "unknown"
+        }
+        
+        # Send enquiry notification email
+        from ..email.sender import email_notification_service
+        await email_notification_service.send_enquiry_notification(enquiry_data)
+        
+        logger.info(f"Enquiry submitted from {enquiry.email}: {enquiry.subject}")
+        
+        return {
+            "status": "success",
+            "message": "Enquiry submitted successfully. We will respond to your email shortly.",
+            "timestamp": enquiry_data["timestamp"],
+            "enquiry_id": f"enq_{int(datetime.utcnow().timestamp())}"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to submit enquiry: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to submit enquiry. Please try again later.")
+
+
+@app.get("/api/v1/enquiry/status", response_model=Dict[str, Any])
+async def get_enquiry_status(
+    api_key: str = Depends(get_api_key),
+) -> Dict[str, Any]:
+    """
+    Get enquiry system status and configuration.
+    
+    Returns information about the enquiry notification system,
+    including configured email addresses and recent statistics.
+    
+    Args:
+        api_key: API key for authentication
+    
+    Returns:
+        Enquiry system status and configuration
+    """
+    try:
+        await verify_permissions(api_key, "system:read")
+        
+        from ..email.sender import email_notification_service
+        
+        # Get configuration status
+        config_status = {
+            "resend_configured": bool(email_notification_service.resend_client),
+            "enquiry_emails_configured": bool(email_notification_service.enquiry_emails),
+            "admin_emails_configured": bool(email_notification_service.admin_emails),
+            "from_email": email_notification_service.from_email,
+            "environment": email_notification_service.env
+        }
+        
+        # Basic statistics (could be enhanced with actual tracking)
+        stats = {
+            "system_status": "operational" if config_status["resend_configured"] else "configuration_needed",
+            "notification_method": "email" if config_status["resend_configured"] else "logging_only",
+            "recipient_count": len(email_notification_service.enquiry_emails or email_notification_service.admin_emails),
+        }
+        
+        return {
+            "status": "active",
+            "configuration": config_status,
+            "statistics": stats,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to get enquiry status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve enquiry system status")
+
+
 @app.get("/.well-known/agent.json", response_model=Dict[str, Any])
 async def get_agent_card() -> Dict[str, Any]:
     """
