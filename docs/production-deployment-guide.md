@@ -375,7 +375,7 @@ curl -X POST https://your-app.railway.app/api/v1/test-error
 
 2. **Configure alerting (optional):**
    - Set up uptime monitoring (UptimeRobot, Pingdom)
-   - Configure Slack/email alerts for failures
+   - Configure email alerts for failures
 
 ### Log Monitoring
 
