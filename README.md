@@ -875,7 +875,7 @@ The deployment includes comprehensive health monitoring and verification:
 #### Monitoring Features
 - ✅ **Automated verification** via GitHub Actions
 - 📊 **Real-time health monitoring** with response time tracking
-- 🔔 **Webhook notifications** for deployment status changes
+- 🔔 **Email notifications** for deployment status changes and enquiries
 - 📈 **Prometheus metrics** at `/metrics` endpoint
 - 🏷️ **Status badges** for deployment health
 - 🔍 **Pre/post deployment hooks** for validation

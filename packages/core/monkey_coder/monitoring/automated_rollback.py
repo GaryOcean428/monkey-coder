@@ -19,6 +19,13 @@ import subprocess
 
 from .railway_webhooks import DeploymentStatus, DeploymentMetrics
 
+# Try to import email service for notifications
+try:
+    from ..email.sender import email_notification_service
+except ImportError:
+    logger.warning("Email notification service not available")
+    email_notification_service = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +76,9 @@ class RollbackManager:
         self.health_check_timeout = int(os.getenv("RAILWAY_HEALTH_CHECK_TIMEOUT", "30"))  # 30 seconds
         self.crash_threshold = int(os.getenv("RAILWAY_CRASH_THRESHOLD", "3"))  # 3 crashes
         self.crash_window = int(os.getenv("RAILWAY_CRASH_WINDOW", "600"))  # 10 minutes
+        
+        # Email notification service
+        self.email_service = email_notification_service
         
         # State tracking
         self.rollback_history: List[RollbackEvent] = []
@@ -237,6 +247,22 @@ class RollbackManager:
         # Record rollback event
         self.rollback_history.append(rollback_event)
         self._save_rollback_history()
+        
+        # Send rollback notification email
+        if self.email_service:
+            try:
+                rollback_data = {
+                    "deployment_id": rollback_event.deployment_id,
+                    "previous_deployment_id": rollback_event.previous_deployment_id,
+                    "reason": rollback_event.reason.value,
+                    "timestamp": rollback_event.timestamp.isoformat(),
+                    "success": rollback_event.success,
+                    "error_message": rollback_event.error_message,
+                    "rollback_duration": rollback_event.rollback_duration
+                }
+                await self.email_service.send_rollback_notification(rollback_data)
+            except Exception as e:
+                logger.error(f"Failed to send rollback notification email: {e}")
         
         return rollback_event
     

@@ -14,7 +14,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from pathlib import Path
 import json
-import aiohttp
 import hashlib
 import hmac
 
@@ -208,58 +207,32 @@ class DeploymentTracker:
 
 
 class AlertManager:
-    """Manages alerts for deployment failures and health check issues."""
+    """Manages alerts for deployment failures and health check issues using email notifications."""
     
-    def __init__(self, webhook_url: Optional[str] = None):
-        self.webhook_url = webhook_url
+    def __init__(self, email_service=None):
+        # Import here to avoid circular imports
+        from ..email.sender import email_notification_service
+        self.email_service = email_service or email_notification_service
         self.alert_cooldown = 300  # 5 minutes cooldown between alerts
         self.last_alert_times: Dict[str, datetime] = {}
     
     async def send_alert(self, alert_type: str, message: str, details: Dict[str, Any] = None):
-        """Send an alert notification."""
-        if not self.webhook_url:
-            logger.warning(f"No webhook URL configured for alert: {alert_type}")
-            return
-        
+        """Send an alert notification via email."""
         # Check cooldown
         last_alert = self.last_alert_times.get(alert_type)
         if last_alert and (datetime.now() - last_alert).total_seconds() < self.alert_cooldown:
             logger.debug(f"Alert {alert_type} skipped due to cooldown")
             return
         
-        payload = {
-            "text": f"🚨 Railway Deployment Alert: {alert_type}",
-            "attachments": [{
-                "color": "danger",
-                "fields": [
-                    {"title": "Alert Type", "value": alert_type, "short": True},
-                    {"title": "Message", "value": message, "short": False},
-                    {"title": "Timestamp", "value": datetime.now().isoformat(), "short": True}
-                ]
-            }]
-        }
-        
-        if details:
-            for key, value in details.items():
-                payload["attachments"][0]["fields"].append({
-                    "title": key.replace('_', ' ').title(),
-                    "value": str(value),
-                    "short": True
-                })
-        
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(self.webhook_url, json=payload) as response:
-                    if response.status == 200:
-                        self.last_alert_times[alert_type] = datetime.now()
-                        logger.info(f"Alert sent successfully: {alert_type}")
-                    else:
-                        logger.error(f"Failed to send alert: HTTP {response.status}")
+            await self.email_service.send_deployment_alert(alert_type, message, details)
+            self.last_alert_times[alert_type] = datetime.now()
+            logger.info(f"Alert email sent successfully: {alert_type}")
         except Exception as e:
-            logger.error(f"Failed to send alert {alert_type}: {e}")
+            logger.error(f"Failed to send alert email {alert_type}: {e}")
     
     async def check_deployment_failure(self, metrics: DeploymentMetrics):
-        """Check for deployment failures and send alerts."""
+        """Check for deployment failures and send email alerts."""
         if metrics.status == DeploymentStatus.FAILED:
             await self.send_alert(
                 alert_type="Deployment Failed",
@@ -284,7 +257,7 @@ class AlertManager:
             )
     
     async def check_health_failure(self, deployment_id: str, health_check_duration: float):
-        """Check for health check failures and send alerts."""
+        """Check for health check failures and send email alerts."""
         if health_check_duration > 30:  # Alert if health check takes more than 30 seconds
             await self.send_alert(
                 alert_type="Health Check Slow",
