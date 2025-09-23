@@ -1,0 +1,27 @@
+{
+  "id": "billing",
+  "title": "Billing & Usage",
+  "description": "Monkey Coder offers flexible pricing tiers to suit different development needs, from individual developers to enterprise teams.",
+  "source": "@site/docs/billing.md",
+  "sourceDirName": ".",
+  "slug": "/billing",
+  "permalink": "/monkey-coder/docs/billing",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/billing.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "billing",
+    "title": "Billing & Usage"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Quantum Tasks",
+    "permalink": "/monkey-coder/docs/quantum-tasks"
+  },
+  "next": {
+    "title": "OpenAI Response Examples",
+    "permalink": "/monkey-coder/docs/openai-response-examples"
+  }
+}

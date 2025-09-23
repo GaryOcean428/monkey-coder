@@ -1,0 +1,73 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/monkey-coder/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/monkey-coder/docs",
+          "mainDocId": "index",
+          "docs": [
+            {
+              "id": "agent-os-standards",
+              "path": "/monkey-coder/docs/agent-os-standards",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "billing",
+              "path": "/monkey-coder/docs/billing",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "contributing",
+              "path": "/monkey-coder/docs/contributing",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "index",
+              "path": "/monkey-coder/docs/",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "migration-guide",
+              "path": "/monkey-coder/docs/migration-guide",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "openai-response-examples",
+              "path": "/monkey-coder/docs/openai-response-examples",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "quantum-tasks",
+              "path": "/monkey-coder/docs/quantum-tasks",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "quick-start",
+              "path": "/monkey-coder/docs/",
+              "sidebar": "tutorialSidebar"
+            },
+            {
+              "id": "railpack-docs-links",
+              "path": "/monkey-coder/docs/railpack-docs-links",
+              "sidebar": "tutorialSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "tutorialSidebar": {
+              "link": {
+                "path": "/monkey-coder/docs/",
+                "label": "index"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "agent-os-standards",
+  "title": "Agent OS Standards (References)",
+  "description": "This project references external Agent OS standards in some documents (e.g., .agent-os/ or ~/.agent-os/). Those paths are not part of this repository.",
+  "source": "@site/docs/agent-os-standards.md",
+  "sourceDirName": ".",
+  "slug": "/agent-os-standards",
+  "permalink": "/monkey-coder/docs/agent-os-standards",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/agent-os-standards.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Contributing",
+    "permalink": "/monkey-coder/docs/contributing"
+  },
+  "next": {
+    "title": "Railpack Documentation Links",
+    "permalink": "/monkey-coder/docs/railpack-docs-links"
+  }
+}

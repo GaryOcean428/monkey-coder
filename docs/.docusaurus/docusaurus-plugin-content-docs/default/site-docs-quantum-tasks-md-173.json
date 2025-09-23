@@ -1,0 +1,27 @@
+{
+  "id": "quantum-tasks",
+  "title": "Quantum Tasks",
+  "description": "Quantum Tasks represent Monkey Coder's advanced AI-powered development capabilities that leverage quantum computing principles and advanced algorithms to solve complex coding challenges.",
+  "source": "@site/docs/quantum-tasks.md",
+  "sourceDirName": ".",
+  "slug": "/quantum-tasks",
+  "permalink": "/monkey-coder/docs/quantum-tasks",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/quantum-tasks.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "quantum-tasks",
+    "title": "Quantum Tasks"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Migration Guide - Qwen3-Coder to Monkey Coder",
+    "permalink": "/monkey-coder/docs/migration-guide"
+  },
+  "next": {
+    "title": "Billing & Usage",
+    "permalink": "/monkey-coder/docs/billing"
+  }
+}

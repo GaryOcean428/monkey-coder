@@ -1,0 +1,24 @@
+{
+  "id": "contributing",
+  "title": "Contributing",
+  "description": "Local quality checks",
+  "source": "@site/docs/contributing.md",
+  "sourceDirName": ".",
+  "slug": "/contributing",
+  "permalink": "/monkey-coder/docs/contributing",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/contributing.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "OpenAI Response Examples",
+    "permalink": "/monkey-coder/docs/openai-response-examples"
+  },
+  "next": {
+    "title": "Agent OS Standards (References)",
+    "permalink": "/monkey-coder/docs/agent-os-standards"
+  }
+}

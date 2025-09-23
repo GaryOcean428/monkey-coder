@@ -1,0 +1,27 @@
+{
+  "id": "migration-guide",
+  "title": "Migration Guide - Qwen3-Coder to Monkey Coder",
+  "description": "This guide will help you migrate from Qwen3-Coder to Monkey Coder, highlighting the key differences, improvements, and steps needed for a smooth transition.",
+  "source": "@site/docs/migration-guide.md",
+  "sourceDirName": ".",
+  "slug": "/migration-guide",
+  "permalink": "/monkey-coder/docs/migration-guide",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/migration-guide.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "migration-guide",
+    "title": "Migration Guide - Qwen3-Coder to Monkey Coder"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Quick Start",
+    "permalink": "/monkey-coder/docs/"
+  },
+  "next": {
+    "title": "Quantum Tasks",
+    "permalink": "/monkey-coder/docs/quantum-tasks"
+  }
+}

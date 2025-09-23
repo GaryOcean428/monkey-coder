@@ -1,0 +1,28 @@
+{
+  "id": "openai-response-examples",
+  "title": "OpenAI Response Examples",
+  "description": "This document provides comprehensive examples of OpenAI client response patterns for different model variants. These examples demonstrate the various configurations and capabilities available across different model tiers.",
+  "source": "@site/docs/openai-response-examples.md",
+  "sourceDirName": ".",
+  "slug": "/openai-response-examples",
+  "permalink": "/monkey-coder/docs/openai-response-examples",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/openai-response-examples.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "openai-response-examples",
+    "title": "OpenAI Response Examples",
+    "sidebar_label": "OpenAI Response Examples"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Billing & Usage",
+    "permalink": "/monkey-coder/docs/billing"
+  },
+  "next": {
+    "title": "Contributing",
+    "permalink": "/monkey-coder/docs/contributing"
+  }
+}

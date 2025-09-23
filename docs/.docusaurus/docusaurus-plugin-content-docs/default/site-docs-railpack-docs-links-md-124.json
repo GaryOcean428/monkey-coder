@@ -1,0 +1,20 @@
+{
+  "id": "railpack-docs-links",
+  "title": "Railpack Documentation Links",
+  "description": "1. https://railpack.com/getting-started",
+  "source": "@site/docs/railpack-docs-links.md",
+  "sourceDirName": ".",
+  "slug": "/railpack-docs-links",
+  "permalink": "/monkey-coder/docs/railpack-docs-links",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/GaryOcean428/monkey-coder/tree/main/docs/docs/railpack-docs-links.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Agent OS Standards (References)",
+    "permalink": "/monkey-coder/docs/agent-os-standards"
+  }
+}
