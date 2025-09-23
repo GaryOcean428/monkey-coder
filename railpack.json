@@ -1,59 +1,23 @@
 {
   "version": "1",
-  "metadata": {
-    "name": "monkey-coder",
-    "description": "AI-powered development platform"
+  "packages": {
+    "python": "3.12.11",
+    "node": "22.11.0",
+    "yarn": "4.9.2"
   },
-  "build": {
-    "provider": "python",
-    "packages": {
-      "python": "3.12.11",
-      "node": "22.11.0"
-    },
-    "cache": {
-      "paths": [
-        "/app/.venv/lib/python3.12/site-packages",
-        "/root/.cache/yarn",
-        "node_modules",
-        "packages/web/.next",
-        "packages/web/out"
-      ]
-    },
-    "steps": {
-      "install": {
-        "commands": [
-          "echo '🐒 Starting Monkey Coder build process...'",
-          "python -m venv /app/.venv",
-          "/app/.venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel",
-          "/app/.venv/bin/pip install --no-cache-dir -r requirements-deploy.txt",
-          "cd packages/core && /app/.venv/bin/pip install --no-cache-dir -e ."
-        ]
-      },
-      "build": {
-        "commands": [
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable || yarn install",
-          "export NODE_ENV=production",
-          "export NEXTAUTH_URL=${NEXTAUTH_URL:-}",
-          "export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-}",
-          "yarn workspace @monkey-coder/web export || echo 'Frontend build failed - continuing with API-only'"
-        ]
-      }
-    }
-  },
+  "install": [
+    { "command": "python -m venv /app/.venv", "cache": "/app/.venv" },
+    { "command": "source /app/.venv/bin/activate && pip install -r requirements.txt", "dependsOn": ["requirements.txt", "pyproject.toml"] },
+    { "command": "corepack enable && corepack prepare yarn@4.9.2 --activate", "description": "Enable Yarn 4" },
+    { "command": "yarn install", "dependsOn": ["package.json", "yarn.lock"], "cache": "node_modules" },
+    { "command": "yarn workspace @monkey-coder/web build", "dependsOn": ["packages/web/"], "output": "packages/web/out" }
+  ],
   "deploy": {
-    "startCommand": "/app/.venv/bin/python /app/run_server.py",
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "environment": {
-      "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:$PATH",
-      "PYTHONPATH": "/app:/app/packages/core",
-      "NODE_ENV": "production",
-      "PYTHON_ENV": "production"
-    }
+    "command": "/app/.venv/bin/python /app/run_server.py",
+    "healthcheck": { "path": "/health", "interval": "30s", "timeout": "5s" }
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "PYTHON_ENV": "production"
   }
 }
