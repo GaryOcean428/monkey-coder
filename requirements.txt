@@ -16,7 +16,7 @@ annotated-types==0.7.0
     # via pydantic
 anthropic==0.68.0
     # via monkey-coder-core (pyproject.toml)
-anyio==4.10.0
+anyio==4.11.0
     # via
     #   monkey-coder-core (pyproject.toml)
     #   anthropic
@@ -37,7 +37,7 @@ bcrypt==4.3.0
     # via passlib
 beautifulsoup4==4.13.5
     # via monkey-coder-core (pyproject.toml)
-billiard==4.2.1
+billiard==4.2.2
     # via celery
 cachetools==5.5.2
     # via google-auth
@@ -53,7 +53,7 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.3
     # via requests
-click==8.2.1
+click==8.3.0
     # via
     #   monkey-coder-core (pyproject.toml)
     #   celery
@@ -81,7 +81,7 @@ docstring-parser==0.17.0
     # via anthropic
 ecdsa==0.19.1
     # via python-jose
-fastapi==0.116.2
+fastapi==0.117.1
     # via
     #   monkey-coder-core (pyproject.toml)
     #   sentry-sdk
@@ -197,7 +197,7 @@ nvidia-nvjitlink-cu12==12.9.86
     #   nvidia-cusparse-cu12
 nvidia-nvtx-cu12==12.1.105
     # via torch
-openai==1.108.0
+openai==1.108.2
     # via monkey-coder-core (pyproject.toml)
 packaging==25.0
     # via
@@ -211,7 +211,7 @@ passlib==1.7.4
     # via monkey-coder-core (pyproject.toml)
 pillow==11.3.0
     # via sentence-transformers
-prometheus-client==0.22.1
+prometheus-client==0.23.1
     # via monkey-coder-core (pyproject.toml)
 prompt-toolkit==3.0.52
     # via click-repl
@@ -269,14 +269,17 @@ pyyaml==6.0.2
     #   uvicorn
 redis==6.4.0
     # via monkey-coder-core (pyproject.toml)
-regex==2025.9.1
+regex==2025.9.18
     # via transformers
 requests==2.32.5
     # via
     #   google-genai
     #   huggingface-hub
+    #   resend
     #   stripe
     #   transformers
+resend==2.14.0
+    # via monkey-coder-core (pyproject.toml)
 rich==14.1.0
     # via
     #   monkey-coder-core (pyproject.toml)
@@ -345,7 +348,7 @@ transformers==4.39.3
     # via
     #   monkey-coder-core (pyproject.toml)
     #   sentence-transformers
-typer==0.17.4
+typer==0.19.1
     # via monkey-coder-core (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -360,6 +363,7 @@ typing-extensions==4.15.0
     #   openai
     #   pydantic
     #   pydantic-core
+    #   resend
     #   starlette
     #   stripe
     #   torch
@@ -373,7 +377,7 @@ urllib3==2.5.0
     # via
     #   requests
     #   sentry-sdk
-uvicorn==0.35.0
+uvicorn==0.36.0
     # via monkey-coder-core (pyproject.toml)
 uvloop==0.21.0
     # via uvicorn
@@ -384,7 +388,7 @@ vine==5.1.0
     #   kombu
 watchfiles==1.1.0
     # via uvicorn
-wcwidth==0.2.13
+wcwidth==0.2.14
     # via prompt-toolkit
 websockets==15.0.1
     # via

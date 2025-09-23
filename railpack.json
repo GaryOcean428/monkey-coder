@@ -6,15 +6,43 @@
     "yarn": "4.9.2"
   },
   "install": [
-    { "command": "python -m venv /app/.venv", "cache": "/app/.venv" },
-    { "command": "source /app/.venv/bin/activate && pip install -r requirements.txt", "dependsOn": ["requirements.txt", "pyproject.toml"] },
-    { "command": "corepack enable && corepack prepare yarn@4.9.2 --activate", "description": "Enable Yarn 4" },
-    { "command": "yarn install", "dependsOn": ["package.json", "yarn.lock"], "cache": "node_modules" },
-    { "command": "yarn workspace @monkey-coder/web build", "dependsOn": ["packages/web/"], "output": "packages/web/out" }
+    { 
+      "command": "python -m venv /app/.venv",
+      "cache": "/app/.venv"
+    },
+    { 
+      "command": "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+      "description": "Upgrade pip in virtual environment"
+    },
+    { 
+      "command": "/app/.venv/bin/pip install -r requirements.txt",
+      "dependsOn": ["requirements.txt", "pyproject.toml"],
+      "description": "Install Python dependencies"
+    },
+    { 
+      "command": "corepack enable && corepack prepare yarn@4.9.2 --activate",
+      "description": "Enable Yarn 4"
+    },
+    { 
+      "command": "yarn install --immutable",
+      "dependsOn": ["package.json", "yarn.lock"],
+      "cache": "node_modules",
+      "description": "Install Node.js dependencies"
+    },
+    { 
+      "command": "yarn workspace @monkey-coder/web build",
+      "dependsOn": ["packages/web/"],
+      "output": "packages/web/out",
+      "description": "Build frontend"
+    }
   ],
   "deploy": {
     "command": "/app/.venv/bin/python /app/run_server.py",
-    "healthcheck": { "path": "/health", "interval": "30s", "timeout": "5s" }
+    "healthcheck": {
+      "path": "/health",
+      "interval": "30s",
+      "timeout": "5s"
+    }
   },
   "environment": {
     "NODE_ENV": "production",
