@@ -1,51 +1,45 @@
 {
+  "$schema": "https://schema.railpack.com",
   "version": "1",
-  "packages": {
-    "python": "3.12.11",
-    "node": "22.11.0",
-    "yarn": "4.9.2"
+  "metadata": {
+    "name": "monkey-coder",
+    "description": "AI-powered code generation and analysis platform"
   },
-  "install": [
-    { 
-      "command": "python -m venv /app/.venv",
-      "cache": "/app/.venv"
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12.11",
+      "node": "20"
     },
-    { 
-      "command": "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-      "description": "Upgrade pip in virtual environment"
+    "steps": {
+      "install": {
+        "commands": [
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt",
+          "corepack enable && corepack prepare yarn@4.9.2 --activate",
+          "yarn install --frozen-lockfile"
+        ]
+      },
+      "build": {
+        "commands": [
+          "yarn workspace @monkey-coder/web export"
+        ]
+      }
     },
-    { 
-      "command": "/app/.venv/bin/pip install -r requirements.txt",
-      "dependsOn": ["requirements.txt", "pyproject.toml"],
-      "description": "Install Python dependencies"
-    },
-    { 
-      "command": "corepack enable && corepack prepare yarn@4.9.2 --activate",
-      "description": "Enable Yarn 4"
-    },
-    { 
-      "command": "yarn install --immutable",
-      "dependsOn": ["package.json", "yarn.lock"],
-      "cache": "node_modules",
-      "description": "Install Node.js dependencies"
-    },
-    { 
-      "command": "yarn workspace @monkey-coder/web build",
-      "dependsOn": ["packages/web/"],
-      "output": "packages/web/out",
-      "description": "Build frontend"
+    "env": {
+      "NODE_ENV": "production",
+      "PYTHON_ENV": "production"
     }
-  ],
+  },
   "deploy": {
-    "command": "/app/.venv/bin/python /app/run_server.py",
-    "healthcheck": {
-      "path": "/health",
-      "interval": "30s",
-      "timeout": "5s"
+    "startCommand": "/app/.venv/bin/python /app/run_server.py",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "env": {
+      "NODE_ENV": "production"
     }
-  },
-  "environment": {
-    "NODE_ENV": "production",
-    "PYTHON_ENV": "production"
   }
 }

@@ -30,7 +30,10 @@
     "docs:dev": "yarn workspace docs run dev",
     "docs:build": "yarn workspace docs run build",
     "docs:serve": "yarn workspace docs run serve",
-    "docs:validate-links": "yarn workspace docs run validate-links"
+    "docs:validate-links": "yarn workspace docs run validate-links",
+    "railway:validate": "./scripts/railway-cheatsheet-validation.sh",
+    "railway:validate-build": "./scripts/railway-build-validation.sh",
+    "railway:check": "./scripts/railway-cheatsheet-validation.sh && echo '✅ Ready for Railway deployment'"
   },
   "devDependencies": {
     "@algolia/client-search": "^5.35.0",
