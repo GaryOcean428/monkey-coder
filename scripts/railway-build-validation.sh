@@ -55,7 +55,7 @@ if [ ${#COMPETING_FILES[@]} -gt 0 ]; then
 fi
 
 # Check for health endpoint in railpack.json
-if ! jq '.deploy.healthCheckPath' railpack.json > /dev/null 2>&1; then
+if ! jq -e '.deploy.healthCheckPath // .deploy.healthcheck.path' railpack.json > /dev/null 2>&1; then
     echo "⚠️  WARNING: No healthCheckPath found in railpack.json"
     echo "   Consider adding a health check endpoint for better deployment reliability."
 fi
@@ -68,7 +68,7 @@ echo "   - Ready for Railway deployment"
 # Show railpack.json summary
 echo ""
 echo "📋 railpack.json configuration summary:"
-echo "   - Python version: $(jq '.packages.python' railpack.json)"
-echo "   - Node.js version: $(jq '.packages.node' railpack.json)"
-echo "   - Health check: $(jq '.deploy.healthCheckPath' railpack.json)"
-echo "   - Start command: $(jq '.deploy.startCommand' railpack.json | cut -c1-50)..."
+echo "   - Python version: $(jq -r '.build.packages.python // .packages.python // "not specified"' railpack.json)"
+echo "   - Node.js version: $(jq -r '.build.packages.node // .packages.node // "not specified"' railpack.json)"
+echo "   - Health check: $(jq -r '.deploy.healthCheckPath // .deploy.healthcheck.path // "not configured"' railpack.json)"
+echo "   - Start command: $(jq -r '.deploy.startCommand // .deploy.command // "not specified"' railpack.json | cut -c1-50)..."

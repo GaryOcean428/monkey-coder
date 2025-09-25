@@ -21,13 +21,47 @@ The project uses a simplified deployment configuration with runtime frontend bui
 ```json
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",
-  "packages": {
-    "python": "3.13",
-    "node": "20"
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder",
+    "description": "AI-powered code generation and analysis platform"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12.11",
+      "node": "20"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt",
+          "corepack enable && corepack prepare yarn@4.9.2 --activate",
+          "yarn install --frozen-lockfile"
+        ]
+      },
+      "build": {
+        "commands": [
+          "yarn workspace @monkey-coder/web export"
+        ]
+      }
+    },
+    "env": {
+      "NODE_ENV": "production",
+      "PYTHON_ENV": "production"
+    }
   },
   "deploy": {
-    "startCommand": "python run_server.py"
+    "startCommand": "/app/.venv/bin/python /app/run_server.py",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "env": {
+      "NODE_ENV": "production"
+    }
   }
 }
 ```
@@ -37,6 +71,26 @@ The project uses a simplified deployment configuration with runtime frontend bui
 - Installs Yarn 4.9.2 and dependencies if needed
 - Builds the Next.js frontend using `yarn workspace @monkey-coder/web export`
 - Continues with server startup even if frontend build fails (with warnings)
+
+### Pre-Deployment Validation
+
+Before deploying, run the comprehensive validation script to ensure Railway deployment best practices:
+
+```bash
+# Validate Railway deployment readiness
+./scripts/railway-cheatsheet-validation.sh
+
+# Or use yarn script
+yarn railway:validate
+```
+
+This validation checks:
+- ✅ Single build system (no competing configurations)
+- ✅ Health check endpoint configuration
+- ✅ Proper PORT environment variable usage
+- ✅ Host binding to 0.0.0.0
+- ✅ Railway reference variable support
+- ✅ JSON syntax validation
 
 ### Deployment Steps
 
