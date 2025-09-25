@@ -72,8 +72,9 @@ const config: Config = {
   themes: ['@docusaurus/theme-live-codeblock'],
 
   plugins: [
-    // Temporarily disabled roadmap plugin due to MDX compilation errors with angle brackets
-    // TODO: Fix roadmap MDX files and re-enable
+    // Roadmap plugin temporarily disabled - roadmap content migrated to main docs
+    // The roadmap MDX files contain angle brackets that cause compilation errors
+    // Current roadmap is available at /docs/roadmap.md
     // [
     //   '@docusaurus/plugin-content-docs',
     //   {
