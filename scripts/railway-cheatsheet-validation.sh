@@ -2,6 +2,7 @@
 
 # 🚀 Railway Deployment Cheatsheet Validation Script
 # Implements all validation checks from the AI Agent Railway Deployment Cheatsheet
+# Enhanced with MCP integration support
 
 set -e
 
@@ -12,8 +13,19 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Railway Deployment Cheatsheet Validation${NC}"
+echo -e "${BLUE}🚀 Railway Deployment Cheatsheet Validation (MCP Enhanced)${NC}"
 echo "=============================================="
+
+# Check if MCP Railway tools are available
+if [ -f "scripts/mcp-railway-deployment-manager.py" ]; then
+    echo -e "${GREEN}🔌 MCP Railway tools detected - using enhanced validation${NC}"
+    echo ""
+    python scripts/mcp-railway-deployment-manager.py
+    exit $?
+else
+    echo -e "${YELLOW}⚠️  MCP tools not found - using standard validation${NC}"
+    echo ""
+fi
 
 ERRORS=0
 WARNINGS=0
