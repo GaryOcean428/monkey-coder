@@ -1,0 +1,22 @@
+# Markdown Lint Ignore File
+
+# Ignore all node_modules directories
+**/node_modules/**
+
+# Ignore generated documentation
+**/coverage/**
+**/dist/**
+**/.next/**
+**/.cache/**
+**/build/**
+
+# Ignore temporary files
+**/*.tmp
+**/*.temp
+**/.DS_Store
+
+# Ignore large auto-generated files
+CHANGELOG.md
+**/CHANGELOG.md
+yarn.lock
+package-lock.json
