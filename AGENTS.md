@@ -75,15 +75,6 @@ corepack prepare yarn@4.9.2 --activate
 yarn --version  # Should output: 4.9.2
 ```
 
-### 2. Environment Variables
-```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Edit the .env file with your configuration
-nano .env  # or use your preferred editor
-```
-
 **Critical Environment Variables:**
 ```bash
 # Security (REQUIRED - Generate secure random values)
@@ -110,11 +101,43 @@ docker-compose up -d postgres redis
 # Or use Railway/external services for development
 ```
 
+## 🚀 Build & Development
+
+### Build Commands
+
+```bash
+# Build all packages
+yarn build
+
+# Build specific workspace
+yarn workspace @monkey-coder/cli build
+yarn workspace @monkey-coder/core build  # Python build
+yarn workspace @monkey-coder/web build
+
+# Development mode with hot reload
+yarn dev
+```
+
+### Development Workflow
+
+```bash
+# 1. Start the development environment
+yarn dev
+
+# 2. In separate terminals:
+# - Backend: packages/core runs on http://localhost:8000
+# - Frontend: packages/web runs on http://localhost:3000
+# - CLI: yarn workspace @monkey-coder/cli dev
+
+# 3. Validate changes
+yarn lint && yarn typecheck && yarn test
+```
+
 ## 📦 Package Structure
 
 This is a Yarn 4.9.2 monorepo with the following packages:
 
-```
+```text
 packages/
 ├── cli/           # TypeScript CLI tool
 ├── core/          # Python FastAPI orchestration engine
@@ -212,7 +235,8 @@ yarn workspace @monkey-coder/web test
 ```
 
 ### Test Structure
-```
+
+```text
 packages/
 ├── cli/
 │   └── __tests__/         # Jest tests for CLI
@@ -486,13 +510,77 @@ python -m cProfile -o profile.stats run_server.py
 - **Railway Documentation:** https://docs.railway.app/
 - **Yarn 4 Documentation:** https://yarnpkg.com/
 
+## 🚂 Railway Deployment
+
+The project includes comprehensive Railway deployment tools with automated validation and fixing:
+
+```bash
+# Comprehensive Railway validation and auto-fix
+./scripts/railway-deployment-integration.sh
+
+# Quick readiness check
+./check-railway-readiness.sh
+
+# Apply auto-fixes
+./scripts/railway-auto-fix.sh
+```
+
+### Railway Deployment Status
+
+✅ **Ready for Railway deployment with:**
+- Valid railpack.json configuration
+- Health endpoint at /health
+- Proper PORT binding (0.0.0.0)
+- MCP-enhanced validation tools
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Yarn Version Mismatch:**
+```bash
+corepack enable && corepack prepare yarn@4.9.2 --activate
+```
+
+**Python Dependencies:**
+```bash
+cd packages/core && pip install -r requirements-updated.txt
+```
+
+**Railway Deployment Issues:**
+```bash
+# Use the comprehensive validation suite
+./scripts/railway-deployment-integration.sh
+```
+
+**MCP Framework Not Available:**
+- Tools fall back to standalone mode
+- Enhanced features unavailable but core functionality works
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes following the coding standards
+4. Run validation: `./scripts/railway-deployment-integration.sh`
+5. Commit with conventional commits: `feat: add amazing feature`
+6. Push to your fork and create a Pull Request
+
+### Code Quality Standards
+
+- **TypeScript:** Strict mode with full type coverage
+- **Python:** Type hints and docstrings required
+- **Testing:** Minimum 70% coverage for critical paths
+- **Documentation:** All public APIs documented
+- **Railway Compliance:** All changes must pass deployment validation
+
 ---
 
 **Need Help?** Open an issue on GitHub or check the troubleshooting section above.
 
 **Pro Tip:** Use the validate scripts before deployment:
 ```bash
-./validate_railway.sh        # Railway deployment validation
-yarn build                   # Ensure all packages build successfully
-yarn test                    # Run the full test suite
+./scripts/railway-deployment-integration.sh  # Railway deployment validation
+yarn build                                   # Ensure all packages build successfully
+yarn test                                    # Run the full test suite
 ```
