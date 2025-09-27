@@ -833,6 +833,20 @@ If you are interested to leave a message to either our research team or product 
 
 ## 🚀 Railway Deployment
 
+### Deployment Architecture
+
+**Monkey Coder uses Railway's railpack system for deployment, not traditional Docker.** This provides a streamlined deployment experience with automatic containerization.
+
+```
+Developer Configuration: railpack.json
+        ↓
+Railway Platform: Reads configuration
+        ↓ 
+Railway Internal: Creates Docker container automatically
+        ↓
+Production: Deployed containerized application
+```
+
 ### Production Deployment
 
 The project is configured for single-service deployment on Railway using `railpack.json`:
@@ -849,6 +863,31 @@ railway up
 - Yarn 4.9.2 workspace build support
 - Next.js static export served via FastAPI
 - Unified single-service architecture
+- Health monitoring at `/health` endpoint
+
+**Key Benefits:**
+- ✅ No Dockerfile required - Railway handles containerization
+- ✅ Automatic dependency resolution and virtual environment setup
+- ✅ Built-in health checking and restart policies
+- ✅ Optimized build caching and performance
+- ✅ Simplified configuration and maintenance
+
+### Docker vs Railway
+
+| Aspect | Traditional Docker | Railway Railpack |
+|--------|-------------------|------------------|
+| Configuration | `Dockerfile` | `railpack.json` |
+| Containerization | Manual Docker build | Automatic by Railway |
+| Dependencies | Manual setup in Dockerfile | Automatic resolution |
+| Health Checks | Manual HEALTHCHECK instruction | Built-in with timeout config |
+| Build Caching | Manual layer optimization | Automatic optimization |
+| Deployment | `docker build && docker push` | `railway deploy` |
+
+**Important Notes:**
+- 🚫 **No root Dockerfile** - Railway creates containers automatically
+- ✅ **`.dockerignore` required** - Controls Railway's internal build process
+- ✅ **`services/sandbox/Dockerfile`** - Separate optional service for code execution
+- ⚠️  **Docker scripts in `scripts/`** - Local testing only, not used for deployment
 
 ### Deployment Health Monitoring
 

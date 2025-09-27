@@ -1,9 +1,31 @@
 #!/bin/bash
 
+# LOCAL DOCKER TESTING SCRIPT - NOT USED FOR RAILWAY DEPLOYMENT
+#
+# This script is for LOCAL development and testing only.
+# Railway deployment uses railpack.json and does NOT use this Docker script.
+#
+# Railway deployment workflow:
+# 1. Railway reads railpack.json 
+# 2. Railway automatically creates containers internally
+# 3. No Dockerfile or Docker scripts needed
+#
+# For Railway deployment, use: railway deploy
+# For local development, use: python run_server.py
+#
+# This script remains for developers who want to test Docker builds locally
+
 # Docker buildx script for local testing with Railway optimization
 # Follows Railway best practices for multi-stage builds and caching
 
 set -e
+
+echo "⚠️  WARNING: This script is for LOCAL testing only!"
+echo "⚠️  Railway deployment uses railpack.json, not Docker"
+echo "⚠️  To deploy to Railway, use: railway deploy"
+echo ""
+echo "Press Ctrl+C to cancel, or any key to continue with local Docker test..."
+read -n 1 -s
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,7 +39,7 @@ IMAGE_NAME="monkey-coder"
 TAG="${1:-latest}"
 PLATFORM="${2:-linux/amd64,linux/arm64}"
 
-echo -e "${BLUE}🐳 Building ${IMAGE_NAME}:${TAG} with Docker buildx${NC}"
+echo -e "${BLUE}🐳 Building ${IMAGE_NAME}:${TAG} with Docker buildx (LOCAL TESTING ONLY)${NC}"
 
 # Check if buildx is available
 if ! docker buildx version >/dev/null 2>&1; then
@@ -121,9 +143,11 @@ docker rm $CONTAINER_ID >/dev/null 2>&1 || true
 echo -e "${BLUE}📊 Image information:${NC}"
 docker images | grep $IMAGE_NAME
 
-echo -e "${GREEN}🚀 Build process completed!${NC}"
-echo -e "${BLUE}💡 To run the container locally:${NC}"
+echo -e "${GREEN}🚀 Local Docker build completed!${NC}"
+echo -e "${YELLOW}⚠️  REMINDER: This Docker image is for LOCAL testing only${NC}"
+echo -e ""
+echo -e "${BLUE}💡 To run this container locally:${NC}"
 echo -e "   docker run -p 8000:8000 -e NODE_ENV=production $IMAGE_NAME:$TAG"
 echo -e ""
-echo -e "${BLUE}💡 To push to Railway (when ready):${NC}"  
-echo -e "   railway deploy"
+echo -e "${BLUE}💡 For Railway deployment (production), use:${NC}"  
+echo -e "   railway deploy  # Uses railpack.json, not this Docker image"
