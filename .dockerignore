@@ -3,6 +3,14 @@
 **/.yarn/cache
 **/.yarn/install-state.gz
 
+# Python virtual environments - CRITICAL FIX
+.venv/
+venv/
+**/venv
+**/.venv
+/app/.venv
+*.egg-info/
+
 # Python cache
 **/__pycache__
 **/*.pyc
