@@ -21,34 +21,53 @@ DATABASE_URL=PostgreSQL://...
 REDIS_URL=Redis://...
 ```
 
-**Dockerfile Optimization:**
+**Railway Railpack Configuration:**
 
-```dockerfile
-# Multi-stage build for production
-FROM node:18-alpine AS frontend-builder
-WORKDIR /app
-COPY packages/web/ ./
-RUN yarn install --frozen-lockfile
-RUN yarn build
+> **Note**: This project uses Railway's `railpack.json` system, not traditional Docker deployment. Railway handles containerization internally.
 
-FROM Python:3.11-slim AS backend
-WORKDIR /app
-
-# Install Python dependencies
-COPY packages/core/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY packages/core/ ./
-COPY --from=frontend-builder /app/dist ./static
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/v1/health || exit 1
-
-EXPOSE 8000
-CMD ["uvicorn", "monkey_coder.API.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder",
+    "description": "AI-powered code generation and analysis platform"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12.11"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt"
+        ]
+      }
+    },
+    "env": {
+      "NODE_ENV": "production",
+      "PYTHON_ENV": "production"
+    }
+  },
+  "deploy": {
+    "startCommand": "/app/.venv/bin/python /app/run_server.py",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
 ```
+
+**Key Benefits of Railpack vs Docker:**
+- No Dockerfile required - Railway handles containerization
+- Simpler configuration and maintenance
+- Automatic dependency resolution
+- Built-in health checking and restart policies
+- Optimized for Railway's infrastructure
 
 ### CI/CD Pipeline
 
@@ -103,24 +122,27 @@ jobs:
 
 **Railway Configuration:**
 
+> **Note**: This project uses `railpack.json` for deployment configuration. Railway automatically handles containerization without requiring a Dockerfile.
+
 ```json
 {
-  "name": "monkey-coder-API",
+  "name": "monkey-coder-api",
   "source": {
-    "type": "GitHub",
+    "type": "GitHub", 
     "repo": "GaryOcean428/monkey-coder",
     "branch": "main"
   },
   "build": {
-    "builder": "dockerfile",
-    "dockerfilePath": "./Dockerfile"
+    "builder": "railpack"
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "restartPolicyMaxRetries": 3,
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300
   },
   "networking": {
-    "serviceDomain": "monkey-coder-API.railway.app"
+    "serviceDomain": "monkey-coder-api.railway.app"
   },
   "scaling": {
     "minReplicas": 1,

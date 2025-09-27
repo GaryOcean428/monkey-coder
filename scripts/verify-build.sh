@@ -123,8 +123,8 @@ fi
 # Summary
 echo -e "${GREEN}🎉 All verification checks passed!${NC}"
 echo -e "${BLUE}💡 Ready for deployment with:${NC}"
-echo -e "   Local Docker build: ./scripts/build-docker.sh"
-echo -e "   Railway deployment: railway deploy"
+echo -e "   Local Docker build: ./scripts/build-docker.sh  # LOCAL testing only"
+echo -e "   Railway deployment: railway deploy              # Production deployment"
 echo -e ""
 echo -e "${GREEN}🔧 Issue Resolution Summary:${NC}"
 echo -e "   ✅ Path alias '@/' resolves correctly in Docker builds"
