@@ -32,14 +32,14 @@ yarn dev
 
 ## 📋 Table of Contents
 
-- [System Requirements](#system-requirements)
-- [Environment Setup](#environment-setup)
-- [Package Structure](#package-structure)
-- [Build & Development](#build--development)
-- [Testing](#testing)
-- [Railway Deployment](#railway-deployment)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
+- [System Requirements](#-system-requirements)
+- [Environment Setup](#-environment-setup)
+- [Package Structure](#-package-structure)
+- [Build & Development](#-build--development)
+- [Testing](#-testing)
+- [Railway Deployment](#-railway-deployment)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
 
 ## 🔧 System Requirements
 
@@ -510,7 +510,7 @@ python -m cProfile -o profile.stats run_server.py
 - **Railway Documentation:** https://docs.railway.app/
 - **Yarn 4 Documentation:** https://yarnpkg.com/
 
-## 🚂 Railway Deployment
+## 🚂 Railway Deployment Tools
 
 The project includes comprehensive Railway deployment tools with automated validation and fixing:
 
@@ -533,7 +533,7 @@ The project includes comprehensive Railway deployment tools with automated valid
 - Proper PORT binding (0.0.0.0)
 - MCP-enhanced validation tools
 
-## 🔧 Troubleshooting
+## 🔧 Common Troubleshooting
 
 ### Common Issues
 
@@ -557,7 +557,7 @@ cd packages/core && pip install -r requirements-updated.txt
 - Tools fall back to standalone mode
 - Enhanced features unavailable but core functionality works
 
-## 🤝 Contributing
+## 🤝 Contributing Guidelines
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
