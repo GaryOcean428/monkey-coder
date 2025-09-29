@@ -402,17 +402,17 @@ The project uses a simplified railpack.json configuration with runtime frontend 
 
 ## 🔴 ISSUE 1: Build System Conflicts
 
-### Common Error Pattern
+### Common Error Pattern - Build System Conflicts
 
 ```text
 Nixpacks build failed
 ERROR: failed to exec pid1: No such file or directory
 ```
 
-### Root Cause
+### Root Cause - Build System Conflicts
 Multiple build configurations competing (Dockerfile, railway.toml, railpack.JSON, nixpacks.toml)
 
-### Correct Solution
+### Correct Solution - Build System Conflicts
 
 ```bash
 # Railway Build Priority Order (highest to lowest):
@@ -457,17 +457,17 @@ touch railpack.JSON                        # Create railpack config
 
 ## 🔴 ISSUE 2: PORT Binding Failures
 
-### Common Error Pattern
+### Common Error Pattern - PORT Binding
 
 ```text
 Application failed to respond
 Health check failed at /API/health
 ```
 
-### Root Cause
+### Root Cause - PORT Binding
 Apps hardcoding ports or binding to localhost instead of 0.0.0.0
 
-### Correct Solution
+### Correct Solution - PORT Binding
 
 #### Node.js/TypeScript
 
@@ -514,15 +514,15 @@ app.run(host="127.0.0.1", port=5000)  # Wrong host and hardcoded port
 
 ## 🔴 ISSUE 3: Theme/CSS Loading Issues
 
-### Common Error Pattern
+### Common Error Pattern - Theme/CSS Loading
 - Dark mode not persisting
 - Tailwind classes not applying
 - CSS loading after page render (flash of unstyled content)
 
-### Root Cause
+### Root Cause - Theme/CSS Loading
 Theme initialization happening after React renders, missing CSS imports
 
-### Correct Solution
+### Correct Solution - Theme/CSS Loading
 
 #### 1. Pre-React Theme Application
 
@@ -576,17 +576,17 @@ export default defineConfig({
 
 ## 🔴 ISSUE 4: Reference Variable Mistakes
 
-### Common Error Pattern
+### Common Error Pattern - Reference Variables
 
 ```text
 "Install inputs must be an image or step input"
 "serviceA.PORT does not resolve"
 ```
 
-### Root Cause
+### Root Cause - Reference Variables
 Misunderstanding Railway's reference variable system
 
-### Correct Solution
+### Correct Solution - Reference Variables
 
 #### ❌ WRONG - Common Mistakes
 
@@ -618,13 +618,13 @@ INTERNAL_API=HTTP://${{backend.RAILWAY_PRIVATE_DOMAIN}}
 
 ## 🔴 ISSUE 5: Health Check Configuration
 
-### Common Error Pattern
+### Common Error Pattern - Health Check Configuration
 
 ```text
 Health check failed: service unavailable
 ```
 
-### Correct Solution
+### Correct Solution - Health Check Configuration
 
 #### 1. Add Health Endpoint
 
@@ -657,14 +657,14 @@ def health():
 
 ## 🔴 ISSUE 6: Monorepo Service Confusion
 
-### Common Error Pattern
+### Common Error Pattern - Monorepo Service Confusion
 
 ```text
 Nixpacks unable to generate build plan
 Multiple services detected
 ```
 
-### Correct Solution
+### Correct Solution - Monorepo Service Confusion
 
 #### Separate railpack.JSON for Each Service
 
