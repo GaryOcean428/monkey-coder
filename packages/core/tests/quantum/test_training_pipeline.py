@@ -318,6 +318,9 @@ class TestDQNTrainingPipeline:
         # Reduce episodes for faster testing
         self.config.max_episodes = 3
         self.config.min_buffer_size = 5  # Lower requirement
+        
+        # Fill buffer with minimum required experiences
+        self._fill_experience_buffer()
 
         metrics = self.pipeline.train()
 
@@ -450,8 +453,9 @@ class TestDQNTrainingPipeline:
 
         from monkey_coder.quantum.experience_buffer import Experience
 
-        # Add minimum required experiences
-        for i in range(pipeline.config.min_buffer_size):
+        # Add enough experiences to meet the buffer's minimum sampling requirement
+        min_required = max(pipeline.config.min_buffer_size, 20)
+        for i in range(min_required):
             state = np.random.rand(21)
             next_state = np.random.rand(21)
 
