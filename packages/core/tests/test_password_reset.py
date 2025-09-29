@@ -10,6 +10,12 @@ client = TestClient(app)
 
 @pytest.mark.asyncio
 async def test_password_reset_flow(monkeypatch):
+    from unittest.mock import AsyncMock
+    async def mock_check_rate_limit(*args, **kwargs):
+        return True  # Always allow requests
+    
+    monkeypatch.setattr('monkey_coder.middleware.rate_limiter.check_rate_limit', mock_check_rate_limit)
+    
     # Create a fake user in DB via monkeypatching User.get_by_email and get_by_id
     class DummyUser:
         def __init__(self):
@@ -26,6 +32,9 @@ async def test_password_reset_flow(monkeypatch):
 
     monkeypatch.setattr(User, 'get_by_email', fake_get_by_email)
     monkeypatch.setattr(User, 'get_by_id', fake_get_by_id)
+    
+    from monkey_coder.app import main as main_module
+    main_module._enforce_csrf = lambda request: None
 
     # Step 1: request reset
     resp = client.post('/api/v1/auth/password/forgot', json={'email': 'test@example.com'})
