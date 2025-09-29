@@ -2,7 +2,7 @@
 
 ## Integration Patterns
 
-### IDE Integrations:
+### IDE Integrations
 
 ```json
 // VS Code extension manifest
@@ -32,7 +32,7 @@
 }
 ```
 
-### Git Hooks Integration:
+### Git Hooks Integration
 
 ```bash
 #!/bin/sh
@@ -57,7 +57,7 @@ if [ -n "$staged_files" ]; then
 fi
 ```
 
-### CI/CD Pipeline Integration:
+### CI/CD Pipeline Integration
 
 ```yaml
 # GitHub Actions integration

@@ -130,7 +130,7 @@ Comprehensive monitoring and management:
 
 The setup configures proper health checking following Railway best practices:
 
-### In `railpack.json`:
+### In `railpack.json`
 ```json
 {
   "deploy": {
@@ -142,7 +142,7 @@ The setup configures proper health checking following Railway best practices:
 }
 ```
 
-### Application Implementation:
+### Application Implementation
 The `/health` endpoint should return:
 ```json
 {
@@ -241,7 +241,7 @@ railway metrics
 
 ## 🔄 Deployment Workflow
 
-### Complete Deployment Process:
+### Complete Deployment Process
 
 1. **Setup Services**:
    ```bash

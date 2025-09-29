@@ -2,7 +2,7 @@
 
 ## Current Development 🚧
 
-## 🎉 MAJOR UPDATE (2025-01-14): Phase 1.7 Complete - Production Ready!
+## 🎉 MAJOR UPDATE (2025-01-14): Phase 1.7 Complete - Production Ready
 
 ### System Assessment Results
 After comprehensive verification and testing:
@@ -97,7 +97,7 @@ With all core functionality complete, development focus shifts to:
 - Workspace state
   - Yarn 4.9.2 install successful across workspaces.
   - ESLint v9 migration warnings for root/cli/sdk (missing eslint.config.js); web lints clean but suggests adding Next.js ESLint plugin.
-  - Tests: web workspace lacks Jest/Vitest test runner; CLI has one failing expectation in __tests__/install.test.ts regarding CI log message; Python core installs editable and test infra is present.
+  - Tests: web workspace lacks Jest/Vitest test runner; CLI has one failing expectation in **tests**/install.test.ts regarding CI log message; Python core installs editable and test infra is present.
 
 #### Follow-ups Implemented (2025-08-08, later)
 
@@ -193,7 +193,6 @@ Status Snapshot (Aug 21):
 | Context (advanced) | Deferred | Semantic/persistent features paused |
 | Observability | Improving | Metrics endpoints added; CI pending |
 | Dependency hygiene | Baseline | Single-source policy instituted |
-
 
 Action Items Logged:
 - [ ] Add CI workflow (tests, lint, drift, coverage)

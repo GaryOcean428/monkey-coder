@@ -161,13 +161,13 @@ python test_railway_config.py
 
 ## Rollback Plan
 
-### If Deployment Fails:
+### If Deployment Fails
 1. **Check logs**: `railway logs --deployment`
 2. **Verify environment variables**: `railway variables`
 3. **Rollback to previous deployment**: Railway dashboard > Deployments > Redeploy previous
 4. **Local testing**: Reproduce issue locally with same environment
 
-### Emergency Contacts:
+### Emergency Contacts
 - **Railway Support**: https://railway.app/help
 - **Repository Issues**: https://github.com/GaryOcean428/monkey-coder/issues
 

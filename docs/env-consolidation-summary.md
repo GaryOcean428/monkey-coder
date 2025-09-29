@@ -43,12 +43,12 @@ Successfully consolidated and cleaned up redundant environment configuration fil
 
 ## Recommended Workflow
 
-### For Local Development:
+### For Local Development
 1. Copy `.env.example` to `.env`
 2. Fill in your API keys in `.env`
 3. Never commit `.env` to Git
 
-### For Railway Deployment:
+### For Railway Deployment
 1. Copy variables from `.env.railway.template`
 2. Replace placeholders with actual values
 3. Upload to Railway via Environment Variables dashboard

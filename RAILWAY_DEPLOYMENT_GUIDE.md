@@ -133,9 +133,9 @@ Key behaviors now enforced in `railpack.json`:
 
 1. Build attempts the workspace export, then alternative methods (unchanged).
 2. After build, a strict verification step runs:
-  - Checks for `packages/web/out/index.html`
-  - Checks for `packages/web/out/_next/`
-  - Computes and logs a SHA-256 hash of `index.html` for traceability.
+- Checks for `packages/web/out/index.html`
+- Checks for `packages/web/out/_next/`
+- Computes and logs a SHA-256 hash of `index.html` for traceability.
 3. Copies the verified build to `/app/out` as an additional fallback search path used by
   `monkey_coder.app.main`.
 4. If verification fails, the build exits with status 1 so Railway does not deploy an incomplete

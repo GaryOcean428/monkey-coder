@@ -152,7 +152,7 @@ ModelValidator.BLOCKED_MODELS = {
 - Workspace state
   - Yarn 4.9.2 install successful across workspaces.
   - ESLint v9 migration warnings for root/cli/sdk (missing eslint.config.js); web lints clean but suggests adding Next.js ESLint plugin.
-  - Tests: web workspace lacks Jest/Vitest test runner; CLI has one failing expectation in __tests__/install.test.ts regarding CI log message; Python core installs editable and test infra is present.
+  - Tests: web workspace lacks Jest/Vitest test runner; CLI has one failing expectation in **tests**/install.test.ts regarding CI log message; Python core installs editable and test infra is present.
 
 #### Follow-ups Implemented (2025-08-08, later)
 
