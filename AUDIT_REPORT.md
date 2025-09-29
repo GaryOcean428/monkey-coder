@@ -51,7 +51,7 @@ This comprehensive audit analyzes the Monkey Coder repository across build syste
 
 #### ⚠️ **Issues Identified:**
 
-**2.1 Inter-service Communication**
+#### 2.1 Inter-service Communication
 - **Current:** Hard-coded URLs in some configurations
 - **Required:** Use Railway domain variables for service communication
 - **Impact:** Service discovery failures in production
@@ -61,19 +61,19 @@ This comprehensive audit analyzes the Monkey Coder repository across build syste
 - **Required:** Restrict to known frontends and Railway domains
 - **Impact:** Security vulnerability
 
-**2.3 WebSocket Configuration**
+#### 2.3 WebSocket Configuration
 - **Current:** HTTP-only WebSocket configuration
 - **Required:** WSS protocol for production
 - **Impact:** Connection failures over HTTPS
 
-**2.4 Logs & Monitoring**
+#### 2.4 Logs & Monitoring
 - **Current:** Basic logging implementation
 - **Required:** Structured logging with Railway integration
 - **Impact:** Difficult debugging in production
 
 #### 🔴 **Critical Issues:**
 
-**2.5 Dockerfile Conflicts**
+#### 2.5 Dockerfile Conflicts
 - **Issue:** Multiple build configuration files may conflict
 - **Files Found:** `start_server.sh`, various validation scripts
 - **Solution:** Ensure only railpack.json is primary build config
@@ -124,7 +124,7 @@ This comprehensive audit analyzes the Monkey Coder repository across build syste
 
 ### 🔴 **CRITICAL SECURITY ISSUES**
 
-**4.1 Hard-coded Secrets**
+#### 4.1 Hard-coded Secrets
 ```python
 # Found in multiple files:
 SECRET_KEY = "railway-build-secret-$(date +%s)"  # ⚠️ Predictable
