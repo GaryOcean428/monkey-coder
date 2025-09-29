@@ -63,7 +63,7 @@ def test_password_reset_db_token_flow(monkeypatch):
     from monkey_coder.app import main as main_module
     main_module._enforce_csrf = lambda request: None
 
-    resp2 = client.post('/api/v1/auth/password/reset', json={'token': raw_token, 'new_password': 'AnotherPass123!'})
+    resp2 = client.post('/api/v1/auth/password/reset', json={'token': raw_token, 'new_password': 'NewPass123!'})
     assert resp2.status_code == 200
     assert resp2.json()['status'] == 'password_reset'
 
