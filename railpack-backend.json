@@ -1,0 +1,27 @@
+{
+  "name": "monkey-coder-backend",
+  "description": "Monkey Coder AI Backend API Service",
+  "version": "1.0.0",
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "cd packages/core && pip install -r requirements.txt",
+    "startCommand": "cd packages/core && python -m monkey_coder.app.main"
+  },
+  "deploy": {
+    "healthcheckPath": "/health",
+    "restartPolicyType": "on_failure",
+    "restartPolicyMaxRetries": 3
+  },
+  "env": {
+    "PORT": "8000",
+    "ENVIRONMENT": "production",
+    "LOG_LEVEL": "info"
+  },
+  "resources": {
+    "memory": "2Gi",
+    "cpu": "1000m"
+  },
+  "networking": {
+    "serviceDomain": "monkey-coder-backend"
+  }
+}

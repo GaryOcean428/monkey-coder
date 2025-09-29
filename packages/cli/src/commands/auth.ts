@@ -135,6 +135,11 @@ export function createAuthCommand(config: ConfigManager): Command {
         console.log(chalk.blue('  Tier:'), authData.user.subscription_tier);
         
         console.log(chalk.gray('\nYour session has been saved. You can now use all Monkey Coder features.'));
+        console.log('');
+        console.log(chalk.blue('💡 Quick start:'));
+        console.log(chalk.gray('  • Run "monkey" to start interactive chat'));
+        console.log(chalk.gray('  • Use "monkey implement <task>" for code generation'));
+        console.log(chalk.gray('  • Try "monkey analyze <files>" for code analysis'));
         
       } catch (error: any) {
         console.error(formatError(error.message || 'Login failed'));
