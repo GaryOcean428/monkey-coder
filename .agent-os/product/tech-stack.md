@@ -6,7 +6,7 @@
 
 ## Application Framework
 - **Framework:** Node.js + Python FastAPI Hybrid Architecture
-- **Version:** Node.js 20+ (enforced >=20.0.0) / Python 3.13 (production)
+- **Version:** Node.js 20+ (enforced >=20.0.0) / Python 3.12.11 (production)
 - **CLI Framework:** TypeScript 5.8.3 with Commander.js for CLI interface
 - **Backend Framework:** Python FastAPI for AI orchestration and quantum routing
 - **Monorepo Management:** Yarn 4.9.2 workspaces with enforced constraints
@@ -65,7 +65,7 @@
 - **Static Assets:** FastAPI StaticFiles with multi-path fallback system
 - **CLI Distribution:** npm registry
 - **Python Distribution:** PyPI registry
-- **Container Runtime:** Python 3.13 + Node.js 20 via railpack
+- **Container Runtime:** Python 3.12.11 + Node.js 20 via railpack
 
 ## Database Hosting
 - **Primary Database:** Railway PostgreSQL addon
@@ -166,7 +166,7 @@
 - **Security:** Secure handling of sensitive configuration without logging secrets
 
 ## Development Tools
-- **Language:** TypeScript 5.8.3 + Python 3.13
+- **Language:** TypeScript 5.8.3 + Python 3.12.11
 - **Testing:** Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
 - **Linting:** ESLint ^9.32.0 + Prettier ^3.6.2 (TypeScript), Black + isort (Python)
 - **Type Checking:** TypeScript compiler + mypy (Python)

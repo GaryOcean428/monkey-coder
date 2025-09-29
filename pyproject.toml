@@ -42,7 +42,7 @@ dependencies = [
   "html2text>=2020.1.16",
   "python-dotenv>=1.0.0",
   "resend>=0.6.0",
-  # PyTorch updated to support Python 3.13 (2.3.0+ has cp313 wheels)
+  # PyTorch updated to support Python 3.12 (2.3.0+ has cp312 wheels)
   # Use CPU index for compatibility across deployment environments
   "torch==2.3.0",
   "transformers>=4.39.0",

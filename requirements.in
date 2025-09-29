@@ -1,9 +1,9 @@
-# Core ML dependencies - use latest versions for Python 3.13 compatibility
+# Core ML dependencies - use latest versions for Python 3.12 compatibility
 torch>=2.0.0
 transformers>=4.39.1
 accelerate>=0.20.0
 safetensors>=0.3.0
-# vllm  # Commented out - may not support Python 3.13 yet
+# vllm  # Commented out - may not support Python 3.12 yet
 
 # Database dependencies
 asyncpg>=0.29.0

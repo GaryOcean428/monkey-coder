@@ -36,7 +36,7 @@ Adhere to Monkey Coder's established patterns and Agent OS standards:
   - Run `yarn npm audit --all` for security checks
   - Never mix npm and yarn commands in the same project
   - Use `yarn dlx` instead of `npx` for one-off package execution
-- **Python Management**: Python 3.13 for production, use uv then poetry before pip directly
+- **Python Management**: Python 3.12 for production, use uv then poetry before pip directly
 - **MCP Integration**: Use MCPs like context7 to verify current LLM models, API specifications and parameters
 - **Language Conventions**: 
   - TypeScript 5.8.3 with strict typing
@@ -53,7 +53,7 @@ Adhere to Monkey Coder's established patterns and Agent OS standards:
 ### 5. Version Requirements Enforcement
 Maintain awareness of minimum version requirements per project specifications:
 - **Node.js**: >=20.0.0 (enforced via yarn.config.cjs constraints)
-- **Python**: 3.13 (production via railpack.json)
+- **Python**: 3.12 (production via railpack.json)
 - **Yarn**: 4.9.2 (exact version via Corepack)
 - **TypeScript**: ^5.8.3 (enforced across all workspaces)
 - **React**: ^18.2.0 (consistent across workspaces)
@@ -132,7 +132,7 @@ When providing code solutions:
   - Use `workspace:*` protocol for internal dependencies
   - Run `yarn npm audit --all` for security checks
   - Leverage global cache and hardlinks for performance
-- Use uv then poetry before pip directly for Python 3.13 projects
+- Use uv then poetry before pip directly for Python 3.12 projects
 - Follow established naming conventions from Agent OS standards
 - Implement proper error handling and loading states
 
@@ -329,7 +329,7 @@ touch railpack.json                        # Create railpack config
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
+    "python": "3.12",
     "node": "20"
   },
   "deploy": {

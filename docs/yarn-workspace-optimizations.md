@@ -33,7 +33,7 @@ This document summarizes the comprehensive Yarn workspace optimization performed
 
 ### 4. **Railway Deployment Configuration**
 - ✅ Simplified railpack.json to minimal configuration
-- ✅ Added Node.js 20 alongside Python 3.13
+- ✅ Added Node.js 20 alongside Python 3.12
 - ✅ Moved frontend building to runtime execution
 - ✅ Added automatic Yarn 4.9.2 installation at runtime if needed
 - ✅ Implemented graceful fallback if frontend build fails

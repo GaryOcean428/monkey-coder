@@ -1,4 +1,4 @@
-# Railway Deployment Fix - Python 3.13 Compatibility Issue
+# Railway Deployment Fix - Python 3.12 Standardization
 
 ## Date: January 15, 2025
 
@@ -6,7 +6,7 @@
 
 The Monkey Coder service on Railway experienced deployment failures due to two critical issues:
 
-1. **Python Version Incompatibility**: Railway's update to Python 3.13 broke compatibility with PyTorch 2.3.0, which lacks Python 3.13 wheels. PyTorch support for Python 3.13 was only added starting from version 2.5.0.
+1. **Python Version Incompatibility**: Railway's update to Python 3.13 broke compatibility with PyTorch 2.3.0, which lacks Python 3.13 wheels. We standardized on Python 3.12 for better compatibility and stability.
 
 2. **Code Quality**: Initial reports indicated an IndentationError in run_server.py at line 423, though this was resolved in the refactored version.
 
@@ -15,8 +15,8 @@ The Monkey Coder service on Railway experienced deployment failures due to two c
 ### 1. Python Version Pinning
 
 **File: `railpack.json`**
-- Changed Python version from `3.13` to `3.12`
-- Updated cache paths from `/app/venv/lib/python3.13/site-packages` to `/app/venv/lib/python3.12/site-packages`
+- Standardized Python version to `3.12.11` for Railway compatibility
+- Updated cache paths to `/app/venv/lib/python3.12/site-packages`
 
 ```json
 "packages": {
@@ -147,10 +147,10 @@ curl -I https://coder.fastmonkey.au/health
 
 ## References
 
-- [PyTorch Python 3.13 Support](https://github.com/pytorch/pytorch/releases)
+- [PyTorch Python 3.12 Support](https://github.com/pytorch/pytorch/releases)
 - [Railway Railpack Documentation](https://docs.railway.app/reference/railpack)
 - [Python Packaging Best Practices](https://packaging.python.org/en/latest/)
 
 ---
 
-*This document serves as a reference for the January 2025 Railway deployment fix addressing Python 3.13 compatibility issues with PyTorch and related deployment challenges.*
+*This document serves as a reference for the January 2025 Railway deployment fix addressing Python version standardization to 3.12 for improved compatibility and deployment stability.*

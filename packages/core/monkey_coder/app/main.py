@@ -129,30 +129,9 @@ logger = logging.getLogger(__name__)
 performance_logger = get_performance_logger("app_performance")
 
 # ---------------------------------------------------------------------------
-# Simple in-memory rate limiting (development / interim)
+# Production Redis-based rate limiting
 # ---------------------------------------------------------------------------
-_RATE_LIMIT_STATE: Dict[str, list] = {}
-_RATE_LIMIT_WINDOW_SECONDS = 300  # 5 minutes
-_RATE_LIMIT_MAX_REQUESTS = 8       # per IP+route window
-
-def _rl_key(ip: str, route_tag: str) -> str:
-    return f"{ip}:{route_tag}"
-
-def check_rate_limit(request: Request, route_tag: str) -> None:
-    """Sliding window rate limiter. Raises HTTPException(429) if exceeded.
-    NOTE: For production replace with Redis or distributed store.
-    """
-    ip = request.client.host if request.client else "unknown"
-    key = _rl_key(ip, route_tag)
-    now = time.time()
-    window_floor = now - _RATE_LIMIT_WINDOW_SECONDS
-    bucket = _RATE_LIMIT_STATE.setdefault(key, [])
-    # Drop old timestamps
-    while bucket and bucket[0] < window_floor:
-        bucket.pop(0)
-    if len(bucket) >= _RATE_LIMIT_MAX_REQUESTS:
-        raise HTTPException(status_code=429, detail="Too many requests, slow down")
-    bucket.append(now)
+from monkey_coder.middleware.rate_limiter import check_rate_limit
 
 # -------------------------------------------------------------
 # Host Validation Middleware (stricter than TrustedHost if set)

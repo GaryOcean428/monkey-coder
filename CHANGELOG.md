@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - `/frontend-status` endpoint and enriched `/health` endpoint with build + hash metadata.
 - Host validation middleware and metrics initialization guard for improved security and observability.
 - Provider preference ordering logic in advanced routing to honor declared provider order before capability scoring.
-- tomli / tomllib fallback to maintain compatibility across Python versions (3.11+ and 3.13) in tests.
+- tomli / tomllib fallback to maintain compatibility across Python versions (3.11+ and 3.12) in tests.
 - Minimal quantum routing smoke test suite (`test_phase2_quantum_routing.py`) providing:
   - State vector dimension stability test.
   - DQN agent action + memory insertion test.
@@ -26,7 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Resolved failing complexity threshold tests across all tiers (trivial, simple, moderate, complex, critical) after iterative tuning.
-- Eliminated `tomli` import errors under Python 3.13 by adding runtime fallback logic.
+- Eliminated `tomli` import errors under Python 3.12 by adding runtime fallback logic.
 - Removed legacy / orphaned quantum test blocks that introduced syntax and name errors.
 
 ### Removed
