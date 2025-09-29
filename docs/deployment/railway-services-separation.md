@@ -102,9 +102,34 @@ Both services include comprehensive health monitoring:
 - **Frontend**: `/api/health`
 - **Restart Policy**: Automatic restart on failure (max 3 retries)
 
+## Railway Deployment Configuration
+
+### Frontend Service (Next.js Static Export)
+
+The frontend service is configured for static export to ensure compatibility with Railway's deployment model:
+
+- **Build Command**: Uses `yarn workspace @monkey-coder/web export` instead of `yarn build`
+- **Environment Variables**: 
+  - `NEXT_OUTPUT_EXPORT=true` - Enables Next.js static export mode
+  - `NEXT_TELEMETRY_DISABLED=1` - Disables Next.js telemetry
+- **Next.js Configuration**: `packages/web/next.config.js` conditionally enables static export
+- **Output Directory**: Static files are generated in `packages/web/out/`
+
+### Troubleshooting
+
+**Build Hanging Issues:**
+- Ensure `yarn export` is used instead of `yarn build` for static export
+- Verify `NEXT_OUTPUT_EXPORT=true` is set in build environment
+- Check that `next.config.js` exists and has proper export configuration
+
+**Static Asset Issues:**
+- Verify `images.unoptimized: true` in Next.js config for static export compatibility
+- Ensure `trailingSlash: true` for proper routing in static export mode
+
 ## Migration Notes
 
 - Existing deployments will continue to work
 - New deployments should use the separated architecture
 - Environment variables need to be configured for service discovery
 - Database connections remain centralized through Supabase
+- Frontend now uses static export for improved Railway compatibility
