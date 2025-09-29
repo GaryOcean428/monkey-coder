@@ -50,6 +50,21 @@ class RedisRateLimiter:
             
         except redis.RedisError as e:
             logger.error(f"Redis rate limiting error: {e}")
+            if "Connection refused" in str(e):
+                key = f"fallback_{ip}_{route_tag}"
+                window_start = now - self.window_seconds
+                
+                if not hasattr(self, '_fallback_store'):
+                    self._fallback_store = {}
+                
+                bucket = self._fallback_store.setdefault(key, [])
+                bucket[:] = [ts for ts in bucket if ts > window_start]
+                
+                if len(bucket) >= self.max_requests:
+                    logger.warning(f"Rate limit exceeded (fallback) for {ip}:{route_tag} - {len(bucket)}/{self.max_requests}")
+                    raise HTTPException(status_code=429, detail="Too many requests, slow down")
+                
+                bucket.append(now)
 
 _rate_limiter: Optional[RedisRateLimiter] = None
 

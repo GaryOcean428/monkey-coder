@@ -1516,7 +1516,7 @@ class PasswordResetConfirm(BaseModel):
 async def request_password_reset(payload: PasswordResetRequest, request: Request):
     """Initiate password reset (always 200). Uses DB auth_tokens when available."""
     try:
-        check_rate_limit(request, "password_forgot")
+        await check_rate_limit(request, "password_forgot")
         user = await User.get_by_email(payload.email)
         if user and user.id:
             raw_token = _generate_reset_token()
@@ -3214,7 +3214,7 @@ async def get_agent_card() -> Dict[str, Any]:
             return agent_card
         else:
             # Return basic agent card if file not found
-            return {
+            basic_card = {
                 "name": "Monkey-Coder Agent",
                 "description": "Specialized Deep Agent for code generation and analysis",
                 "version": "1.0.0",
@@ -3222,6 +3222,21 @@ async def get_agent_card() -> Dict[str, Any]:
                 "error": "Agent card file not found",
                 "updated_at": datetime.utcnow().isoformat() + "Z"
             }
+            
+            # Add A2A server status even for basic card
+            if hasattr(app.state, 'a2a_agent') and app.state.a2a_agent:
+                basic_card["a2a_server"] = {
+                    "status": "running",
+                    "port": app.state.a2a_agent.port,
+                    "mcp_clients": list(app.state.a2a_agent.mcp_clients.keys())
+                }
+            else:
+                basic_card["a2a_server"] = {
+                    "status": "not_running",
+                    "reason": "A2A server disabled or failed to initialize"
+                }
+            
+            return basic_card
             
     except Exception as e:
         logger.error(f"Agent card retrieval failed: {str(e)}")
