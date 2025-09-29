@@ -38,7 +38,7 @@ class MonkeyCoderA2AAgent:
         self.agent_card = AgentCard(
             name="Monkey-Coder Agent",
             description="Specialized Deep Agent for code generation, repository analysis, and testing",
-            url="http://localhost:7702",  # A2A server URL
+            url=f"http://localhost:{port}",  # A2A server URL
             version="1.0.0",
             capabilities={
                 "code_generation": True,
@@ -136,7 +136,8 @@ class MonkeyCoderA2AAgent:
             
             # Create A2A server
             self.server = A2AServer(
-                agent_card=self.agent_card
+                agent_card=self.agent_card,
+                url=f"http://localhost:{self.port}"
             )
             
             # Register skills
@@ -244,6 +245,10 @@ class MonkeyCoderA2AAgent:
             Analysis results as string
         """
         try:
+            from pathlib import Path
+            if not Path(repo_path).exists():
+                return f"Error: Repository path '{repo_path}' does not exist"
+            
             # Use MCP filesystem tools to read repository structure
             repo_structure = await self._get_repo_structure(repo_path)
             
@@ -467,10 +472,11 @@ class MonkeyCoderA2AAgent:
     
     async def start(self) -> None:
         """Start the A2A server"""
-        if not self.server:
-            await self.initialize()
+        await self.initialize()
         
         if self.server:
+            if hasattr(self.server, 'start') and callable(getattr(self.server, 'start')):
+                await self.server.start()
             logger.info(f"Monkey-Coder A2A server initialized on port {self.port}")
         else:
             raise RuntimeError("Failed to initialize A2A server")
@@ -478,6 +484,8 @@ class MonkeyCoderA2AAgent:
     async def stop(self) -> None:
         """Stop the A2A server and cleanup"""
         if self.server:
+            if hasattr(self.server, 'stop') and callable(getattr(self.server, 'stop')):
+                await self.server.stop()
             logger.info("A2A server cleanup initiated")
         
         # Disconnect MCP clients
