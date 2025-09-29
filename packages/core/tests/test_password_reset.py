@@ -14,6 +14,11 @@ async def test_password_reset_flow(monkeypatch):
     async def mock_check_rate_limit(*args, **kwargs):
         return True  # Always allow requests
     
+    from monkey_coder.middleware.rate_limiter import get_rate_limiter
+    limiter = get_rate_limiter()
+    if hasattr(limiter, '_fallback_store'):
+        limiter._fallback_store.clear()
+    
     monkeypatch.setattr('monkey_coder.middleware.rate_limiter.check_rate_limit', mock_check_rate_limit)
     
     # Create a fake user in DB via monkeypatching User.get_by_email and get_by_id
