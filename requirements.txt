@@ -14,7 +14,7 @@ amqp==5.3.1
     # via kombu
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.68.0
+anthropic==0.68.1
     # via monkey-coder-core (pyproject.toml)
 anyio==4.11.0
     # via
@@ -33,9 +33,9 @@ asyncpg==0.30.0
     # via monkey-coder-core (pyproject.toml)
 attrs==25.3.0
     # via aiohttp
-bcrypt==4.3.0
+bcrypt==5.0.0
     # via passlib
-beautifulsoup4==4.13.5
+beautifulsoup4==4.14.0
     # via monkey-coder-core (pyproject.toml)
 billiard==4.2.2
     # via celery
@@ -100,9 +100,9 @@ fsspec==2025.9.0
     #   torch
 google-auth==2.40.3
     # via google-genai
-google-genai==1.38.0
+google-genai==1.39.1
     # via monkey-coder-core (pyproject.toml)
-groq==0.31.1
+groq==0.32.0
     # via monkey-coder-core (pyproject.toml)
 h11==0.16.0
     # via
@@ -123,7 +123,7 @@ httpx==0.28.1
     #   google-genai
     #   groq
     #   openai
-huggingface-hub==0.35.0
+huggingface-hub==0.35.1
     # via
     #   accelerate
     #   sentence-transformers
@@ -147,7 +147,7 @@ kombu==5.5.4
     # via celery
 markdown-it-py==4.0.0
     # via rich
-markupsafe==3.0.2
+markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
@@ -197,7 +197,7 @@ nvidia-nvjitlink-cu12==12.9.86
     #   nvidia-cusparse-cu12
 nvidia-nvtx-cu12==12.1.105
     # via torch
-openai==1.108.2
+openai==1.109.1
     # via monkey-coder-core (pyproject.toml)
 packaging==25.0
     # via
@@ -260,7 +260,7 @@ python-jose==3.5.0
     # via monkey-coder-core (pyproject.toml)
 python-multipart==0.0.20
     # via monkey-coder-core (pyproject.toml)
-pyyaml==6.0.2
+pyyaml==6.0.3
     # via
     #   monkey-coder-core (pyproject.toml)
     #   accelerate
@@ -278,7 +278,7 @@ requests==2.32.5
     #   resend
     #   stripe
     #   transformers
-resend==2.14.0
+resend==2.15.0
     # via monkey-coder-core (pyproject.toml)
 rich==14.1.0
     # via
@@ -301,7 +301,7 @@ scipy==1.16.2
     #   sentence-transformers
 sentence-transformers==2.7.0
     # via monkey-coder-core (pyproject.toml)
-sentry-sdk==2.38.0
+sentry-sdk==2.39.0
     # via monkey-coder-core (pyproject.toml)
 shellingham==1.5.4
     # via typer
@@ -348,7 +348,7 @@ transformers==4.39.3
     # via
     #   monkey-coder-core (pyproject.toml)
     #   sentence-transformers
-typer==0.19.1
+typer==0.19.2
     # via monkey-coder-core (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -377,7 +377,7 @@ urllib3==2.5.0
     # via
     #   requests
     #   sentry-sdk
-uvicorn==0.36.0
+uvicorn==0.37.0
     # via monkey-coder-core (pyproject.toml)
 uvloop==0.21.0
     # via uvicorn
