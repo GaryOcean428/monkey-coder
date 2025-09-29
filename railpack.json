@@ -27,13 +27,15 @@
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
-          "yarn workspace @monkey-coder/web build",
-          "echo '✅ Frontend build completed'"
+          "yarn workspace @monkey-coder/web export",
+          "echo '✅ Frontend export completed'"
         ]
       }
     },
     "env": {
-      "NODE_ENV": "production"
+      "NODE_ENV": "production",
+      "NEXT_OUTPUT_EXPORT": "true",
+      "NEXT_TELEMETRY_DISABLED": "1"
     }
   },
   "deploy": {
