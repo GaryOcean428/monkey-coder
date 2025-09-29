@@ -20,13 +20,12 @@ jobs:
       - name: Python dependency drift check
         run: |
           ./scripts/check_python_deps_sync.sh || (echo "❌ Drift detected" && exit 1)
+      - name: Enable Corepack
+        run: corepack enable && corepack prepare yarn@4.9.2 --activate
       - name: Install Node for markdown lint
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'yarn'
-      - name: Enable Corepack
-        run: corepack enable && corepack prepare yarn@4.9.2 --activate
       - name: Install JS dependencies (for markdownlint)
         run: yarn install --frozen-lockfile --mode=skip-build
       - name: Documentation hygiene check
