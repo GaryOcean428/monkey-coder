@@ -42,7 +42,7 @@ async def test_monkey_coder():
     print("4. Test file operations")
     print("5. Generate unit tests")
     
-    choice = input("\nEnter your choice (1-5): ")
+    choice = "1"  # Default choice for automated testing
     
     if choice == "1":
         # Generate a Python function
