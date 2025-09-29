@@ -42,7 +42,7 @@ class TestMainErrorHandling:
         with patch.object(app, 'state', mock_app_state):
 
             # Create a proper mock quantum routing result
-            from monkey_coder.quantum.router_integration import QuantumRoutingResult
+            from monkey_coder.quantum import QuantumRoutingResult
             from monkey_coder.models import ProviderType
 
             mock_quantum_result = MagicMock(spec=QuantumRoutingResult)

@@ -161,7 +161,7 @@ class TestEmailNotificationService:
         assert "Test Subject" in caplog.text
     
     @patch.dict(os.environ, {"ENV": "production"})
-    @patch('monkey_coder.email.sender.resend')
+    @patch('monkey_coder.email.sender.resend', create=True)
     async def test_send_email_production_success(self, mock_resend):
         """Test successful email sending in production mode."""
         mock_resend.emails.send = Mock(return_value={"id": "email_123"})
@@ -183,7 +183,7 @@ class TestEmailNotificationService:
         assert call_args["html"] == "<html><body>Test</body></html>"
     
     @patch.dict(os.environ, {"ENV": "production"})
-    @patch('monkey_coder.email.sender.resend')
+    @patch('monkey_coder.email.sender.resend', create=True)
     async def test_send_email_production_failure(self, mock_resend):
         """Test email sending failure in production mode."""
         mock_resend.emails.send = Mock(side_effect=Exception("Resend API error"))
