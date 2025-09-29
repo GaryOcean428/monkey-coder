@@ -82,9 +82,9 @@ class TestMainErrorHandling:
                     mock_app_state.metrics_collector.record_error.assert_called_once()
                     call_args = mock_app_state.metrics_collector.record_error.call_args
 
-                    # Check that the correct parameters were passed (as keyword arguments)
-                    assert call_args.kwargs['execution_id'] == "test_execution_id"
-                    assert call_args.kwargs['error'] == "Test error"
+                    # Check that the correct parameters were passed (as positional arguments)
+                    assert call_args.args[0] == "test_execution_id"
+                    assert call_args.args[1] == "Test error"
 
     @pytest.mark.asyncio
     async def test_record_error_signature_compatibility(self, mock_metrics_collector):
