@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FormField } from '../../src/components/ui/form-field'
+import { FormField } from '../../../src/components/ui/form-field'
 
 describe('FormField Component', () => {
   it('renders label and input correctly', () => {
@@ -129,7 +129,7 @@ describe('FormField Component', () => {
   })
 
   it('shows validation loading state', async () => {
-    const slowValidation = () => new Promise(resolve => setTimeout(() => resolve(undefined), 1000))
+    const slowValidation = (): Promise<string | undefined> => new Promise(resolve => setTimeout(() => resolve(undefined), 1000))
     const user = userEvent.setup()
 
     render(

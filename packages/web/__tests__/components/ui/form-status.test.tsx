@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { FormStatus, useFormStatus } from '../../src/components/ui/form-status'
+import { FormStatus, useFormStatus } from '../../../src/components/ui/form-status'
 import { renderHook, act } from '@testing-library/react'
 
 describe('FormStatus Component', () => {

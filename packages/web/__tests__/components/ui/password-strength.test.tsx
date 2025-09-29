@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { PasswordStrengthIndicator, getPasswordStrength } from '../../src/components/ui/password-strength'
+import { PasswordStrengthIndicator, getPasswordStrength } from '../../../src/components/ui/password-strength'
 
 describe('PasswordStrengthIndicator Component', () => {
   it('does not render when password is empty', () => {
