@@ -2,16 +2,18 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-frontend",
-    "description": "Monkey Coder Frontend - Web Interface and Authentication Portal"
+    "name": "monkey-coder",
+    "description": "AI-powered code generation platform with unified frontend/backend"
   },
   "build": {
-    "provider": "node",
+    "provider": "python",
     "packages": {
+      "python": "3.12.11",
       "node": "20"
     },
     "cache": {
       "paths": [
+        "/app/.venv/lib/python3.12/site-packages",
         "node_modules",
         "packages/web/.next",
         "packages/web/out"
@@ -20,33 +22,41 @@
     "steps": {
       "install": {
         "commands": [
-          "yarn install --frozen-lockfile",
-          "echo '✅ Node dependencies installed'"
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt",
+          "echo '✅ Python dependencies installed'"
         ]
       },
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
-          "yarn workspace @monkey-coder/web export",
-          "echo '✅ Frontend export completed'"
+          "cd packages/web && yarn install --frozen-lockfile",
+          "cd packages/web && yarn build",
+          "cd packages/web && NEXT_OUTPUT_EXPORT=true yarn export",
+          "test -d packages/web/out && echo '✅ Static export complete' || exit 1"
         ]
       }
     },
     "env": {
       "NODE_ENV": "production",
+      "PYTHON_ENV": "production",
       "NEXT_OUTPUT_EXPORT": "true",
-      "NEXT_TELEMETRY_DISABLED": "1"
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:$PATH"
     }
   },
   "deploy": {
-    "startCommand": "yarn workspace @monkey-coder/web start",
-    "healthCheckPath": "/api/health",
+    "startCommand": "/app/.venv/bin/python /app/run_server.py",
+    "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "env": {
-      "PORT": "3000",
-      "BACKEND_URL": "${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}"
+      "LOG_LEVEL": "info",
+      "HEALTH_CHECK_PATH": "/health"
     }
   }
 }
