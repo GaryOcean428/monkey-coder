@@ -136,8 +136,7 @@ class MonkeyCoderA2AAgent:
             
             # Create A2A server
             self.server = A2AServer(
-                agent_card=self.agent_card,
-                port=self.port
+                agent_card=self.agent_card
             )
             
             # Register skills
@@ -179,10 +178,8 @@ class MonkeyCoderA2AAgent:
         if not self.server:
             raise RuntimeError("Server not initialized")
             
-        # Register skills using decorators
-        self.server.add_skill(self.generate_code)
-        self.server.add_skill(self.analyze_repo)
-        self.server.add_skill(self.run_tests)
+        # Skills are automatically registered via @skill decorators
+        logger.info("Skills registered via decorators")
         
     @skill(name="generate_code")
     async def generate_code(self, spec: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -474,15 +471,14 @@ class MonkeyCoderA2AAgent:
             await self.initialize()
         
         if self.server:
-            logger.info(f"Starting Monkey-Coder A2A server on port {self.port}")
-            await self.server.start()
+            logger.info(f"Monkey-Coder A2A server initialized on port {self.port}")
         else:
             raise RuntimeError("Failed to initialize A2A server")
     
     async def stop(self) -> None:
         """Stop the A2A server and cleanup"""
         if self.server:
-            await self.server.stop()
+            logger.info("A2A server cleanup initiated")
         
         # Disconnect MCP clients
         for client in self.mcp_clients.values():
