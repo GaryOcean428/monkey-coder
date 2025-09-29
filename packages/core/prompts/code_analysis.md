@@ -17,21 +17,21 @@ Structure: {repo_structure}
 
 ## Analysis Instructions
 
-### For Structure Analysis:
+### For Structure Analysis
 - Examine the overall architecture and organization
 - Identify design patterns used
 - Assess modularity and separation of concerns
 - Evaluate dependency management
 - Review file and directory structure
 
-### For Issues Analysis:
+### For Issues Analysis
 - Identify potential bugs and vulnerabilities
 - Find code smells and anti-patterns
 - Check for performance issues
 - Review error handling
 - Assess code complexity
 
-### For Improvements Analysis:
+### For Improvements Analysis
 - Suggest architectural improvements
 - Recommend refactoring opportunities
 - Identify optimization potential

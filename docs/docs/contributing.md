@@ -19,4 +19,3 @@
 - Node coverage: `node-coverage` artifact
 - Python JUnit: `python-junit` artifact (pytest-results.xml)
 - Quantum metrics: `python-quantum-metrics` artifact (artifacts/quantum/metrics.json)
-

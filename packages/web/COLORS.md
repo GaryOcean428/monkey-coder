@@ -4,7 +4,7 @@
 
 **ISSUE RESOLVED**: The Tailwind configuration contained a critical naming inconsistency where "Brand Lime" (#6c5ce7) was incorrectly labeled - this hex value represents an **Electric Purple/Violet** color, not lime green.
 
-### ✅ What Was Fixed:
+### ✅ What Was Fixed
 - Changed `lime: '#6c5ce7'` → `violet: '#6c5ce7'` in `tailwind.config.ts`
 - Added accurate color descriptions and validation
 - Created type-safe color constants with proper naming
@@ -33,6 +33,7 @@ Our brand colors are derived from the Monkey Coder logo gradient and represent t
 Optimized for daytime use with warm, soft backgrounds and high-contrast text.
 
 ### Backgrounds
+
 | Preview | Class Name | Hex | Description |
 |---------|------------|-----|-------------|
 | ![#fefefe](https://via.placeholder.com/30x20/fefefe/000000?text=+) | `bg-light-bg-primary` | `#fefefe` | **Soft White** - Main background |
@@ -41,6 +42,7 @@ Optimized for daytime use with warm, soft backgrounds and high-contrast text.
 | ![#ffffff](https://via.placeholder.com/30x20/ffffff/000000?text=+) | `bg-light-bg-chat` | `#ffffff` | **Pure White** - Chat bubbles |
 
 ### Text Colors
+
 | Preview | Class Name | Hex | Description |
 |---------|------------|-----|-------------|
 | ![#2d3436](https://via.placeholder.com/30x20/2d3436/ffffff?text=+) | `text-light-text-primary` | `#2d3436` | **Charcoal Gray** - Main text |
@@ -54,6 +56,7 @@ Optimized for daytime use with warm, soft backgrounds and high-contrast text.
 Designed for low-light environments with deep navy backgrounds and vibrant accents.
 
 ### Backgrounds
+
 | Preview | Class Name | Hex | Description |
 |---------|------------|-----|-------------|
 | ![#0a0e1a](https://via.placeholder.com/30x20/0a0e1a/ffffff?text=+) | `bg-dark-bg-primary` | `#0a0e1a` | **Midnight Navy** - Main background |
@@ -62,6 +65,7 @@ Designed for low-light environments with deep navy backgrounds and vibrant accen
 | ![#252b3d](https://via.placeholder.com/30x20/252b3d/ffffff?text=+) | `bg-dark-bg-chat` | `#252b3d` | **Dark Slate** - Chat bubbles |
 
 ### Text Colors
+
 | Preview | Class Name | Hex | Description |
 |---------|------------|-----|-------------|
 | ![#f8f9fa](https://via.placeholder.com/30x20/f8f9fa/000000?text=+) | `text-dark-text-primary` | `#f8f9fa` | **Soft White** - Main text |
@@ -69,6 +73,7 @@ Designed for low-light environments with deep navy backgrounds and vibrant accen
 | ![#6c757d](https://via.placeholder.com/30x20/6c757d/ffffff?text=+) | `text-dark-text-tertiary` | `#6c757d` | **Cool Gray** - Meta information |
 
 ### Accent Colors
+
 | Preview | Class Name | Hex | Description |
 |---------|------------|-----|-------------|
 | ![#00cec9](https://via.placeholder.com/30x20/00cec9/ffffff?text=+) | `text-dark-accent-primary` | `#00cec9` | **Cyan** - Primary accents |
@@ -149,7 +154,7 @@ Enhanced glows on user interaction:
 </button>
 ```
 
-| Class Name | Description | 
+| Class Name | Description |
 |------------|-------------|
 | `hover:shadow-neon-hover-cyan` | Enhanced cyan glow on hover |
 | `hover:shadow-neon-hover-violet` | Intensified violet glow |
@@ -312,5 +317,5 @@ find src -name "*.tsx" -o -name "*.ts" | xargs sed -i 's/brand-lime/brand-violet
 
 ---
 
-**Questions or Issues?** 
+**Questions or Issues?**
 Contact the development team or open an issue in the repository for color system improvements.

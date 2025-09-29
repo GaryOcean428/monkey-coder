@@ -5,4 +5,3 @@ This project references external Agent OS standards in some documents (e.g., `.a
 - These references point to team-wide standards and templates maintained outside this repo.
 - If you need access, contact the maintainer to obtain the standards package or links.
 - For immediate guidance, follow the conventions documented in `docs/roadmap.md` and `CLAUDE.md`.
-

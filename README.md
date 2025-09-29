@@ -41,18 +41,18 @@ Current Features:
 - Lightweight CSRF enforcement helper (header `X-CSRF-Token` must match CSRF cookie when protection enabled)
 - Structured OAuth scaffolding endpoints (`/api/v1/auth/oauth/{provider}/initiate|callback`) for Google & GitHub (return 501 until wired)
 - Unified security roadmap embedded in code for continuity
- - OAuth implementation (Google/GitHub) now active with signed state + PKCE (Google) and degraded mock mode if secrets absent
- - Signup endpoint hardened with rate limiting, email normalization, password complexity policy, enumeration resistance
- - Email verification flow (request + confirm) using `AuthToken` purpose `email_verify` with DB + in-memory fallback and dev debug token
- - Refresh token rotation with in-memory revoked JTI tracking (development safeguard)
+- OAuth implementation (Google/GitHub) now active with signed state + PKCE (Google) and degraded mock mode if secrets absent
+- Signup endpoint hardened with rate limiting, email normalization, password complexity policy, enumeration resistance
+- Email verification flow (request + confirm) using `AuthToken` purpose `email_verify` with DB + in-memory fallback and dev debug token
+- Refresh token rotation with in-memory revoked JTI tracking (development safeguard)
 
 New / Updated Endpoints:
 - POST `/api/v1/auth/password/forgot` – Always returns 200; issues reset token (debug token included in non-production)
 - POST `/api/v1/auth/password/reset` – Validates token (DB first, fallback memory), updates password
 - GET `/api/v1/auth/oauth/{provider}/initiate` – Placeholder for future OAuth initiation
 - GET `/api/v1/auth/oauth/{provider}/callback` – Placeholder for future OAuth callback handling
- - GET `/api/v1/auth/oauth/{provider}/initiate` – Initiate OAuth (returns signed state, PKCE challenge for Google)
- - GET `/api/v1/auth/oauth/{provider}/callback` – Completes OAuth (state validation, token exchange/profile fetch, session creation)
+- GET `/api/v1/auth/oauth/{provider}/initiate` – Initiate OAuth (returns signed state, PKCE challenge for Google)
+- GET `/api/v1/auth/oauth/{provider}/callback` – Completes OAuth (state validation, token exchange/profile fetch, session creation)
 
 Rate Limiting (current dev implementation):
 - Sliding window: 8 requests / 5 minutes per IP+route tag
@@ -76,7 +76,7 @@ Planned / Roadmap (Next Iteration Targets):
 - Production-grade distributed rate limiting (Redis or Postgres advisory locks)
 - Session persistence & refresh token rotation (eliminate pure in-memory sessions)
 - Full OAuth integration (Google / GitHub) + state & PKCE handling
- - (Implemented) Full OAuth integration with state & PKCE (now moved to Current Features)
+- (Implemented) Full OAuth integration with state & PKCE (now moved to Current Features)
 - Brute force mitigation: adaptive backoff / IP+account lockout heuristics
 - Enhanced CSRF: session-bound HMAC or double-submit with rotating nonce
 - Email delivery pipeline (SES / Resend) replacing debug token exposure

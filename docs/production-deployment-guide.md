@@ -605,7 +605,7 @@ railway restart
 
 ## Success Criteria
 
-### Deployment Complete When:
+### Deployment Complete When
 
 ✅ **Infrastructure:**
 - Application deployed and accessible
