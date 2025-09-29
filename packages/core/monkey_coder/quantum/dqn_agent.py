@@ -269,7 +269,7 @@ class DQNRoutingAgent:
             else:
                 # This will be implemented when neural network is ready (T2.1.3)
                 state_vector = state.to_vector().reshape(1, -1)
-                q_values = self.q_network.predict(state_vector, verbose=0)
+                q_values = self.q_network.predict(state_vector)
                 action_index = np.argmax(q_values[0])
                 logger.debug(f"Exploitation: selected action {action_index} with Q-value {q_values[0][action_index]:.3f}")
         
@@ -355,22 +355,25 @@ class DQNRoutingAgent:
             if not done:
                 # Use target network for stable learning (Double DQN approach)
                 next_q_values = self.target_q_network.predict(
-                    next_state.reshape(1, -1), verbose=0
+                    next_state.reshape(1, -1)
                 )
                 target += self.discount_factor * np.amax(next_q_values[0])
             
             # Get current Q-values
-            current_q_values = self.q_network.predict(state.reshape(1, -1), verbose=0)
+            current_q_values = self.q_network.predict(state.reshape(1, -1))
             current_q_values[0][action] = target
             
             # Train the network
-            history = self.q_network.fit(
+            loss = self.q_network.train(
                 state.reshape(1, -1),
-                current_q_values,
-                epochs=1,
-                verbose=0
+                current_q_values
             )
-            total_loss += history.history.get('loss', [0.0])[0]
+            if hasattr(loss, 'item'):
+                loss = loss.item()
+            elif not isinstance(loss, (int, float)):
+                loss = float(loss) if loss is not None else 0.0
+            
+            total_loss += loss
         
         # Decay exploration rate
         if self.exploration_rate > self.exploration_min:
