@@ -20,7 +20,7 @@ corepack prepare yarn@4.9.2 --activate
 
 ### Workspace Structure
 
-```
+```text
 monkey-coder/
 ├── packages/
 │   ├── cli/         # TypeScript CLI (monkey-coder-cli)

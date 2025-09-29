@@ -128,7 +128,7 @@ Every HTTP request is tracked with:
 4. **qwen-agent import error**: Fixed import to use `Agent as QwenAgent`
 
 ### Required Dependencies
-```
+```txt
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 qwen-agent>=0.0.10

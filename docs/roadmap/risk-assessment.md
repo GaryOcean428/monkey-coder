@@ -78,7 +78,7 @@ class AIProviderCircuitBreaker:
                 self.state = "OPEN"
                 self.last_failure_time = time.time()
             raise e
-```
+```python
 
 ### Business Mitigations
 - Diversified revenue streams (API, enterprise, consulting)

@@ -6,7 +6,7 @@ Monkey Coder is configured for single-service deployment on Railway using `railp
 
 ### Architecture
 
-```
+```text
 ┌─────────────────┐         ┌─────────────────────────┐         ┌──────────────┐
 │                 │         │                         │         │              │
 │  CLI/SDK Users  │────────▶│    Railway Service     │────────▶│ AI Providers │

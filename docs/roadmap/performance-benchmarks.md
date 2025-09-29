@@ -55,7 +55,7 @@ class GradualLoadTest(HttpUser):
     @task(20)  # 20% of requests
     def system_capabilities(self):
         self.client.get('/v1/capabilities')
-```
+```python
 
 **Performance Monitoring:**
 
@@ -83,7 +83,7 @@ async def performance_monitoring(request: Request, call_next):
     )
 
     return response
-```
+```python
 
 ### Scalability Planning
 

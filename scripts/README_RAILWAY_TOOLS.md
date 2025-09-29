@@ -21,7 +21,7 @@ This directory contains comprehensive Railway deployment tools that integrate wi
 python scripts/mcp-railway-deployment-manager.py
 python scripts/mcp-railway-deployment-manager.py --verbose
 python scripts/mcp-railway-deployment-manager.py --fix
-```
+```bash
 
 ### 2. Railway Auto-Fix Script (`railway-auto-fix.sh`)
 **Purpose**: Automatically fixes common Railway deployment issues
@@ -128,7 +128,7 @@ The tools integrate with the MCP (Model Context Protocol) framework providing:
 
 ## Validation Workflow
 
-```
+```text
 ┌─────────────────────────────────────┐
 │ Railway Deployment Integration      │
 ├─────────────────────────────────────┤

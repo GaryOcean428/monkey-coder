@@ -130,7 +130,7 @@ is_valid, error, suggestion = validate_model("gpt-4-turbo", "openai")
 # Auto-correct invalid models
 model = enforce_model_compliance("gpt-4-turbo", "openai")
 # Returns: "gpt-4.1"
-```
+```python
 
 ## 📊 Model Statistics
 
@@ -168,7 +168,7 @@ python -c "from monkey_coder.models.model_validator import validate_model; print
 
 # Get all valid models
 python -c "from monkey_coder.models.model_validator import get_validator; print(get_validator().get_valid_models())"
-```
+```bash
 
 ## 💡 Usage Example: Select xAI Grok Code Fast 1 for code generation
 
@@ -178,7 +178,7 @@ from monkey_coder.models.model_validator import enforce_model_compliance
 # Provider identifier: "grok" (xAI)
 model = enforce_model_compliance("grok-code-fast-1", "grok")
 print(model)  # -> "grok-code-fast-1" (validated and enforced)
-```
+```python
 
 ## 📝 Notes
 

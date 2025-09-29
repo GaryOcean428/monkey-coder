@@ -97,7 +97,7 @@ python railway_deployment_validation.py
 
 # Setup Railway environment
 ./railway_environment_setup.sh
-```
+```bash
 
 ### Railway Deployment Commands
 ```bash
@@ -109,7 +109,7 @@ railway logs --service monkey-coder --follow
 
 # Verify deployment status
 railway status
-```
+```bash
 
 ### Post-Deployment Verification
 ```bash
@@ -121,7 +121,7 @@ curl https://your-railway-domain.railway.app/api/docs
 
 # Verify virtual environment is active in logs
 railway logs --service monkey-coder | grep "Virtual environment"
-```
+```bash
 
 ### 🔐 Strict Frontend Build Verification (Option A)
 
@@ -148,20 +148,20 @@ Sample log lines you should see on success:
 ✅ Frontend verification passed: index.html + _next present
 🔐 index.html sha256: <hash>
 📁 Copied build to /app/out (fallback path)
-```
+```text
 
 If you instead see:
 
 ```bash
 ❌ Frontend verification failed: missing index.html or _next directory
 Aborting build to prevent deploying API-only fallback (Option A strict mode).
-```
+```text
 
 Resolve the underlying Next.js build error locally:
 
 ```bash
 yarn workspace @monkey-coder/web run export
-```
+```bash
 
 Then redeploy.
 
@@ -205,7 +205,7 @@ to disable static file serving.
     "restartPolicyMaxRetries": 3
   }
 }
-```
+```json
 
 ### Log Analysis Commands
 ```bash
@@ -217,7 +217,7 @@ railway logs | grep -E "(ImportError|ModuleNotFoundError|PYTHONPATH)"
 
 # Monitor startup sequence
 railway logs | grep -E "(Starting|✅|❌)"
-```
+```bash
 
 ### Common Error Patterns and Solutions
 
@@ -229,20 +229,20 @@ railway logs | grep -E "(Starting|✅|❌)"
 # New solution
 # startCommand: "/app/start_server.sh"
 # which sources virtual environment and uses /app/venv/bin/python
-```
+```text
 
 #### Error: "ModuleNotFoundError: No module named 'monkey_coder'"
 ```bash
 # Solution: PYTHONPATH environment variable
 export PYTHONPATH="/app:/app/packages/core:$PYTHONPATH"
-```
+```bash
 
 #### Error: "Health check failed"
 ```bash
 # Check if server is binding to correct interface
 # run_server.py uses: uvicorn.run(host="0.0.0.0", port=port)
 # Not: uvicorn.run(host="localhost", port=port)
-```
+```text
 
 ## 🔒 Security Considerations
 

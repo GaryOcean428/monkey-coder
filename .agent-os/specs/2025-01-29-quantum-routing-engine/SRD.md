@@ -48,7 +48,7 @@ Transform the existing static routing system into an intelligent, learning-based
 
 ### 2.1 High-Level Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                 Quantum Routing Engine                      │
 ├─────────────────────────────────────────────────────────────┤

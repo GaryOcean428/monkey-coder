@@ -22,4 +22,4 @@ monkey-coder/
 │   └── sdk/                  # Multi-language SDKs
 │       ├── src/TypeScript/
 │       └── src/Python/
-```
+```text

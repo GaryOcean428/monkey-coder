@@ -25,7 +25,7 @@ yarn add @monkey-coder/sdk
 
 # Install via pnpm
 pnpm add @monkey-coder/sdk
-```
+```bash
 
 ```typescript
 import { MonkeyCoderClient, createCodeGenerationRequest } from '@monkey-coder/sdk';
@@ -44,14 +44,14 @@ const request = createCodeGenerationRequest(
 
 const response = await client.execute(request);
 console.log(response.result?.result);
-```
+```typescript
 
 ### Python
 
 ```bash
 # Install via pip
 pip install monkey-coder-sdk
-```
+```python
 
 ```python
 from monkey_coder_sdk import MonkeyCoderClient, create_code_generation_request
@@ -70,7 +70,7 @@ request = create_code_generation_request(
 
 response = client.execute(request)
 print(response.result.result)
-```
+```typescript
 
 ## Documentation
 
@@ -91,7 +91,7 @@ interface MonkeyCoderClientConfig {
   retryCondition?: (error: AxiosError) => boolean;
   onRetry?: (retryCount: number, error: AxiosError) => void;
 }
-```
+```typescript
 
 #### Core Methods
 
@@ -117,7 +117,7 @@ await client.listModels(provider?: ProviderType): Promise<Record<string, any>>
 
 // Debug routing decisions
 await client.debugRouting(request: ExecuteRequest): Promise<Record<string, any>>
-```
+```python
 
 #### Helper Functions
 
@@ -145,7 +145,7 @@ createCodeReviewRequest(
   files: Array<{ path: string; content: string; type?: string }>,
   options?: Partial<ExecuteRequest>
 ): ExecuteRequest
-```
+```python
 
 ### Python API
 
@@ -162,7 +162,7 @@ class MonkeyCoderClientConfig:
     max_retry_delay: float = 10.0
     retry_condition: Optional[Callable[[Exception], bool]] = None
     on_retry: Optional[Callable[[int, Exception], None]] = None
-```
+```python
 
 #### Core Methods
 
@@ -188,7 +188,7 @@ client.list_models(provider: Optional[ProviderType] = None) -> Dict
 
 # Debug routing decisions
 client.debug_routing(request: ExecuteRequest) -> Dict
-```
+```python
 
 #### Helper Functions
 
@@ -218,7 +218,7 @@ create_documentation_request(...)
 create_security_analysis_request(...)
 create_testing_request(...)
 create_performance_optimization_request(...)
-```
+```typescript
 
 ## Examples
 
@@ -256,7 +256,7 @@ try {
     console.error('Error Code:', error.code);
   }
 }
-```
+```typescript
 
 ### Configuration Management
 
@@ -305,27 +305,27 @@ const client = new MonkeyCoderClient({
 cd examples/node
 npm install
 node index.js
-```
+```bash
 
 ### Bun
 ```bash
 cd examples/bun
 bun install
 bun run index.ts
-```
+```bash
 
 ### Deno
 ```bash
 cd examples/deno
 deno run --allow-net index.ts
-```
+```bash
 
 ### Python
 ```bash
 cd examples/python
 pip install -r requirements.txt
 python main.py
-```
+```typescript
 
 ## Advanced Configuration
 
@@ -339,7 +339,7 @@ const monkey1Config: Monkey1Config = {
   enable_reflection: true,
   max_iterations: 10
 };
-```
+```typescript
 
 ### Quantum Execution Configuration
 
@@ -351,7 +351,7 @@ const gary8dConfig: Gary8DConfig = {
   execution_branches: 5,
   uncertainty_threshold: 0.05
 };
-```
+```typescript
 
 ## Error Codes
 

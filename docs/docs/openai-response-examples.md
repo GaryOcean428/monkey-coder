@@ -50,7 +50,7 @@ response = client.responses.create(
     top_p=1,
     store=True
 )
-```
+```python
 
 **Configuration Details:**
 - **Temperature**: `2` - Maximum creativity and variation
@@ -97,7 +97,7 @@ response = client.responses.create(
     tools=[],
     store=True
 )
-```
+```python
 
 **Configuration Details:**
 - **Text Format**: Structured text output with high verbosity
@@ -144,7 +144,7 @@ response = client.responses.create(
     tools=[],
     store=True
 )
-```
+```python
 
 **Configuration Details:**
 - **Text Format**: Structured text output with low verbosity
@@ -196,7 +196,7 @@ async function generateHighPerformanceResponse() {
 
   return response;
 }
-```
+```typescript
 
 ### GPT-5 Mini (TypeScript)
 
@@ -237,7 +237,7 @@ async function generateBalancedResponse() {
 
   return response;
 }
-```
+```typescript
 
 ### GPT-5 Nano (TypeScript)
 
@@ -278,7 +278,7 @@ async function generateLightweightResponse() {
 
   return response;
 }
-```
+```typescript
 
 ## Configuration Reference
 
@@ -331,7 +331,7 @@ except openai.AuthenticationError as e:
     print(f"Authentication failed: {e}")
 except Exception as e:
     print(f"Unexpected error: {e}")
-```
+```python
 
 ### TypeScript Error Handling
 
@@ -364,7 +364,7 @@ async function handleResponse() {
     throw error;
   }
 }
-```
+```typescript
 
 ## Integration Examples
 
@@ -419,7 +419,7 @@ const OpenAIChat: React.FC = () => {
 };
 
 export default OpenAIChat;
-```
+```tsx
 
 ### Node.js Backend Integration
 
@@ -467,7 +467,7 @@ app.post('/api/generate', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
-```
+```javascript
 
 ## Best Practices
 

@@ -114,7 +114,7 @@ OAUTH_STATE_SECRET=long-random-hmac-key
 ```
 
 State Token Format (base64url(body).base64url(hmac_sha256(body))):
-```
+```json
 {"sid":"<random>","p":"google|github","iat":<sec> ,"exp":<sec>}
 ```
 
@@ -169,7 +169,7 @@ monkey-coder/
 ├─ examples/            # Usage examples (from original repo)
 ├─ qwencoder-eval/      # Evaluation benchmarks (from original repo)
 └─ demo/                # Demo applications (from original repo)
-```
+```text
 
 ## Introduction
 
@@ -238,7 +238,7 @@ pip install monkey-coder-core
 
 # Install the Python SDK for API integration
 pip install monkey-coder-sdk
-```
+```bash
 
 #### npm Package (v1.1.0)
 

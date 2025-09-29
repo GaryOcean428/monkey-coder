@@ -70,7 +70,7 @@ ENABLE_HTTPS_REDIRECT=true
 # Health Checks
 HEALTH_CHECK_PATH=/health
 HEALTH_CHECK_TIMEOUT=300
-```
+```bash
 
 ### Validation Commands
 
@@ -88,7 +88,7 @@ curl -X GET https://your-app.railway.app/health/readiness
 
 # 4. Test performance metrics
 curl -X GET https://your-app.railway.app/metrics/performance
-```
+```bash
 
 ---
 
@@ -135,7 +135,7 @@ curl -X GET https://your-app.railway.app/metrics/performance
     "inputs": [{"step": "python"}]
   }
 }
-```
+```json
 
 2. **Verify run_server.py configuration:**
 ```python
@@ -155,7 +155,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
+```python
 
 ### Step 2: Railway Project Creation
 
@@ -172,7 +172,7 @@ railway create monkey-coder-production
 
 # Link to repository
 railway link
-```
+```bash
 
 2. **Add required services:**
 ```bash
@@ -181,7 +181,7 @@ railway add --service postgresql
 
 # Add Redis cache (optional but recommended)
 railway add --service redis
-```
+```bash
 
 ### Step 3: Environment Configuration
 
@@ -203,7 +203,7 @@ railway env set CORS_ORIGINS=https://monkey-coder.up.railway.app
 # Enable monitoring
 railway env set SENTRY_DSN=your-sentry-dsn-here
 railway env set LOG_LEVEL=INFO
-```
+```bash
 
 2. **Verify environment setup:**
 ```bash
@@ -212,7 +212,7 @@ railway env list
 
 # Test configuration
 railway run -- python -c "from monkey_coder.config.env_config import get_config; print(get_config().get_config_summary())"
-```
+```bash
 
 ### Step 4: Security Configuration
 
@@ -223,7 +223,7 @@ openssl rand -base64 64
 
 # Generate secure API keys for internal services
 openssl rand -hex 32
-```
+```bash
 
 2. **Configure security headers:**
 ```bash
@@ -231,13 +231,13 @@ openssl rand -hex 32
 railway env set ENABLE_SECURITY_HEADERS=true
 railway env set ENABLE_HTTPS_REDIRECT=true
 railway env set ENABLE_RATE_LIMITING=true
-```
+```bash
 
 3. **Set up trusted hosts:**
 ```bash
 # Configure for Railway + custom domain
 railway env set TRUSTED_HOSTS="monkey-coder.up.railway.app,your-domain.com,*.railway.app,*.railway.internal"
-```
+```bash
 
 ### Step 5: Database Setup
 
@@ -245,13 +245,13 @@ railway env set TRUSTED_HOSTS="monkey-coder.up.railway.app,your-domain.com,*.rai
 ```bash
 # Run any required database setup
 railway run -- python -c "from monkey_coder.database import init_database; init_database()"
-```
+```bash
 
 2. **Verify database connection:**
 ```bash
 # Test database connectivity
 railway run -- python -c "from monkey_coder.config.env_config import get_config; print('DB configured:', bool(get_config().database.url))"
-```
+```bash
 
 ### Step 6: Deployment
 

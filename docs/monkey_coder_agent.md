@@ -110,7 +110,7 @@ The agent uses MCP (Model Context Protocol) for external operations:
 
 ### Agent Components
 
-```
+```text
 MonkeyCoderA2AAgent
 ├── CodeGeneratorAgent (quantum execution)
 ├── CodeAnalyzerAgent (comprehensive analysis)
@@ -181,7 +181,7 @@ curl http://localhost:8000/.well-known/agent.json
 #### Demo Client (Full Demonstration)
 ```bash
 cd examples/a2a
-python demo_client.py
+pythondemo_client.py
 ```
 
 #### Simple Client (Command Line)
@@ -195,7 +195,7 @@ python simple_client.py generate "Create a sorting algorithm" --language python
 python simple_client.py analyze ./src --type comprehensive
 
 # Run tests
-python simple_client.py test ./tests --framework pytest
+python simple_client.py test ./tests--framework pytest
 ```
 
 ### Python A2A Client
@@ -237,7 +237,7 @@ pytest packages/core/tests/agents/test_monkey_coder_a2a.py -v
 pytest packages/core/tests/agents/test_monkey_coder_a2a.py::TestMonkeyCoderA2AAgent::test_generate_code_skill -v
 
 # Run with coverage
-pytest packages/core/tests/agents/test_monkey_coder_a2a.py --cov=monkey_coder.a2a_server
+pytest packages/core/tests/agents/test_monkey_coder_a2a.py--cov=monkey_coder.a2a_server
 ```
 
 ### Test Coverage

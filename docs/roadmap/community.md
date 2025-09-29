@@ -40,7 +40,7 @@ Brief description of changes made
 - [ ] Self-review completed
 - [ ] Documentation updated if needed
 - [ ] No new warnings introduced
-```
+```markdown
 
 ### Community Support
 

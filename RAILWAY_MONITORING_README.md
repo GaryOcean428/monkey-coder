@@ -124,7 +124,7 @@ RAILWAY_STARTUP_TIMEOUT=300
 RAILWAY_HEALTH_CHECK_TIMEOUT=30
 RAILWAY_CRASH_THRESHOLD=3
 RAILWAY_CRASH_WINDOW=600
-```
+```bash
 
 ### Monitoring Configuration
 
@@ -146,7 +146,7 @@ The monitoring system stores configuration in `data/monitoring_config.json`:
         "crash_window": 600
     }
 }
-```
+```json
 
 ## Usage
 
@@ -161,7 +161,7 @@ RESEND_API_KEY=re_... ./railway_monitoring_setup.sh
 
 # With custom deployment URL
 ./railway_monitoring_setup.sh --url https://my-app.railway.app
-```
+```bash
 
 ### 2. Path Verification
 
@@ -171,7 +171,7 @@ RESEND_API_KEY=re_... ./railway_monitoring_setup.sh
 
 # With custom paths
 VENV_PATH=/custom/venv ./scripts/railway_path_verification.sh
-```
+```bash
 
 ### 3. Access Monitoring Dashboard
 
@@ -193,7 +193,7 @@ curl -X POST "https://your-app.railway.app/api/v1/railway/rollback/manual" \
     "target_deployment_id": "stable_deployment_id",
     "reason": "manual_trigger"
   }'
-```
+```bash
 
 ## Success Criteria Achievement
 
@@ -262,7 +262,7 @@ print('✅ All monitoring modules imported successfully')
 
 # Test monitoring setup
 ./railway_monitoring_setup.sh --help
-```
+```bash
 
 ## Next Steps
 

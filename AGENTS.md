@@ -28,7 +28,7 @@ yarn test
 
 # 7. Start development server
 yarn dev
-```
+```bash
 
 ## 📋 Table of Contents
 
@@ -73,7 +73,7 @@ corepack prepare yarn@4.9.2 --activate
 
 # Verify installation
 yarn --version  # Should output: 4.9.2
-```
+```bash
 
 **Critical Environment Variables:**
 ```bash
@@ -91,7 +91,7 @@ DATABASE_URL=postgresql://username:password@host:port/database
 # Application URLs (adjust for your deployment)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+```bash
 
 ### 3. Database Setup (Optional for basic testing)
 ```bash
@@ -99,7 +99,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 docker-compose up -d postgres redis
 
 # Or use Railway/external services for development
-```
+```bash
 
 ## 🚀 Build & Development
 
@@ -116,7 +116,7 @@ yarn workspace @monkey-coder/web build
 
 # Development mode with hot reload
 yarn dev
-```
+```bash
 
 ### Development Workflow
 
@@ -131,7 +131,7 @@ yarn dev
 
 # 3. Validate changes
 yarn lint && yarn typecheck && yarn test
-```
+```text
 
 ## 📦 Package Structure
 
@@ -146,7 +146,7 @@ packages/
 
 docs/              # Docusaurus documentation
 services/          # Optional microservices
-```
+```bash
 
 ### Package Dependencies
 - **CLI:** Commander.js, Chalk, Ora for user experience
@@ -165,7 +165,7 @@ yarn install
 cd packages/core
 pip install -e .
 cd ../..
-```
+```bash
 
 ### 2. Build Commands
 ```bash
@@ -179,7 +179,7 @@ yarn workspace @monkey-coder/web build
 # Development builds with watch mode
 yarn dev                                    # All packages in watch mode
 yarn workspace @monkey-coder/web dev        # Web frontend only
-```
+```bash
 
 ### 3. Development Workflow
 ```bash
@@ -199,7 +199,7 @@ yarn dev
 cd packages/cli
 yarn build && yarn link
 monkey --help
-```
+```bash
 
 ### 4. Code Quality
 ```bash
@@ -214,7 +214,7 @@ yarn typecheck
 
 # Format code with Prettier
 yarn format
-```
+```bash
 
 ## 🧪 Testing
 
@@ -232,7 +232,7 @@ yarn test:coverage
 # Run tests for specific package
 yarn workspace @monkey-coder/cli test
 yarn workspace @monkey-coder/web test
-```
+```text
 
 ### Test Structure
 
@@ -252,7 +252,7 @@ tests/
 ├── integration/           # Cross-package integration tests
 ├── e2e/                  # End-to-end user workflows
 └── performance/          # Load and performance tests
-```
+```javascript
 
 ### Writing Tests
 
@@ -268,7 +268,7 @@ describe('CLI Commands', () => {
     expect(command.validate('test input')).toBe(true);
   });
 });
-```
+```python
 
 **Python (Pytest):**
 ```python
@@ -280,7 +280,7 @@ from monkey_coder.core.orchestrator import MultiAgentOrchestrator
 async def test_orchestrator_initialization():
     orchestrator = MultiAgentOrchestrator()
     assert orchestrator.is_initialized()
-```
+```bash
 
 ## 🚂 Railway Deployment
 
@@ -306,7 +306,7 @@ railway variables set JWT_SECRET_KEY="your-secure-secret-here"
 railway variables set NEXTAUTH_SECRET="your-nextauth-secret-here"
 railway variables set OPENAI_API_KEY="sk-your-openai-key"
 # ... set all required variables from .env.example
-```
+```bash
 
 #### 2. Database Setup
 ```bash
