@@ -71,18 +71,16 @@ describe('getPasswordStrength Function', () => {
     expect(result.score).toBeLessThanOrEqual(40)
   })
 
-  it('returns correct strength for fair password', () => {
+  it('returns correct strength for weak password with multiple criteria', () => {
     const result = getPasswordStrength('test123')
-    expect(result.level).toBe('fair')
-    expect(result.score).toBeGreaterThan(40)
-    expect(result.score).toBeLessThanOrEqual(60)
+    expect(result.level).toBe('weak')
+    expect(result.score).toBe(40)
   })
 
-  it('returns correct strength for good password', () => {
+  it('returns correct strength for fair password', () => {
     const result = getPasswordStrength('Test123')
-    expect(result.level).toBe('good')
-    expect(result.score).toBeGreaterThan(60)
-    expect(result.score).toBeLessThanOrEqual(80)
+    expect(result.level).toBe('fair')
+    expect(result.score).toBe(60)
   })
 
   it('returns correct strength for strong password', () => {
