@@ -460,7 +460,7 @@ class TestDQNAgentIntegration(unittest.TestCase):
         self.agent.target_q_network = Mock()
         self.agent.q_network.predict.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]])
         self.agent.target_q_network.predict.return_value = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]])
-        self.agent.q_network.fit.return_value.history = {"loss": [0.1]}
+        self.agent.q_network.train.return_value = 0.1
         self.agent.q_network.get_weights.return_value = "mock_weights"
         
         # Perform multiple replay steps

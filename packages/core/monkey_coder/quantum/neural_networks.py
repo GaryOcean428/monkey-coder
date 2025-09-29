@@ -390,7 +390,7 @@ class DQNNetworkManager:
         if len(state.shape) == 1:
             state = state.reshape(1, -1)
         
-        return self.q_network.predict(state, verbose=0)
+        return self.q_network.predict(state)
     
     def predict_target_q_values(self, state: np.ndarray) -> np.ndarray:
         """
@@ -408,7 +408,7 @@ class DQNNetworkManager:
         if len(state.shape) == 1:
             state = state.reshape(1, -1)
         
-        return self.target_q_network.predict(state, verbose=0)
+        return self.target_q_network.predict(state)
     
     def get_network_info(self) -> Dict[str, Any]:
         """
