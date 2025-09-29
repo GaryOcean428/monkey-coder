@@ -49,8 +49,8 @@ async def test_password_reset_flow(monkeypatch):
     assert 'debug_token' in data  # since ENV != production
     raw_token = data['debug_token']
 
-    # Step 2: confirm reset
-    resp2 = client.post('/api/v1/auth/password/reset', json={'token': raw_token, 'new_password': 'NewSecurePass123!'})
+    # Step 2: confirm reset (use shorter password to avoid bcrypt 72-byte limit)
+    resp2 = client.post('/api/v1/auth/password/reset', json={'token': raw_token, 'new_password': 'NewPass123!'})
     assert resp2.status_code == 200
     assert resp2.json()['status'] == 'password_reset'
 
@@ -61,5 +61,5 @@ async def test_password_reset_flow(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_password_reset_invalid_token():
-    resp = client.post('/api/v1/auth/password/reset', json={'token': 'badtoken', 'new_password': 'Whatever123!'})
+    resp = client.post('/api/v1/auth/password/reset', json={'token': 'badtoken', 'new_password': 'Pass123!'})
     assert resp.status_code == 400
