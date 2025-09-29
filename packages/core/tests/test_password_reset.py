@@ -10,16 +10,17 @@ client = TestClient(app)
 
 @pytest.mark.asyncio
 async def test_password_reset_flow(monkeypatch):
-    from unittest.mock import AsyncMock
-    async def mock_check_rate_limit(*args, **kwargs):
-        return True  # Always allow requests
+    from unittest.mock import AsyncMock, patch
     
-    from monkey_coder.middleware.rate_limiter import get_rate_limiter
+    async def mock_check_rate_limit_method(self, request, route_tag):
+        return None  # Don't raise any exceptions
+    
+    from monkey_coder.middleware.rate_limiter import RedisRateLimiter, get_rate_limiter
     limiter = get_rate_limiter()
     if hasattr(limiter, '_fallback_store'):
         limiter._fallback_store.clear()
     
-    monkeypatch.setattr('monkey_coder.middleware.rate_limiter.check_rate_limit', mock_check_rate_limit)
+    monkeypatch.setattr(RedisRateLimiter, 'check_rate_limit', mock_check_rate_limit_method)
     
     # Create a fake user in DB via monkeypatching User.get_by_email and get_by_id
     class DummyUser:
