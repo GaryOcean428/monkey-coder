@@ -147,7 +147,7 @@ The service exposes health endpoints:
 ### Prerequisites
 
 - Node.js 20+
-- Python 3.13
+- Python 3.12
 - Yarn 4.9.2 (via Corepack)
 
 ### Setup

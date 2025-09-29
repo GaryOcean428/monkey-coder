@@ -104,7 +104,7 @@ curl -X GET https://your-app.railway.app/metrics/performance
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.13",
+      "python": "3.12.11",
       "node": "20"
     },
     "steps": {

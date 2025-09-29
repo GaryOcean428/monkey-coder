@@ -12,7 +12,7 @@ echo "📋 PROBLEM ANALYSIS:"
 echo "   ❌ Original Issue: Railway builds hanging due to shell context failures"
 echo "   ❌ Root Cause: 'source /app/.venv/bin/activate' command fails in Railway environment"
 echo "   ❌ Secondary Issue: Frontend builds timing out without proper error handling"
-echo "   ❌ Version Inconsistency: Mixed Python 3.13/3.12.11 references causing confusion"
+echo "   ❌ Version Inconsistency: Mixed Python 3.12/3.12.11 references causing confusion"
 
 echo ""
 echo "🔧 SOLUTION IMPLEMENTED:"

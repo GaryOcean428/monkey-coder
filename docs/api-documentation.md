@@ -353,7 +353,7 @@ Standard security headers included:
 
 ### Infrastructure
 - **Platform:** Railway
-- **Runtime:** Python 3.13 with FastAPI
+- **Runtime:** Python 3.12.11 with FastAPI
 - **Database:** PostgreSQL with connection pooling
 - **Monitoring:** Sentry error tracking + custom metrics
 - **Caching:** High-performance in-memory cache

@@ -107,7 +107,7 @@ module.exports = {
 | Package | Version | Scope |
 |---------|---------|-------|
 | Node.js | >=20.0.0 | All workspaces |
-| Python | 3.13 | Production |
+| Python | 3.12.11 | Production |
 | Yarn | 4.9.2 | Global |
 | TypeScript | ^5.8.3 | All TypeScript packages |
 | React | ^18.2.0 | Web packages |
@@ -126,7 +126,7 @@ module.exports = {
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
+    "python": "3.12.11",
     "node": "20"
   },
   "steps": {

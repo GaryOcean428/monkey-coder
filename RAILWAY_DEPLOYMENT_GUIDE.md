@@ -31,13 +31,13 @@ The updated configuration includes:
   "$schema": "https://schema.railpack.com",
   "provider": "python",
   "packages": {
-    "python": "3.13",
+    "python": "3.12.11",
     "node": "20"
   },
   "build": {
     "cache": {
       "paths": [
-        "/app/venv/lib/python3.13/site-packages",
+        "/app/venv/lib/python3.12/site-packages",
         "/root/.cache/yarn",
         "node_modules",
         "packages/web/.next"
@@ -184,7 +184,7 @@ to disable static file serving.
 - **Improvement**: 30-50% faster builds
 
 ### Cache Efficiency
-- **Python packages**: Cached at `/app/venv/lib/python3.13/site-packages`
+- **Python packages**: Cached at `/app/venv/lib/python3.12/site-packages`
 - **Node modules**: Cached at `/root/.cache/yarn` and `node_modules`
 - **Frontend builds**: Cached at `packages/web/.next`
 
