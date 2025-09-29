@@ -1,39 +1,43 @@
 from . import quantum_performance  # re-export for easy import path
 
-# Import BillingTracker and MetricsCollector from the parent monitoring module
+# Import BillingTracker and MetricsCollector from the sibling monitoring.py module
 # These are used by the main app but defined in the standalone monitoring.py
 # Use lazy import to avoid circular import issues
 def _get_monitoring_classes():
     """Lazy import monitoring classes to avoid circular imports."""
     try:
-        from .. import monitoring as parent_monitoring
-        return parent_monitoring.BillingTracker, parent_monitoring.MetricsCollector
+        from .monitoring import BillingTracker as RealBillingTracker, MetricsCollector as RealMetricsCollector
+        return RealBillingTracker, RealMetricsCollector
     except (ImportError, AttributeError):
         # Fallback classes for development environments
         class MetricsCollector:
             def __init__(self):
                 pass
-            def record_execution(self, *args, **kwargs):
+            def start_execution(self, request):
+                return "placeholder"
+            def complete_execution(self, execution_id, response):
                 pass
+            def record_error(self, execution_id, error):
+                pass
+            def record_http_request(self, method, endpoint, status, duration):
+                pass
+            def get_prometheus_metrics(self):
+                return b"# Metrics collector not available\n"
         
         class BillingTracker:
             def __init__(self):
                 pass
-            def track_usage(self, *args, **kwargs):
+            async def track_usage(self, api_key, usage):
                 pass
+            async def get_usage(self, api_key, start_date, end_date, granularity):
+                return {}
         
         return BillingTracker, MetricsCollector
 
-# Lazy loading
-BillingTracker = None
-MetricsCollector = None
+BillingTracker, MetricsCollector = _get_monitoring_classes()
 
 def __getattr__(name):
     """Support lazy loading of monitoring classes."""
-    global BillingTracker, MetricsCollector
-    if name in ("BillingTracker", "MetricsCollector") and BillingTracker is None:
-        BillingTracker, MetricsCollector = _get_monitoring_classes()
-    
     if name == "BillingTracker":
         return BillingTracker
     elif name == "MetricsCollector":
