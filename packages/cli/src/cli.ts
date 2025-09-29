@@ -637,11 +637,12 @@ program
       console.log(chalk.green('🐒 Monkey Coder Chat'));
       console.log(
         chalk.gray(
-          'Type your message and press Enter. Type "exit" or "quit" to leave.'
+          '💬 Chat with AI about your codebase. Type your message and press Enter.'
         )
       );
-      console.log(chalk.gray('Use Ctrl+C to exit at any time.'));
-      console.log(chalk.gray(`Persona: ${options.persona || 'developer'}`));
+      console.log(chalk.gray('Commands: "exit", "quit" to leave, Ctrl+C anytime'));
+      console.log(chalk.gray(`🎭 Persona: ${options.persona || 'developer'}`));
+      console.log(chalk.gray('🔍 I can analyze files, suggest improvements, and help with coding tasks'));
       console.log('');
 
       const rl = readline.createInterface({
@@ -692,10 +693,10 @@ program
           }
 
           spinner.stop();
-          console.log(
-            chalk.cyan('🤖 AI:'),
-            response.result?.result || 'No response received'
-          );
+          console.log('');
+          console.log(chalk.cyan('🤖 Monkey Coder:'));
+          console.log(response.result?.result || 'No response received');
+          console.log('');
         } catch (error: any) {
           console.error(chalk.red('Error:'), error.message);
         }
@@ -704,14 +705,15 @@ program
         rl.prompt();
       }).on('close', () => {
         console.log('');
-        console.log(chalk.green('Thanks for chatting! Goodbye! 👋'));
+        console.log(chalk.green('Thanks for using Monkey Coder! 🐒'));
+        console.log(chalk.gray('Run "monkey" anytime to start a new chat session.'));
         process.exit(0);
       });
 
       // Handle Ctrl+C gracefully
       rl.on('SIGINT', () => {
         console.log('');
-        console.log(chalk.yellow('Chat interrupted. Goodbye! 👋'));
+        console.log(chalk.yellow('Chat interrupted. Thanks for using Monkey Coder! 🐒'));
         process.exit(0);
       });
     } catch (error: any) {
@@ -741,9 +743,11 @@ program.hook('preSubcommand', async (thisCommand, actionCommand) => {
   }
 });
 
-// If no command was provided, start chat mode
+// If no command was provided, start chat mode with enhanced UX
 if (process.argv.length === 2) {
-  // Start chat with default options
+  console.log(chalk.cyan('🐒 Welcome to Monkey Coder!'));
+  console.log(chalk.gray('Starting interactive chat mode...'));
+  console.log('');
   process.argv.push('chat');
 }
 

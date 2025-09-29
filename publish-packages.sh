@@ -16,10 +16,10 @@ if [[ ! -f "package.json" ]] || [[ ! "$(cat package.json | grep -o '"name": "mon
 fi
 
 echo "📋 Package Update Summary:"
+echo "• monkey-coder-cli (NPM): v1.5.0 (enhanced CLI UX)"
 echo "• monkey-coder-sdk (NPM): v1.3.6 (needs update from v1.3.4)"
-echo "• monkey-coder-core (PyPI): v1.1.1 (needs update from v1.0.4)"
+echo "• monkey-coder-core (PyPI): v1.2.0 (enhanced backend API)"
 echo "• monkey-coder-sdk (PyPI): v1.1.0 (needs update from v1.0.1)"
-echo "• monkey-coder-cli (NPM): v1.4.2 (already up to date)"
 echo ""
 
 # Confirm with user
@@ -65,20 +65,30 @@ fi
 cd ../..
 
 # monkey-coder-cli is already up to date, skip it
-echo "⏭️  Skipping monkey-coder-cli (already up to date at v1.4.2)"
+echo "📤 Publishing monkey-coder-cli v1.5.0 (enhanced UX)..."
+cd packages/cli
+yarn build
+if npm publish --access public --dry-run; then
+    npm publish --access public
+    echo "✅ monkey-coder-cli v1.5.0 published to npm"
+else
+    echo "❌ Failed to publish monkey-coder-cli"
+    exit 1
+fi
+cd ../..
 
 echo ""
 
 # 2. Publish Python packages
 echo "🚀 Publishing Python packages..."
 
-echo "📤 Publishing monkey-coder-core v1.1.1..."
+echo "📤 Publishing monkey-coder-core v1.2.0..."
 cd packages/core
 rm -rf dist/  # Clean previous builds
 python -m build
 if twine check dist/*; then
     twine upload dist/*
-    echo "✅ monkey-coder-core v1.1.1 published to PyPI"
+    echo "✅ monkey-coder-core v1.2.0 published to PyPI"
 else
     echo "❌ Failed to publish monkey-coder-core"
     exit 1
@@ -112,10 +122,10 @@ echo ""
 
 echo "📋 Post-publishing checklist:"
 echo "• ✅ Packages built and tested successfully"
+echo "• ✅ NPM package monkey-coder-cli v1.5.0 published"
 echo "• ✅ NPM package monkey-coder-sdk v1.3.6 published"
-echo "• ✅ PyPI package monkey-coder-core v1.1.1 published"
+echo "• ✅ PyPI package monkey-coder-core v1.2.0 published"
 echo "• ✅ PyPI package monkey-coder-sdk v1.1.0 published"
-echo "• ⏭️  monkey-coder-cli already up to date (v1.4.2)"
 echo ""
 
 echo "🎯 All monkey-coder packages are now up to date!"

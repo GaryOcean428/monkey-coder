@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "monkey-coder-core"
-version = "1.1.1"
+version = "1.2.0"
 authors = [{name = "GaryOcean428", email = "gary@ocean428.dev"}]
 description = "Python orchestration core for Monkey Coder"
 readme = "README.md"

@@ -2,18 +2,16 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder",
-    "description": "AI-powered code generation and analysis platform with PostgreSQL and Redis services"
+    "name": "monkey-coder-frontend",
+    "description": "Monkey Coder Frontend - Web Interface and Authentication Portal"
   },
   "build": {
-    "provider": "python",
+    "provider": "node",
     "packages": {
-      "python": "3.12.11",
       "node": "20"
     },
     "cache": {
       "paths": [
-        "/app/.venv/lib/python3.12/site-packages",
         "node_modules",
         "packages/web/.next",
         "packages/web/out"
@@ -22,37 +20,31 @@
     "steps": {
       "install": {
         "commands": [
-          "python -m venv /app/.venv",
-          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-          "/app/.venv/bin/pip install -r requirements.txt",
-          "echo '✅ Python dependencies installed'"
+          "yarn install --frozen-lockfile",
+          "echo '✅ Node dependencies installed'"
         ]
       },
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
-          "if [ -d packages/web ]; then cd packages/web && yarn install --frozen-lockfile && yarn build; fi",
-          "echo '✅ Build completed'"
+          "yarn workspace @monkey-coder/web build",
+          "echo '✅ Frontend build completed'"
         ]
       }
     },
     "env": {
-      "NODE_ENV": "production",
-      "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/packages/core",
-      "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:$PATH"
+      "NODE_ENV": "production"
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python /app/run_server.py",
-    "healthCheckPath": "/health",
+    "startCommand": "yarn workspace @monkey-coder/web start",
+    "healthCheckPath": "/api/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "env": {
-      "LOG_LEVEL": "info",
-      "HEALTH_CHECK_PATH": "/health"
+      "PORT": "3000",
+      "BACKEND_URL": "${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}"
     }
   }
 }
