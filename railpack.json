@@ -31,7 +31,7 @@
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
-          "if [ -d packages/web ]; then cd packages/web && yarn install --frozen-lockfile && yarn build && yarn export; fi",
+          "if [ -d packages/web ]; then cd packages/web && yarn install --frozen-lockfile && yarn build; fi",
           "echo '✅ Build completed'"
         ]
       }
