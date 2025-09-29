@@ -454,7 +454,8 @@ class TestDQNTrainingPipeline:
         from monkey_coder.quantum.experience_buffer import Experience
 
         # Add enough experiences to meet the buffer's minimum sampling requirement
-        min_required = max(pipeline.config.min_buffer_size, 20)
+        min_required = max(pipeline.config.min_buffer_size, getattr(pipeline.experience_buffer, 'min_size', 20))
+        
         for i in range(min_required):
             state = np.random.rand(21)
             next_state = np.random.rand(21)
