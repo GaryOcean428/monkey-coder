@@ -21,7 +21,7 @@ npm install -g monkey-coder-cli
 
 # Or use yarn
 yarn global add monkey-coder-cli
-```
+```bash
 
 ## Quick Start
 
@@ -37,7 +37,7 @@ monkey auth login --email your@email.com --password yourpassword
 
 # Or use an API key if you have one
 monkey config set apiKey "your-api-key-here"
-```
+```bash
 
 Option B - Use local development:
 ```bash
@@ -49,12 +49,12 @@ monkey config set apiKey "mk-dev-YOUR-KEY"
 2. **Check server health:**
 ```bash
 monkey health
-```
+```bash
 
 3. **Generate some code:**
 ```bash
 monkey-coder implement "Create a TypeScript function that validates email addresses" --output email-validator.ts
-```
+```bash
 
 ## Commands
 
@@ -68,7 +68,7 @@ monkey-coder implement <prompt> [files...] [options]
 monkey-coder implement "Create a React component for user authentication"
 monkey-coder implement "Add error handling to this API" src/api.ts --output src/api-fixed.ts
 monkey-coder implement "Convert this to TypeScript" legacy.js --language typescript --stream
-```
+```bash
 
 **Options:**
 - `-o, --output <file>` - Output file path
@@ -90,7 +90,7 @@ monkey-coder analyze <files...> [options]
 monkey-coder analyze src/**/*.ts --type security
 monkey-coder analyze app.py --type performance --output performance-report.md
 monkey-coder analyze src/ --persona security_analyst --stream
-```
+```bash
 
 **Options:**
 - `-t, --type <type>` - Analysis type (quality, security, performance)
@@ -110,7 +110,7 @@ monkey-coder build <prompt> [files...] [options]
 monkey-coder build "Design a microservices architecture for e-commerce"
 monkey-coder build "Refactor this monolith into modules" src/ --output refactored/
 monkey-coder build "Add caching layer" --persona architect --stream
-```
+```bash
 
 **Options:**
 - `-o, --output <dir>` - Output directory for built files
@@ -129,7 +129,7 @@ monkey-coder test <files...> [options]
 monkey-coder test src/utils.ts --framework jest
 monkey-coder test src/**/*.py --output tests/ --framework pytest
 monkey-coder test app.js --persona tester --stream
-```
+```bash
 
 **Options:**
 - `-o, --output <dir>` - Output directory for test files
@@ -157,14 +157,14 @@ monkey-coder config list
 
 # Reset to defaults
 monkey-coder config reset
-```
+```bash
 
 ### `health`
 Check API server health.
 
 ```bash
 monkey-coder health
-```
+```bash
 
 ## Configuration
 
@@ -207,7 +207,7 @@ Enable real-time progress updates with the `--stream` flag:
 
 ```bash
 monkey-coder implement "Build a REST API" --stream
-```
+```bash
 
 This provides:
 - Real-time progress updates
@@ -292,7 +292,7 @@ yarn build
 
 # Link for local development
 yarn link
-```
+```bash
 
 ### Testing
 

@@ -33,7 +33,7 @@ monkey-coder/
 │   └── sdk/                  # Multi-language SDKs
 │       ├── src/TypeScript/
 │       └── src/Python/
-```
+```text
 ### Model Compliance System
 
 **Enforced Model Standards:**
@@ -485,7 +485,7 @@ packages/core/monkey_coder/mcp/
     ├── browser.py         ✅ Created
     ├── GitHub.py          ✅ Created
     └── database.py        ✅ Created
-```
+```text
 
 ###### CLI Commands
 
@@ -500,7 +500,7 @@ monkey mcp config                  # Interactive MCP configuration
 # MCP Usage in Commands (Available)
 monkey generate --mcp GitHub,filesystem "Create a new feature"
 monkey analyze --mcp database "Review database schema"
-```
+```bash
 
 ###### Phase 6: Package Publishing (Completed)
 
@@ -678,7 +678,7 @@ class MCPEnabledOrchestrator:
             variations,
             collapse_strategy=CollapseStrategy.BEST_SCORE
         )
-```
+```python
 
 ###### User Experience Enhancement
 
@@ -703,7 +703,7 @@ Select MCP servers to use:
 
 Estimated Total: $0.30
 Proceed? (y/n):
-```
+```text
 
 ###### Q3 2025: Enterprise Features
 
@@ -775,7 +775,7 @@ class BaseAgent(ABC):
     def get_quantum_variations(self, task: str) -> List[Dict<str, Any>]:
         """Get quantum variations for parallel execution"""
         pass
-```
+```python
 
 **Specialized Agents:**
 - **CodeGeneratorAgent**: Generates code with multiple style variations
@@ -800,7 +800,7 @@ class BaseAgent(ABC):
 async def generate_code(task, **params):
     """Generate code with quantum variations"""
     pass
-```
+```python
 
 ### MCP Integration
 
@@ -828,7 +828,7 @@ servers:
 default_servers:
   - filesystem
   - GitHub
-```
+```yaml
 
 ## Performance Metrics
 
@@ -877,7 +877,7 @@ git checkout -b feature/phase-2-quantum-routing
 git commit -m "feat(quantum): implement DQN agent architecture"
 git push origin feature/phase-2-quantum-routing
 # Create PR with phase milestone and required reviewers
-```
+```bash
 
 **Review Process:**
 - Technical review by phase lead
@@ -909,7 +909,7 @@ class QuantumRoutingDQN:
 
         q_values = await self.predict(state)
         return self.available_models[np.argmax(q_values)]
-```
+```python
 
 ## **Phase 3: Multi-Agent Implementation:**
 
@@ -929,7 +929,7 @@ class AgentOrchestrator:
         agents = await self.select_agents_for_task(task)
         task_plan = await self.decompose_task(task, agents)
         return await self.execute_coordinated_plan(task_plan)
-```
+```python
 
 ## API Documentation Standards
 
@@ -948,7 +948,7 @@ servers:
     description: Production server
   - url: http://localhost:8000/v1
     description: Development server
-```
+```yaml
 
 **Authentication Schema:**
 
@@ -963,7 +963,7 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-```
+```yaml
 
 **Standard Response Format:**
 
@@ -980,7 +980,7 @@ components:
   },
   "errors": []
 }
-```
+```json
 
 ### Endpoint Specifications
 

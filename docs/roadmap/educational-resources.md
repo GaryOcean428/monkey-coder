@@ -61,7 +61,7 @@ monkey analyze --file ./src/API/todos.py
 ## 5. Interactive chat mode
 monkey chat
 > Help me optimize this database query
-```
+```bash
 
 **Advanced Examples Repository:**
 

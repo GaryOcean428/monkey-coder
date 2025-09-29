@@ -214,7 +214,7 @@ Streaming execution with Server-Sent Events (SSE).
 **Request:** Same as `/api/v1/execute` with `"stream": true`
 
 **Response:** SSE stream with events:
-```
+```text
 data: {"type": "start", "task_id": "task_123"}
 
 data: {"type": "progress", "message": "Analyzing requirements..."}
@@ -300,7 +300,7 @@ Refresh access token using refresh token.
 
 ### Headers
 All responses include rate limiting headers:
-```
+```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 85
 X-RateLimit-Reset: 1642157400
@@ -322,7 +322,7 @@ X-RateLimit-Reset: 1642157400
 
 ### Performance Headers
 All responses include performance timing:
-```
+```http
 X-Process-Time: 0.234
 X-Cache-Status: HIT|MISS
 ```

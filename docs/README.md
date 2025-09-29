@@ -47,7 +47,7 @@ This directory also contains the Docusaurus-based documentation site:
 
 ## Project Structure
 
-```
+```text
 docs/
 ├── blog/                     # Blog posts and announcements
 ├── docs/                     # Documentation markdown files

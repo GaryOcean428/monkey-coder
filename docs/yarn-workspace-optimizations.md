@@ -100,7 +100,7 @@ yarn workspaces foreach --include '@monkey-coder/web' run dev
 
 # Use yarn dlx instead of npx for one-off execution
 yarn dlx <package>  # NOT: npx <package>
-```
+```bash
 
 ## ⚠️ Important Notes
 

@@ -13,7 +13,7 @@ Railway uses a multi-layer approach:
 2. **Internal Containerization**: Railway automatically creates Docker containers from railpack config
 3. **No Dockerfile Required**: Railway handles containerization internally
 
-```
+```text
 Developer writes: railpack.json
         ↓
 Railway reads: railpack.json configuration  

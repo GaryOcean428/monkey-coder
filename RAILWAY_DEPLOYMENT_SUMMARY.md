@@ -52,7 +52,7 @@ Based on the Railway Deployment Master Cheat Sheet:
 
 # Deploy to Railway
 railway up
-```
+```bash
 
 ## Links
 

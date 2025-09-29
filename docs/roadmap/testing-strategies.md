@@ -6,7 +6,7 @@
 
 **Testing Pyramid:**
 
-```
+```text
                     E2E Tests (5%)
                    /              \
                 API Tests (15%)

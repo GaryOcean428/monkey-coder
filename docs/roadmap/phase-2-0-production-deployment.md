@@ -102,7 +102,7 @@ With Phase 1.7 achieving 100% completion, Phase 2.0 focuses on production deploy
 ## 🔧 Technical Implementation Details
 
 ### Production Architecture
-```
+```text
 Internet → Railway Load Balancer → FastAPI App → Database
                                               → AI Providers
                                               → Monitoring

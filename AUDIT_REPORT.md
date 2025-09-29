@@ -171,7 +171,7 @@ CORS_CONFIG = {
 - ❌ Security tests for authentication
 
 ### Recommended Testing Structure
-```
+```text
 tests/
 ├── unit/           # Package-specific unit tests
 ├── integration/    # Cross-package integration tests  

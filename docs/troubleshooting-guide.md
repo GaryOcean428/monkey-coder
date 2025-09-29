@@ -16,7 +16,7 @@ Run these commands to gather diagnostic information:
 
 # 3. Railway environment validation
 ./scripts/railway-validation.sh
-```
+```bash
 
 ## Common Issues & Solutions
 
@@ -42,7 +42,7 @@ npm install -g monkey-coder-cli
 
 # If monkey-coder-cli doesn't exist, use:
 npm install -g monkey-coder-cli
-```
+```bash
 
 **Verification:**
 
@@ -69,7 +69,7 @@ CI=true npm install -g monkey-coder-cli
 
 # Or disable all scripts
 npm install -g monkey-coder-cli --ignore-scripts
-```
+```bash
 
 **For CI/CD Pipelines:**
 
@@ -81,7 +81,7 @@ npm install -g monkey-coder-cli --ignore-scripts
     npm install -g monkey-coder-cli
   env:
     NODE_ENV: production
-```
+```yaml
 
 ### Issue H3: Registry Misconfiguration
 
@@ -102,7 +102,7 @@ npm cache clean --force
 
 # Verify registry
 npm config get registry
-```
+```bash
 
 **Project-level fix:**
 
@@ -132,7 +132,7 @@ railway variables --service monkey-coder
 
 # Test health endpoint
 curl -v https://monkey-coder.up.railway.app/health
-```
+```bash
 
 **Common Fixes:**
 
@@ -144,7 +144,7 @@ curl -v https://monkey-coder.up.railway.app/health
 
    # Check for startup errors
    railway logs --service monkey-coder --deployment
-   ```
+   ```bash
 
 2. **Missing Environment Variables:**
 
@@ -153,7 +153,7 @@ curl -v https://monkey-coder.up.railway.app/health
    railway variables set OPENAI_API_KEY=your_key_here
    railway variables set STRIPE_API_KEY=your_stripe_key
    railway variables set DATABASE_URL=your_db_url
-   ```
+   ```bash
 
 3. **Database Connection Issues:**
 
@@ -162,7 +162,7 @@ curl -v https://monkey-coder.up.railway.app/health
 railway connect postgres
 # or
 psql $DATABASE_URL -c "SELECT 1;"
-```
+```bash
 
 ### Issue H5: Missing Environment Variables
 
@@ -185,7 +185,7 @@ railway var set SENTRY_DSN="HTTPS://..."
 # For local development
 cp .env.example .env
 # Edit .env with your values
-```
+```bash
 
 **CLI Configuration:**
 
@@ -196,7 +196,7 @@ monkey-coder config set apiKey "your-API-key"
 
 # Test configuration
 monkey-coder health
-```
+```bash
 
 ## Advanced Troubleshooting
 
@@ -213,7 +213,7 @@ grep -E "(GET|POST)" install-trace.log
 
 # Check for post-install network activity
 grep -i "postinstall" install-trace.log
-```
+```bash
 
 ### CLI Network Debugging
 
@@ -228,7 +228,7 @@ DEBUG=* monkey-coder health
 
 # Check CLI configuration
 monkey-coder config list
-```
+```bash
 
 ### Railway Service Debugging
 
@@ -246,7 +246,7 @@ railway logs --service monkey-coder --deployment
 
 # Check resource usage
 railway metrics
-```
+```bash
 
 ### Health Endpoint Analysis
 
@@ -263,7 +263,7 @@ curl -H "Accept: application/JSON" https://monkey-coder.up.railway.app/health
 # Test alternative paths
 curl https://monkey-coder.up.railway.app/healthz
 curl https://monkey-coder.up.railway.app/api/health
-```
+```bash
 
 ## Prevention & Best Practices
 
@@ -291,7 +291,7 @@ curl https://monkey-coder.up.railway.app/api/health
 - name: Health Check
   run: |
     curl -sf "${{ secrets.API_BASE_URL }}/health"
-```
+```yaml
 
 ### For Railway Deployment
 

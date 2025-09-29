@@ -44,7 +44,7 @@ npm install -g yarn
 
 # Verify version
 yarn --version  # Should show 4.9.2 or higher
-```
+```bash
 
 ### 2. Project Structure Migration
 
@@ -60,7 +60,7 @@ cd monkey-coder
 
 # Install dependencies
 yarn install
-```
+```bash
 
 ### 3. Configuration Migration
 
@@ -74,7 +74,7 @@ MONKEY_CODER_API_KEY=your_api_key_here
 QWEN_MODEL_PATH=./models/qwen3-coder
 QUANTUM_ENABLED=true
 ANALYTICS_ENABLED=true
-```
+```env
 
 #### Model Configuration
 
@@ -100,7 +100,7 @@ module.exports = {
     maxLength: 2048
   }
 };
-```
+```javascript
 
 ### 4. Code Migration
 
@@ -119,7 +119,7 @@ yarn cli analyze file.py
 
 # Or using the full path
 ./packages/cli/bin/monkey-coder generate "Create a function"
-```
+```bash
 
 #### API Integration
 
@@ -131,7 +131,7 @@ from qwen3_coder import QwenCoder
 
 coder = QwenCoder(model_path='./models')
 result = coder.generate("Create a REST API")
-```
+```python
 
 ```typescript
 // Monkey Coder (new)
@@ -142,7 +142,7 @@ const coder = new MonkeyCoder({
 });
 
 const result = await coder.generate("Create a REST API");
-```
+```typescript
 
 ### 5. Advanced Features Migration
 
@@ -156,7 +156,7 @@ yarn cli quantum-generate --type="optimization" --prompt="Optimize database quer
 
 # Perform quantum analysis
 yarn cli quantum-analyze --file="complex-algorithm.ts" --depth="maximum"
-```
+```bash
 
 #### WebContainer Integration (New Feature)
 
@@ -170,7 +170,7 @@ import { MonkeyCoderREPL } from '@monkey-coder/web-container';
   initialCode="console.log('Hello from Monkey Coder!');"
   showConsole={true}
 />
-```
+```jsx
 
 ## Breaking Changes
 
@@ -209,7 +209,7 @@ Remove old Qwen3-Coder dependencies and use Monkey Coder packages:
     "monkey-coder-cli": "^1.0.0"
   }
 }
-```
+```json
 
 ## Testing Your Migration
 
@@ -227,7 +227,7 @@ yarn cli quantum-generate --type="optimization" --prompt="Optimize this algorith
 
 # Run the development server
 yarn dev
-```
+```bash
 
 ## Troubleshooting
 

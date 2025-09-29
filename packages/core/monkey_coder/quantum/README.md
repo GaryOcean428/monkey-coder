@@ -63,7 +63,7 @@ async def main():
     print(f"Execution time: {result.execution_time:.3f}s")
 
 asyncio.run(main())
-```
+```python
 
 ### Using the Decorator
 
@@ -97,7 +97,7 @@ async def main():
     print(f"Sorted: {result}")
 
 asyncio.run(main())
-```
+```python
 
 ### Advanced Usage with Custom Scoring
 
@@ -127,13 +127,13 @@ async def main():
     print(report)
 
 asyncio.run(main())
-```
+```python
 
 ## Architecture
 
 ### Core Components
 
-```
+```text
 quantum/
 ├── __init__.py           # Module exports
 ├── manager.py            # Main quantum execution logic

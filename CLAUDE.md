@@ -57,7 +57,7 @@ yarn constraints --fix
 
 # Security audit
 yarn npm audit --all
-```
+```bash
 
 ### Package-Specific Commands
 
@@ -83,7 +83,7 @@ cd packages/sdk
 yarn build:ts      # Build TypeScript SDK
 yarn build:Python  # Build Python SDK
 yarn examples:node # Test Node.js example
-```
+```bash
 
 ### Documentation Commands
 
@@ -96,7 +96,7 @@ yarn docs:build
 
 # Validate documentation links
 yarn docs:validate-links
-```
+```bash
 
 ## Architecture Overview
 
@@ -159,7 +159,7 @@ GOOGLE_API_KEY=your_google_key
 # Optional
 SENTRY_DSN=your_sentry_dsn
 MONKEY_CODER_NO_SPLASH=1  # Disable CLI splash screen
-```
+```bash
 
 ### CLI Configuration
 The CLI stores configuration in `~/.monkey-coder/config.JSON`:
@@ -172,7 +172,7 @@ The CLI stores configuration in `~/.monkey-coder/config.JSON`:
   "defaultProvider": "openai",
   "showSplash": true
 }
-```
+```json
 
 ## Testing Strategies
 
@@ -201,7 +201,7 @@ Python -m pytest -v -s
 
 # Integration tests
 Python -m pytest -m integration
-```
+```bash
 
 ## Development Workflow
 
@@ -243,7 +243,7 @@ yarn release
 # Individual package scripts
 yarn publish-pypi    # Python packages
 yarn publish-npm     # npm packages
-```
+```bash
 
 ## Troubleshooting
 
@@ -264,7 +264,7 @@ Python -m monkey_coder.core.orchestrator --debug
 
 # Check health
 monkey health
-```
+```bash
 
 ### Log Locations
 - CLI logs: Console output with colored formatting
@@ -387,7 +387,7 @@ The project uses a simplified railpack.json configuration with runtime frontend 
     "startCommand": "python run_server.py"
   }
 }
-```
+```json
 
 **Note**: Frontend building is handled at runtime by `run_server.py` which automatically:
 - Checks if `packages/web/out` directory exists
@@ -424,7 +424,7 @@ Multiple build configurations competing (Dockerfile, railway.toml, railpack.JSON
 # ENFORCE RAILPACK ONLY:
 rm Dockerfile railway.toml nixpacks.toml  # Remove competing configs
 touch railpack.JSON                        # Create railpack config
-```
+```bash
 
 ### Correct railpack.JSON Template
 
@@ -451,7 +451,7 @@ touch railpack.JSON                        # Create railpack config
     "healthCheckTimeout": 300
   }
 }
-```
+```json
 
 ---
 
@@ -482,7 +482,7 @@ app.listen(PORT, HOST, () => {
 // ❌ WRONG
 app.listen(3000);  // Hardcoded port
 app.listen(PORT, 'localhost');  // Wrong host
-```
+```javascript
 
 #### Python
 

@@ -82,7 +82,7 @@ ANTHROPIC_API_KEY=sk-ant-<your-anthropic-key>
 
 # Database (Automatically provided by Railway)
 DATABASE_URL=<railway-postgresql-url>
-```
+```bash
 
 ### Optional but Recommended
 ```bash
@@ -96,7 +96,7 @@ CORS_ORIGINS=https://your-domain.railway.app
 STRIPE_SECRET_KEY=sk_live_<your-live-key>
 STRIPE_PUBLIC_KEY=pk_live_<your-live-key>
 STRIPE_WEBHOOK_SECRET=whsec_<your-webhook-secret>
-```
+```bash
 
 ## Railway-Specific Checks
 
@@ -157,7 +157,7 @@ python packages/core/run_server.py
 # Validate configuration
 ./validate_railway.sh
 python test_railway_config.py
-```
+```bash
 
 ## Rollback Plan
 
@@ -189,7 +189,7 @@ curl https://your-domain.railway.app/health
 
 # 5. Check frontend
 curl -I https://your-domain.railway.app/
-```
+```bash
 
 ---
 
