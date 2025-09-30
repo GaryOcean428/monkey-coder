@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-ml",
+    "description": "ML inference service with torch and transformers"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12.11"
+    },
+    "cache": {
+      "paths": [
+        "/app/.venv/lib/python3.12/site-packages"
+      ]
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt",
+          "echo '✅ ML dependencies installed (2.5GB+ with CUDA)'"
+        ]
+      }
+    },
+    "env": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "deploy": {
+    "startCommand": "/app/.venv/bin/uvicorn ml_server:app --host 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 600,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "env": {
+      "LOG_LEVEL": "info",
+      "HEALTH_CHECK_PATH": "/health",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
+    }
+  }
+}

@@ -2,8 +2,8 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder",
-    "description": "AI-powered code generation platform with unified frontend/backend"
+    "name": "monkey-coder-frontend",
+    "description": "Next.js frontend with static export (lightweight)"
   },
   "build": {
     "provider": "python",

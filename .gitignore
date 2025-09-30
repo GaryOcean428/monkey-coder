@@ -6,6 +6,13 @@ __pycache__/
 .DS_Store
 .gitconfig
 
+# Railway service directories (configs only, not the /backend directory from old setup)
+# Keep services/ directory structure but ignore build artifacts
+services/**/node_modules/
+services/**/.venv/
+services/**/dist/
+services/**/out/
+
 # C extensions
 *.so
 
