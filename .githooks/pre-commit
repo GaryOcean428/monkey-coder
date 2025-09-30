@@ -51,9 +51,15 @@ else
     echo "   This project uses railpack.json for Railway deployment"
 fi
 
-# Run the full validation script if it exists
-if [ -f "scripts/railway-build-validation.sh" ]; then
-    ./scripts/railway-build-validation.sh
+# Validate railpack.json schema if provider is specified
+if jq -e '.build.provider' railpack.json > /dev/null 2>&1; then
+    PROVIDER=$(jq -r '.build.provider' railpack.json)
+    if [ "$PROVIDER" != "python" ] && [ "$PROVIDER" != "node" ]; then
+        echo "❌ ERROR: railpack.json provider must be 'python' or 'node', not '$PROVIDER'"
+        echo "   Railway native providers only - no nixpacks/docker!"
+        exit 1
+    fi
+    echo "✅ Using Railway native provider: $PROVIDER"
 fi
 
 exit 0

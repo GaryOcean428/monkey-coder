@@ -1,0 +1,73 @@
+# Railway deployment ignore file
+# Exclude build artifacts and unnecessary files
+
+# Node modules (installed during build)
+node_modules/
+.pnp.*
+.yarn/cache
+.yarn/unplugged
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Development files
+.env.local
+.env.development
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test coverage
+coverage/
+.nyc_output/
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in deployment)
+docs/
+*.md
+!README.md
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+
+# Exclude any Docker files except operational sandbox
+Dockerfile*
+docker-compose*.yml
+!services/sandbox/Dockerfile
+!services/sandbox/docker-compose*.yml
+
+# Prevent build system conflicts
+nixpacks*
+railway.toml
+railway.json
+!railpack.json
+
+# Git files
+.git/
+.gitignore
+.gitattributes
