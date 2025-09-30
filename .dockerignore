@@ -1,0 +1,99 @@
+# Railway-optimized build configuration
+# Reduces build context and prevents timeout issues
+
+# Core files only
+.git
+.github
+.vscode
+.husky
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Dependencies (Railway installs these)
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+
+# Build outputs (recreated during build)
+packages/web/.next/
+packages/web/out/
+dist/
+build/
+*.egg-info/
+htmlcov/
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+.pytest_cache/
+junit.xml
+test-results/
+
+# Documentation and non-essential files
+docs/
+examples/
+demo/
+qwencoder-eval/
+archive/
+artifacts/
+assets/
+monitoring/
+*.md
+!README.md
+!RAILWAY_DEPLOYMENT_GUIDE.md
+
+# IDE and editor files
+.idea/
+*.sublime-*
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# Large media files (if any)
+*.mp4
+*.mov
+*.avi
+*.zip
+*.tar.gz
+*.rar
+
+# Keep essential config files
+!railpack.json
+!nixpacks.toml
+!package.json
+!requirements.txt
+!pyproject.toml
+!run_server.py
