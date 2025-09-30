@@ -67,6 +67,10 @@ Settings → Variables:
   ├─ TRANSFORMERS_CACHE=/app/.cache/huggingface
   └─ CUDA_VISIBLE_DEVICES=0
 
+Settings → Storage → Add Volume:
+  ├─ Mount Path: /app/.cache
+  └─ Size: 10GB (recommended for model storage)
+
 Then: Deploy
 ```
 

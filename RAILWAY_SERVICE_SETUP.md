@@ -85,6 +85,18 @@ TRANSFORMERS_CACHE=/app/.cache/huggingface
 CUDA_VISIBLE_DEVICES=0
 ```
 
+**Volume (REQUIRED):**
+```bash
+Mount Path: /app/.cache
+Size: 10GB minimum (stores downloaded ML models)
+```
+
+**Why Volume is Needed:**
+- Hugging Face models (BERT, CodeBERT, etc.) are 1-5GB each
+- Without volume, models re-download on every deployment
+- Volume persists models across deployments
+- Reduces startup time from minutes to seconds
+
 **requirements.txt:**
 - Located at `services/ml/requirements.txt`
 - Contains torch==2.3.0, transformers, accelerate, all CUDA libs
@@ -134,7 +146,11 @@ CUDA_VISIBLE_DEVICES=0
    TRANSFORMERS_CACHE=/app/.cache/huggingface
    CUDA_VISIBLE_DEVICES=0
    ```
-7. Deploy (will take ~25 minutes first time due to torch/CUDA downloads)
+7. **Add Volume (IMPORTANT):**
+   - Settings → Storage → Add Volume
+   - Mount Path: `/app/.cache`
+   - Size: `10GB` (minimum, 20GB recommended for multiple models)
+8. Deploy (will take ~25 minutes first time due to torch/CUDA downloads)
 
 ---
 
