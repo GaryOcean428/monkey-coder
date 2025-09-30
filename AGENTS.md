@@ -286,7 +286,7 @@ async def test_orchestrator_initialization():
 
 ### Prerequisites
 1. Railway account: https://railway.app/
-2. Railway CLI installed: `npm install -g @railway/cli`
+2. Railway CLI available: prefer ephemeral usage with `yarn dlx @railway/cli@latest` (avoid global npm inside repo)
 3. Environment variables configured in Railway dashboard
 
 ### Deployment Process
@@ -337,13 +337,16 @@ The project uses `railpack.json` for Railway deployment configuration:
 - ✅ Python 3.12 + Node.js 20 dual runtime
 - ✅ Virtual environment isolation
 - ✅ Frontend build + API server in single service
-- ✅ Health checks at `/health`
+- ✅ Health checks at `/health` (primary) and `/api/health` (alias)
 - ✅ Build caching for faster deployments
 
 **Health Check Endpoints:**
-- `/health` - Basic health status
+- `/health` - Basic health status (railpack.json default)
+- `/api/health` - Alias for A2A/MCP tooling & unified standards
 - `/health/comprehensive` - Detailed component status
 - `/health/readiness` - Kubernetes-style readiness probe
+
+> Both `/health` and `/api/health` return identical payloads. Tooling may probe either; automation continues to reference `/health` for backward compatibility.
 
 ### Environment Variables for Railway
 
@@ -376,7 +379,7 @@ railway open
 
 ## 🔍 Troubleshooting
 
-### Common Issues
+### Additional Common Issues
 
 #### 1. Yarn Version Mismatch
 ```bash

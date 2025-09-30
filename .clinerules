@@ -26,7 +26,7 @@ Use structured thinking approaches:
 ### 4. Technical Standards & Architecture Compliance
 Adhere to Monkey Coder's established patterns and Agent OS standards:
 - **Project Architecture**: Yarn 4.9.2 workspace monorepo with TypeScript CLI, Python FastAPI core
-- **Package Management**: 
+- **Package Management**:
   - Use Yarn 4.9.2 exclusively with Corepack enabled (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
   - Global cache enabled for 30-50% faster installs
   - Node linker: node-modules with hardlinks for performance
@@ -38,7 +38,7 @@ Adhere to Monkey Coder's established patterns and Agent OS standards:
   - Use `yarn dlx` instead of `npx` for one-off package execution
 - **Python Management**: Python 3.12 for production, use uv then poetry before pip directly
 - **MCP Integration**: Use MCPs like context7 to verify current LLM models, API specifications and parameters
-- **Language Conventions**: 
+- **Language Conventions**:
   - TypeScript 5.8.3 with strict typing
   - Python type hints
   - React 18.2.0 functional patterns
@@ -154,6 +154,17 @@ Follow the 8-step checklist for Railway projects to ensure proper configuration 
   - Use `docker buildx build --builder cloud-garyocean77-superagi .` to use docker build cloud
 - Deploy and test loop
 - Commit and push changes after verification
+
+#### 15.a Dual Health Endpoint Convention
+To support both legacy automation and newer agent/tool standards:
+- Primary health endpoint: `/health` (configured in `railpack.json`)
+- Alias endpoint: `/api/health` (MCP/A2A & external tooling)
+- Payloads MUST remain identical; do not fork behavior.
+
+#### 15.b Yarn Execution Consistency
+- Inside the monorepo use `yarn dlx <pkg>` instead of `npx`.
+- Avoid adding global npm installs in build steps; rely on Corepack for Yarn activation.
+- External docs may reference `npm install -g monkey-coder-cli` for end users, but contributors should prefer workspace commands (`yarn workspaces foreach`).
 
 ### 16. Project Planning Standards
 - **Do not include artificial timeframes into plans** - Phases and tasks should be based on complexity and requirements, not arbitrary deadlines

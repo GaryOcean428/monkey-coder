@@ -24,7 +24,7 @@
           "apt-get update && apt-get install -y curl",
           "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -",
           "apt-get install -y nodejs",
-          "npm install -g yarn@latest",
+          "corepack enable && corepack prepare yarn@4.9.2 --activate",
           "python -m venv /app/.venv",
           "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
           "/app/.venv/bin/pip install -r requirements.txt",
@@ -34,7 +34,7 @@
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
-          "yarn install --frozen-lockfile || npm install -g yarn@latest && yarn install --frozen-lockfile",
+          "yarn install --frozen-lockfile",
           "cd packages/web && yarn install --frozen-lockfile",
           "cd packages/web && yarn build",
           "cd packages/web && NEXT_OUTPUT_EXPORT=true yarn export || yarn build",
@@ -54,13 +54,13 @@
   },
   "deploy": {
     "startCommand": "/app/.venv/bin/python /app/run_server.py",
-    "healthCheckPath": "/health",
+    "healthCheckPath": "/api/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "env": {
       "LOG_LEVEL": "info",
-      "HEALTH_CHECK_PATH": "/health"
+      "HEALTH_CHECK_PATH": "/api/health"
     }
   }
 }

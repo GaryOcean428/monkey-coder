@@ -73,11 +73,31 @@ Execute tests with automatic framework detection and comprehensive reporting.
   - `auto`: Automatic detection (default)
 - `options` (optional): Additional test options
   - `coverage`: Enable coverage reporting
+```bash
+# Run all A2A tests
+pytest packages/core/tests/agents/test_monkey_coder_a2a.py -v
+
+# Run specific test
+pytest packages/core/tests/agents/test_monkey_coder_a2a.py::TestMonkeyCoderA2AAgent::test_generate_code_skill -v
+
+# Run with coverage
+pytest packages/core/tests/agents/test_monkey_coder_a2a.py --cov=monkey_coder.a2a_server
+```
   - `verbose`: Enable verbose output
 
-**Example:**
-```python
-result = await client.call_skill(
+### Health Checks
+
+Primary endpoints:
+- `GET /health` (primary, referenced by railpack.json)
+- `GET /api/health` (alias for standardized tooling & agent discovery)
+- `GET /.well-known/agent.json` (agent card including A2A server & skills)
+
+Extended diagnostics:
+- `GET /health/comprehensive`
+- `GET /health/readiness`
+- `GET /health/env`
+
+Both `/health` and `/api/health` return identical JSON for backward & forward compatibility.
     skill_name="run_tests",
     parameters={
         "path": "./tests",
@@ -207,7 +227,7 @@ from python_a2a import A2AClient
 async def example():
     client = A2AClient(host="localhost", port=7702)
     await client.connect()
-    
+
     try:
         # Generate code
         result = await client.call_skill(
@@ -218,7 +238,7 @@ async def example():
             }
         )
         print("Generated code:", result)
-        
+
     finally:
         await client.disconnect()
 
@@ -237,7 +257,7 @@ pytest packages/core/tests/agents/test_monkey_coder_a2a.py -v
 pytest packages/core/tests/agents/test_monkey_coder_a2a.py::TestMonkeyCoderA2AAgent::test_generate_code_skill -v
 
 # Run with coverage
-pytest packages/core/tests/agents/test_monkey_coder_a2a.py--cov=monkey_coder.a2a_server
+pytest packages/core/tests/agents/test_monkey_coder_a2a.py --cov=monkey_coder.a2a_server
 ```
 
 ### Test Coverage
@@ -254,9 +274,17 @@ The test suite covers:
 
 ### Health Checks
 
-- Main application health: `GET /health`
-- Agent card status: `GET /.well-known/agent.json`
-- A2A server status included in agent card response
+Primary endpoints:
+- `GET /health` (primary, referenced by railpack.json)
+- `GET /api/health` (alias for standardized tooling & agent discovery)
+- `GET /.well-known/agent.json` (agent card including A2A server & skills)
+
+Extended diagnostics:
+- `GET /health/comprehensive`
+- `GET /health/readiness`
+- `GET /health/env`
+
+Both `/health` and `/api/health` return identical JSON for backward & forward compatibility.
 
 ### Logging
 
@@ -286,9 +314,9 @@ async def my_skill(self, param1: str, param2: int = 10) -> str:
     return result
 ```
 
-2. Register skill in `_register_skills()` method
-3. Add parameter schema to agent card
-4. Create tests for the new skill
+1. Register skill in `_register_skills()` method
+2. Add parameter schema to agent card
+3. Create tests for the new skill
 
 ### Extending MCP Integration
 
@@ -308,6 +336,15 @@ Create new templates in `prompts/` directory:
 
 Instructions...
 ```
+
+## Consistency & Deployment Notes
+
+This agent complies with the unified Railway + Yarn 4.9.2 + MCP/A2A standards:
+- Single deployment config: `railpack.json` (avoid mixed Dockerfile/railway.toml unless intentional)
+- Dual health endpoints: `/health` + `/api/health`
+- Agent discovery: `/.well-known/agent.json`
+- Prefer `yarn dlx` for ephemeral CLI tools; avoid mixing npm in workspace operations
+- Use reference variables for inter-service communication in Railway (e.g. `http://${{backend.RAILWAY_PRIVATE_DOMAIN}}`)
 
 ## Troubleshooting
 

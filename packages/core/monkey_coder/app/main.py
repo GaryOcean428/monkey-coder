@@ -532,6 +532,11 @@ class RefreshTokenRequest(BaseModel):
 
 @app.get("/health", response_model=HealthResponse)
 @app.get("/healthz", response_model=HealthResponse)
+# Added /api/health alias for consistency with consolidated deployment docs and
+# master Railway + Yarn + MCP/A2A cheat sheet. Keeping legacy /health endpoint
+# as primary (referenced by existing automation & railpack.json) while exposing
+# /api/health for forward compatibility and unified tooling expectations.
+@app.get("/api/health", response_model=HealthResponse)
 async def health_check():
     """
     Health check endpoint optimized for Railway deployment.
@@ -987,8 +992,8 @@ async def confirm_password_reset(payload: PasswordResetConfirm, request: Request
 
         # Fallback in-memory token handling
         entry_mem = _PASSWORD_RESET_TOKENS.get(token_hash)
-    from ..utils.time import utc_now
-    if not entry_mem or entry_mem.used or utc_now() > entry_mem.expires_at:
+        from ..utils.time import utc_now
+        if not entry_mem or entry_mem.used or utc_now() > entry_mem.expires_at:
             raise HTTPException(status_code=400, detail="Invalid or expired token")
         user = await User.get_by_id(entry_mem.user_id)
         if not user:
