@@ -53,22 +53,23 @@ Always verify model availability at these official sources:
 - ~~gpt-4~~ → Use `gpt-4.1`
 - ~~gpt-3.5-turbo~~ → Use `gpt-4.1-mini`
 
-### Anthropic (5 Models - Claude 4.5/4.1 Series)
+### Anthropic (4 Models - Claude 4.5/4.1 Series)
 
 **Latest Models (September 2025):**
-- `claude-sonnet-4-5-20250929` - Best model for complex agents and coding (200K context, 64K output)
+- `claude-4.5-sonnet-20250930` - Latest Claude 4.5 model with enhanced reasoning and coding (200K context, 64K output)
+- `claude-4.5-haiku-20250930` - Fast and efficient Claude 4.5 model (200K context, 32K output)
 - `claude-opus-4-1-20250805` - Exceptional model for specialized complex tasks (200K context, 32K output)
-- `claude-opus-4-20250514` - Most capable and intelligent model
 - `claude-sonnet-4-20250514` - High-performance with exceptional reasoning
-- `claude-3-7-sonnet-20250219` - High-performance with early extended thinking
 
 **⚠️ DEPRECATED - DO NOT USE:**
-- ~~claude-3-5-sonnet-20241022~~ → Use `claude-sonnet-4-5-20250929`
-- ~~claude-3-5-sonnet-20240620~~ → Use `claude-sonnet-4-5-20250929`
-- ~~claude-3-5-haiku-20241022~~ → Use `claude-sonnet-4-5-20250929`
+- ~~claude-sonnet-4-5-20250929~~ → Use `claude-4.5-sonnet-20250930`
+- ~~claude-3-7-sonnet-20250219~~ → Use `claude-4.5-sonnet-20250930`
+- ~~claude-3-5-sonnet-20241022~~ → Use `claude-4.5-sonnet-20250930`
+- ~~claude-3-5-sonnet-20240620~~ → Use `claude-4.5-sonnet-20250930`
+- ~~claude-3-5-haiku-20241022~~ → Use `claude-4.5-haiku-20250930`
 - ~~claude-3-opus-20240229~~ → Use `claude-opus-4-1-20250805`
 - ~~claude-3-sonnet-20240229~~ → Use `claude-sonnet-4-20250514`
-- ~~claude-2.1~~ → Use `claude-sonnet-4-5-20250929`
+- ~~claude-2.1~~ → Use `claude-4.5-sonnet-20250930`
 
 ### Google (4 Models - Gemini 2.5 Series)
 
@@ -138,7 +139,7 @@ model = enforce_model_compliance("gpt-4-turbo", "openai")
 | Provider | Total Models | Latest Addition | Deprecation Count |
 |----------|-------------|-----------------|-------------------|
 | OpenAI | 12 | gpt-5 (Sep 2025) | 15+ deprecated |
-| Anthropic | 5 | claude-sonnet-4-5 (Sep 2025) | 11+ deprecated |
+| Anthropic | 4 | claude-4.5 (Sep 2025) | 12+ deprecated |
 | Google | 4 | gemini-2.5 series (Jun 2025) | 6+ deprecated |
 | Groq | 6 | llama-4 preview (Aug 2025) | 3+ deprecated |
 | xAI | 6 | grok-4-latest (Aug 2025) | 2+ deprecated |
@@ -147,7 +148,7 @@ model = enforce_model_compliance("gpt-4-turbo", "openai")
 
 ### For AI Agents
 1. **DO NOT** suggest `gpt-4-turbo` - Use `gpt-4.1`
-2. **DO NOT** suggest `claude-3-5-sonnet` - Use `claude-sonnet-4-5-20250929`
+2. **DO NOT** suggest `claude-3-5-sonnet` - Use `claude-4.5-sonnet-20250930`
 3. **DO NOT** suggest `claude-3-opus-20240229` - Use `claude-opus-4-1-20250805`
 4. **DO NOT** suggest `gemini-pro` - Use `gemini-2.5-flash`
 5. **DO NOT** make up version numbers like `gpt-4.5` or use old Claude 3.x models

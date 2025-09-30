@@ -402,7 +402,7 @@ class ValidationError(Exception):
 # Full documentation at https://ai1docs.abacusai.app/
 # Add to top of MODEL_REGISTRY section
 DEFAULT_MODELS = {
-    ProviderType.ANTHROPIC: "claude-opus-4-1-20250805",  # Default as per user spec
+    ProviderType.ANTHROPIC: "claude-4.5-sonnet-20250930",  # Latest Claude 4.5 model
     # Defaults for other providers
     ProviderType.OPENAI: "gpt-5",  # Latest GPT-5 model
     ProviderType.GOOGLE: "gemini-2.5-pro",
@@ -433,17 +433,13 @@ MODEL_REGISTRY = {
         # "gpt-3.5-turbo",  # Use gpt-4.1-mini instead
     ],
     ProviderType.ANTHROPIC: [
-        # Claude 4.1 Family (Latest and most capable)
+        # Claude 4.5 Family (Latest and most capable)
+        "claude-4.5-sonnet-20250930",
+        "claude-4.5-haiku-20250930",
+        # Claude 4.1 Family
         "claude-opus-4-1-20250805",
         # Claude 4 Family
-        "claude-opus-4-20250514",
         "claude-sonnet-4-20250514",
-        # Claude 3.7
-        "claude-3-7-sonnet-20250219",
-        # Claude 3.5
-        "claude-3-5-sonnet-20241022",
-        "claude-3-5-sonnet-20240620",
-        "claude-3-5-haiku-20241022",
     ],
     ProviderType.GOOGLE: [
         # Gemini 2.5 Family
@@ -501,12 +497,19 @@ MODEL_ALIASES = {
     "models/gemini-live-2.5-flash-preview": "gemini-2.5-flash",
     "models/gemini-2.0-flash-live-001": "gemini-2.0-flash",
     # Anthropic aliases
-    "claude-3-opus-20240229": "claude-opus-4-20250514",  # Old Opus -> new Opus 4
+    "claude-3-opus-20240229": "claude-opus-4-1-20250805",  # Old Opus -> new Opus 4.1
     "claude-3-sonnet-20240229": "claude-sonnet-4-20250514",  # Old Sonnet -> new Sonnet 4
-    "claude-2.1": "claude-3-5-haiku-20241022",  # Claude 2 -> Haiku
-    "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",  # Latest alias
+    "claude-3-5-sonnet-20241022": "claude-4.5-sonnet-20250930",  # 3.5 Sonnet -> 4.5 Sonnet
+    "claude-3-5-sonnet-20240620": "claude-4.5-sonnet-20250930",  # 3.5 Sonnet -> 4.5 Sonnet
+    "claude-3-5-haiku-20241022": "claude-4.5-haiku-20250930",  # 3.5 Haiku -> 4.5 Haiku
+    "claude-sonnet-4-5-20250929": "claude-4.5-sonnet-20250930",  # Old 4.5 -> new 4.5
+    "claude-3-7-sonnet-20250219": "claude-4.5-sonnet-20250930",  # 3.7 -> 4.5
+    "claude-2.1": "claude-4.5-haiku-20250930",  # Claude 2 -> 4.5 Haiku
+    "claude-3-5-sonnet-latest": "claude-4.5-sonnet-20250930",  # Latest alias
     "claude-opus-4-1": "claude-opus-4-1-20250805",  # Unversioned alias
     "claude-opus-4.1": "claude-opus-4-1-20250805",  # Alternate format
+    "claude-4.5-sonnet": "claude-4.5-sonnet-20250930",  # Unversioned alias
+    "claude-4.5-haiku": "claude-4.5-haiku-20250930",  # Unversioned alias
     # Google aliases
     "gemini-pro": "gemini-2.5-flash",
     "gemini-1.5-pro": "gemini-2.5-pro",

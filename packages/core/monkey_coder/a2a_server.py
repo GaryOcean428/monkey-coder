@@ -8,10 +8,10 @@ import logging
 import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
-from functools import partial
+import threading
 
 from python_a2a import A2AServer, skill, AgentCard
-from python_a2a.server.http import run_server
+from python_a2a.server.http import create_flask_app
 from python_a2a.models import Message, MessageRole, TextContent
 
 from .agents.base_agent import AgentContext, AgentCapability
@@ -43,7 +43,8 @@ class MonkeyCoderA2AAgent:
         self.code_analyzer = None  # Will initialize if available
         self.mcp_clients: Dict[str, MCPClient] = {}
         self.config = get_config()
-        self._server_future: Optional[asyncio.Future] = None
+        self._http_server = None
+        self._server_thread: Optional[threading.Thread] = None
 
         # Determine public URL for agent card discovery
         public_url = os.getenv("A2A_PUBLIC_URL")
@@ -504,11 +505,32 @@ class MonkeyCoderA2AAgent:
         if not self.server:
             raise RuntimeError("Failed to initialize A2A server")
 
-        loop = asyncio.get_running_loop()
+        if self._server_thread and self._server_thread.is_alive():
+            logger.info("A2A HTTP server already running on %s:%s", self.bind_host, self.port)
+            return
 
-        if not self._server_future or self._server_future.done():
-            runner = partial(run_server, self.server, host=self.bind_host, port=self.port, debug=False)
-            self._server_future = loop.run_in_executor(None, runner)
+        flask_app = create_flask_app(self.server)
+
+        try:
+            from werkzeug.serving import make_server
+        except ImportError as exc:
+            logger.error("Werkzeug not available; cannot start A2A HTTP server: %s", exc)
+            raise
+
+        self._http_server = make_server(self.bind_host, self.port, flask_app)
+
+        def _serve():
+            try:
+                self._http_server.serve_forever()
+            except Exception as server_exc:  # pragma: no cover - defensive guard for runtime issues
+                logger.error("A2A HTTP server exited unexpectedly: %s", server_exc)
+
+        self._server_thread = threading.Thread(
+            target=_serve,
+            name="monkey-coder-a2a-http",
+            daemon=True,
+        )
+        self._server_thread.start()
 
         logger.info(
             "Monkey-Coder A2A server listening",
@@ -527,8 +549,16 @@ class MonkeyCoderA2AAgent:
         if self.server:
             logger.info("A2A server cleanup initiated")
 
-        if self._server_future and not self._server_future.done():
-            logger.info("Requesting A2A HTTP runner shutdown (Flask)")
+        if self._http_server:
+            try:
+                self._http_server.shutdown()
+            except Exception as exc:  # pragma: no cover - guard against unexpected shutdown errors
+                logger.warning("Error while shutting down A2A HTTP server: %s", exc)
+            self._http_server = None
+
+        if self._server_thread and self._server_thread.is_alive():
+            self._server_thread.join(timeout=5)
+        self._server_thread = None
         
         # Disconnect MCP clients
         for client in self.mcp_clients.values():

@@ -56,7 +56,8 @@ class ModelManifestValidator:
         "claude-3-opus-20240229", "claude-3-sonnet-20240229",
         "claude-3-haiku-20240307",
         "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620",
-        "claude-3-5-haiku-20241022",
+        "claude-3-5-haiku-20241022", "claude-3-7-sonnet-20250219",
+        "claude-sonnet-4-5-20250929",  # Old 4.5 model replaced by 20250930
 
         # Google deprecated
         "gemini-1.0-pro", "gemini-1.5-pro-001",
@@ -265,10 +266,10 @@ class ModelManifestValidator:
             if "opus" in invalid_model:
                 return "claude-opus-4-1-20250805"  # Latest Opus
             elif "sonnet" in invalid_model:
-                return "claude-sonnet-4-20250514"  # Latest Sonnet
+                return "claude-4.5-sonnet-20250930"  # Latest 4.5 Sonnet
             elif "haiku" in invalid_model:
-                return "claude-3-5-haiku-20241022"  # Latest Haiku
-            return "claude-sonnet-4-20250514"  # Default to Sonnet
+                return "claude-4.5-haiku-20250930"  # Latest 4.5 Haiku
+            return "claude-4.5-sonnet-20250930"  # Default to latest 4.5 Sonnet
 
         elif provider == "google":
             if "flash" in invalid_model:
