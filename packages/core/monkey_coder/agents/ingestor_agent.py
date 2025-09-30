@@ -176,7 +176,13 @@ class IngestorAgent(BaseAgent):
             # Match service requirement pattern
             service_match = re.search(r'(\w+)\s+(?:service\s+)?(?:on\s+\w+\s+)?(?:requires?|needs?)', line, re.IGNORECASE)
             if service_match:
-                current_service = service_match.group(1)
+                service_name = service_match.group(1)
+                
+                # Skip common words that aren't services
+                if service_name.lower() in ['the', 'this', 'that', 'following', 'environment']:
+                    continue
+                    
+                current_service = service_name
                 
                 # Create service entity
                 service_id = f"service:{current_service.lower()}"
@@ -192,11 +198,11 @@ class IngestorAgent(BaseAgent):
                 entities.append(service_entity)
             
             # Look for environment variables in current line and following bullet points
-            env_vars = re.findall(r'([A-Z_][A-Z0-9_]*)', line)
+            env_vars = re.findall(r'([A-Z_][A-Z0-9_]{2,})', line)  # Require at least 3 chars
             
             for env_var in env_vars:
                 # Skip common words that aren't env vars
-                if env_var in ['THE', 'FOR', 'AND', 'WITH', 'KEY', 'URL']:
+                if env_var in ['THE', 'FOR', 'AND', 'WITH', 'KEY', 'URL', 'API', 'APP']:
                     continue
                     
                 env_id = f"envvar:{env_var.lower()}"
@@ -257,11 +263,11 @@ class IngestorAgent(BaseAgent):
         """Extract incident descriptions"""
         entities = []
         
-        # Pattern for incidents/errors
+        # Pattern for incidents/errors - improved to capture full context
         patterns = [
-            r'(?:incident|error|failure)\s*[:#]?\s*([^.!?\n]+)',
-            r'missing\s+([A-Z_][A-Z0-9_]*)',
-            r'failed\s+to\s+([^.!?\n]+)'
+            r'(?:incident|error|failure)\s*[:#]?\s*([^.!?\n]{5,})',  # At least 5 chars
+            r'(missing\s+[A-Z_][A-Z0-9_]*\s*[^\n]*)',  # Missing env var with context
+            r'(failed\s+[^.!?\n]{5,})'  # At least 5 chars after "failed"
         ]
         
         for pattern in patterns:
@@ -269,7 +275,12 @@ class IngestorAgent(BaseAgent):
             
             for match in matches:
                 description = match.group(1).strip()
-                # Create standardized incident ID
+                
+                # Skip very short or generic descriptions
+                if len(description) < 5:
+                    continue
+                
+                # Create standardized incident ID from description
                 incident_id = f"incident:{description[:20].lower().replace(' ', '_').replace('-', '_')}"
                 
                 entity = {
