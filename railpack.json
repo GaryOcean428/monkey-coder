@@ -23,12 +23,12 @@
         "commands": [
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --frozen-lockfile"
+          "yarn install --immutable"
         ]
       },
       "build": {
         "commands": [
-          "cd packages/web && yarn build && yarn export"
+          "yarn workspace @monkey-coder/web build"
         ]
       }
     },
@@ -40,9 +40,9 @@
     }
   },
   "deploy": {
-    "startCommand": "npx serve -s packages/web/out -p $PORT",
-    "healthCheckPath": "/index.html",
-    "healthCheckTimeout": 60,
+    "startCommand": "yarn workspace @monkey-coder/web start --hostname 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

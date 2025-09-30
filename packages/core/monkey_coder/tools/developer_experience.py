@@ -332,7 +332,7 @@ class AutomatedTestRunner:
     
     async def _run_jest_tests(self, pattern: Optional[str]) -> TestResult:
         """Run Jest tests."""
-        cmd = ["npx", "jest", "--json"]
+        cmd = ["yarn", "dlx", "jest", "--json"]
         if pattern:
             cmd.append(pattern)
         
@@ -350,7 +350,7 @@ class AutomatedTestRunner:
     
     async def _run_playwright_tests(self, pattern: Optional[str]) -> TestResult:
         """Run Playwright tests."""
-        cmd = ["npx", "playwright", "test", "--reporter=json"]
+        cmd = ["yarn", "dlx", "playwright", "test", "--reporter=json"]
         if pattern:
             cmd.append(pattern)
         

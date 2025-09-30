@@ -204,37 +204,43 @@ export default function CLIDocsPage() {
         {/* Quick Install */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Quick Install</CardTitle>
-            <CardDescription>Get up and running in seconds</CardDescription>
+            <CardTitle>Quick Install (Recommended)</CardTitle>
+            <CardDescription>Activate Yarn via Corepack and run the CLI with <code>yarn dlx</code></CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="relative">
                 <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
-                  <code>npm install -g monkey-coder-cli</code>
+                  <code>corepack enable &amp;&amp; corepack prepare yarn@4.9.2 --activate</code>
                 </pre>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="absolute top-2 right-2"
-                  onClick={() => copyToClipboard('npm install -g monkey-coder-cli', 'npm install')}
+                  onClick={() => copyToClipboard('corepack enable && corepack prepare yarn@4.9.2 --activate', 'corepack setup')}
                 >
-                  {copiedCommand === 'npm install' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedCommand === 'corepack setup' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <div className="relative">
                 <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
-                  <code>yarn global add monkey-coder-cli</code>
+                  <code>yarn dlx monkey-coder-cli@latest --help</code>
                 </pre>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="absolute top-2 right-2"
-                  onClick={() => copyToClipboard('yarn global add monkey-coder-cli', 'yarn install')}
+                  onClick={() => copyToClipboard('yarn dlx monkey-coder-cli@latest --help', 'yarn dlx install')}
                 >
-                  {copiedCommand === 'yarn install' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedCommand === 'yarn dlx install' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
+              <Alert>
+                <Terminal className="h-4 w-4" />
+                <AlertDescription>
+                  Need legacy npm or global installs? They still work, but we now recommend <code>yarn dlx</code> to stay aligned with the Yarn 4 workspace toolchain.
+                </AlertDescription>
+              </Alert>
             </div>
           </CardContent>
         </Card>

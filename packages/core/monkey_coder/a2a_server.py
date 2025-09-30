@@ -8,8 +8,10 @@ import logging
 import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
+from functools import partial
 
 from python_a2a import A2AServer, skill, AgentCard
+from python_a2a.server.http import run_server
 from python_a2a.models import Message, MessageRole, TextContent
 
 from .agents.base_agent import AgentContext, AgentCapability
@@ -27,18 +29,43 @@ class MonkeyCoderA2AAgent:
     """
     
     def __init__(self, port: int = 7702):
+        configured_port = os.getenv("A2A_PORT") or os.getenv("PORT")
+        if configured_port:
+            try:
+                port = int(configured_port)
+            except ValueError:
+                logger.warning("Invalid A2A port '%s'; falling back to %s", configured_port, port)
+
         self.port = port
+        self.bind_host = os.getenv("A2A_HOST", "0.0.0.0")
         self.server: Optional[A2AServer] = None
         self.code_generator = CodeGeneratorAgent()
         self.code_analyzer = None  # Will initialize if available
         self.mcp_clients: Dict[str, MCPClient] = {}
         self.config = get_config()
+        self._server_future: Optional[asyncio.Future] = None
+
+        # Determine public URL for agent card discovery
+        public_url = os.getenv("A2A_PUBLIC_URL")
+        if not public_url:
+            railway_public = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+            if railway_public:
+                public_url = f"https://{railway_public}"
+            else:
+                railway_private = os.getenv("RAILWAY_PRIVATE_DOMAIN")
+                if railway_private:
+                    public_url = f"https://{railway_private}"
+        if not public_url:
+            public_url = f"http://localhost:{self.port}"
+
+        # Ensure trailing path trimmed
+        self.public_url = public_url.rstrip('/')
         
         # Agent card metadata
         self.agent_card = AgentCard(
             name="Monkey-Coder Agent",
             description="Specialized Deep Agent for code generation, repository analysis, and testing",
-            url=f"http://localhost:{port}",  # A2A server URL
+            url=f"{self.public_url}/a2a",  # Published A2A discovery endpoint
             version="1.0.0",
             capabilities={
                 "code_generation": True,
@@ -137,7 +164,7 @@ class MonkeyCoderA2AAgent:
             # Create A2A server
             self.server = A2AServer(
                 agent_card=self.agent_card,
-                url=f"http://localhost:{self.port}"
+                url=self.public_url
             )
             
             # Register skills
@@ -162,7 +189,7 @@ class MonkeyCoderA2AAgent:
             if github_token:
                 github_client = await MCPClient.connect({
                     "name": "github",
-                    "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+                    "command": ["yarn", "dlx", "@modelcontextprotocol/server-github"],
                     "env": {"GITHUB_TOKEN": github_token}
                 })
                 self.mcp_clients["github"] = github_client
@@ -451,7 +478,7 @@ class MonkeyCoderA2AAgent:
         try:
             import subprocess
             
-            cmd = ["npx", "jest", path, "--verbose"]
+            cmd = ["yarn", "dlx", "jest", path, "--verbose"]
             
             if options.get("coverage"):
                 cmd.append("--coverage")
@@ -471,22 +498,37 @@ class MonkeyCoderA2AAgent:
             return f"Error running jest: {str(e)}"
     
     async def start(self) -> None:
-        """Start the A2A server"""
+        """Start the A2A server using the python-a2a HTTP runner."""
         await self.initialize()
-        
-        if self.server:
-            if hasattr(self.server, 'start') and callable(getattr(self.server, 'start')):
-                await self.server.start()
-            logger.info(f"Monkey-Coder A2A server initialized on port {self.port}")
-        else:
+
+        if not self.server:
             raise RuntimeError("Failed to initialize A2A server")
+
+        loop = asyncio.get_running_loop()
+
+        if not self._server_future or self._server_future.done():
+            runner = partial(run_server, self.server, host=self.bind_host, port=self.port, debug=False)
+            self._server_future = loop.run_in_executor(None, runner)
+
+        logger.info(
+            "Monkey-Coder A2A server listening",
+            extra={
+                "extra_fields": {
+                    "metric_type": "a2a_server",
+                    "port": self.port,
+                    "host": self.bind_host,
+                    "public_url": self.public_url,
+                }
+            },
+        )
     
     async def stop(self) -> None:
         """Stop the A2A server and cleanup"""
         if self.server:
-            if hasattr(self.server, 'stop') and callable(getattr(self.server, 'stop')):
-                await self.server.stop()
             logger.info("A2A server cleanup initiated")
+
+        if self._server_future and not self._server_future.done():
+            logger.info("Requesting A2A HTTP runner shutdown (Flask)")
         
         # Disconnect MCP clients
         for client in self.mcp_clients.values():

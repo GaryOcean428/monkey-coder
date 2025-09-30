@@ -16,11 +16,12 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 ## Installation
 
 ```bash
-# Install globally
-npm install -g monkey-coder-cli
+# Recommended: run via Yarn dlx with the pinned toolchain
+corepack enable && corepack prepare yarn@4.9.2 --activate
+yarn dlx monkey-coder-cli@latest --help
 
-# Or use yarn
-yarn global add monkey-coder-cli
+# Legacy global install (fallback only)
+npm install -g monkey-coder-cli
 ```bash
 
 ## Quick Start

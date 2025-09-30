@@ -26,6 +26,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
+def _health_payload() -> dict:
+    """Return consistent health payload for Railway probes and tooling."""
+    return {
+        "status": "healthy",
+        "service": "ml-inference",
+        "models_loaded": False,  # TODO: Implement model loading
+        "gpu_available": False   # TODO: Check CUDA availability
+    }
+
 class CodeGenerationRequest(BaseModel):
     prompt: str
     model: str = "local-inference"  # Local model inference, not production APIs
@@ -38,14 +48,10 @@ class CodeGenerationResponse(BaseModel):
     tokens_used: int
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "ml-inference",
-        "models_loaded": False,  # TODO: Implement model loading
-        "gpu_available": False   # TODO: Check CUDA availability
-    }
+    return _health_payload()
 
 @app.post("/generate", response_model=CodeGenerationResponse)
 async def generate_code(request: CodeGenerationRequest):

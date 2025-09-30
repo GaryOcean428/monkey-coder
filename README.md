@@ -243,8 +243,12 @@ pip install monkey-coder-sdk
 #### npm Package (v1.1.0)
 
 ```bash
-# Will be available after publishing
-yarn global add monkey-coder-cli
+# Recommended: run via Yarn dlx with pinned toolchain
+corepack enable && corepack prepare yarn@4.9.2 --activate
+yarn dlx monkey-coder-cli@latest --help
+
+# Legacy global install (not recommended)
+npm install -g monkey-coder-cli
 ```
 
 ### Development Setup

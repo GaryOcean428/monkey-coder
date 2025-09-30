@@ -107,13 +107,50 @@ export default function GettingStartedPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="npm" className="w-full">
+            <Tabs defaultValue="yarn" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="npm">npm</TabsTrigger>
                 <TabsTrigger value="yarn">Yarn</TabsTrigger>
+                <TabsTrigger value="npm">npm</TabsTrigger>
                 <TabsTrigger value="pnpm">pnpm</TabsTrigger>
                 <TabsTrigger value="homebrew">Homebrew</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="yarn">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
+                      <code>corepack enable &amp;&amp; corepack prepare yarn@4.9.2 --activate</code>
+                    </pre>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-2 right-2"
+                      onClick={() => copyToClipboard('corepack enable && corepack prepare yarn@4.9.2 --activate', 'corepack getting started')}
+                    >
+                      {copiedCommand === 'corepack getting started' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
+                      <code>yarn dlx monkey-coder-cli@latest --help</code>
+                    </pre>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-2 right-2"
+                      onClick={() => copyToClipboard('yarn dlx monkey-coder-cli@latest --help', 'yarn dlx getting started')}
+                    >
+                      {copiedCommand === 'yarn dlx getting started' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <Alert>
+                    <Terminal className="h-4 w-4" />
+                    <AlertDescription>
+                      Yarn dlx keeps your global environment clean and uses the repo&apos;s pinned tools. Run <code>yarn constraints</code> regularly to stay in sync.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </TabsContent>
 
               <TabsContent value="npm">
                 <div className="space-y-4">
@@ -133,27 +170,9 @@ export default function GettingStartedPage() {
                   <Alert>
                     <Terminal className="h-4 w-4" />
                     <AlertDescription>
-                      Requires Node.js 18.0 or higher. Run <code>node --version</code> to check.
+                      Requires Node.js 18.0 or higher. Prefer Yarn unless you have an established npm workflow.
                     </AlertDescription>
                   </Alert>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="yarn">
-                <div className="space-y-4">
-                  <div className="relative">
-                    <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
-                      <code>yarn global add monkey-coder-cli</code>
-                    </pre>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute top-2 right-2"
-                      onClick={() => copyToClipboard('yarn global add monkey-coder-cli', 'yarn install command')}
-                    >
-                      {copiedCommand === 'yarn install command' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
                 </div>
               </TabsContent>
 

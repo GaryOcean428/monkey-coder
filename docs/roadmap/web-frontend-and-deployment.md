@@ -77,5 +77,7 @@
 - ✅ Fixed CLI chat 422 error - invalid persona type (2025-01-28)
 - ✅ Environment configuration
 - ✅ Removed exposed npm token from .yarnrc.yml
+- ✅ Railpack configs updated for Yarn 4.9.2 + /api/health health checks (2025-09-30)
+- ✅ A2A/MCP services now bind to 0.0.0.0 and respect Railway `PORT` (2025-09-30)
 - 🚧 Frontend deployment
 - 🚧 Domain configuration

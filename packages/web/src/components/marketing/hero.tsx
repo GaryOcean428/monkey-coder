@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Code2, Sparkles, Zap, Terminal, Download, Key, CheckCircle } from 'lucide-react'
+import { ArrowRight, Code2, Sparkles, Zap, Terminal, Download, Key } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export function Hero() {
@@ -10,25 +10,25 @@ export function Hero() {
 
   const cliSteps = [
     {
-      command: '$ npm install -g monkey-coder-cli',
-      description: 'Install the CLI globally',
+      command: '$ corepack enable && corepack prepare yarn@4.9.2 --activate',
+      description: 'Activate the project Yarn version',
       icon: Download,
-      output: '✓ Installed monkey-coder-cli@1.0.0'
+      output: '✓ Yarn 4.9.2 ready via Corepack'
     },
     {
-      command: '$ monkey-coder --version',
-      description: 'Verify installation',
-      icon: CheckCircle,
+      command: '$ yarn dlx monkey-coder-cli@latest --version',
+      description: 'Run the CLI with Yarn dlx (no global install)',
+      icon: Terminal,
       output: 'monkey-coder-cli v1.0.0'
     },
     {
-      command: '$ monkey-coder config set apiKey "your-key"',
-      description: 'Configure your API key',
+      command: '$ yarn dlx monkey-coder-cli config set apiKey "your-key"',
+      description: 'Securely configure your API key',
       icon: Key,
       output: '✓ API key configured successfully'
     },
     {
-      command: '$ monkey-coder implement "Create a React login form"',
+      command: '$ yarn dlx monkey-coder-cli implement "Create a React login form"',
       description: 'Generate your first component',
       icon: Code2,
       output: '✓ Generated: LoginForm.tsx (45 lines)'

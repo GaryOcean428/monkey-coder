@@ -72,9 +72,9 @@ class MCPClient:
         """Get command for built-in servers"""
         builtin_servers = {
             "filesystem": ["python", "-m", "monkey_coder.mcp.servers.filesystem"],
-            "github": ["npx", "-y", "@modelcontextprotocol/server-github"],
-            "browser": ["npx", "-y", "@modelcontextprotocol/server-browserbase"],
-            "postgres": ["npx", "-y", "@modelcontextprotocol/server-postgres"],
+            "github": ["yarn", "dlx", "@modelcontextprotocol/server-github"],
+            "browser": ["yarn", "dlx", "@modelcontextprotocol/server-browserbase"],
+            "postgres": ["yarn", "dlx", "@modelcontextprotocol/server-postgres"],
         }
         
         if server_name not in builtin_servers:

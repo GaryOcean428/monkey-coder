@@ -477,8 +477,8 @@ class MCPServerManager:
             # Built-in servers use their name
             return None
         elif config.type == ServerType.NPM:
-            # NPM package server
-            return ["npx", config.package] if config.package else None
+            # Package server executed via Yarn dlx to avoid npm mixing
+            return ["yarn", "dlx", config.package] if config.package else None
         elif config.type == ServerType.CUSTOM:
             # Custom command - handle string properly
             if isinstance(config.command, str):

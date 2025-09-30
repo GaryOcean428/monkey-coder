@@ -9,8 +9,29 @@ import { SiteFooter } from '@/components/site-footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const resolvedAppUrl = (() => {
+  const explicit = process.env.NEXT_PUBLIC_APP_URL
+  if (explicit) return explicit
+
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN
+  if (railwayDomain) return `https://${railwayDomain}`
+
+  const vercelUrl = process.env.VERCEL_URL
+  if (vercelUrl) return `https://${vercelUrl}`
+
+  return 'http://localhost:3000'
+})()
+
+const metadataBase = (() => {
+  try {
+    return new URL(resolvedAppUrl)
+  } catch {
+    return new URL('http://localhost:3000')
+  }
+})()
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://coder.fastmonkey.au'),
+  metadataBase,
   title: 'Monkey Coder - AI-Powered Code Generation Platform',
   description: 'Transform your ideas into production-ready code with AI. Powered by advanced language models.',
   keywords: 'AI, code generation, programming, development, automation',
@@ -21,12 +42,12 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   alternates: {
-    canonical: '/',
+    canonical: metadataBase.href,
   },
   openGraph: {
     title: 'Monkey Coder - AI-Powered Code Generation',
     description: 'Transform your ideas into production-ready code with AI',
-    url: '/',
+    url: metadataBase.href,
     siteName: 'Monkey Coder',
     images: [
       {
