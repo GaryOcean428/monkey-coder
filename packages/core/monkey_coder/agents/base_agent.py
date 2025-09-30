@@ -5,6 +5,7 @@ Provides quantum execution capabilities and MCP integration
 
 import asyncio
 import logging
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
@@ -13,6 +14,7 @@ from datetime import datetime
 
 from ..quantum.manager import QuantumManager, CollapseStrategy
 from ..mcp.client import MCPClient
+from .memory_graph import MemoryGraph, Node, Edge, QueryResult
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +54,7 @@ class AgentMemory:
     long_term: Dict[str, Any] = field(default_factory=dict)
     conversation_history: List[Dict[str, Any]] = field(default_factory=list)
     learned_patterns: Dict[str, Any] = field(default_factory=dict)
+    graph: MemoryGraph = field(default_factory=MemoryGraph)  # Memory graph for structured knowledge
 
 
 class BaseAgent(ABC):
@@ -215,6 +218,75 @@ class BaseAgent(ABC):
     def learn_pattern(self, pattern_name: str, pattern_data: Dict[str, Any]):
         """Learn a new pattern for future use"""
         self.memory.learned_patterns[pattern_name] = pattern_data
+    
+    # Memory Graph Methods
+    def add_entity(self, entity_type: str, properties: Dict[str, Any], 
+                   entity_id: Optional[str] = None, source: Optional[str] = None) -> str:
+        """Add an entity to the memory graph"""
+        node = Node(
+            id=entity_id or f"{entity_type.lower()}:{uuid.uuid4().hex[:8]}",
+            type=entity_type,
+            props=properties,
+            source=source or f"agent:{self.name}"
+        )
+        
+        if self.memory.graph.add_node(node):
+            logger.debug(f"Agent {self.name} added entity: {node.id}")
+            return node.id
+        else:
+            raise RuntimeError(f"Failed to add entity: {node.id}")
+    
+    def add_relationship(self, from_entity_id: str, to_entity_id: str, 
+                        relationship_type: str, properties: Optional[Dict[str, Any]] = None,
+                        source: Optional[str] = None) -> bool:
+        """Add a relationship to the memory graph"""
+        edge = Edge(
+            type=relationship_type,
+            from_id=from_entity_id,
+            to_id=to_entity_id,
+            props=properties or {},
+            source=source or f"agent:{self.name}"
+        )
+        
+        success = self.memory.graph.add_edge(edge)
+        if success:
+            logger.debug(f"Agent {self.name} added relationship: {edge.type} from {edge.from_id} to {edge.to_id}")
+        
+        return success
+    
+    def get_entity(self, entity_id: str) -> Optional[Node]:
+        """Get an entity from the memory graph"""
+        return self.memory.graph.get_node(entity_id)
+    
+    def get_entities_by_type(self, entity_type: str) -> List[Node]:
+        """Get all entities of a specific type"""
+        return self.memory.graph.get_nodes_by_type(entity_type)
+    
+    def get_related_entities(self, entity_id: str, relationship_type: Optional[str] = None,
+                           direction: str = "out") -> List[Node]:
+        """Get entities related to a given entity"""
+        return self.memory.graph.neighbors(entity_id, relationship_type, direction)
+    
+    def query_memory_graph(self, start_entity_id: str, max_hops: int = 2,
+                          relationship_types: Optional[List[str]] = None) -> QueryResult:
+        """Query the memory graph for a subgraph around an entity"""
+        return self.memory.graph.query_subgraph(start_entity_id, max_hops, relationship_types)
+    
+    def find_connection_path(self, from_entity_id: str, to_entity_id: str, 
+                           max_depth: int = 5) -> List[List[str]]:
+        """Find connection paths between two entities"""
+        return self.memory.graph.find_paths(from_entity_id, to_entity_id, max_depth)
+    
+    def get_memory_graph_stats(self) -> Dict[str, Any]:
+        """Get statistics about the memory graph"""
+        stats = self.memory.graph.get_stats()
+        stats["agent_name"] = self.name
+        return stats
+    
+    def clear_memory_graph(self):
+        """Clear all data from the memory graph"""
+        self.memory.graph.clear()
+        logger.info(f"Agent {self.name} cleared memory graph")
         
     async def collaborate_with(self, other_agent: 'BaseAgent', task: str, context: AgentContext) -> Dict[str, Any]:
         """Collaborate with another agent on a task"""
