@@ -6,7 +6,8 @@
     "description": "AI-powered code generation platform with unified frontend/backend"
   },
   "build": {
-    "provider": "python",
+    "provider": "nixpacks",
+    "nixpacksFile": "./nixpacks.toml",
     "packages": {
       "python": "3.12.11",
       "node": "20"
@@ -20,6 +21,16 @@
       ]
     },
     "steps": {
+      "setup": {
+        "commands": [
+          "apt-get update && apt-get install -y curl",
+          "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -",
+          "apt-get install -y nodejs",
+          "npm install -g yarn@4.9.2",
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate"
+        ]
+      },
       "install": {
         "commands": [
           "python -m venv /app/.venv",
@@ -31,6 +42,7 @@
       "build": {
         "commands": [
           "echo '🔨 Building frontend assets...'",
+          "yarn install --frozen-lockfile",
           "cd packages/web && yarn install --frozen-lockfile",
           "cd packages/web && yarn build",
           "cd packages/web && NEXT_OUTPUT_EXPORT=true yarn export",
@@ -45,7 +57,7 @@
       "NEXT_TELEMETRY_DISABLED": "1",
       "PYTHONPATH": "/app:/app/packages/core",
       "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:$PATH"
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
     }
   },
   "deploy": {
