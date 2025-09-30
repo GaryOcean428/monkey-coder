@@ -2,18 +2,18 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-unified",
-    "description": "Unified Python backend with runtime frontend building"
+    "name": "monkey-coder-frontend",
+    "description": "Next.js frontend - deploys from repo root"
   },
   "build": {
-    "provider": "python",
+    "provider": "node",
     "packages": {
-      "python": "3.12.11",
       "node": "20"
     },
     "cache": {
       "paths": [
-        "/app/.venv/lib/python3.12/site-packages",
+        "node_modules",
+        ".yarn/cache",
         "packages/web/.next",
         "packages/web/out"
       ]
@@ -21,31 +21,29 @@
     "steps": {
       "install": {
         "commands": [
-          "python -m venv /app/.venv",
-          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-          "/app/.venv/bin/pip install -r requirements.txt",
-          "echo '✅ Python dependencies installed'"
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn install --frozen-lockfile"
+        ]
+      },
+      "build": {
+        "commands": [
+          "cd packages/web && yarn build && yarn export"
         ]
       }
     },
     "env": {
-      "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/packages/core",
-      "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin",
       "NODE_ENV": "production",
-      "NEXT_TELEMETRY_DISABLED": "1"
+      "NEXT_OUTPUT_EXPORT": "true",
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "NEXT_PUBLIC_API_URL": "https://${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}"
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python run_server.py",
-    "healthCheckPath": "/api/health",
-    "healthCheckTimeout": 300,
+    "startCommand": "npx serve -s packages/web/out -p $PORT",
+    "healthCheckPath": "/index.html",
+    "healthCheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "env": {
-      "LOG_LEVEL": "info",
-      "HEALTH_CHECK_PATH": "/api/health"
-    }
+    "restartPolicyMaxRetries": 3
   }
 }
