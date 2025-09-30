@@ -3,13 +3,6 @@
   "hints": {
     "no-inline-styles": "off"
   },
-  "ignoredUrls": [
-    "**/.next/**",
-    "**/out/**",
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/build/**"
-  ],
   "connector": {
     "name": "local",
     "options": {

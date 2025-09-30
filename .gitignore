@@ -286,3 +286,5 @@ scripts/test-docker-build.sh
 # Temporary deployment validation files
 # Smoke test results
 smoke_test_results.json
+.vscode/settings.json
+.vscode/settings.json

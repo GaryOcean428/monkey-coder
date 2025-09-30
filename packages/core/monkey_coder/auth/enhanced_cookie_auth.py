@@ -13,7 +13,7 @@ This module provides a comprehensive authentication solution that:
 
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from typing import Optional, Dict, Any, Literal
 from dataclasses import dataclass
 from enum import Enum
@@ -118,11 +118,13 @@ class EnhancedAuthManager:
         session_id = self.generate_session_id()
         csrf_token = self.generate_csrf_token() if self.config.enable_csrf_protection else None
 
+        from ..utils.time import utc_now
+        now = utc_now()
         session_data = {
             "user_id": user_id,
-            "created_at": datetime.now(timezone.utc),
-            "last_activity": datetime.now(timezone.utc),
-            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=self.config.session_timeout_minutes),
+            "created_at": now,
+            "last_activity": now,
+            "expires_at": now + timedelta(minutes=self.config.session_timeout_minutes),
             "user_agent": user_agent,
             "ip_address": ip_address,
             "csrf_token": csrf_token,
@@ -142,7 +144,8 @@ class EnhancedAuthManager:
         session = self._sessions[session_id]
 
         # Check if session is expired
-        if datetime.now(timezone.utc) > session["expires_at"]:
+    from ..utils.time import utc_now
+    if utc_now() > session["expires_at"]:
             del self._sessions[session_id]
             logger.info(f"Session {session_id} expired")
             return False
@@ -152,7 +155,8 @@ class EnhancedAuthManager:
             return False
 
         # Update last activity
-        session["last_activity"] = datetime.now(timezone.utc)
+    from ..utils.time import utc_now
+    session["last_activity"] = utc_now()
 
         # Optional: Validate user agent and IP for session binding
         if self.config.enable_session_binding:
@@ -185,7 +189,8 @@ class EnhancedAuthManager:
     ) -> Response:
         """Set authentication cookies in the HTTP response."""
         # Calculate expiration
-        expires_at = datetime.now(timezone.utc) + timedelta(days=self.config.max_age_days)
+    from ..utils.time import utc_now
+    expires_at = utc_now() + timedelta(days=self.config.max_age_days)
         max_age_seconds = self.config.max_age_days * 24 * 60 * 60
 
         # In test / non-production environments allow insecure cookies so TestClient/HTTP works

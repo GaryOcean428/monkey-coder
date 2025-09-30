@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import timedelta
 import secrets
 import uuid
 
@@ -56,15 +56,17 @@ active_sessions: Dict[str, Dict[str, Any]] = {}  # session_id: {user_id, expires
 
 # --- JWT UTILS ---
 
+from ..utils.time import utc_now
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = utc_now() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 def create_refresh_token(user_id: str):
-    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = utc_now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode = {"user_id": user_id, "exp": expire, "type": "refresh"}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -145,7 +147,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     refresh_token = create_refresh_token(user.id)
     active_sessions[session_id] = {
         "user_id": user.id,
-        "expires": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        "expires": utc_now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         "refresh_token": refresh_token
     }
     return Token(

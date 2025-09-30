@@ -124,5 +124,6 @@
     "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.scopeSelection": true,
     "editor.aiStats.enabled": true,
-    "github.copilot.chat.byok.responsesApi": true
+    "github.copilot.chat.byok.responsesApi": true,
+    "python.languageServer": "None"
 }
