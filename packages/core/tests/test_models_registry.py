@@ -21,10 +21,10 @@ def test_openai_models_presence():
 
 
 def test_anthropic_models_presence():
-    """Anthropic registry should include Claude Opus 4.1 and 3.5 Sonnet."""
+    """Anthropic registry should include Claude 4.5 Sonnet and Opus 4.1."""
     models = get_available_models(ProviderType.ANTHROPIC)[ProviderType.ANTHROPIC.value]
+    assert "claude-sonnet-4-5-20250929" in models
     assert "claude-opus-4-1-20250805" in models
-    assert "claude-3-5-sonnet-20240620" in models
 
 
 def test_google_models_presence():

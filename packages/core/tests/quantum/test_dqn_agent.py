@@ -118,7 +118,7 @@ class TestRoutingAction(unittest.TestCase):
         # Test Anthropic balanced action
         action = RoutingAction.from_action_index(4)
         self.assertEqual(action.provider, ProviderType.ANTHROPIC)
-        self.assertEqual(action.model, "claude-3-5-sonnet-latest")
+        self.assertEqual(action.model, "claude-sonnet-4-5-20250929")
         self.assertEqual(action.strategy, "balanced")
     
     def test_from_action_index_invalid_index(self):
@@ -224,7 +224,7 @@ class TestDQNRoutingAgent(unittest.TestCase):
     
     def test_calculate_reward_successful_routing(self):
         """Test reward calculation for successful routing."""
-        action = RoutingAction(ProviderType.ANTHROPIC, "claude-3-5-sonnet-latest", "balanced")
+        action = RoutingAction(ProviderType.ANTHROPIC, "claude-sonnet-4-5-20250929", "balanced")
         routing_result = {"success": True}
         execution_metrics = {
             "response_time": 2.0,
@@ -296,7 +296,7 @@ class TestDQNRoutingAgent(unittest.TestCase):
     
     def test_update_routing_performance(self):
         """Test updating routing performance tracking."""
-        action = RoutingAction(ProviderType.ANTHROPIC, "claude-3-5-sonnet-latest", "balanced")
+        action = RoutingAction(ProviderType.ANTHROPIC, "claude-sonnet-4-5-20250929", "balanced")
         provider_key = f"{action.provider}:{action.model}"
         
         # First update
