@@ -2,8 +2,8 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-frontend",
-    "description": "Next.js frontend with static export"
+    "name": "monkey-coder",
+    "description": "Next.js frontend with static export (custom domain: coder.fastmonkey.au)"
   },
   "build": {
     "provider": "node",

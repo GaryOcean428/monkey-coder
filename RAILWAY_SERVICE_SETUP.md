@@ -10,10 +10,10 @@ Following the Gary8D-monorepo pattern, Monkey Coder is split into 3 services to 
 
 ## Service Configuration
 
-### 1. Frontend Service (monkey-coder-frontend)
+### 1. Frontend Service (monkey-coder)
 
 **Railway Dashboard Settings:**
-- Service Name: `monkey-coder-frontend` (or keep as `monkey-coder`)
+- Service Name: `monkey-coder` (EXISTING - has custom domain)
 - Root Directory: `services/frontend`
 - Config Path: `railpack.json`
 
@@ -34,7 +34,7 @@ NEXT_PUBLIC_API_URL=https://${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}
 ### 2. Backend Service (monkey-coder-backend)
 
 **Railway Dashboard Settings:**
-- Service Name: `monkey-coder-backend`
+- Service Name: `monkey-coder-backend` (EXISTING)
 - Root Directory: `services/backend`
 - Config Path: `railpack.json`
 
@@ -94,33 +94,47 @@ CUDA_VISIBLE_DEVICES=0
 
 ## Migration Steps
 
-### Step 1: Update Existing Service (Frontend)
+### Step 1: Update Frontend Service (monkey-coder)
+
+**IMPORTANT:** This service has the custom domain `coder.fastmonkey.au` - don't change the service name!
 
 1. Go to Railway Dashboard → `monkey-coder` service
 2. Settings → Service → Root Directory: `services/frontend`
 3. Settings → Config as Code → Path: `railpack.json`
-4. Settings → Environment Variables → Add `NEXT_PUBLIC_API_URL`
-5. Trigger redeploy
+4. Settings → Environment Variables → Add:
+   ```
+   NEXT_PUBLIC_API_URL=https://${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}
+   ```
+5. Trigger redeploy (should take ~2-3 minutes)
 
-### Step 2: Create Backend Service
+### Step 2: Update Backend Service (monkey-coder-backend)
 
-1. Railway Dashboard → Add New Service
-2. Name: `monkey-coder-backend`
-3. Source: Same GitHub repo
-4. Root Directory: `services/backend`
-5. Config Path: `railpack.json`
-6. Add all environment variables listed above
-7. Deploy
+**EXISTING SERVICE** - just needs root directory update:
 
-### Step 3: Create ML Service
+1. Go to Railway Dashboard → `monkey-coder-backend` service
+2. Settings → Service → Root Directory: `services/backend`
+3. Settings → Config as Code → Path: `railpack.json`
+4. Settings → Environment Variables → Add:
+   ```
+   ML_SERVICE_URL=http://${{monkey-coder-ml.RAILWAY_PRIVATE_DOMAIN}}
+   ```
+5. Verify all other env vars are still set (DATABASE_URL, REDIS_URL, API keys)
+6. Trigger redeploy (should take ~2 minutes)
+
+### Step 3: Create ML Service (NEW)
 
 1. Railway Dashboard → Add New Service
 2. Name: `monkey-coder-ml`
-3. Source: Same GitHub repo
+3. Source: Same GitHub repo as other services
 4. Root Directory: `services/ml`
 5. Config Path: `railpack.json`
-6. Add ML-specific environment variables
-7. Deploy (will take ~25 minutes first time)
+6. Add environment variables:
+   ```
+   PYTHON_ENV=production
+   TRANSFORMERS_CACHE=/app/.cache/huggingface
+   CUDA_VISIBLE_DEVICES=0
+   ```
+7. Deploy (will take ~25 minutes first time due to torch/CUDA downloads)
 
 ---
 
