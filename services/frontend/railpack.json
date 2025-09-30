@@ -13,10 +13,10 @@
     "steps": {
       "install": {
         "commands": [
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --frozen-lockfile",
-          "cd ../../packages/web && yarn install --frozen-lockfile",
+          "echo '📦 Installing dependencies from repo root...'",
+          "cd ../.. && corepack enable",
+          "cd ../.. && corepack prepare yarn@4.9.2 --activate",
+          "cd ../.. && yarn install --frozen-lockfile",
           "echo '✅ Frontend dependencies installed'"
         ]
       },
@@ -24,7 +24,7 @@
         "commands": [
           "echo '🔨 Building Next.js frontend...'",
           "cd ../../packages/web && yarn build",
-          "cd ../../packages/web && NEXT_OUTPUT_EXPORT=true yarn export",
+          "cd ../../packages/web && yarn export",
           "test -d ../../packages/web/out && echo '✅ Static export complete' || echo '⚠️ Export failed'"
         ]
       }
