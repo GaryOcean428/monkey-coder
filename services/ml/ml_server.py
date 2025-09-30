@@ -1,6 +1,14 @@
 """
 ML Inference Service
-Handles heavy ML workloads (torch, transformers) separately from main API
+Handles ML inference workloads separately from main API.
+
+This service is for LOCAL model inference only. For production AI requests,
+use the providers in MODEL_MANIFEST.md:
+- OpenAI (gpt-5, gpt-4.1, o3)
+- Anthropic (claude-opus-4-1, claude-sonnet-4)
+- Google (gemini-2.5-pro, gemini-2.5-flash)
+- Groq (llama-3.3-70b, qwen3-32b)
+- xAI (grok-4-latest, grok-code-fast-1)
 """
 import os
 from fastapi import FastAPI, HTTPException
@@ -20,7 +28,7 @@ app = FastAPI(
 
 class CodeGenerationRequest(BaseModel):
     prompt: str
-    model: str = "qwen-coder"
+    model: str = "local-inference"  # Local model inference, not production APIs
     max_tokens: int = 2048
     temperature: float = 0.7
 

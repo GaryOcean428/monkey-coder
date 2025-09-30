@@ -92,10 +92,11 @@ Size: 10GB minimum (stores downloaded ML models)
 ```
 
 **Why Volume is Needed:**
-- Hugging Face models (BERT, CodeBERT, etc.) are 1-5GB each
+- ML models and tokenizers can be 1-5GB each
 - Without volume, models re-download on every deployment
 - Volume persists models across deployments
 - Reduces startup time from minutes to seconds
+- Caches torch checkpoints and model weights
 
 **requirements.txt:**
 - Located at `services/ml/requirements.txt`

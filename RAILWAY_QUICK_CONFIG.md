@@ -69,7 +69,7 @@ Settings → Variables:
 
 Settings → Storage → Add Volume:
   ├─ Mount Path: /app/.cache
-  └─ Size: 10GB (recommended for model storage)
+  └─ Size: 10GB (for model weights and torch cache)
 
 Then: Deploy
 ```
