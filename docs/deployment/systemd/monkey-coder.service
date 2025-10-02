@@ -1,0 +1,73 @@
+# Systemd service unit file for Monkey Coder
+# Install to: /etc/systemd/system/monkey-coder.service
+#
+# Usage:
+#   sudo cp monkey-coder.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable monkey-coder
+#   sudo systemctl start monkey-coder
+#   sudo systemctl status monkey-coder
+
+[Unit]
+Description=Monkey Coder AI Development Platform
+Documentation=https://github.com/GaryOcean428/monkey-coder
+After=network.target
+
+[Service]
+Type=simple
+User=monkey-coder
+Group=monkey-coder
+WorkingDirectory=/opt/monkey-coder
+
+# Startup command - adjust path as needed
+ExecStart=/usr/bin/python3 /opt/monkey-coder/run_server.py
+
+# Resource Limits - CRITICAL for preventing production crashes
+# Allow plenty of file descriptors for HTTP clients (Undici), WASM, and headless browsers
+LimitNOFILE=65535
+
+# Allow adequate memory for the application
+# Set to infinity or a high value like 4G depending on your needs
+MemoryMax=infinity
+# Alternative: MemoryMax=4G
+
+# Limit CPU time per request (prevents runaway processes)
+# CPUQuota=200%  # 2 full cores
+
+# Node.js thread pool size for better I/O performance
+# Recommended: 64 for fs/crypto/dns operations
+Environment="UV_THREADPOOL_SIZE=64"
+
+# Node.js memory settings (if running Node.js components)
+Environment="NODE_OPTIONS=--max-old-space-size=4096"
+
+# Application environment variables
+Environment="RAILWAY_ENVIRONMENT=production"
+Environment="LOG_LEVEL=info"
+Environment="PORT=8000"
+
+# Add your API keys and other environment variables here
+# Environment="OPENAI_API_KEY=your_key_here"
+# Environment="ANTHROPIC_API_KEY=your_key_here"
+# Or use EnvironmentFile=/etc/monkey-coder/env
+
+# Restart configuration for reliability
+Restart=on-failure
+RestartSec=3
+StartLimitInterval=60
+StartLimitBurst=5
+
+# Security hardening (optional but recommended)
+# NoNewPrivileges=true
+# PrivateTmp=true
+# ProtectSystem=strict
+# ProtectHome=true
+# ReadWritePaths=/opt/monkey-coder/data /opt/monkey-coder/logs
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=monkey-coder
+
+[Install]
+WantedBy=multi-user.target

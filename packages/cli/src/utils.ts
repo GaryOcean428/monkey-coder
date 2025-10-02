@@ -6,6 +6,7 @@
 import fs from 'fs-extra';
 import * as path from 'path';
 import chalk from 'chalk';
+import { execSync } from 'child_process';
 import { ExecuteResponse } from './types.js';
 
 /**
@@ -267,4 +268,164 @@ export function parseFileArguments(args: string[]): string[] {
     // Filter out options (starting with -)
     return !arg.startsWith('-');
   });
+}
+
+/**
+ * System Resource Limits Utilities
+ * 
+ * Probes and logs system resource limits at runtime to detect potential issues
+ * before they cause crashes in production.
+ * 
+ * Common issues prevented:
+ * - Undici socket errors under load
+ * - Headless browser/WASM OOM despite low app usage
+ * - Blank pages / builds passing but runtime silently failing
+ */
+
+export interface SystemLimits {
+  openFiles: string | number;
+  virtualMemory: string | number;
+  maxProcesses?: string | number;
+  threadPoolSize?: number;
+  available: boolean;
+}
+
+export interface LimitCheckResult {
+  limits: SystemLimits;
+  warnings: string[];
+  ok: boolean;
+}
+
+/**
+ * Probe system resource limits using ulimit
+ */
+export function probeSystemLimits(): SystemLimits {
+  try {
+    const nofile = execSync('ulimit -n', { shell: '/bin/bash', encoding: 'utf-8' }).trim();
+    const vmem = execSync('ulimit -v', { shell: '/bin/bash', encoding: 'utf-8' }).trim();
+    
+    // Try to get max processes
+    let maxProc: string | number = 'unavailable';
+    try {
+      maxProc = execSync('ulimit -u', { shell: '/bin/bash', encoding: 'utf-8' }).trim();
+    } catch {
+      // Not available on all systems
+    }
+    
+    // Get UV_THREADPOOL_SIZE if set
+    const threadPoolSize = process.env.UV_THREADPOOL_SIZE 
+      ? parseInt(process.env.UV_THREADPOOL_SIZE, 10)
+      : undefined;
+    
+    return {
+      openFiles: nofile,
+      virtualMemory: vmem,
+      maxProcesses: maxProc,
+      threadPoolSize,
+      available: true,
+    };
+  } catch (error) {
+    return {
+      openFiles: 'unavailable',
+      virtualMemory: 'unavailable',
+      available: false,
+    };
+  }
+}
+
+/**
+ * Check if system limits meet recommended thresholds
+ */
+export function checkSystemLimits(): LimitCheckResult {
+  const limits = probeSystemLimits();
+  const warnings: string[] = [];
+  
+  if (!limits.available) {
+    return {
+      limits,
+      warnings: ['Unable to probe system limits (ulimit not available in this environment)'],
+      ok: true, // Don't fail if we can't check
+    };
+  }
+  
+  // Check open files
+  const nofile = typeof limits.openFiles === 'string' 
+    ? parseInt(limits.openFiles, 10)
+    : limits.openFiles;
+    
+  if (!isNaN(nofile) && nofile < 65535) {
+    warnings.push(
+      `Open files limit is low (${nofile}). Recommended: ≥65535. ` +
+      `This may cause issues with HTTP clients (Undici), WASM, and headless browsers.`
+    );
+  }
+  
+  // Check virtual memory
+  const vmem = limits.virtualMemory;
+  if (vmem !== 'unlimited' && vmem !== 'unavailable') {
+    const vmemNum = typeof vmem === 'string' ? parseInt(vmem, 10) : vmem;
+    if (!isNaN(vmemNum) && vmemNum > 0) {
+      warnings.push(
+        `Virtual memory limit is restricted (${vmem}). Recommended: unlimited. ` +
+        `This may cause runtime OOM errors.`
+      );
+    }
+  }
+  
+  // Check UV_THREADPOOL_SIZE for Node.js I/O performance
+  if (!limits.threadPoolSize || limits.threadPoolSize < 64) {
+    warnings.push(
+      `UV_THREADPOOL_SIZE not set or too low (${limits.threadPoolSize || 'default 4'}). ` +
+      `Recommended: 64 for better fs/crypto/dns performance.`
+    );
+  }
+  
+  return {
+    limits,
+    warnings,
+    ok: warnings.length === 0,
+  };
+}
+
+/**
+ * Log system limits information to console
+ */
+export function logSystemLimits(prefix = '[preflight]'): void {
+  const result = checkSystemLimits();
+  
+  if (!result.limits.available) {
+    console.log(`${prefix} ulimit probe not available in this environment`);
+    return;
+  }
+  
+  console.log(`${prefix} System Resource Limits:`);
+  console.log(`${prefix}   open files      = ${result.limits.openFiles}`);
+  console.log(`${prefix}   virtual memory  = ${result.limits.virtualMemory}`);
+  if (result.limits.maxProcesses !== undefined) {
+    console.log(`${prefix}   max processes   = ${result.limits.maxProcesses}`);
+  }
+  if (result.limits.threadPoolSize !== undefined) {
+    console.log(`${prefix}   threadpool size = ${result.limits.threadPoolSize}`);
+  }
+  
+  if (result.warnings.length > 0) {
+    console.warn(`${prefix} ⚠️  Resource limit warnings:`);
+    result.warnings.forEach(warning => {
+      console.warn(`${prefix}   - ${warning}`);
+    });
+  } else {
+    console.log(`${prefix} ✅ All resource limits are properly configured`);
+  }
+}
+
+/**
+ * Get formatted system limits for structured logging
+ */
+export function getSystemLimitsInfo(): Record<string, unknown> {
+  const result = checkSystemLimits();
+  return {
+    limits: result.limits,
+    warnings: result.warnings,
+    ok: result.ok,
+  };
 }

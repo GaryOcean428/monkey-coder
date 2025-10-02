@@ -1,0 +1,97 @@
+# Docker Compose configuration with proper resource limits
+# Prevents production crashes from insufficient file descriptors and memory limits
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.resource-limits.yml up
+#
+# Or merge this into your main docker-compose.yml
+
+version: '3.8'
+
+services:
+  app:
+    image: monkey-coder:latest
+    
+    # Resource limits - CRITICAL for preventing production crashes
+    ulimits:
+      # Open file descriptors
+      # Prevents: Undici socket errors, headless browser failures, WASM crashes
+      nofile:
+        soft: 65535
+        hard: 65535
+      
+      # Memory lock - useful for some workloads
+      memlock:
+        soft: -1
+        hard: -1
+    
+    # Memory and CPU limits
+    deploy:
+      resources:
+        limits:
+          # Set to appropriate value for your workload
+          # Use 0 for unlimited in Docker Swarm
+          # In Kubernetes, set requests and limits appropriately
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    
+    # Environment variables for Node.js performance
+    environment:
+      # Node.js thread pool size - recommended for I/O heavy workloads
+      - UV_THREADPOOL_SIZE=64
+      
+      # Node.js memory settings
+      - NODE_OPTIONS=--max-old-space-size=4096
+      
+      # Application settings
+      - LOG_LEVEL=info
+      - RAILWAY_ENVIRONMENT=production
+    
+    # Network settings
+    ports:
+      - "8000:8000"
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Restart policy for reliability
+    restart: unless-stopped
+
+# Example with multiple services
+  backend:
+    image: monkey-coder-backend:latest
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+    environment:
+      - UV_THREADPOOL_SIZE=64
+    restart: unless-stopped
+
+  frontend:
+    image: monkey-coder-frontend:latest
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+    environment:
+      - UV_THREADPOOL_SIZE=64
+    restart: unless-stopped
