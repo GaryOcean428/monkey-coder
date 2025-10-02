@@ -1,0 +1,55 @@
+name: Preflight System Limits
+on: [push, pull_request]
+
+jobs:
+  system-limits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check ulimit and system resource limits
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "System Resource Limits Preflight Check"
+          echo "=========================================="
+          echo ""
+          echo "ULIMITS:"
+          ulimit -a
+          echo ""
+          
+          # Verify open files limit
+          NOFILE=$(ulimit -n)
+          NOFILE_OK=$( [ "$NOFILE" -ge 65535 ] && echo OK || echo FAIL )
+          
+          # Verify virtual memory limit
+          VMEM_VAL=$(ulimit -v) # 'unlimited' or a number
+          VMEM_OK=$( [ "$VMEM_VAL" = "unlimited" ] || [ "$VMEM_VAL" -eq 0 ] 2>/dev/null && echo OK || echo FAIL )
+          
+          echo "=========================================="
+          echo "Resource Limit Validation Results:"
+          echo "=========================================="
+          echo "open files:      $NOFILE ($NOFILE_OK) - minimum: 65535"
+          echo "virtual memory:  $VMEM_VAL ($VMEM_OK) - expected: unlimited"
+          echo ""
+          
+          # Check if we need to fail
+          if [ "$NOFILE_OK" != "OK" ]; then
+            echo "::error::❌ Open files limit is too low ($NOFILE). Expected at least 65535."
+            echo "::error::This may cause issues with Node.js HTTP clients (Undici), WASM modules, and headless browsers."
+            echo "::error::To fix on Linux: ulimit -n 65535 or set LimitNOFILE=65535 in systemd service"
+          fi
+          
+          if [ "$VMEM_OK" != "OK" ]; then
+            echo "::error::❌ Virtual memory limit is restricted ($VMEM_VAL). Expected unlimited."
+            echo "::error::This may cause runtime crashes with memory-intensive operations."
+            echo "::error::To fix on Linux: ulimit -v unlimited or set MemoryMax=infinity in systemd service"
+          fi
+          
+          # Summary
+          if [ "$NOFILE_OK" = "OK" ] && [ "$VMEM_OK" = "OK" ]; then
+            echo "::notice::✅ All system resource limits are properly configured!"
+            exit 0
+          else
+            echo "::error::❌ System resource limits need adjustment. See errors above."
+            echo "::notice::💡 Tip: For Node.js projects, also set UV_THREADPOOL_SIZE=64 for better I/O performance"
+            exit 1
+          fi

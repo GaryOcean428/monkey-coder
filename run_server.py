@@ -85,6 +85,17 @@ class SystemInfo:
                 "pythonpath_entries": len(os.environ.get("PYTHONPATH", "").split(os.pathsep)),
             },
         }
+    
+    @staticmethod
+    def log_resource_limits():
+        """Log system resource limits at startup."""
+        try:
+            # Import system_limits utility
+            from monkey_coder.utils.system_limits import log_startup_limits
+            log_startup_limits()
+        except ImportError:
+            # Gracefully handle if the module isn't available yet
+            logging.debug("System limits module not available, skipping resource limit check")
 
     @staticmethod
     def log_startup_banner(config: ServerConfig):
@@ -121,6 +132,9 @@ class SystemInfo:
         print(f"  • Node Env:     {env['node_env']}")
 
         print("=" * 60 + "\n")
+        
+        # Log system resource limits
+        SystemInfo.log_resource_limits()
 
 
 class MCPEnvironmentManager:

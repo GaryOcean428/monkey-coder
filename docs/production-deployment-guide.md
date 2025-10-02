@@ -24,6 +24,22 @@ This guide provides step-by-step instructions for deploying Monkey Coder to prod
 
 ## Pre-Deployment Checklist
 
+### System Resource Limits
+
+⚠️ **CRITICAL**: Ensure system resource limits are properly configured to prevent production crashes.
+
+See [System Resource Limits Configuration](./deployment/SYSTEM_RESOURCE_LIMITS.md) for detailed guidance.
+
+**Quick Check:**
+```bash
+# Verify limits meet requirements
+ulimit -n  # Should be ≥65535
+ulimit -v  # Should be unlimited
+echo $UV_THREADPOOL_SIZE  # Should be 64
+```
+
+The application automatically logs resource limits at startup and warns if they're insufficient.
+
 ### Required Environment Variables
 
 Copy and configure these environment variables in Railway:
