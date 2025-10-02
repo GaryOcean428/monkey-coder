@@ -3,10 +3,12 @@
  * File operations, formatting, and helper functions
  */
 
-import fs from 'fs-extra';
-import * as path from 'path';
-import chalk from 'chalk';
 import { execSync } from 'child_process';
+import * as path from 'path';
+
+import chalk from 'chalk';
+import fs from 'fs-extra';
+
 import { ExecuteResponse } from './types.js';
 
 /**
@@ -324,7 +326,7 @@ export function probeSystemLimits(): SystemLimits {
       threadPoolSize,
       available: true,
     };
-  } catch (error) {
+  } catch {
     return {
       openFiles: 'unavailable',
       virtualMemory: 'unavailable',
