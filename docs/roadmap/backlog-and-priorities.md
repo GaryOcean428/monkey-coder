@@ -4,6 +4,17 @@
 
 ## Critical Issues (Priority 0 - Must Complete)
 
+- [x] **Test Failures Fixed** - Resolved all failing tests in CI/CD pipeline `S` ✅ **[2025-09-29]**
+  - ✅ **CLI Utils Fix**: Fixed syntax error in `packages/cli/src/utils.ts` (checkSystemLimits function)
+  - ✅ **All Tests Passing**: 234 total tests passing (73 CLI + 161 Web)
+  - ✅ **Build Success**: All packages compile successfully
+  - ✅ **TypeScript Compilation**: No compilation errors
+
+- [x] **Docusaurus Build Fixed** - Resolved documentation build failures `S` ✅ **[2025-09-29]**
+  - ✅ **Version Fix**: Pinned @docusaurus/theme-live-codeblock to exact version 3.8.1
+  - ✅ **Build Success**: Documentation builds successfully
+  - ✅ **Deployment Ready**: Documentation ready for GitHub Pages deployment
+
 - [x] **Web Package Testing** - Comprehensive test coverage for React components `S` ✅
   - ✅ **Component Tests**: Added tests for Button, Input, Card components (66 tests)
   - ✅ **Removed passWithNoTests**: Web package now has proper test coverage
@@ -90,7 +101,12 @@
 
 - [ ] **Documentation Updates** - Fix package.JSON metadata, update README links, add CONTRIBUTING.md `S`
   - [ ] Update all package.JSON files with correct metadata
-  - [ ] Fix broken links and references
+  - [ ] **Fix broken documentation links** - The following pages are referenced but don't exist:
+    - `/docs/multi-agent` - Multi-Agent Orchestration documentation
+    - `/docs/mcp-integration` - Model Context Protocol integration guide
+    - `/docs/deployment/railway` - Railway deployment guide
+    - `/docs/troubleshooting` - Troubleshooting guide
+    - `/docs/faq` - Frequently Asked Questions
   - [ ] Create comprehensive CONTRIBUTING.md
   - [ ] Add API documentation generation
 
