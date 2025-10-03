@@ -13,6 +13,10 @@ services/**/.venv/
 services/**/dist/
 services/**/out/
 
+# Railway debug reports (generated files)
+railway-debug-report.json
+railway-auto-fix.sh
+
 # C extensions
 *.so
 
