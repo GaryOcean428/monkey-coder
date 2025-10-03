@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "System Resource Limits Configuration",
+  "description": "Shared configuration for system resource limit validation across Python and TypeScript implementations",
+  "version": "1.0.0",
+  "limits": {
+    "open_files": {
+      "min": 65535,
+      "recommended": "unlimited",
+      "warning_template": "Open files limit is low ({value}). Recommended: ≥{min}. This may cause issues with HTTP clients (Undici), WASM, and headless browsers."
+    },
+    "virtual_memory": {
+      "expected": "unlimited",
+      "warning_template": "Virtual memory limit is restricted ({value}). Recommended: {expected}. This may cause runtime OOM errors."
+    },
+    "threadpool_size": {
+      "min": 64,
+      "default": 4,
+      "env_var": "UV_THREADPOOL_SIZE",
+      "warning_template": "UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min} for better fs/crypto/dns performance in Node.js components."
+    },
+    "max_processes": {
+      "min": 4096,
+      "warning_template": "Max processes limit is low ({value}). Recommended: ≥{min}."
+    }
+  },
+  "metadata": {
+    "last_updated": "2025-01-14",
+    "platforms": ["linux", "macos", "docker", "kubernetes", "railway"],
+    "documentation": "docs/deployment/SYSTEM_RESOURCE_LIMITS.md"
+  }
+}
