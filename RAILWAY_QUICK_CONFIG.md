@@ -1,14 +1,36 @@
 # Railway Service Configuration - Quick Reference
 
-## ⚡ TL;DR
+## ⚠️ DEPRECATED - See RAILWAY_FIX_INSTRUCTIONS.md
 
-Update 2 existing services, create 1 new service:
+**This document contains INCORRECT configuration that caused 100% deployment failure.**
 
-| Service | Status | Root Dir | Config | Build Time |
+**The instructions below set `rootDirectory` to subdirectories which breaks Yarn workspaces!**
+
+**Use instead**: `RAILWAY_FIX_INSTRUCTIONS.md` or `RAILWAY_DEPLOYMENT.md`
+
+---
+
+## ⚡ TL;DR (CORRECTED)
+
+Update all 3 services to use root directory:
+
+| Service | Root Dir | Config | Build Time |
+|---------|----------|--------|------------|
+| `monkey-coder` | `/` | `railpack.json` | ~2 min |
+| `monkey-coder-backend` | `/` | `railpack-backend.json` | ~2 min |
+| `monkey-coder-ml` | `/` | `railpack-ml.json` | ~25 min |
+
+---
+
+## ⚡ Old TL;DR (INCORRECT - DO NOT USE)
+
+~~Update 2 existing services, create 1 new service:~~
+
+| Service | Status | Root Dir (WRONG) | Config | Build Time |
 |---------|--------|----------|--------|------------|
-| `monkey-coder` | UPDATE | `services/frontend` | `railpack.json` | ~2 min |
-| `monkey-coder-backend` | UPDATE | `services/backend` | `railpack.json` | ~2 min |
-| `monkey-coder-ml` | CREATE | `services/ml` | `railpack.json` | ~25 min |
+| `monkey-coder` | UPDATE | ~~`services/frontend`~~ | `railpack.json` | ~2 min |
+| `monkey-coder-backend` | UPDATE | ~~`services/backend`~~ | `railpack.json` | ~2 min |
+| `monkey-coder-ml` | CREATE | ~~`services/ml`~~ | `railpack.json` | ~25 min |
 
 ---
 

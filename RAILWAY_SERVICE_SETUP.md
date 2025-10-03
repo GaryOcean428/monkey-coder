@@ -1,6 +1,20 @@
 # Railway 3-Service Architecture Setup
 
-## Overview
+## ⚠️ DEPRECATED - See RAILWAY_FIX_INSTRUCTIONS.md
+
+**This document contains INCORRECT configuration instructions that caused deployment failures.**
+
+**Use instead**:
+- `RAILWAY_FIX_INSTRUCTIONS.md` - Quick fix guide
+- `RAILWAY_DEPLOYMENT.md` - Comprehensive deployment guide
+
+## Root Cause of Previous Failures
+
+The instructions below configure services with `rootDirectory: services/frontend` which breaks Yarn workspace commands. This repository uses a **Shared Monorepo** pattern where all services MUST operate from repository root (`/`).
+
+---
+
+## Overview (Historical - DO NOT FOLLOW)
 
 Following the Gary8D-monorepo pattern, Monkey Coder is split into 3 services to optimize memory usage and build times:
 
@@ -12,9 +26,14 @@ Following the Gary8D-monorepo pattern, Monkey Coder is split into 3 services to 
 
 ### 1. Frontend Service (monkey-coder)
 
-**Railway Dashboard Settings:**
+**❌ INCORRECT Configuration (caused deployment failures):**
 - Service Name: `monkey-coder` (EXISTING - has custom domain)
-- Root Directory: `services/frontend`
+- Root Directory: `services/frontend` ← **THIS IS WRONG**
+- Config Path: `railpack.json`
+
+**✅ CORRECT Configuration:**
+- Service Name: `monkey-coder`
+- Root Directory: `/` or blank
 - Config Path: `railpack.json`
 
 **What it does:**
