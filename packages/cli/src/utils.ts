@@ -403,8 +403,8 @@ export function checkSystemLimits(): LimitCheckResult {
       limits,
       warnings: ['Unable to probe system limits (ulimit not available in this environment)'],
       ok: true, // Don't fail if we can't check
-    };
-  }
+    if (result.limits.maxProcesses !== undefined && result.limits.maxProcesses !== 'unavailable') {
+      console.log(`${prefix}   max processes   = ${result.limits.maxProcesses}`);
   
   const configLimits = CONFIG.limits || {};
   
