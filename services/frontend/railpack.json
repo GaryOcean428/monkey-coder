@@ -2,8 +2,8 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder",
-    "description": "Next.js frontend with static export (custom domain: coder.fastmonkey.au)"
+    "name": "monkey-coder-frontend",
+    "description": "DEPRECATED: Railway should use root railpack.json with rootDirectory='/'"
   },
   "build": {
     "provider": "node",
@@ -13,18 +13,17 @@
     "steps": {
       "install": {
         "commands": [
-          "echo '📦 Installing dependencies from repo root...'",
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable",
-          "echo '✅ Frontend dependencies installed'"
+          "echo '⚠️  WARNING: This railpack.json should not be used!'",
+          "echo '⚠️  Configure Railway service with rootDirectory=/ or blank'",
+          "echo '⚠️  Railway will use /railpack.json from repo root'",
+          "cd ../.. && corepack enable",
+          "cd ../.. && corepack prepare yarn@4.9.2 --activate",
+          "cd ../.. && yarn install --immutable"
         ]
       },
       "build": {
         "commands": [
-          "echo '🔨 Building Next.js frontend...'",
-          "yarn workspace @monkey-coder/web build",
-          "echo '✅ Next.js build complete'"
+          "cd ../.. && yarn workspace @monkey-coder/web build"
         ]
       }
     },
@@ -36,7 +35,7 @@
     }
   },
   "deploy": {
-    "startCommand": "yarn workspace @monkey-coder/web start --hostname 0.0.0.0 --port $PORT",
+    "startCommand": "cd ../.. && yarn workspace @monkey-coder/web start --hostname 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

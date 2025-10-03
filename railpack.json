@@ -2,41 +2,47 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-frontend",
-    "description": "Next.js frontend - deploys from repo root"
+    "name": "monkey-coder",
+    "description": "Monkey Coder Shared Monorepo - Multi-service deployment from repo root"
   },
   "build": {
     "provider": "node",
     "packages": {
-      "node": "20"
+      "node": "20",
+      "python": "3.12"
     },
     "cache": {
       "paths": [
         "node_modules",
         ".yarn/cache",
         "packages/web/.next",
-        "packages/web/out"
+        "packages/web/out",
+        ".venv",
+        "__pycache__"
       ]
     },
     "steps": {
       "install": {
         "commands": [
+          "echo '📦 Installing dependencies for Monkey Coder...'",
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable"
+          "yarn install --immutable",
+          "echo '✅ Dependencies installed'"
         ]
       },
       "build": {
         "commands": [
-          "yarn workspace @monkey-coder/web build"
+          "echo '🔨 Building frontend (Next.js static export)...'",
+          "yarn workspace @monkey-coder/web build",
+          "echo '✅ Frontend build complete'"
         ]
       }
     },
     "env": {
       "NODE_ENV": "production",
       "NEXT_OUTPUT_EXPORT": "true",
-      "NEXT_TELEMETRY_DISABLED": "1",
-      "NEXT_PUBLIC_API_URL": "https://${{monkey-coder-backend.RAILWAY_PUBLIC_DOMAIN}}"
+      "NEXT_TELEMETRY_DISABLED": "1"
     }
   },
   "deploy": {

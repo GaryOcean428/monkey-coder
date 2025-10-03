@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-backend",
+    "description": "Python FastAPI backend - for monkey-coder-backend service"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12"
+    },
+    "cache": {
+      "paths": [
+        ".venv",
+        "__pycache__",
+        "packages/core/**/__pycache__"
+      ]
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "echo '📦 Installing Python backend dependencies...'",
+          "python -m venv .venv",
+          ".venv/bin/pip install --upgrade pip setuptools wheel",
+          ".venv/bin/pip install -r requirements.txt",
+          "echo '✅ Backend dependencies installed'"
+        ]
+      }
+    },
+    "env": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+    }
+  },
+  "deploy": {
+    "startCommand": ".venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "env": {
+      "LOG_LEVEL": "info",
+      "HEALTH_CHECK_PATH": "/api/health"
+    }
+  }
+}
