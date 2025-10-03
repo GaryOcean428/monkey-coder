@@ -26,12 +26,18 @@ ulimit -u  # Max processes
 
 ### Recommended Minimum Values
 
+All limit thresholds are defined in a shared configuration file: **`config/system-limits.config.json`**
+
+This eliminates code duplication between Python and TypeScript implementations.
+
 | Limit | Recommended Value | Why |
 |-------|------------------|-----|
 | Open files (`-n`) | ≥65535 | HTTP clients (Undici), WASM modules, headless browsers |
 | Virtual memory (`-v`) | unlimited | Prevents OOM in memory-intensive operations |
 | Max processes (`-u`) | ≥4096 | Child process spawning |
 | UV_THREADPOOL_SIZE | 64 | Node.js I/O performance (fs/crypto/dns) |
+
+To customize thresholds, edit the shared configuration file. Both Python and TypeScript implementations will automatically use the updated values.
 
 ## Platform-Specific Configuration
 

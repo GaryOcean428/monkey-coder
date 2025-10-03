@@ -298,6 +298,62 @@ export interface LimitCheckResult {
   ok: boolean;
 }
 
+interface LimitsConfig {
+  limits: {
+    open_files?: {
+      min: number;
+      warning_template: string;
+    };
+    virtual_memory?: {
+      expected: string;
+      warning_template: string;
+    };
+    threadpool_size?: {
+      min: number;
+      default: number;
+      warning_template: string;
+    };
+  };
+}
+
+/**
+ * Load system limits configuration from shared config file
+ */
+function loadLimitsConfig(): LimitsConfig {
+  try {
+    // Try to load from config directory
+    const configPath = path.join(__dirname, '../../..', 'config', 'system-limits.config.json');
+    if (fs.existsSync(configPath)) {
+      const configData = fs.readFileSync(configPath, 'utf-8');
+      return JSON.parse(configData) as LimitsConfig;
+    }
+  } catch (error) {
+    // Fall through to defaults
+  }
+  
+  // Fallback to hardcoded defaults if config not found
+  return {
+    limits: {
+      open_files: {
+        min: 65535,
+        warning_template: 'Open files limit is low ({value}). Recommended: ≥{min}.'
+      },
+      virtual_memory: {
+        expected: 'unlimited',
+        warning_template: 'Virtual memory limit is restricted ({value}). Recommended: {expected}.'
+      },
+      threadpool_size: {
+        min: 64,
+        default: 4,
+        warning_template: 'UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}.'
+      }
+    }
+  };
+}
+
+// Load configuration once at module level
+const CONFIG = loadLimitsConfig();
+
 /**
  * Probe system resource limits using ulimit
  */
@@ -336,7 +392,7 @@ export function probeSystemLimits(): SystemLimits {
 }
 
 /**
- * Check if system limits meet recommended thresholds
+ * Check if system limits meet recommended thresholds using shared configuration
  */
 export function checkSystemLimits(): LimitCheckResult {
   const limits = probeSystemLimits();
@@ -350,36 +406,42 @@ export function checkSystemLimits(): LimitCheckResult {
     };
   }
   
+  const configLimits = CONFIG.limits || {};
+  
   // Check open files
+  const openFilesConfig = configLimits.open_files || { min: 65535, warning_template: 'Open files limit is low ({value}). Recommended: ≥{min}.' };
   const nofile = typeof limits.openFiles === 'string' 
     ? parseInt(limits.openFiles, 10)
     : limits.openFiles;
     
-  if (!isNaN(nofile) && nofile < 65535) {
-    warnings.push(
-      `Open files limit is low (${nofile}). Recommended: ≥65535. ` +
-      `This may cause issues with HTTP clients (Undici), WASM, and headless browsers.`
-    );
+  if (!isNaN(nofile) && nofile < openFilesConfig.min) {
+    const warning = openFilesConfig.warning_template
+      .replace('{value}', String(nofile))
+      .replace('{min}', String(openFilesConfig.min));
+    warnings.push(warning);
   }
   
   // Check virtual memory
+  const vmemConfig = configLimits.virtual_memory || { expected: 'unlimited', warning_template: 'Virtual memory limit is restricted ({value}). Recommended: {expected}.' };
   const vmem = limits.virtualMemory;
-  if (vmem !== 'unlimited' && vmem !== 'unavailable') {
+  if (vmem !== vmemConfig.expected && vmem !== 'unavailable') {
     const vmemNum = typeof vmem === 'string' ? parseInt(vmem, 10) : vmem;
     if (!isNaN(vmemNum) && vmemNum > 0) {
-      warnings.push(
-        `Virtual memory limit is restricted (${vmem}). Recommended: unlimited. ` +
-        `This may cause runtime OOM errors.`
-      );
+      const warning = vmemConfig.warning_template
+        .replace('{value}', String(vmem))
+        .replace('{expected}', vmemConfig.expected);
+      warnings.push(warning);
     }
   }
   
   // Check UV_THREADPOOL_SIZE for Node.js I/O performance
-  if (!limits.threadPoolSize || limits.threadPoolSize < 64) {
-    warnings.push(
-      `UV_THREADPOOL_SIZE not set or too low (${limits.threadPoolSize || 'default 4'}). ` +
-      `Recommended: 64 for better fs/crypto/dns performance.`
-    );
+  const threadpoolConfig = configLimits.threadpool_size || { min: 64, default: 4, warning_template: 'UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}.' };
+  if (!limits.threadPoolSize || limits.threadPoolSize < threadpoolConfig.min) {
+    const valueDisplay = limits.threadPoolSize || `default ${threadpoolConfig.default}`;
+    const warning = threadpoolConfig.warning_template
+      .replace('{value}', String(valueDisplay))
+      .replace('{min}', String(threadpoolConfig.min));
+    warnings.push(warning);
   }
   
   return {

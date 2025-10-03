@@ -13,10 +13,51 @@ Common issues prevented:
 import os
 import subprocess
 import logging
+import json
+from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
+
+
+def _load_limits_config() -> Dict[str, Any]:
+    """Load system limits configuration from shared config file."""
+    try:
+        # Try to find config relative to this file
+        config_paths = [
+            Path(__file__).parents[4] / "config" / "system-limits.config.json",  # From packages/core/monkey_coder/utils
+            Path(__file__).parents[3] / "config" / "system-limits.config.json",  # Fallback
+            Path.cwd() / "config" / "system-limits.config.json",  # From project root
+        ]
+        
+        for config_path in config_paths:
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+        
+        # Fallback to hardcoded defaults if config not found
+        logger.warning("System limits config file not found, using defaults")
+        return {
+            "limits": {
+                "open_files": {"min": 65535, "warning_template": "Open files limit is low ({value}). Recommended: ≥{min}."},
+                "virtual_memory": {"expected": "unlimited", "warning_template": "Virtual memory limit is restricted ({value}). Recommended: {expected}."},
+                "threadpool_size": {"min": 64, "default": 4, "warning_template": "UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}."}
+            }
+        }
+    except Exception as e:
+        logger.warning(f"Failed to load system limits config: {e}, using defaults")
+        return {
+            "limits": {
+                "open_files": {"min": 65535, "warning_template": "Open files limit is low ({value}). Recommended: ≥{min}."},
+                "virtual_memory": {"expected": "unlimited", "warning_template": "Virtual memory limit is restricted ({value}). Recommended: {expected}."},
+                "threadpool_size": {"min": 64, "default": 4, "warning_template": "UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}."}
+            }
+        }
+
+
+# Load configuration once at module level
+_CONFIG = _load_limits_config()
 
 
 @dataclass
@@ -94,7 +135,7 @@ def probe_system_limits() -> SystemLimits:
 
 def check_system_limits() -> LimitCheckResult:
     """
-    Check if system limits meet recommended thresholds.
+    Check if system limits meet recommended thresholds using shared configuration.
     
     Returns:
         LimitCheckResult with limits, warnings, and ok status
@@ -109,37 +150,44 @@ def check_system_limits() -> LimitCheckResult:
             ok=True  # Don't fail if we can't check
         )
     
+    config_limits = _CONFIG.get("limits", {})
+    
     # Check open files limit
+    open_files_config = config_limits.get("open_files", {})
+    min_open_files = open_files_config.get("min", 65535)
     try:
         nofile = int(limits.open_files)
-        if nofile < 65535:
-            warnings.append(
-                f"Open files limit is low ({nofile}). Recommended: ≥65535. "
-                f"This may cause issues with HTTP clients (Undici), WASM, and headless browsers."
-            )
+        if nofile < min_open_files:
+            template = open_files_config.get("warning_template", "Open files limit is low ({value}). Recommended: ≥{min}.")
+            warning = template.format(value=nofile, min=min_open_files)
+            warnings.append(warning)
     except (ValueError, TypeError):
         pass
     
     # Check virtual memory limit
+    vmem_config = config_limits.get("virtual_memory", {})
+    expected_vmem = vmem_config.get("expected", "unlimited")
     vmem = limits.virtual_memory
-    if vmem not in ('unlimited', 'unavailable'):
+    if vmem not in (expected_vmem, 'unavailable'):
         try:
             vmem_num = int(vmem)
             if vmem_num > 0:
-                warnings.append(
-                    f"Virtual memory limit is restricted ({vmem}). Recommended: unlimited. "
-                    f"This may cause runtime OOM errors."
-                )
+                template = vmem_config.get("warning_template", "Virtual memory limit is restricted ({value}). Recommended: {expected}.")
+                warning = template.format(value=vmem, expected=expected_vmem)
+                warnings.append(warning)
         except (ValueError, TypeError):
             pass
     
     # Check UV_THREADPOOL_SIZE for Node.js I/O performance
-    # (relevant if running mixed Node.js/Python environment)
-    if not limits.threadpool_size or limits.threadpool_size < 64:
-        warnings.append(
-            f"UV_THREADPOOL_SIZE not set or too low ({limits.threadpool_size or 'default 4'}). "
-            f"Recommended: 64 for better fs/crypto/dns performance in Node.js components."
-        )
+    threadpool_config = config_limits.get("threadpool_size", {})
+    min_threadpool = threadpool_config.get("min", 64)
+    default_threadpool = threadpool_config.get("default", 4)
+    
+    if not limits.threadpool_size or limits.threadpool_size < min_threadpool:
+        template = threadpool_config.get("warning_template", "UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}.")
+        value_display = limits.threadpool_size or f'default {default_threadpool}'
+        warning = template.format(value=value_display, min=min_threadpool)
+        warnings.append(warning)
     
     return LimitCheckResult(
         limits=limits,
