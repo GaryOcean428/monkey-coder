@@ -22,7 +22,7 @@ jobs:
           
           # Verify virtual memory limit
           VMEM_VAL=$(ulimit -v) # 'unlimited' or a number
-          VMEM_OK=$( [ "$VMEM_VAL" = "unlimited" ] || [ "$VMEM_VAL" -eq 0 ] 2>/dev/null && echo OK || echo FAIL )
+          VMEM_OK=$( [ "$VMEM_VAL" = "unlimited" ] && echo OK || echo FAIL )
           
           echo "=========================================="
           echo "Resource Limit Validation Results:"
