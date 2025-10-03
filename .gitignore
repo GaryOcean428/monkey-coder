@@ -16,6 +16,8 @@ services/**/out/
 # Railway debug reports (generated files)
 railway-debug-report.json
 railway-auto-fix.sh
+railway-smoke-test-report.json
+/tmp/railway-smoke-test.json
 
 # C extensions
 *.so
