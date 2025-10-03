@@ -46,25 +46,25 @@ def _load_limits_config() -> Dict[str, Any]:
             }
         }
     except Exception as e:
-        logger.warning(f"Failed to load system limits config: {e}, using defaults")
-        return {
-            "limits": {
-                "open_files": {"min": 65535, "warning_template": "Open files limit is low ({value}). Recommended: ≥{min}."},
-                "virtual_memory": {"expected": "unlimited", "warning_template": "Virtual memory limit is restricted ({value}). Recommended: {expected}."},
-                "threadpool_size": {"min": 64, "default": 4, "warning_template": "UV_THREADPOOL_SIZE not set or too low ({value}). Recommended: {min}."}
-            }
-        }
-
-
-# Load configuration once at module level
-_CONFIG = _load_limits_config()
-
-
-@dataclass
-class SystemLimits:
-    """System resource limits information."""
-    open_files: str = "unavailable"
-    virtual_memory: str = "unavailable"
+    nofile = subprocess.check_output(
+        ['sh', '-c', 'ulimit -n'],
+        stderr=subprocess.DEVNULL,
+        encoding='utf-8'
+    ).strip()
+    
+    # Get virtual memory limit
+    vmem = subprocess.check_output(
+        ['sh', '-c', 'ulimit -v'],
+        stderr=subprocess.DEVNULL,
+        encoding='utf-8'
+    ).strip()
+    
+    # Try to get max processes
+    max_proc = "unavailable"
+    try:
+        max_proc = subprocess.check_output(
+            ['sh', '-c', 'ulimit -u'],
+            stderr=subprocess.DEVNULL,
     max_processes: str = "unavailable"
     threadpool_size: Optional[int] = None
     available: bool = False
