@@ -199,3 +199,67 @@ Action Items Logged:
 - [ ] Define scope for advanced context persistence
 - [ ] Add quantum routing performance counters (latency, strategy distribution)
 - [ ] Draft caching & performance RFC (Phase 2.4 precursor)
+
+---
+
+### Microsoft Agent Framework Integration (2025-01-15)
+
+**Status**: 🚀 In Progress - Phase 1 Foundation Complete
+
+Integrating Microsoft Agent Framework patterns and architecture into Monkey Coder's multi-agent orchestration system. This brings enterprise-grade patterns from Semantic Kernel and AutoGen into our platform.
+
+**Official Reference**: [Microsoft Agent Framework Overview](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview)
+
+#### Phase 1: Foundation ✅ COMPLETE (2025-01-15)
+
+- [x] Research Microsoft Agent Framework architecture and patterns
+- [x] Document integration plan with official references
+- [x] Create comprehensive architecture documentation
+- [x] Implement Agent Registry for discovery and management
+- [x] Add full test coverage for Agent Registry (13/13 tests passing)
+- [x] Update roadmap with integration progress
+
+**Deliverables**:
+- Documentation: `docs/architecture/microsoft-agent-framework-integration.md`
+- Implementation: `packages/core/monkey_coder/core/agent_registry.py`
+- Tests: `packages/core/tests/test_agent_registry.py`
+
+#### Phase 2: Orchestration Patterns (Next)
+
+- [ ] Enhance group chat orchestration for multi-agent conversations
+- [ ] Implement explicit handoff patterns with state transfer
+- [ ] Add magnetic routing for dynamic agent attraction
+- [ ] Enhance failure isolation with circuit breakers
+- [ ] Create workflow definition system
+
+**Timeline**: 1-2 weeks
+
+#### Phase 3: Enterprise Features (Future)
+
+- [ ] Implement governance and safety policies
+- [ ] Add distributed tracing across agent interactions
+- [ ] Create agent versioning system
+- [ ] Add human-in-the-loop support
+- [ ] Implement context propagation policies
+
+**Timeline**: 2-3 weeks
+
+#### Key Benefits
+
+1. **Enhanced Discovery**: Agent Registry enables intelligent agent selection
+2. **Enterprise Patterns**: Adopting proven patterns from Microsoft Agent Framework
+3. **Better Observability**: Structured tracing and monitoring
+4. **Governance Ready**: Foundation for enterprise safety and access control
+5. **Microsoft Compatibility**: Aligned with Microsoft Agent Framework architecture
+
+#### Integration Points
+
+- **Orchestrator**: `packages/core/monkey_coder/core/orchestrator.py`
+- **Agent Registry**: `packages/core/monkey_coder/core/agent_registry.py` (NEW)
+- **Context Manager**: `packages/core/monkey_coder/core/context_manager.py`
+- **Quantum Manager**: `packages/core/monkey_coder/quantum/manager.py`
+
+**References**:
+- [Microsoft Agent Framework Documentation](https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview)
+- [Multi-Agent Reference Architecture](https://microsoft.github.io/multi-agent-reference-architecture/)
+- [Semantic Kernel Agent Architecture](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-architecture)
