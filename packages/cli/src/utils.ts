@@ -371,9 +371,9 @@ export function probeSystemLimits(): SystemLimits {
     }
     
     // Get UV_THREADPOOL_SIZE if set
-    const threadPoolSize = process.env.UV_THREADPOOL_SIZE 
-      ? parseInt(process.env.UV_THREADPOOL_SIZE, 10)
-      : undefined;
+    const rawPoolSize = process.env.UV_THREADPOOL_SIZE;
+    const parsedPoolSize = rawPoolSize ? parseInt(rawPoolSize, 10) : NaN;
+    const threadPoolSize = !isNaN(parsedPoolSize) ? parsedPoolSize : undefined;
     
     return {
       openFiles: nofile,
