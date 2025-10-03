@@ -343,10 +343,9 @@ class SmartModelRouter:
         ]
         
         for pattern, replacement in secret_patterns:
-            matches = re.findall(pattern, guarded_text)
-            if matches:
-                guarded_text = re.sub(pattern, replacement, guarded_text)
-                warnings.append(f"Redacted {len(matches)} potential secrets")
+            guarded_text, num_matches = re.subn(pattern, replacement, guarded_text)
+            if num_matches > 0:
+                warnings.append(f"Redacted {num_matches} potential secrets")
         
         # Apply length cap (configurable)
         max_length = 10000  # characters
