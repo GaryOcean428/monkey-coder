@@ -3264,14 +3264,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@docusaurus/theme-live-codeblock@npm:^3.8.1":
-  version: 3.9.1
-  resolution: "@docusaurus/theme-live-codeblock@npm:3.9.1"
+"@docusaurus/theme-live-codeblock@npm:3.8.1":
+  version: 3.8.1
+  resolution: "@docusaurus/theme-live-codeblock@npm:3.8.1"
   dependencies:
-    "@docusaurus/core": "npm:3.9.1"
-    "@docusaurus/theme-common": "npm:3.9.1"
-    "@docusaurus/theme-translations": "npm:3.9.1"
-    "@docusaurus/utils-validation": "npm:3.9.1"
+    "@docusaurus/core": "npm:3.8.1"
+    "@docusaurus/theme-common": "npm:3.8.1"
+    "@docusaurus/theme-translations": "npm:3.8.1"
+    "@docusaurus/utils-validation": "npm:3.8.1"
     "@philpl/buble": "npm:^0.19.7"
     clsx: "npm:^2.0.0"
     fs-extra: "npm:^11.1.1"
@@ -3280,7 +3280,7 @@ __metadata:
   peerDependencies:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
-  checksum: 10/e93390663b732adcfbfa67e6083436ad36d15c10d607321d68ca1f1110f98822274fdd1919169da78f082f72a338aef04f779fd2301d1b1c74147438177dfc95
+  checksum: 10/f92e2ff12d6c3be6a9efc4c0425f95ab46f10aaa0475345d7fd6eefc160c4a6cd586565f68a2d08c227847164f9f9877872996e6a32da5e18946a041fa9b0815
   languageName: node
   linkType: hard
 
@@ -3318,16 +3318,6 @@ __metadata:
     fs-extra: "npm:^11.1.1"
     tslib: "npm:^2.6.0"
   checksum: 10/1f995edfc6a19598f5b87bf8cff674094990d7a42ee08745f87d4e28b1741898b334f755347716a8abd7dec1933856244a6dc9ee5c8552fe5f81085c15ddd98d
-  languageName: node
-  linkType: hard
-
-"@docusaurus/theme-translations@npm:3.9.1":
-  version: 3.9.1
-  resolution: "@docusaurus/theme-translations@npm:3.9.1"
-  dependencies:
-    fs-extra: "npm:^11.1.1"
-    tslib: "npm:^2.6.0"
-  checksum: 10/e2f87cd3827a24a4361072d51097a87861d8352fd88c7d29cb84ef5499389c27d830f3f36349331a1ad059eafa0a6e1f2892520dad780a3496d379809ce6ba20
   languageName: node
   linkType: hard
 
@@ -11647,7 +11637,7 @@ __metadata:
     "@docusaurus/module-type-aliases": "npm:3.8.1"
     "@docusaurus/plugin-content-docs": "npm:^3.8.1"
     "@docusaurus/preset-classic": "npm:3.8.1"
-    "@docusaurus/theme-live-codeblock": "npm:^3.8.1"
+    "@docusaurus/theme-live-codeblock": "npm:3.8.1"
     "@docusaurus/tsconfig": "npm:3.8.1"
     "@docusaurus/types": "npm:3.8.1"
     "@mdx-js/react": "npm:^3.1.0"
