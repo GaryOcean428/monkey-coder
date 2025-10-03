@@ -81,6 +81,13 @@
   - [ ] Create performance benchmarking tests
   - [ ] Set up automated testing pipeline
 
+- [x] **Railway Deployment Documentation** - Comprehensive Railway best practices documentation `S` ✅
+  - [x] Updated DEPLOYMENT.md with multi-service architecture explanation ✅
+  - [x] Added Railway best practices with official documentation references ✅
+  - [x] Documented single-service vs multi-service deployment options ✅
+  - [x] Added comprehensive troubleshooting section for Railway ✅
+  - [x] Verified all configurations against Railway official docs ✅
+
 - [ ] **Documentation Updates** - Fix package.JSON metadata, update README links, add CONTRIBUTING.md `S`
   - [ ] Update all package.JSON files with correct metadata
   - [ ] Fix broken links and references
@@ -126,10 +133,11 @@
 
 ## Newly Added (Aug 2025) – Operational & Observability Roadmap
 
-- [ ] **CI Workflow Implementation** `P0`
-  - [ ] Add GitHub Actions pipeline (uv sync, pytest, yarn workspaces build, markdownlint, drift check)
-  - [ ] Enforce non-drift between pyproject.toml and requirements.txt
-  - [ ] Publish coverage + JUnit summaries as PR check
+- [x] **CI Workflow Implementation** `P0` ✅
+  - [x] Add GitHub Actions pipeline (uv sync, pytest, yarn workspaces build, markdownlint, drift check) ✅
+  - [x] Enforce non-drift between pyproject.toml and requirements.txt ✅
+  - [x] Publish coverage + JUnit summaries as PR check ✅
+  - [x] Fixed preflight-limits workflow to be CI-friendly ✅
 - [ ] **Advanced Context Decision Record** `P1`
   - [ ] Evaluate restoring DB + semantic search context vs. redesign
   - [ ] Produce ADR with scope, acceptance criteria, migration plan
@@ -143,6 +151,7 @@
 - [ ] **Markdown Lint Compliance Policy** `P2`
   - [ ] Decide on remediation vs. selective ignore list
   - [ ] Automate lint in CI with clear contribution guidance
-- [ ] **Dependency Drift Enforcement** `P0`
-  - [ ] Integrate scripts/check_python_deps_sync.sh into CI fail-fast job (ensure Python dependency drift is blocked)
+- [x] **Dependency Drift Enforcement** `P0` ✅
+  - [x] Integrate scripts/check_python_deps_sync.sh into CI fail-fast job (ensure Python dependency drift is blocked) ✅
+  - [x] CI now enforces dependency drift detection ✅
   - [ ] Document workflow in CONTRIBUTING (future)
