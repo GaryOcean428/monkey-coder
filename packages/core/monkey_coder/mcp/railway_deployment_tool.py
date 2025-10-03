@@ -191,7 +191,8 @@ class MCPRailwayTool:
     def monitor_railway_deployment(
         self,
         service_name: Optional[str] = None,
-        check_health: bool = True
+        check_health: bool = True,
+        run_smoke_tests: bool = False
     ) -> Dict[str, Any]:
         """
         MCP tool: Monitor Railway deployment status and health.
@@ -201,10 +202,12 @@ class MCPRailwayTool:
         - Service status checking
         - Performance metrics
         - Error detection
+        - Optional smoke test execution
         
         Args:
             service_name: Optional Railway service name
             check_health: Whether to perform health checks
+            run_smoke_tests: Whether to run comprehensive smoke tests
             
         Returns:
             Deployment monitoring results
@@ -213,13 +216,23 @@ class MCPRailwayTool:
             "timestamp": datetime.now().isoformat(),
             "service_name": service_name,
             "health_check_enabled": check_health,
-            "mcp_monitoring": self.mcp_enabled
+            "mcp_monitoring": self.mcp_enabled,
+            "smoke_tests_enabled": run_smoke_tests
         }
         
         # Check health endpoint if requested
         if check_health:
             health_status = self._check_health_endpoint()
             monitoring_results["health_status"] = health_status
+            
+            # Check multiple endpoints if no service specified
+            if not service_name:
+                monitoring_results["all_endpoints"] = self._check_all_health_endpoints()
+        
+        # Run smoke tests if requested
+        if run_smoke_tests:
+            smoke_test_results = self._run_smoke_tests()
+            monitoring_results["smoke_tests"] = smoke_test_results
         
         # Use MCP orchestration for enhanced monitoring
         if self.mcp_enabled:
@@ -336,6 +349,79 @@ class MCPRailwayTool:
             
         except ImportError:
             return {"available": False, "error": "requests library not available"}
+    
+    def _check_all_health_endpoints(self) -> Dict[str, Any]:
+        """Check all Railway service health endpoints."""
+        import os
+        
+        try:
+            import requests
+        except ImportError:
+            return {"error": "requests library not available"}
+        
+        services = {
+            "frontend": os.getenv("RAILWAY_BASE_URL", "https://monkey-coder.up.railway.app"),
+            "backend": os.getenv("BACKEND_URL", "https://monkey-coder-backend-production.up.railway.app"),
+            "ml": os.getenv("ML_SERVICE_URL", "")
+        }
+        
+        results = {}
+        for service_name, base_url in services.items():
+            if not base_url:
+                continue
+                
+            try:
+                health_url = base_url.rstrip("/") + "/api/health"
+                response = requests.get(health_url, timeout=10)
+                results[service_name] = {
+                    "available": True,
+                    "status_code": response.status_code,
+                    "url": health_url,
+                    "response_time_ms": response.elapsed.total_seconds() * 1000,
+                    "healthy": response.status_code == 200
+                }
+            except Exception as e:
+                results[service_name] = {
+                    "available": False,
+                    "error": str(e),
+                    "url": base_url
+                }
+        
+        return results
+    
+    def _run_smoke_tests(self) -> Dict[str, Any]:
+        """Run comprehensive smoke tests using the smoke test script."""
+        import subprocess
+        
+        try:
+            smoke_test_script = self.project_root / "scripts" / "railway-smoke-test.py"
+            
+            if not smoke_test_script.exists():
+                return {"error": "Smoke test script not found"}
+            
+            # Run smoke tests
+            result = subprocess.run(
+                ["python3", str(smoke_test_script), "--output", "/tmp/railway-smoke-test.json"],
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            
+            # Try to load results
+            import json
+            try:
+                with open("/tmp/railway-smoke-test.json", "r") as f:
+                    smoke_results = json.load(f)
+                return smoke_results
+            except Exception:
+                return {
+                    "exit_code": result.returncode,
+                    "stdout": result.stdout[-500:] if result.stdout else "",
+                    "stderr": result.stderr[-500:] if result.stderr else ""
+                }
+                
+        except Exception as e:
+            return {"error": str(e)}
     
     def _get_orchestration_monitoring(self) -> Dict[str, Any]:
         """Get orchestration monitoring status."""
@@ -474,7 +560,7 @@ def get_mcp_railway_tools() -> Dict[str, Any]:
         },
         "monitor_railway_deployment": {
             "name": "monitor_railway_deployment", 
-            "description": "Monitor Railway deployment status and health",
+            "description": "Monitor Railway deployment status and health with comprehensive smoke testing",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -485,6 +571,10 @@ def get_mcp_railway_tools() -> Dict[str, Any]:
                     "check_health": {
                         "type": "boolean",
                         "description": "Whether to perform health checks"
+                    },
+                    "run_smoke_tests": {
+                        "type": "boolean",
+                        "description": "Whether to run comprehensive smoke tests"
                     }
                 }
             }
