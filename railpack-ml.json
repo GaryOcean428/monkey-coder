@@ -3,7 +3,7 @@
   "version": "1",
   "metadata": {
     "name": "monkey-coder-ml",
-    "description": "DEPRECATED: Railway should use root railpack.json with rootDirectory='/'"
+    "description": "Python ML inference service - for monkey-coder-ml service"
   },
   "build": {
     "provider": "python",
@@ -12,19 +12,19 @@
     },
     "cache": {
       "paths": [
-        "/app/.venv/lib/python3.12/site-packages",
-        "/app/.cache/huggingface"
+        ".venv",
+        "__pycache__",
+        ".cache/huggingface"
       ]
     },
     "steps": {
       "install": {
         "commands": [
-          "echo '⚠️  WARNING: This railpack.json should not be used!'",
-          "echo '⚠️  Configure Railway service with rootDirectory=/ or blank'",
-          "echo '⚠️  Railway will use /railpack.json from repo root'",
-          "cd ../.. && python -m venv .venv",
-          "cd ../.. && .venv/bin/pip install --upgrade pip setuptools wheel",
-          "cd ../.. && .venv/bin/pip install -r services/ml/requirements.txt"
+          "echo '📦 Installing ML dependencies (this will take 25+ minutes)...'",
+          "python -m venv .venv",
+          ".venv/bin/pip install --upgrade pip setuptools wheel",
+          ".venv/bin/pip install -r services/ml/requirements.txt",
+          "echo '✅ ML dependencies installed (2.5GB+ with CUDA)'"
         ]
       }
     },
@@ -36,7 +36,7 @@
     }
   },
   "deploy": {
-    "startCommand": "cd ../.. && .venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "startCommand": ".venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
