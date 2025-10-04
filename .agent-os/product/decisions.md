@@ -410,3 +410,183 @@ Following successful Railway deployment and Phase 1 completion, several enhancem
 - Reduces technical debt accumulation
 - Improves team confidence in system stability
 - Provides foundation for enterprise-grade features
+
+## 2025-01-29: Build Tool Strategy and Yarn Workspace Retention
+
+**ID:** DEC-007
+**Status:** Accepted
+**Category:** Technical Infrastructure
+**Stakeholders:** Engineering Team, DevOps, Tech Lead
+
+### Decision
+
+Continue using Yarn 4.9.2 workspace configuration as the primary build and package management system, with targeted enhancements rather than migrating to Nx, Bazel, or Pants. Implement specific improvements to task orchestration, build monitoring, TypeScript project references, and Python integration within the existing Yarn ecosystem.
+
+### Context
+
+Following the completion of Phase 1 system enhancements and the establishment of a stable Railway deployment, a comprehensive evaluation was conducted to determine whether the project should migrate from Yarn workspaces to more advanced build systems like Nx (JavaScript-first monorepo), Bazel/Pants (polyglot hermetic builds), or maintain the current setup with improvements.
+
+**Current State:**
+- 4 workspace packages: cli (TypeScript), core (Python), sdk (TypeScript+Python), web (Next.js)
+- Yarn 4.9.2 with global cache and hardlinks achieving 30-50% faster installs
+- Comprehensive constraint enforcement via yarn.config.cjs
+- Optimized Railway deployment with railpack.json
+- Small-to-medium development team
+- Build times: ~2-3 minutes full build, ~10-20 seconds incremental TypeScript
+
+**Evaluation Criteria:**
+Applied decision matrix for Yarn vs Nx vs Bazel/Pants across signals:
+- Shared UI/libs coupling: Medium (some type sharing between CLI and Web)
+- Developer experience priority: High (team velocity critical)
+- Mixed language complexity: High (TypeScript + Python core)
+- CI scale/remote caching: Low-Medium (current infrastructure sufficient)
+- Build determinism: Medium (Railway handles reproducibility)
+- Migration friction: High for any migration
+- Ecosystem maturity: JS-heavy with Python services
+
+### Alternatives Considered
+
+1. **Migrate to Nx 21**
+   - Pros: Project graph intelligence, better task orchestration, terminal UI, enhanced caching, continuous tasks mode
+   - Cons: 3-4 week migration effort, learning curve, Python integration complexity, Railway deployment changes, added configuration overhead
+   - Score: 7/10 - Good features but migration costs too high for current scale
+
+2. **Migrate to Bazel 7+ or Pants**
+   - Pros: True hermetic builds, native multi-language support, advanced caching (BwoB), Google-scale capability, Skymeld analysis/execution
+   - Cons: 8-12 week migration, steep learning curve, developer experience degradation, opaque errors, rules_python still evolving, WORKSPACE→Bzlmod transition, Railway incompatibility
+   - Score: 5/10 - Massive overkill for 4-package monorepo
+
+3. **Hybrid Approach (Nx for Frontend + Yarn for Python)**
+   - Pros: Leverages Nx for frontend optimization
+   - Cons: Two build systems to maintain, cognitive load, unclear boundaries
+   - Score: 4/10 - Complexity without clear benefits
+
+4. **Turborepo as Lighter Alternative**
+   - Pros: Simpler than Nx, good caching, less invasive
+   - Cons: Still requires migration, limited Python integration
+   - Score: 6/10 - Interesting but not compelling
+
+5. **Continue with Yarn + Targeted Improvements (Selected)**
+   - Pros: Zero migration effort, proven configuration, team familiarity, Railway compatibility, ~10 days implementation for enhancements
+   - Cons: Manual dependency tracking, limited build optimization, no remote caching, no project graph
+   - Score: 8.5/10 - Best ROI and risk profile
+
+### Rationale
+
+The decision to continue with Yarn 4.9.2 with enhancements is based on:
+
+**Scale Appropriateness:**
+- 4 packages do not justify the complexity of Nx or Bazel
+- Current build times (2-3 minutes) are acceptable
+- No evidence of scalability issues at current growth trajectory
+
+**Cost-Benefit Analysis:**
+- Nx migration: 3-4 weeks for 15-20% build improvement = negative ROI
+- Bazel migration: 8-12 weeks with team productivity impact = highly negative ROI
+- Yarn enhancements: ~10 days for 15-25% improvement = positive ROI
+
+**Developer Experience:**
+- Team already proficient with Yarn
+- Simple commands maintain velocity
+- No learning curve overhead
+- Railway deployment proven stable
+
+**Risk Management:**
+- Migration introduces deployment risks
+- Current setup has zero production issues
+- Enhancements can be implemented incrementally
+- Easy rollback if enhancements cause problems
+
+**Technical Fit:**
+- Yarn handles TypeScript workspaces well
+- Python builds can be integrated via scripts
+- Railway deployment optimized for Yarn
+- Constraint system prevents version drift
+
+### Implementation Plan
+
+**Targeted Improvements (10 days over 3 weeks):**
+
+**Week 1: Task Orchestration & Monitoring (P0)**
+1. Install npm-run-all2 for parallel execution
+2. Create build orchestrator script with progress reporting
+3. Implement build time monitoring and performance tracking
+4. Update Railway configuration for enhanced orchestration
+
+**Week 2: TypeScript & Python Integration (P1)**
+5. Enable TypeScript project references for incremental builds
+6. Add Python build integration to Yarn workflow
+7. Create unified build interface across languages
+8. Test incremental build performance
+
+**Week 3: Analysis & CI/CD (P2)**
+9. Create dependency graph visualization (Mermaid)
+10. Add circular dependency detection (madge)
+11. Set up GitHub Actions for build validation
+12. Generate comprehensive build metrics
+
+**Expected Outcomes:**
+- Build times: Sequential 2-3 min → Parallel 1.5-2 min (25% faster)
+- Incremental builds: 10-20 sec → 5-15 sec (faster with project references)
+- Better visibility: Build monitoring, dependency graphs, performance trends
+- Unified interface: Single commands for TypeScript + Python builds
+
+### Consequences
+
+**Positive:**
+- Zero migration risk maintains deployment stability
+- 10-day enhancement effort vs weeks of migration
+- Team productivity maintained and improved
+- Railway deployment remains optimized
+- Incremental improvements can be validated quickly
+- Clear path for future reevaluation if scale increases
+- Enhanced build monitoring provides data for future decisions
+
+**Negative:**
+- No project graph visualization (manual dependency tracking continues)
+- Limited task orchestration intelligence compared to Nx
+- No remote caching capability (local only)
+- Python builds not fully integrated into single build system
+- May need to reconsider at larger scale (10+ packages, 15+ engineers)
+
+**Future Reevaluation Triggers:**
+- Package count exceeds 10
+- Team grows beyond 15 engineers
+- Build times exceed 10 minutes
+- Circular dependency issues emerge
+- Enterprise hermetic build requirements
+- CI cache inefficiency becomes critical
+
+### Validation Criteria
+
+**Success Metrics:**
+- Parallel builds complete in ≤2 minutes
+- Incremental TypeScript builds ≤15 seconds
+- Zero circular dependencies detected
+- Build time monitoring automated
+- Team satisfaction ≥8/10
+- Railway deployments remain stable
+
+**Failure Criteria:**
+- Build times increase
+- Developer satisfaction decreases
+- Railway deployment issues
+- Complexity increases without benefits
+
+### References
+
+- Decision Document: `docs/BUILD_TOOL_EVALUATION.md`
+- Implementation Guide: `docs/BUILD_IMPROVEMENTS_IMPLEMENTATION.md`
+- Nx 21 Release Notes: https://nx.dev/blog/nx-21-release
+- Bazel 7 Features: https://blog.bazel.build/2024/01/bazel-7.html
+- Yarn Workspaces: https://yarnpkg.com/features/workspaces
+- Current Optimizations: `docs/yarn-workspace-optimizations.md`
+
+### Approval Status
+
+- [x] Technical evaluation completed
+- [x] Cost-benefit analysis documented
+- [x] Implementation plan defined
+- [ ] Engineering Team consensus (to be confirmed)
+- [ ] Tech Lead approval (to be obtained)
+- [ ] DevOps acknowledgment (to be obtained)
