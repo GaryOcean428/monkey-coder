@@ -399,12 +399,17 @@ class MCPRailwayTool:
             if not smoke_test_script.exists():
                 return {"error": "Smoke test script not found"}
             
-            # Run smoke tests
+            # Validate script path for security
+            if not str(smoke_test_script).startswith(str(self.project_root)):
+                return {"error": "Invalid script path"}
+            
+            # Run smoke tests with explicit path (no shell)
             result = subprocess.run(
-                ["python3", str(smoke_test_script), "--output", "/tmp/railway-smoke-test.json"],
+                ["python3", str(smoke_test_script.resolve()), "--output", "/tmp/railway-smoke-test.json"],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
+                shell=False
             )
             
             # Try to load results

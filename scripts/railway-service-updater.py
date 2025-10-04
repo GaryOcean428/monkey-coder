@@ -81,11 +81,31 @@ class RailwayServiceUpdater:
             return False
         
         try:
-            # Add service selection if specified
+            # Validate command to prevent injection
+            if not all(isinstance(arg, str) for arg in command):
+                print("✗ Invalid command arguments")
+                return False
+            
+            # Build command without shell for security
             if service:
-                full_command = ['railway', 'service', service] + ['&&', 'railway'] + command
-            else:
-                full_command = ['railway'] + command
+                # Execute two separate commands sequentially
+                # First select the service
+                service_cmd = ['railway', 'service', service]
+                service_result = subprocess.run(
+                    service_cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    shell=False
+                )
+                if service_result.returncode != 0:
+                    print(f"✗ Failed to select service: {service}")
+                    if service_result.stderr:
+                        print(f"  Error: {service_result.stderr}")
+                    return False
+            
+            # Execute the main command
+            full_command = ['railway'] + command
             
             if self.verbose:
                 print(f"Executing: {' '.join(full_command)}")
@@ -95,7 +115,7 @@ class RailwayServiceUpdater:
                 capture_output=True,
                 text=True,
                 timeout=30,
-                shell=True
+                shell=False
             )
             
             if result.returncode == 0:
