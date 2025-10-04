@@ -17,6 +17,7 @@ services/**/out/
 railway-debug-report.json
 railway-auto-fix.sh
 railway-smoke-test-report.json
+railway-update-services.sh
 /tmp/railway-smoke-test.json
 
 # C extensions
