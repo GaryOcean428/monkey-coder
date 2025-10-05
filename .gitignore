@@ -207,8 +207,10 @@ packages/web/out/
 *.tsbuildinfo
 next-env.d.ts
 
-# TypeScript build output
+# TypeScript build output and project references
 *.tsbuildinfo
+tsconfig.tsbuildinfo
+packages/*/tsconfig.tsbuildinfo
 
 # Yarn Berry
 .yarn/*

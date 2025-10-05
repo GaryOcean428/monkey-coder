@@ -9,7 +9,10 @@
     "docs"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach -A run build",
+    "build": "tsc --build",
+    "build:clean": "tsc --build --clean",
+    "build:force": "tsc --build --force",
+    "build:watch": "tsc --build --watch",
     "build:parallel": "run-p build:cli build:web build:sdk",
     "build:cli": "yarn workspace monkey-coder-cli run build",
     "build:web": "yarn workspace @monkey-coder/web run build",
