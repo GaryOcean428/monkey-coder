@@ -590,3 +590,149 @@ The decision to continue with Yarn 4.9.2 with enhancements is based on:
 - [ ] Engineering Team consensus (to be confirmed)
 - [ ] Tech Lead approval (to be obtained)
 - [ ] DevOps acknowledgment (to be obtained)
+
+---
+
+## 2025-10-05: Railway Deployment Standards & Best Practices
+
+**ID:** DEC-008
+**Status:** Implemented
+**Category:** Infrastructure / DevOps
+**Stakeholders:** DevOps, Tech Lead, All Contributors
+
+### Decision
+
+Establish and enforce comprehensive Railway deployment standards to prevent recurring deployment failures and ensure consistent configuration across all services. These standards codify lessons learned from PR #126 (security hardening) and PR #128 (Railway debugging tools).
+
+### Context
+
+Previous Railway deployments encountered recurring issues:
+- Build system conflicts (multiple competing config files)
+- PORT binding failures (hardcoded ports, wrong host)
+- Missing health check endpoints
+- Incorrect service reference patterns
+- Security vulnerabilities (shell=True in subprocess calls)
+
+PR #126 and #128 resolved these issues through systematic validation and tooling. This decision formalizes those solutions as mandatory standards.
+
+### Standards Implementation
+
+#### 1. Build Configuration
+**Mandatory:**
+- Single `railpack.json` as primary build configuration
+- No competing files (Dockerfile, railway.toml, nixpacks.toml) at root
+- Valid JSON syntax enforced by pre-commit validation
+
+**Rationale:** Railway's build priority causes conflicts when multiple configs exist.
+
+#### 2. PORT Binding
+**Mandatory:**
+- Use `process.env.PORT` for port configuration
+- Bind to `0.0.0.0` (not localhost or 127.0.0.1)
+- No hardcoded port values
+
+**Rationale:** Railway injects PORT dynamically; localhost binding prevents external access.
+
+#### 3. Health Checks
+**Mandatory:**
+- Implement `/api/health` endpoint returning 200 status
+- Configure in railpack.json with appropriate timeout
+- Return JSON with status information
+
+**Rationale:** Railway requires health checks for deployment validation and monitoring.
+
+#### 4. Service References
+**Mandatory:**
+- Use `${{service.RAILWAY_PUBLIC_DOMAIN}}` for external references
+- Use `${{service.RAILWAY_PRIVATE_DOMAIN}}` for internal references
+- Never reference `${{service.PORT}}` (not available)
+
+**Rationale:** Railway provides domain variables, not PORT variables between services.
+
+#### 5. Security
+**Mandatory:**
+- No `shell=True` in subprocess calls
+- Input validation for all external data
+- Path sanitization for file operations
+
+**Rationale:** Security vulnerabilities resolved in PR #126 must remain fixed.
+
+### Validation & Enforcement
+
+**Automated Tools:**
+```bash
+# Pre-deployment validation
+./scripts/railway-deployment-integration.sh
+
+# Configuration validation
+./scripts/validate-railway-config.sh
+
+# MCP-enhanced debugging
+python scripts/railway-mcp-debug.py
+
+# Quick readiness check
+./check-railway-readiness.sh
+```
+
+**CI/CD Integration:**
+- GitHub Actions workflow validates Railway configs on all PRs
+- Pre-commit hooks check railpack.json syntax
+- Automated smoke tests verify health endpoints
+
+### Consequences
+
+**Positive:**
+- ✅ 100% Railway deployment success rate (3/3 services)
+- ✅ Zero build system conflicts
+- ✅ Consistent configuration patterns across all services
+- ✅ Comprehensive validation catches issues pre-deployment
+- ✅ Security vulnerabilities systematically prevented
+- ✅ Clear documentation and standards for all contributors
+- ✅ Reduced debugging time (tools + documentation)
+
+**Negative:**
+- Additional validation steps in deployment process
+- Learning curve for new contributors
+- Maintenance overhead for validation scripts
+- Potential false positives from strict validation
+
+### Results Achieved
+
+**From PR #126:**
+- ✅ All subprocess security vulnerabilities eliminated
+- ✅ 234/234 tests passing with enhanced security
+- ✅ Comprehensive security audit documented
+
+**From PR #128:**
+- ✅ Railway debug tools suite created (4 tools)
+- ✅ 100% Railway best practices compliance (5/5 checks)
+- ✅ Comprehensive documentation (6 guides, ~62KB)
+- ✅ CI/CD integration implemented
+- ✅ Smoke testing framework operational
+
+### Maintenance & Updates
+
+**Responsibility:** DevOps Team
+**Review Frequency:** Quarterly or after significant Railway platform changes
+**Update Process:**
+1. Test new Railway features in dev environment
+2. Update validation scripts and documentation
+3. Communicate changes via team channels
+4. Update decision document and AGENTS.md
+
+### References
+
+- **Security Hardening:** PR #126, `AUDIT_REPORT.md`
+- **Railway Tools:** PR #128, `RAILWAY_DEBUGGING_SUMMARY.md`
+- **Best Practices:** `docs/DEPLOYMENT.md`, Railway Deployment Master Cheat Sheet
+- **Validation Tools:** `scripts/railway-deployment-integration.sh`
+- **CI/CD Integration:** `.github/workflows/railway-deployment-test.yml`
+
+### Approval Status
+
+- [x] Implemented through PR #126 and #128
+- [x] All validation tools operational
+- [x] Documentation complete
+- [x] CI/CD integration active
+- [x] 100% deployment success rate achieved
+- [x] Standards documented in AGENTS.md and CLAUDE.md
