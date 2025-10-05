@@ -348,6 +348,91 @@ The project uses `railpack.json` for Railway deployment configuration:
 
 > Both `/health` and `/api/health` return identical payloads. Tooling may probe either; automation continues to reference `/health` for backward compatibility.
 
+### Railway Deployment Standards (CRITICAL)
+
+**These standards MUST be followed for all Railway deployments:**
+
+#### 1. Build System Configuration
+- ✅ **Always use railpack.json** as the primary build configuration
+- ❌ **Never create competing files**: Dockerfile, railway.toml, nixpacks.toml at root level
+- ⚠️ Railway Build Priority: Dockerfile > railpack.json > railway.toml > Nixpacks auto-detection
+- 🔧 Remove competing configs to avoid build conflicts
+
+#### 2. PORT Binding
+- ✅ **Always use process.env.PORT** - Railway injects this automatically
+- ❌ **Never hardcode ports** - causes deployment failures
+- ✅ **Always bind to 0.0.0.0** - NOT localhost or 127.0.0.1
+- 🔧 Example: `app.listen(process.env.PORT || 3000, '0.0.0.0')`
+
+#### 3. Service References
+- ✅ **Use RAILWAY_PUBLIC_DOMAIN** for external access
+- ✅ **Use RAILWAY_PRIVATE_DOMAIN** for internal service-to-service
+- ❌ **Never reference PORT** of another service (not available)
+- 🔧 Example: `https://${{backend.RAILWAY_PUBLIC_DOMAIN}}`
+
+#### 4. Health Check Configuration
+- ✅ **Include health endpoint** at `/api/health` returning 200 status
+- ✅ **Configure in railpack.json**: `"healthCheckPath": "/api/health"`
+- ✅ **Set timeout appropriately**: `"healthCheckTimeout": 300`
+- 🔧 Simple health endpoint: `app.get('/api/health', (req, res) => res.json({status: 'healthy'}))`
+
+#### 5. Railway Validation Tools
+```bash
+# Comprehensive Railway validation and auto-fix
+./scripts/railway-deployment-integration.sh
+
+# Quick readiness check
+./check-railway-readiness.sh
+
+# Validate specific configurations
+./scripts/validate-railway-config.sh
+
+# MCP-enhanced debugging
+python scripts/railway-mcp-debug.py
+```
+
+#### 6. Common Pitfalls to Avoid
+- ❌ Using `shell=True` in subprocess calls (security risk)
+- ❌ Hardcoding environment-specific values
+- ❌ Missing or incorrect health check endpoints
+- ❌ Binding to localhost instead of 0.0.0.0
+- ❌ Creating competing build configuration files
+- ❌ Referencing PORT of other services
+
+#### 7. Pre-Deployment Checklist
+```bash
+# 1. Check for conflicting build configs
+ls -la | grep -E "(Dockerfile|railway\.toml|nixpacks\.toml|railpack\.json)"
+
+# 2. Validate railpack.json syntax
+cat railpack.json | jq '.' > /dev/null && echo "✅ Valid JSON"
+
+# 3. Verify PORT usage in code
+grep -r "process.env.PORT\|PORT" . | grep -v node_modules
+
+# 4. Check host binding (should be 0.0.0.0)
+grep -r "0\.0\.0\.0\|localhost\|127\.0\.0\.1" . | grep -E "(listen|HOST|host)"
+
+# 5. Verify health endpoint exists
+grep -r "/health\|/api/health" . | grep -v node_modules
+
+# 6. Test build locally
+yarn build && PORT=3000 yarn start
+```
+
+### Railway Deployment Best Practices Summary
+
+1. **Single Build System**: Only railpack.json, remove all competing configs
+2. **Dynamic PORT**: Use process.env.PORT, never hardcode
+3. **Correct Host**: Bind to 0.0.0.0, never localhost
+4. **Health Checks**: Implement at /api/health with 200 response
+5. **Service References**: Use RAILWAY_PUBLIC_DOMAIN/RAILWAY_PRIVATE_DOMAIN
+6. **Validation**: Run scripts/railway-deployment-integration.sh before deploying
+7. **Security**: Never use shell=True in subprocess, validate all inputs
+8. **Testing**: Test locally with Railway environment: `railway run yarn dev`
+9. **JSON Validation**: Always validate railpack.json syntax before commit
+10. **No Manual Config**: Clear manual Build/Start commands in Railway Dashboard
+
 ### Environment Variables for Railway
 
 **Required:**
