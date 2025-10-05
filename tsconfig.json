@@ -7,8 +7,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -23,9 +21,12 @@
     "skipLibCheck": true,
     "composite": true,
     "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [{ "path": "./packages/cli" }, { "path": "./packages/sdk" }]
+  "files": [],
+  "references": [
+    { "path": "./packages/cli" },
+    { "path": "./packages/sdk" },
+    { "path": "./packages/web" }
+  ]
 }

@@ -1,0 +1,58 @@
+name: Build Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Enable Corepack
+        run: corepack enable
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install Dependencies
+        run: |
+          yarn install --immutable
+          cd packages/core && pip install -e .
+          
+      - name: Run Timed Build
+        run: ./scripts/time-build.sh 'yarn build'
+        
+      - name: Test Incremental Build
+        run: |
+          echo "// test comment" >> packages/cli/src/index.ts
+          time yarn build
+        
+      - name: Run Tests
+        run: yarn test:parallel
+        
+      - name: Analyze Dependencies
+        run: yarn analyze:deps
+        
+      - name: Check for Circular Dependencies
+        run: yarn analyze:circular
+        
+      - name: Generate Performance Report
+        run: yarn build:report
+        
+      - name: Upload Build Metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-metrics
+          path: monitoring/build-times/
