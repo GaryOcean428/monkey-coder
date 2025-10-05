@@ -55,9 +55,10 @@ class TestResult:
 class RailwaySmokeTest:
     """Comprehensive smoke test suite for Railway deployments."""
     
-    def __init__(self, timeout: int = 30, verbose: bool = False):
+    def __init__(self, timeout: int = 30, verbose: bool = False, base_url: Optional[str] = None):
         self.timeout = timeout
         self.verbose = verbose
+        self.base_url = base_url
         self.results: List[TestResult] = []
         self.services = self._load_service_endpoints()
         
@@ -65,8 +66,8 @@ class RailwaySmokeTest:
         """Load service endpoints from environment or defaults."""
         services = []
         
-        # Try to load from environment
-        base_url = os.getenv("RAILWAY_BASE_URL", "https://monkey-coder.up.railway.app")
+        # Try to load from environment or use provided base_url
+        base_url = self.base_url or os.getenv("RAILWAY_BASE_URL", "https://monkey-coder.up.railway.app")
         backend_url = os.getenv("BACKEND_URL", "https://monkey-coder-backend-production.up.railway.app")
         
         # Frontend service
@@ -407,14 +408,20 @@ class RailwaySmokeTest:
         
         print("="*75 + "\n")
         
+        # Calculate total duration
+        total_duration = sum(r.duration_ms for r in self.results)
+        
         summary = {
             "timestamp": datetime.now().isoformat(),
-            "total_tests": total,
-            "passed": passed,
-            "failed": failed,
-            "skipped": skipped,
-            "success_rate": success_rate,
-            "results": [asdict(r) for r in self.results]
+            "summary": {
+                "total": total,
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped,
+                "success_rate": success_rate,
+                "duration_ms": total_duration
+            },
+            "tests": [asdict(r) for r in self.results]
         }
         
         return summary
@@ -434,6 +441,10 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Railway Deployment Smoke Test Suite"
+    )
+    parser.add_argument(
+        "--base-url",
+        help="Base URL for deployment to test (e.g., https://coder.fastmonkey.au)"
     )
     parser.add_argument(
         "--services",
@@ -459,7 +470,11 @@ def main():
     args = parser.parse_args()
     
     # Create smoke test instance
-    smoke_test = RailwaySmokeTest(timeout=args.timeout, verbose=args.verbose)
+    smoke_test = RailwaySmokeTest(
+        timeout=args.timeout, 
+        verbose=args.verbose,
+        base_url=args.base_url
+    )
     
     # Filter services if specified
     if args.services:
