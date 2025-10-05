@@ -309,3 +309,8 @@ nixpacks*.toml
 railway.toml
 railway.json
 !railpack.json
+
+# Build monitoring (keep directory structure, ignore logs and history)
+monitoring/build-times/*.log
+monitoring/build-times/build-history.csv
+monitoring/build-times/performance-report.txt
