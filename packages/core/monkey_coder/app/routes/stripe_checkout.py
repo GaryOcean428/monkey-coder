@@ -2,7 +2,6 @@ from typing import Optional
 
 import os
 import stripe
-import stripe.error as stripe_error
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
 
@@ -55,7 +54,7 @@ async def create_checkout_session(payload: CheckoutRequest):
             "sessionId": session.id,
             "sessionUrl": session.url,
         }
-    except stripe_error.StripeError as e:
+    except stripe.error.StripeError as e:
         # Surface Stripe error details where possible
         raise HTTPException(status_code=e.http_status or 400, detail=e.user_message or str(e)) from e
     except Exception as e:
