@@ -13,7 +13,7 @@ This module provides a comprehensive authentication solution that:
 
 import logging
 import secrets
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Literal
 from dataclasses import dataclass
 from enum import Enum
@@ -144,8 +144,8 @@ class EnhancedAuthManager:
         session = self._sessions[session_id]
 
         # Check if session is expired
-    from ..utils.time import utc_now
-    if utc_now() > session["expires_at"]:
+        from ..utils.time import utc_now
+        if utc_now() > session["expires_at"]:
             del self._sessions[session_id]
             logger.info(f"Session {session_id} expired")
             return False
@@ -155,8 +155,7 @@ class EnhancedAuthManager:
             return False
 
         # Update last activity
-    from ..utils.time import utc_now
-    session["last_activity"] = utc_now()
+        session["last_activity"] = utc_now()
 
         # Optional: Validate user agent and IP for session binding
         if self.config.enable_session_binding:
@@ -189,8 +188,8 @@ class EnhancedAuthManager:
     ) -> Response:
         """Set authentication cookies in the HTTP response."""
         # Calculate expiration
-    from ..utils.time import utc_now
-    expires_at = utc_now() + timedelta(days=self.config.max_age_days)
+        from ..utils.time import utc_now
+        expires_at = utc_now() + timedelta(days=self.config.max_age_days)
         max_age_seconds = self.config.max_age_days * 24 * 60 * 60
 
         # In test / non-production environments allow insecure cookies so TestClient/HTTP works
