@@ -43,7 +43,7 @@ cachetools==6.2.0
     # via google-auth
 celery==5.5.3
     # via monkey-coder-core (pyproject.toml)
-certifi==2025.8.3
+certifi==2025.10.5
     # via
     #   httpcore
     #   httpx
@@ -394,5 +394,5 @@ websockets==15.0.1
     # via
     #   google-genai
     #   uvicorn
-yarl==1.20.1
+yarl==1.21.0
     # via aiohttp
