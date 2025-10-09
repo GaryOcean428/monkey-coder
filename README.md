@@ -222,7 +222,8 @@ Detailed performance and introduction are shown in this
 
 - **Node.js** 20+ (enforced via Yarn constraints)
 - **Yarn** 4.9.2 via Corepack (`corepack enable && corepack prepare yarn@4.9.2 --activate`)
-- **Python** 3.12.11 (required for Railway deployment)
+- **Python** 3.13+ (Railway uses latest stable Python)
+- **PyTorch** 2.5.0+ (required for Python 3.13 compatibility)
 - **Git** for version control
 - **Railway CLI** (optional) for deployment management
 
@@ -863,7 +864,7 @@ railway up
 ```
 
 **Railway Configuration (`railpack.json`):**
-- Python 3.12.11 + Node.js 20 runtime
+- Python 3.13+ (Railway default) + Node.js 20 runtime
 - Yarn 4.9.2 workspace build support
 - Next.js static export served via FastAPI
 - Unified single-service architecture

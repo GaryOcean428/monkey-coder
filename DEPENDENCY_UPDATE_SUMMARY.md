@@ -7,6 +7,28 @@
 
 This update ensures the project follows Next.js 15 best practices, updates all dependencies to their highest compatible versions, and introduces uv for Python package management.
 
+## Recent Updates (January 2025)
+
+### PyTorch 2.8.0 & Python 3.13 Upgrade
+
+**Critical Update**: Upgraded PyTorch from 2.3.0 to 2.8.0 to support Python 3.13 (Railway's default).
+
+**Changes:**
+- PyTorch: 2.3.0 → 2.8.0 (range: >=2.5.0,<2.9.0)
+- Python: 3.12 → 3.13 requirement in all configurations
+- Added propcache!=0.4.0 exclusion (yanked version)
+- Updated all railpack.json files to document Python 3.13
+- Regenerated requirements.txt with uv for Python 3.13 compatibility
+
+**Why This Was Necessary:**
+Railway deploys using Python 3.13 (latest stable), but torch==2.3.0 only has wheels up to Python 3.12 (cp312). This caused `monkey-coder-ml` service to fail with "No matching distribution found for torch==2.3.0". PyTorch 2.5.0+ provides native Python 3.13 support with cp313 wheels.
+
+**Impact:**
+- Resolves Railway ML service build failures
+- Aligns with Railway's platform defaults (Python 3.13)
+- Maintains CUDA 12.1+ compatibility
+- No breaking API changes in PyTorch 2.5.0-2.8.0 range
+
 ## Changes Made
 
 ### 1. Python Package Management (UV)

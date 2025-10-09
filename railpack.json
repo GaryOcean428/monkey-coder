@@ -9,7 +9,7 @@
     "provider": "node",
     "packages": {
       "node": "20",
-      "python": "3.12"
+      "python": "3.13"
     },
     "cache": {
       "paths": [

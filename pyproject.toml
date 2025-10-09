@@ -3,7 +3,7 @@ name = "monkey-coder-core"
 version = "0.0.0"
 description = "Core orchestration engine for Monkey Coder"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 authors = [ { name = "Monkey Coder" } ]
 license = { text = "MIT" }
 
@@ -42,9 +42,10 @@ dependencies = [
   "html2text>=2020.1.16",
   "python-dotenv>=1.0.0",
   "resend>=0.6.0",
-  # PyTorch updated to support Python 3.12 (2.3.0+ has cp312 wheels)
+  # PyTorch updated to support Python 3.13 (2.5.0+ has cp313 wheels)
   # Use CPU index for compatibility across deployment environments
-  "torch==2.3.0",
+  "torch>=2.5.0,<2.9.0",
+  "propcache!=0.4.0",  # Exclude yanked version with memory leak
   "transformers>=4.39.0",
   "accelerate>=1.2.0",
   "safetensors>=0.4.3",
@@ -73,7 +74,7 @@ asyncio_mode = "auto"
 # Black Configuration
 [tool.black]
 line-length = 88
-target-version = ['py312']
+target-version = ['py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -93,7 +94,7 @@ extend-exclude = '''
 
 # Ruff Configuration
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 88
 select = [
     "E",  # pycodestyle errors
