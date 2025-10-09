@@ -17,6 +17,14 @@ Monkey Coder is an AI-powered code generation and analysis platform that transfo
 - **Installation**: Always use `corepack enable && corepack prepare yarn@4.9.2 --activate`
 - **Commands**: Use `yarn dlx` instead of `npx` for one-off package execution
 
+### Python Package Management with UV
+- **Package Manager**: uv 0.9.0+ for Python dependencies
+- **Lock File**: packages/core/uv.lock committed for reproducible builds
+- **Python Version**: Requires Python >=3.12
+- **Installation**: See [UV Setup Guide](docs/UV_SETUP.md)
+- **Usage**: `cd packages/core && uv sync` to install dependencies
+- **Run Commands**: Use `uv run <command>` to execute in managed venv
+
 ## Common Development Commands
 
 ### Building and Testing
@@ -69,14 +77,15 @@ yarn dev          # Watch mode
 yarn test         # Jest tests
 yarn typecheck    # TypeScript checking
 
-# Core package (Python)
+# Core package (Python with UV)
 cd packages/core
-Python -m pytest                    # Run tests
-Python -m pytest -v                 # Verbose tests
-Python -m pytest --cov=monkey_coder # Coverage
-black .                             # Format code
-isort .                             # Sort imports
-mypy monkey_coder                   # Type checking
+uv sync                             # Install/sync dependencies
+uv run pytest                       # Run tests
+uv run pytest -v                    # Verbose tests
+uv run pytest --cov=monkey_coder    # Coverage
+uv run black .                      # Format code
+uv run isort .                      # Sort imports
+uv run mypy monkey_coder            # Type checking
 
 # SDK package (TypeScript + Python)
 cd packages/sdk
@@ -114,12 +123,12 @@ yarn docs:validate-links
 - Node.js >=20.0.0 required for all packages
 
 ### Key Technologies
-- Frontend: TypeScript 5.8.3, Commander.js, Chalk, Ora (CLI); Next.js 15.2.3, React 18.2.0 (Web)
-- Backend: Python 3.12.11, FastAPI, Pydantic, asyncio
+- Frontend: TypeScript 5.8.3, Commander.js, Chalk, Ora (CLI); Next.js 15.5.4, React 18.2.0 (Web)
+- Backend: Python 3.12+, FastAPI, Pydantic, asyncio
 - AI Integration: OpenAI, Anthropic, Google GenAI, Groq, Qwen-Agent
 - Infrastructure: Railway deployment with railpack.json, Sentry monitoring ^9.42.0
 - Testing: Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
-- Package Manager: Yarn 4.9.2 with workspace constraints
+- Package Managers: Yarn 4.9.2 (JavaScript/TypeScript), uv 0.9.0+ (Python)
 
 ### Core Components
 
