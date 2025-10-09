@@ -8,7 +8,7 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.12"
+      "python": "3.13"
     },
     "cache": {
       "paths": [
@@ -20,11 +20,16 @@
     "steps": {
       "install": {
         "commands": [
+          "echo '🔍 Verifying Python version...'",
+          "python --version",
+          "python -c 'import sys; print(f\"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\")'",
           "echo '📦 Installing ML dependencies (this will take 25+ minutes)...'",
           "python -m venv .venv",
           ".venv/bin/pip install --upgrade pip setuptools wheel",
           ".venv/bin/pip install -r services/ml/requirements.txt",
-          "echo '✅ ML dependencies installed (2.5GB+ with CUDA)'"
+          "echo '✅ ML dependencies installed (2.5GB+ with CUDA)'",
+          "echo '🧪 Verifying PyTorch installation...'",
+          ".venv/bin/python -c 'import torch; print(f\"PyTorch {torch.__version__}\")'"
         ]
       }
     },

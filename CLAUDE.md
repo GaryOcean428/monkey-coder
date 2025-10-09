@@ -20,7 +20,8 @@ Monkey Coder is an AI-powered code generation and analysis platform that transfo
 ### Python Package Management with UV
 - **Package Manager**: uv 0.9.0+ for Python dependencies
 - **Lock File**: packages/core/uv.lock committed for reproducible builds
-- **Python Version**: Requires Python >=3.12
+- **Python Version**: Requires Python >=3.13 (Railway default)
+- **PyTorch**: 2.5.0+ required for Python 3.13 compatibility
 - **Installation**: See [UV Setup Guide](docs/UV_SETUP.md)
 - **Usage**: `cd packages/core && uv sync` to install dependencies
 - **Run Commands**: Use `uv run <command>` to execute in managed venv
@@ -124,7 +125,7 @@ yarn docs:validate-links
 
 ### Key Technologies
 - Frontend: TypeScript 5.8.3, Commander.js, Chalk, Ora (CLI); Next.js 15.5.4, React 18.2.0 (Web)
-- Backend: Python 3.12+, FastAPI, Pydantic, asyncio
+- Backend: Python 3.13+, FastAPI, Pydantic, asyncio, PyTorch 2.8.0
 - AI Integration: OpenAI, Anthropic, Google GenAI, Groq, Qwen-Agent
 - Infrastructure: Railway deployment with railpack.json, Sentry monitoring ^9.42.0
 - Testing: Jest ^30.0.5 (TypeScript), Jest ^29.7.0 (Next.js), Pytest (Python)
