@@ -37,7 +37,7 @@
     "examples:python": "cd examples/python && pip install -r requirements.txt && python main.py"
   },
   "dependencies": {
-    "@types/node": "^24.1.0",
+    "@types/node": "^20",
     "axios": "^1.11.0"
   },
   "devDependencies": {
