@@ -3,10 +3,12 @@
  * Handles login, logout, and session management
  */
 
+import * as readline from 'readline';
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
-import * as readline from 'readline';
+
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';

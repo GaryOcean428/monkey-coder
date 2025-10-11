@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+
 import { ConfigManager } from './config.js';
 import { EnhancedSplash, printEnhancedSplash, printEnhancedSplashSync } from './enhanced-splash.js';
 
