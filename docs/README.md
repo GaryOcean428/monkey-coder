@@ -1,39 +1,46 @@
 # Documentation Index
 
-## Getting Started
+## 🚀 Getting Started
 
-- [Setup Guide](../SETUP_GUIDE.md) - Installation and configuration
-- [Testing Guide](../TESTING_GUIDE.md) - Running tests across the monorepo
+- **[Setup Guide](../AGENTS.md)** - Complete setup, build, and deployment instructions
+- **[Main README](../README.md)** - Project overview and quick start
 - [Troubleshooting Guide](troubleshooting-guide.md) - Common issues and solutions
 
-## Architecture & Development
+## 🏗️ Architecture & Development
 
-- [Yarn Workspace Optimizations](yarn-workspace-optimizations.md) - Performance and configuration
+- [Advanced Features](ADVANCED_FEATURES.md) - Platform capabilities and features
 - [Model Manifest](../MODEL_MANIFEST.md) - AI model configurations and capabilities
-- [Model Compliance](MODEL_COMPLIANCE.md) - Model validation and compliance rules
-- [Quantum Routing Progress](QUANTUM_ROUTING_PROGRESS.md) - Advanced routing implementation
+- [API Documentation](api-documentation.md) - API reference and usage
+- [Microsoft Agent Framework Integration](MICROSOFT_AGENT_FRAMEWORK_INTEGRATION.md) - Agent framework integration
 
-## Deployment
+## 📦 Deployment
 
-- [Deployment Guide](DEPLOYMENT.md) - Railway deployment and local development
-- [Railway Deployment Guide](railway-deployment-guide.md) - Railway-specific optimizations
-- [Build Outputs and Ignores](BUILD_OUTPUTS_AND_IGNORES.md) - Build configuration
+- **[Railway Deployment](../RAILWAY_DEPLOYMENT.md)** - Authoritative Railway deployment guide (root)
+- [Deployment Guide](DEPLOYMENT.md) - General deployment strategies
+- [Railway Deployment Guide](railway-deployment-guide.md) - Railway-specific details
+- [Production Deployment Guide](production-deployment-guide.md) - Production best practices
+- [Deployment Architecture](deployment/) - Architecture diagrams and service setup
 
-## Workflows
+## 🗺️ Roadmap & Planning
 
-- [AI Automated Workflows](AI_AUTOMATED_WORKFLOWS.md) - Automation patterns
-- [Documentation Structure](DOCUMENTATION_STRUCTURE.md) - Documentation organization
-- [Navigation Best Practices](NAVIGATION_BEST_PRACTICES.md) - UI/UX guidelines
+- [Project Roadmap](roadmap.md) - High-level roadmap overview
+- [Roadmap Details](roadmap/) - Detailed roadmap documentation (36+ files)
+  - [Current Development](roadmap/current-development.md) - Active work in progress
+  - [Backlog & Priorities](roadmap/backlog-and-priorities.md) - Prioritized tasks
+  - [Technical Architecture](roadmap/technical-architecture.md) - Architecture decisions
 
-## Roadmap
+## 🔧 Specialized Topics
 
-- [Project Roadmap](roadmap.md) - Development roadmap and milestones
+- [TRM Integration](trm-integration.md) - TRM system integration
+- [Monkey Coder Agent](monkey_coder_agent.md) - Agent system documentation
 
-## Reference
+## 📚 Historical Documentation
 
-- [Railway Docs Links](railway-docs-links.md) - Railway documentation references
-- [Railpack Docs Links](railpack-docs-links.md) - Railpack configuration references
-- [Changelog](../CHANGELOG.md) - Version history
+- **[Archive](../archive/reports/2025/)** - Historical reports and documentation
+  - Phase completion reports
+  - Session summaries  
+  - Build tool evaluations
+  - Railway troubleshooting history
 
 ## Docusaurus Site
 
