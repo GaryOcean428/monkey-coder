@@ -15,19 +15,27 @@
 
 ## 📦 Deployment
 
-- **[Railway Deployment](../RAILWAY_DEPLOYMENT.md)** - Authoritative Railway deployment guide (root)
-- [Deployment Guide](DEPLOYMENT.md) - General deployment strategies
-- [Railway Deployment Guide](railway-deployment-guide.md) - Railway-specific details
+- **[Railway Deployment](../RAILWAY_DEPLOYMENT.md)** - Authoritative Railway configuration guide (root)
+- **[Deployment Guide](DEPLOYMENT.md)** - Overview of deployment architectures and strategies
 - [Production Deployment Guide](production-deployment-guide.md) - Production best practices
-- [Deployment Architecture](deployment/) - Architecture diagrams and service setup
+- [Deployment Details](deployment/) - Detailed deployment documentation
+  - [Railway Optimization](deployment/railway-optimization.md) - Performance and monitoring
+  - [Railway Architecture](deployment/railway-architecture.md) - Architecture diagrams
+  - [Railway Services Setup](deployment/railway-services-setup.md) - Service configuration
+  - [System Resource Limits](deployment/SYSTEM_RESOURCE_LIMITS.md) - Resource management
 
 ## 🗺️ Roadmap & Planning
 
-- [Project Roadmap](roadmap.md) - High-level roadmap overview
-- [Roadmap Details](roadmap/) - Detailed roadmap documentation (36+ files)
+- **[Comprehensive Roadmap Index](roadmap.md)** - Authoritative roadmap with 36+ detailed sub-documents
+  - Version 4.1.0, last updated 2025-08-21
+  - Covers all phases, technical specs, implementation guidelines
+- **[Quick Roadmap Summary](../ROADMAP.md)** - Executive summary at repository root
+- [Roadmap Details](roadmap/) - Detailed roadmap documentation directory
   - [Current Development](roadmap/current-development.md) - Active work in progress
-  - [Backlog & Priorities](roadmap/backlog-and-priorities.md) - Prioritized tasks
+  - [Backlog & Priorities](roadmap/backlog-and-priorities.md) - Prioritized tasks (P0-P2)
   - [Technical Architecture](roadmap/technical-architecture.md) - Architecture decisions
+  - [Phase 1.7 Critical Gaps](roadmap/phase-1-7-critical-gaps.md) - ✅ Complete
+  - [Phase 2.0 Production Deployment](roadmap/phase-2-0-production-deployment.md) - 🚧 Current
 
 ## 🔧 Specialized Topics
 
