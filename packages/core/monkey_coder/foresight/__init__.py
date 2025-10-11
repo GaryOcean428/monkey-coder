@@ -22,12 +22,21 @@ from .predictive_engine import (
     ProbabilityNode
 )
 
+from .trm_foresight import (
+    TRMPredictiveForesightEngine,
+    TRMForesightConfig,
+    create_trm_foresight_engine
+)
+
 __all__ = [
     "PredictiveForesightEngine",
     "ForesightType",
     "ForesightContext",
     "Prediction",
-    "ProbabilityNode"
+    "ProbabilityNode",
+    "TRMPredictiveForesightEngine",
+    "TRMForesightConfig",
+    "create_trm_foresight_engine"
 ]
 
 # Claude 4.5 Model Specifications for Foresight Engine
