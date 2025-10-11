@@ -8,17 +8,29 @@
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.13"
+      "python": "3.13",
+      "node": "20"
     },
     "cache": {
       "paths": [
+        "node_modules",
+        ".yarn/cache",
         ".venv",
         "__pycache__",
         ".cache/huggingface"
       ]
     },
     "steps": {
-      "install": {
+      "install-yarn": {
+        "commands": [
+          "echo '📦 Setting up Yarn for monorepo...'",
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn install --immutable",
+          "echo '✅ Yarn dependencies installed (including React for Docusaurus)'"
+        ]
+      },
+      "install-ml": {
         "commands": [
           "echo '🔍 Verifying Python version...'",
           "python --version",
@@ -30,7 +42,8 @@
           "echo '✅ ML dependencies installed (2.5GB+ with CUDA)'",
           "echo '🧪 Verifying PyTorch installation...'",
           ".venv/bin/python -c 'import torch; print(f\"PyTorch {torch.__version__}\")'"
-        ]
+        ],
+        "inputs": [{"step": "install-yarn"}]
       }
     },
     "env": {
