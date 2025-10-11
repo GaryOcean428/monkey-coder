@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+
 import { EnhancedSplash } from '../enhanced-splash.js';
 
 export function createSplashTestCommand(): Command {

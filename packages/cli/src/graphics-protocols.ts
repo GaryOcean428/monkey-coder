@@ -1,8 +1,10 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 import sharp from 'sharp';
 import termImg from 'term-img';
 import chalk from 'chalk';
+
 import { getOptimalImageDimensions, TerminalCapabilities } from './terminal-capabilities.js';
 
 // ES module equivalent of __dirname

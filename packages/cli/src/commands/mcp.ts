@@ -3,11 +3,12 @@
  */
 
 import { Command } from 'commander';
-import { MonkeyCoderAPIClient } from '../api-client.js';
-import { ConfigManager } from '../config.js';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
+
+import { ConfigManager } from '../config.js';
+import { MonkeyCoderAPIClient } from '../api-client.js';
 import { formatError } from '../utils.js';
 
 export function createMCPCommand(config: ConfigManager): Command {

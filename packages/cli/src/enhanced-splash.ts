@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import boxen from 'boxen';
+
 import { ConfigManager } from './config.js';
 import { detectTerminalCapabilities, getBestGraphicsProtocol } from './terminal-capabilities.js';
 import { GraphicsProtocols } from './graphics-protocols.js';

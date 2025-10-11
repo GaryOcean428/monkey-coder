@@ -6,9 +6,11 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
+
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
+
 import { requireAuth } from './auth.js';
 
 interface UsageData {

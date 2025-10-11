@@ -1,14 +1,16 @@
 #!/usr/bin/env node
 
 // Trigger CI/CD pipeline for npm publishing
+import * as path from 'path';
+import * as readline from 'readline';
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as dotenv from 'dotenv';
 import fs from 'fs-extra';
-import * as path from 'path';
 import * as Sentry from '@sentry/node';
-import * as readline from 'readline';
+
 
 import { MonkeyCoderAPIClient } from './api-client.js';
 import { ConfigManager } from './config.js';
