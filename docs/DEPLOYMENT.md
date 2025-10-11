@@ -1,6 +1,12 @@
 # Deployment Guide
 
-## Railway Deployment
+> 📖 **For Railway deployment**, see [../RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md) - the authoritative guide with complete Railway configuration, environment variables, and troubleshooting.
+
+## Deployment Overview
+
+Monkey Coder can be deployed in various environments with different architectures:
+
+### Railway Deployment (Recommended)
 
 Monkey Coder supports **two deployment architectures** on Railway:
 1. **Single-Service Deployment** (Simplified): Python backend + Next.js frontend in one service
@@ -9,6 +15,12 @@ Monkey Coder supports **two deployment architectures** on Railway:
 Choose based on your needs:
 - **Single-service**: Easier setup, lower cost, suitable for development/testing
 - **Multi-service**: Better scalability, independent scaling, production-ready
+
+**Documentation**:
+- [RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md) - Authoritative configuration guide
+- [deployment/railway-optimization.md](deployment/railway-optimization.md) - Performance monitoring and optimization
+- [deployment/railway-architecture.md](deployment/railway-architecture.md) - Architecture diagrams
+- [deployment/railway-services-setup.md](deployment/railway-services-setup.md) - Service setup details
 
 ### Architecture Options
 

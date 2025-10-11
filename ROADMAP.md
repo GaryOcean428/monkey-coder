@@ -3,12 +3,15 @@
 **Last Updated**: October 2025  
 **Status**: Production Ready - Phase 2.0 Deployment in Progress
 
+> 📖 **For comprehensive roadmap details**, see [docs/roadmap.md](docs/roadmap.md) - the authoritative roadmap index with 36+ detailed sub-documents covering all phases, technical specifications, and implementation guidelines.
+
 ## Quick Links
 
-- 📋 [Detailed Roadmap](docs/roadmap/) - Complete roadmap documentation
-- 🚧 [Current Development](docs/roadmap/current-development.md) - Active work
+- 📋 **[Comprehensive Roadmap](docs/roadmap.md)** - Complete roadmap index (authoritative)
+- 🚧 [Current Development](docs/roadmap/current-development.md) - Active work in progress
 - 📊 [Backlog & Priorities](docs/roadmap/backlog-and-priorities.md) - Prioritized tasks
 - ⚡ [Quick Start](AGENTS.md) - Setup and development guide
+- 🚀 [Railway Deployment](RAILWAY_DEPLOYMENT.md) - Authoritative deployment guide
 
 ## Current Status
 
