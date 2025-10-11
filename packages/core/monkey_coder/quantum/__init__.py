@@ -81,6 +81,19 @@ from .state_encoder import (
     create_state_encoder
 )
 
+# Phase 2.2: TRM Refinement Components
+from .trm_refinement import (
+    TRMRefinementModule,
+    TRMConfig,
+    RefinementStep,
+    create_trm_module
+)
+
+from .trm_router import (
+    TRMRouter,
+    create_trm_router
+)
+
 __all__ = [
     # Core quantum execution
     "QuantumManager",
@@ -131,6 +144,14 @@ __all__ = [
     "ResourceConstraints",
     "ContextComplexity",
     "create_state_encoder",
+    
+    # TRM refinement components
+    "TRMRefinementModule",
+    "TRMConfig",
+    "RefinementStep",
+    "create_trm_module",
+    "TRMRouter",
+    "create_trm_router",
 ]
 
 __version__ = "2.0.0"  # Phase 2 implementation
