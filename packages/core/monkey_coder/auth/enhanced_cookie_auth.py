@@ -31,6 +31,7 @@ from ..security import (
     get_user_permissions,
 )
 from ..database import get_user_store, User
+from .redis_session_backend import redis_session_backend
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +103,10 @@ class EnhancedAuthManager:
         self.config = config or AuthConfig()
         self.security = HTTPBearer(auto_error=False)
 
-        # Session storage (in production, use Redis or similar)
+        # Session storage - now uses Redis backend with in-memory fallback
+        # Legacy in-memory storage kept for backward compatibility
         self._sessions: Dict[str, Dict[str, Any]] = {}
+        self._use_redis = True  # Attempt to use Redis by default
 
     def generate_session_id(self) -> str:
         """Generate a secure session ID."""
@@ -113,8 +116,8 @@ class EnhancedAuthManager:
         """Generate a CSRF token."""
         return secrets.token_urlsafe(CSRF_TOKEN_LENGTH)
 
-    def create_session(self, user_id: str, user_agent: str, ip_address: str) -> str:
-        """Create a new authentication session."""
+    async def create_session(self, user_id: str, user_agent: str, ip_address: str) -> str:
+        """Create a new authentication session with Redis persistence."""
         session_id = self.generate_session_id()
         csrf_token = self.generate_csrf_token() if self.config.enable_csrf_protection else None
 
@@ -131,52 +134,106 @@ class EnhancedAuthManager:
             "is_active": True,
         }
 
-        self._sessions[session_id] = session_data
-        logger.info(f"Created new session {session_id} for user {user_id}")
+        # Store in Redis with fallback to in-memory
+        if self._use_redis:
+            try:
+                ttl_seconds = self.config.session_timeout_minutes * 60
+                await redis_session_backend.set(session_id, session_data, ttl_seconds)
+                logger.info(f"Created new session {session_id} for user {user_id} (Redis)")
+            except Exception as e:
+                logger.warning(f"Failed to store session in Redis, using memory: {e}")
+                self._sessions[session_id] = session_data
+                logger.info(f"Created new session {session_id} for user {user_id} (memory fallback)")
+        else:
+            self._sessions[session_id] = session_data
+            logger.info(f"Created new session {session_id} for user {user_id} (memory)")
 
         return session_id
 
-    def validate_session(self, session_id: str, request: Request) -> bool:
-        """Validate a session and update last activity."""
-        if session_id not in self._sessions:
+    async def validate_session(self, session_id: str, request: Request) -> bool:
+        """Validate a session and update last activity with Redis support."""
+        # Try to get session from Redis first
+        session = None
+        if self._use_redis:
+            try:
+                session = await redis_session_backend.get(session_id)
+            except Exception as e:
+                logger.warning(f"Failed to get session from Redis: {e}")
+        
+        # Fallback to in-memory
+        if session is None:
+            session = self._sessions.get(session_id)
+        
+        if session is None:
             return False
-
-        session = self._sessions[session_id]
 
         # Check if session is expired
         from ..utils.time import utc_now
         if utc_now() > session["expires_at"]:
-            del self._sessions[session_id]
+            # Delete expired session
+            if self._use_redis:
+                try:
+                    await redis_session_backend.delete(session_id)
+                except Exception:
+                    pass
+            if session_id in self._sessions:
+                del self._sessions[session_id]
             logger.info(f"Session {session_id} expired")
             return False
 
         # Check if session is active
-        if not session["is_active"]:
+        if not session.get("is_active", True):
             return False
 
         # Update last activity
-        session["last_activity"] = utc_now()
+        now = utc_now()
+        session["last_activity"] = now
+        
+        # Store updated session back
+        if self._use_redis:
+            try:
+                ttl_seconds = int((session["expires_at"] - now).total_seconds())
+                if ttl_seconds > 0:
+                    await redis_session_backend.set(session_id, session, ttl_seconds)
+            except Exception as e:
+                logger.warning(f"Failed to update session in Redis: {e}")
+                self._sessions[session_id] = session
+        else:
+            self._sessions[session_id] = session
 
         # Optional: Validate user agent and IP for session binding
         if self.config.enable_session_binding:
             current_user_agent = request.headers.get("user-agent", "")
             current_ip = request.client.host if request.client else ""
 
-            if (session["user_agent"] != current_user_agent or
-                session["ip_address"] != current_ip):
+            if (session.get("user_agent") != current_user_agent or
+                session.get("ip_address") != current_ip):
                 logger.warning(f"Session binding failed for {session_id}")
                 return False
 
         return True
 
-    def invalidate_session(self, session_id: str) -> bool:
-        """Invalidate a session."""
+    async def invalidate_session(self, session_id: str) -> bool:
+        """Invalidate a session with Redis support."""
+        deleted = False
+        
+        # Delete from Redis
+        if self._use_redis:
+            try:
+                deleted = await redis_session_backend.delete(session_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete session from Redis: {e}")
+        
+        # Delete from in-memory fallback
         if session_id in self._sessions:
             self._sessions[session_id]["is_active"] = False
             del self._sessions[session_id]
+            deleted = True
+        
+        if deleted:
             logger.info(f"Invalidated session {session_id}")
-            return True
-        return False
+        
+        return deleted
 
     def set_auth_cookies(
         self,

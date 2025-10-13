@@ -141,6 +141,17 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Monkey Coder Core Orchestration Engine...")
 
+    # Initialize Redis session backend
+    try:
+        from ..auth.redis_session_backend import redis_session_backend
+        await redis_session_backend.connect()
+        backend_stats = redis_session_backend.get_stats()
+        logger.info(f"Session backend initialized: {backend_stats['backend']} (health: {backend_stats['health']})")
+        app.state.session_backend = redis_session_backend
+    except Exception as e:
+        logger.warning(f"Failed to initialize session backend: {e}")
+        # Continue with in-memory fallback
+
     # Initialize environment configuration
     try:
         config = get_config()
@@ -288,6 +299,14 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down Monkey Coder Core...")
+
+    # Disconnect Redis session backend
+    if hasattr(app.state, 'session_backend'):
+        try:
+            await app.state.session_backend.disconnect()
+            logger.info("Session backend disconnected")
+        except Exception as e:
+            logger.warning(f"Could not disconnect session backend cleanly: {e}")
 
     # Cancel periodic cleanup task
     if hasattr(app.state, 'cleanup_task') and app.state.cleanup_task is not None:
@@ -728,20 +747,78 @@ async def readiness_check():
 
     Returns 200 if the application is ready to receive traffic,
     503 if still initializing or experiencing issues.
+    
+    Checks:
+    - Core components initialized
+    - Redis connectivity (if configured)
+    - Email service configured
+    - OAuth providers configured
     """
+    checks = {
+        "core_components": False,
+        "redis": None,
+        "email": None,
+        "oauth": None
+    }
+    
     # Check if critical components are initialized
-    if not all([
+    checks["core_components"] = all([
         hasattr(app.state, 'orchestrator'),
         hasattr(app.state, 'quantum_executor'),
         hasattr(app.state, 'provider_registry')
-    ]):
+    ])
+    
+    if not checks["core_components"]:
         return JSONResponse(
-            content={"status": "not_ready", "message": "Core components not initialized"},
+            content={
+                "status": "not_ready", 
+                "message": "Core components not initialized",
+                "checks": checks
+            },
             status_code=503
         )
+    
+    # Check Redis (optional but recommended for production)
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        try:
+            import redis
+            r = redis.from_url(redis_url, socket_connect_timeout=2)
+            r.ping()
+            checks["redis"] = "connected"
+        except Exception as e:
+            checks["redis"] = f"error: {str(e)[:50]}"
+            logger.warning(f"Redis health check failed: {e}")
+    else:
+        checks["redis"] = "not_configured"
+    
+    # Check email service configuration
+    resend_key = os.getenv("RESEND_API_KEY")
+    if resend_key:
+        checks["email"] = "configured"
+    else:
+        checks["email"] = "not_configured"
+    
+    # Check OAuth providers
+    google_configured = bool(os.getenv("GOOGLE_OAUTH_CLIENT_ID") and os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"))
+    github_configured = bool(os.getenv("GITHUB_OAUTH_CLIENT_ID") and os.getenv("GITHUB_OAUTH_CLIENT_SECRET"))
+    
+    if google_configured or github_configured:
+        providers = []
+        if google_configured:
+            providers.append("google")
+        if github_configured:
+            providers.append("github")
+        checks["oauth"] = f"configured: {', '.join(providers)}"
+    else:
+        checks["oauth"] = "not_configured"
 
     return JSONResponse(
-        content={"status": "ready", "timestamp": datetime.utcnow().isoformat()},
+        content={
+            "status": "ready", 
+            "timestamp": datetime.utcnow().isoformat(),
+            "checks": checks
+        },
         status_code=200
     )
 
