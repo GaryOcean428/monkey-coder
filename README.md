@@ -939,6 +939,71 @@ railway up --force
 railway variables
 ```
 
+### Railway Service Configuration Management
+
+The project includes automated tools for Railway service configuration management:
+
+#### Automated Configuration Updater
+
+Update all Railway services with correct environment variables and settings:
+
+```bash
+# Preview changes (dry-run)
+python scripts/railway-service-config-updater.py --dry-run
+
+# Apply configuration to all services
+python scripts/railway-service-config-updater.py
+
+# Update specific service
+python scripts/railway-service-config-updater.py --service monkey-coder-backend
+
+# Generate shell script for manual execution
+python scripts/railway-service-config-updater.py --generate-commands
+bash railway-update-commands.sh
+```
+
+**Features:**
+- ✅ Direct service ID targeting for precise updates
+- ✅ Comprehensive environment variable management
+- ✅ Automatic secret detection and masking
+- ✅ Dry-run mode for safe testing
+- ✅ Command generation for manual execution
+- ✅ JSON summary export
+
+#### Configuration Verification
+
+Verify that Railway services are properly configured:
+
+```bash
+# Verify all services
+python scripts/verify-railway-config.py
+
+# Verify specific service
+python scripts/verify-railway-config.py --service monkey-coder-backend
+
+# Generate JSON compliance report
+python scripts/verify-railway-config.py --json > compliance-report.json
+```
+
+**Checks:**
+- ✅ Railpack configuration files exist and are valid
+- ✅ Required environment variables are set
+- ✅ Health check configuration
+- ✅ Service settings compliance
+
+#### Service Configuration Documentation
+
+See comprehensive guides:
+- **[RAILWAY_SERVICE_CONFIGURATION.md](./RAILWAY_SERVICE_CONFIGURATION.md)** - Complete configuration guide
+- **[RAILWAY_SERVICE_SETTINGS.md](./RAILWAY_SERVICE_SETTINGS.md)** - Quick reference
+- **[RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)** - Deployment guide
+- **[RAILWAY_PRODUCTION_CHECKLIST.md](./RAILWAY_PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+
+**Service IDs (AetherOS Project):**
+- `monkey-coder` (Frontend): `ccc58ca2-1f4b-4086-beb6-2321ac7dab40`
+- `monkey-coder-backend` (API): `6af98d25-621b-4a2d-bbcb-7acb314fbfed`
+- `monkey-coder-ml` (ML): `07ef6ac7-e412-4a24-a0dc-74e301413eaa`
+
 ### Local Development with Railway
 
 ```bash
