@@ -2,6 +2,26 @@
 
 This document provides the exact settings needed for each Railway service in the dashboard.
 
+## 🚀 Automated Configuration (Recommended)
+
+Use the automated configuration script for faster, error-free setup:
+
+```bash
+# Preview changes (dry-run)
+python scripts/railway-service-config-updater.py --dry-run
+
+# Apply configuration to all services
+python scripts/railway-service-config-updater.py
+
+# Generate shell script for manual execution
+python scripts/railway-service-config-updater.py --generate-commands
+bash railway-update-commands.sh
+```
+
+**See [RAILWAY_SERVICE_CONFIGURATION.md](./RAILWAY_SERVICE_CONFIGURATION.md) for complete guide.**
+
+---
+
 ## Service IDs Reference
 
 Based on the problem statement:
