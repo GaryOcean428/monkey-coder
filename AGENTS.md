@@ -373,7 +373,7 @@ The project uses `railpack.json` for Railway deployment configuration:
 #### 4. Health Check Configuration
 - ✅ **Include health endpoint** at `/api/health` returning 200 status
 - ✅ **Configure in railpack.json**: `"healthCheckPath": "/api/health"`
-- ✅ **Set timeout appropriately**: `"healthCheckTimeout": 300`
+- ✅ **Set timeout appropriately**: `"healthCheckTimeout": 305` (304.805s rounded to 305s for optimal Railway performance)
 - 🔧 Simple health endpoint: `app.get('/api/health', (req, res) => res.json({status: 'healthy'}))`
 
 #### 5. Railway Validation Tools

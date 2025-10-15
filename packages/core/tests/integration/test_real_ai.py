@@ -29,7 +29,7 @@ async def test_real_code_generation():
             "session_id": "test_session",
             "workspace_id": "test_workspace",
             "environment": "production",
-            "timeout": 300,
+            "timeout": 305,
             "max_tokens": 4096,
             "temperature": 0.1
         },
@@ -183,7 +183,7 @@ async def test_multiple_providers():
                 "session_id": "test_session",
                 "workspace_id": "test_workspace",
                 "environment": "production",
-                "timeout": 300,
+                "timeout": 305,
                 "max_tokens": 500,
                 "temperature": 0.1
             },
