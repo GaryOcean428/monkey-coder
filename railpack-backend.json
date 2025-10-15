@@ -51,7 +51,7 @@
   "deploy": {
     "startCommand": ".venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
-    "healthCheckTimeout": 300,
+    "healthCheckTimeout": 305,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "env": {

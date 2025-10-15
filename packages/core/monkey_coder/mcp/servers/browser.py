@@ -28,7 +28,7 @@ class BrowserMCPServer:
         """
         self.config = config
         self.headless = config.get("headless", True)
-        self.timeout = config.get("timeout", 30000)
+        self.timeout = config.get("timeout", 304805)
         self.user_agent = config.get("user_agent", "Monkey-Coder-MCP/1.0")
         self._session: Optional[httpx.AsyncClient] = None
         self._html2text = html2text.HTML2Text()

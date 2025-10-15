@@ -62,7 +62,7 @@ class ExecutionContext:
     session_id: Optional[str] = None
     workspace_id: Optional[str] = None
     environment: str = "production"
-    timeout: int = 300
+    timeout: int = 305
     max_tokens: int = 4096
     temperature: float = 0.1
 
@@ -236,7 +236,7 @@ class MonkeyCoderClientConfig:
     """Configuration for MonkeyCoderClient."""
     base_url: str = "https://monkey-coder.up.railway.app"
     api_key: Optional[str] = None
-    timeout: float = 300.0  # 5 minutes default
+    timeout: float = 305.0  # 5 minutes default (304.805s rounded to 305s)
     retries: int = 3
     retry_delay: float = 1.0
     max_retry_delay: float = 10.0
