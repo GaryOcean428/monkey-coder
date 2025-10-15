@@ -3,55 +3,33 @@
   "version": "1",
   "metadata": {
     "name": "monkey-coder-frontend",
-    "description": "Next.js static export frontend service"
+    "description": "Next.js static export frontend - use for root directory deployments"
   },
-  "build": {
-    "provider": "node",
-    "packages": {
-      "node": "20",
-      "python": "3.13"
-    },
-    "cache": {
-      "paths": [
-        "node_modules",
-        ".yarn/cache",
-        "packages/web/.next",
-        "packages/web/out",
-        ".venv",
-        "__pycache__"
+  "steps": {
+    "install": {
+      "commands": [
+        "corepack enable && corepack prepare yarn@4.9.2 --activate",
+        "yarn install --immutable"
       ]
     },
-    "steps": {
-      "install": {
-        "commands": [
-          "echo '📦 Installing dependencies for Monkey Coder...'",
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable",
-          "echo '✅ Dependencies installed'"
-        ]
-      },
-      "build": {
-        "commands": [
-          "echo '🔨 Building frontend (Next.js static export)...'",
-          "yarn workspace @monkey-coder/web build",
-          "echo '📦 Installing serve for static file serving...'",
-          "yarn global add serve@14.2.4",
-          "echo '✅ Frontend build complete - static files in packages/web/out/'"
-        ]
-      }
-    },
-    "env": {
-      "NODE_ENV": "production",
-      "NEXT_OUTPUT_EXPORT": "true",
-      "NEXT_TELEMETRY_DISABLED": "1"
+    "build": {
+      "inputs": [{ "step": "install" }],
+      "commands": [
+        "yarn workspace @monkey-coder/web build",
+        "yarn global add serve@14.2.4"
+      ]
     }
   },
   "deploy": {
-    "startCommand": "serve -s packages/web/out -l $PORT -c serve.json",
-    "healthCheckPath": "/",
-    "healthCheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "startCommand": "serve -s packages/web/out -l $PORT --no-clipboard",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "always",
+    "variables": {
+      "NODE_ENV": "production",
+      "NEXT_OUTPUT_EXPORT": "true",
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "YARN_ENABLE_TELEMETRY": "0"
+    }
   }
 }
