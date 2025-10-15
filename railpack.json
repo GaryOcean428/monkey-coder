@@ -5,6 +5,12 @@
     "name": "monkey-coder-frontend",
     "description": "Next.js static export frontend - use for root directory deployments"
   },
+  "build": {
+    "provider": "node",
+    "packages": {
+      "node": "20"
+    }
+  },
   "steps": {
     "install": {
       "commands": [

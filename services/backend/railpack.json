@@ -5,6 +5,12 @@
     "name": "monkey-coder-backend",
     "description": "FastAPI backend with authentication, routing, and AI orchestration (lightweight - no ML dependencies)"
   },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.13"
+    }
+  },
   "steps": {
     "install": {
       "commands": [
