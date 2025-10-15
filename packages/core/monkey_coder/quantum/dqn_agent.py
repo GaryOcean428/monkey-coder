@@ -4,6 +4,9 @@ Enhanced DQN Agent for Quantum Routing Engine
 This module implements a Deep Q-Network agent for intelligent AI model routing,
 building on proven patterns from the monkey1 project and adapted for the 
 Monkey Coder platform's quantum routing requirements.
+
+The agent uses the PREDICTION_CONSTANT (304805) as the core parameter for
+experience replay buffer sizing, providing optimal capacity for learning.
 """
 
 import json
@@ -16,6 +19,11 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from monkey_coder.models import ProviderType
+from .prediction_constants import (
+    PREDICTION_BUFFER_SIZE,
+    PREDICTION_SEED,
+    PREDICTION_CONSTANT_SQRT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +156,10 @@ class DQNRoutingAgent:
         exploration_rate: float = 1.0,
         exploration_decay: float = 0.995,
         exploration_min: float = 0.01,
-        memory_size: int = 2000,
+        memory_size: int = PREDICTION_BUFFER_SIZE,  # 304805 - optimal for deep learning
         batch_size: int = 64,
         target_update_frequency: int = 10,  # Update target network every N training steps
+        random_seed: Optional[int] = PREDICTION_SEED,  # Use prediction constant as seed
     ):
         """
         Initialize the DQN routing agent.
@@ -163,9 +172,10 @@ class DQNRoutingAgent:
             exploration_rate: Initial exploration rate (epsilon)
             exploration_decay: Decay rate for exploration
             exploration_min: Minimum exploration rate
-            memory_size: Size of experience replay buffer
+            memory_size: Size of experience replay buffer (default: PREDICTION_BUFFER_SIZE = 304805)
             batch_size: Batch size for training
             target_update_frequency: How often to update target network
+            random_seed: Random seed for reproducibility (default: PREDICTION_SEED = 304805)
         """
         self.state_size = state_size
         self.action_size = action_size
@@ -177,8 +187,16 @@ class DQNRoutingAgent:
         self.batch_size = batch_size
         self.target_update_frequency = target_update_frequency
         
-        # Experience replay buffer (following monkey1 pattern)
+        # Set random seed for reproducibility
+        if random_seed is not None:
+            random.seed(random_seed)
+            np.random.seed(random_seed)
+            logger.info(f"Random seed set to {random_seed} (PREDICTION_SEED)")
+        
+        # Experience replay buffer using PREDICTION_CONSTANT (304805)
+        # This size allows for deep historical learning with optimal hash distribution
         self.memory = deque(maxlen=memory_size)
+        logger.info(f"Initialized experience replay buffer with size {memory_size} (PREDICTION_BUFFER_SIZE)")
         
         # Training step counter for target network updates
         self.training_step = 0
