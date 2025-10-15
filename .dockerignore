@@ -72,7 +72,6 @@ monitoring/
 *.stTheme.cache
 .vscode/*
 !.vscode/settings.json
-!.vscode/extensions.json
 
 # Temporary files
 tmp/

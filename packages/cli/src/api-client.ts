@@ -4,9 +4,18 @@
  */
 
 import { createParser } from 'eventsource-parser';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 import { ExecuteRequest, ExecuteResponse, StreamEvent } from './types.js';
 
+// Read package version for User-Agent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = join(__dirname, '../package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+const CLI_VERSION = packageJson.version;
 
 export class MonkeyCoderAPIClient {
   private baseUrl: string;
@@ -21,7 +30,7 @@ export class MonkeyCoderAPIClient {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'User-Agent': 'monkey-coder-cli/1.0.0',
+      'User-Agent': `monkey-coder-cli/${CLI_VERSION}`,
       ...options.headers as Record<string, string>,
     };
 

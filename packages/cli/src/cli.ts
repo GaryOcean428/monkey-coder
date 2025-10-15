@@ -31,6 +31,16 @@ import { createUsageCommand, createBillingCommand } from './commands/usage.js';
 import { createMCPCommand } from './commands/mcp.js';
 import { printSplashSync } from './splash.js';
 
+// Read package version
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = join(__dirname, '../package.json');
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+const CLI_VERSION = packageJson.version;
 
 // Initialize Sentry for error tracking
 if (process.env.SENTRY_DSN) {
@@ -56,7 +66,7 @@ if (noSplashIndex === -1) {
 program
   .name('monkey-coder')
   .description('Monkey Coder CLI - AI-powered code generation and analysis')
-  .version('1.1.0')
+  .version(CLI_VERSION)
   .option('--api-key <key>', 'API key for authentication')
   .option('--base-url <url>', 'Base URL for the API', process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000')
   .option('--config <path>', 'Path to configuration file')
