@@ -165,8 +165,7 @@ yarn workspace monkey-coder-cli test mcp-railway.test.ts
 
 ### Running All Tests
 ```bash
-# Run both Python and TypeScript tests
-cd /home/runner/work/monkey-coder/monkey-coder
+# Run both Python and TypeScript tests from project root
 
 # Python tests
 python -m pytest packages/core/tests/test_railway_mcp_integration.py -v
