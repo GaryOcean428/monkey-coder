@@ -1,4 +1,19 @@
-# Railway Deployment Configuration - AUTHORITATIVE GUIDE
+# Railway Deployment Configuration
+
+> **⚠️ OUTDATED - SEE UPDATED GUIDE**
+>
+> This document contains outdated information about Railway deployment using root-level `railpack.json` files.
+>
+> **For current, accurate deployment instructions, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Complete configuration guide
+>
+> **Last Updated:** 2025-01-16 (Archived 2025-10-16)
+>
+> This file is preserved for historical reference only.
+
+---
+
+# Railway Deployment Configuration - HISTORICAL
 
 ## 🚨 CRITICAL: Shared Monorepo Architecture
 

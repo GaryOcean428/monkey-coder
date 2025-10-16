@@ -1,5 +1,19 @@
 # Railway Migration: AetherOS → Monkey Project
 
+> **⚠️ HISTORICAL REFERENCE ONLY**
+>
+> This document describes the migration from AetherOS to Monkey project structure.
+> Much of the guidance here has been superseded by newer best practices.
+>
+> **For current deployment guidance, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Current guide
+>
+> **Archived:** 2025-10-16
+>
+> This file is preserved for historical reference only.
+
+---
+
 ## Overview
 Moving monkey-coder services from AetherOS to Monkey project using **railpack.json** configurations.
 

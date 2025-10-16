@@ -1,5 +1,17 @@
 # Railway Production Deployment Checklist
 
+> **⚠️ PARTIALLY OUTDATED**
+>
+> This checklist references deprecated root-level `railpack-*.json` files.
+> The checklist items are still valid, but configuration details have changed.
+>
+> **For updated configuration details, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Current configuration
+>
+> **Last Updated:** 2025-10-13 (Warning added 2025-10-16)
+
+---
+
 This checklist ensures all Railway services are properly configured for production deployment with no build failures and all production features enabled.
 
 ## Pre-Deployment Checklist

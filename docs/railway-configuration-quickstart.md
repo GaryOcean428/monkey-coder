@@ -1,5 +1,16 @@
 # Railway Configuration Quick Start Guide
 
+> **⚠️ OUTDATED - SEE UPDATED GUIDE**
+>
+> This document references deprecated root-level `railpack-*.json` files and automation scripts.
+>
+> **For current, accurate quick start, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Complete guide with quick start
+>
+> **Archived:** 2025-10-16
+
+---
+
 This guide will help you quickly set up and configure your Railway services for the AetherOS Monkey Coder project.
 
 ## 🎯 Prerequisites

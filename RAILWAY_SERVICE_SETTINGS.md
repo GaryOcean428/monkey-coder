@@ -1,5 +1,18 @@
 # Railway Service Settings - Quick Reference
 
+> **⚠️ OUTDATED - SEE UPDATED GUIDE**
+>
+> This document references deprecated root-level `railpack-*.json` files and `RAILWAY_CONFIG_FILE` variables.
+>
+> **For current, accurate configuration, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Complete guide
+>
+> **Archived:** 2025-10-16
+>
+> This file is preserved for historical reference only.
+
+---
+
 This document provides the exact settings needed for each Railway service in the dashboard.
 
 ## 🚀 Automated Configuration (Recommended)
