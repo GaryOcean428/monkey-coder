@@ -24,14 +24,16 @@ This document confirms that the Monkey Coder codebase is fully compliant with:
 
 ### ✅ Railway Build System
 
-- [x] **Single build system:** Only ONE `railpack.json` at root (Nx + Railway best practice)
-- [x] **No competing configs:** Removed railpack-backend.json, railpack-ml.json, services/*/railpack.json
-- [x] **Multi-service support:** Uses `services` configuration for frontend, backend, ml
-- [x] **Valid JSON:** Root railpack.json validated with `jq`
+- [x] **Official railpack.com specification** followed for all railpack.json files
+- [x] **Service-specific configs**: Root, services/backend, services/ml each with own railpack.json
+- [x] **No non-standard keys**: Removed 'services' key, using proper structure
+- [x] **Valid JSON:** All railpack.json files validated with `jq`
+- [x] **Schema compliance**: All files use `$schema: "https://schema.railpack.com"`
+- [x] **Proper structure**: metadata, build, steps, deploy sections
 - [x] **PORT binding:** All services use `$PORT` environment variable
-- [x] **0.0.0.0 binding:** All services bind to 0.0.0.0, not localhost
-- [x] **Health checks:** Configured for all services (/api/health for backend/ml, / for frontend)
-- [x] **Service references:** Use RAILWAY_PRIVATE_DOMAIN for inter-service communication
+- [x] **0.0.0.0 binding:** All services bind to 0.0.0.0
+- [x] **Health checks:** Configured for all services
+- [x] **Environment variables:** Use `env` key per railpack.com spec (not 'variables')
 
 ### ✅ Next.js Configuration
 
@@ -57,56 +59,90 @@ This document confirms that the Monkey Coder codebase is fully compliant with:
 - [x] **Build order:** Proper dependency chain via workspace protocol
 - [x] **Scripts:** Workspace-aware build/test/lint commands
 - [x] **TypeScript:** Shared tsconfig.base.json (if applicable)
-- [x] **Nx-style deployment:** Single root railpack.json with multi-service configuration
-- [x] **Service isolation:** Each service (frontend, backend, ml) independently configured
+- [x] **Nx-style deployment:** Service-specific railpack.json files
+- [x] **Service isolation:** Each service independently deployable
+- [x] **Railway root paths:** Frontend (root), Backend (services/backend), ML (services/ml)
 
 ## Configuration Files
 
-### railpack.json (Root - Nx Multi-Service)
+### Root railpack.json (Frontend Service)
 ```json
 {
+  "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-monorepo",
-    "description": "Monkey Coder monorepo - Nx-style multi-service deployment"
+    "name": "monkey-coder-frontend",
+    "description": "Next.js 15 frontend with static export"
   },
-  "services": {
-    "frontend": {
-      "root": "./packages/web",
-      "build": { "provider": "node" },
-      "deploy": {
-        "startCommand": "serve -s packages/web/out -l $PORT",
-        "healthCheckPath": "/"
-      }
-    },
-    "backend": {
-      "root": "./services/backend",
-      "build": { "provider": "python", "packages": { "python": "3.12" } },
-      "deploy": {
-        "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
-        "healthCheckPath": "/api/health"
-      }
-    },
-    "ml": {
-      "root": "./services/ml",
-      "build": { "provider": "python", "packages": { "python": "3.12" } },
-      "deploy": {
-        "startCommand": "python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
-        "healthCheckPath": "/api/health"
-      }
-    }
+  "build": {
+    "provider": "node",
+    "packages": { "node": "20" }
+  },
+  "steps": {
+    "install": { "commands": [...] },
+    "build": { "inputs": [{"step": "install"}], "commands": [...] }
+  },
+  "deploy": {
+    "startCommand": "serve -s packages/web/out -l $PORT",
+    "healthCheckPath": "/",
+    "healthCheckTimeout": 120,
+    "env": { "NODE_ENV": "production" }
+  }
+}
+```
+
+### services/backend/railpack.json
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-backend",
+    "description": "FastAPI backend service"
+  },
+  "build": {
+    "provider": "python",
+    "packages": { "python": "3.12" }
+  },
+  "deploy": {
+    "startCommand": "python -m uvicorn ... --port $PORT",
+    "healthCheckPath": "/api/health",
+    "env": { "PYTHONPATH": "/app:/app/packages/core" }
+  }
+}
+```
+
+### services/ml/railpack.json
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-ml",
+    "description": "ML inference service"
+  },
+  "build": {
+    "provider": "python",
+    "packages": { "python": "3.12" },
+    "cache": { "paths": [".cache/huggingface"] }
+  },
+  "deploy": {
+    "startCommand": "python -m uvicorn ... --port $PORT",
+    "healthCheckPath": "/api/health",
+    "env": { "TRANSFORMERS_CACHE": "/app/.cache/huggingface" }
   }
 }
 ```
 
 **✅ Compliance:**
-- Single root railpack.json (Nx + Railway best practice)
-- Multi-service configuration for monorepo
-- Each service uses $PORT environment variable
-- All services bind to 0.0.0.0
+- Follows official railpack.com specification
+- Each service has independent railpack.json
+- Uses `env` key (not 'variables') per spec
+- Proper `steps` with `inputs` for layer dependencies
+- All services use $PORT and bind to 0.0.0.0
 - Health checks configured for all services
 - Python 3.12 for Railway compatibility
-- Inter-service communication via RAILWAY_PRIVATE_DOMAIN
+- Service-specific configurations in service directories
 
 ### next.config.mjs
 ```javascript
@@ -175,17 +211,22 @@ $ find . -maxdepth 1 -name "Dockerfile" -o -name "railway.toml" -o -name "nixpac
 
 $ find . -name "railpack*.json" | grep -v node_modules
 ./railpack.json
-(only one root railpack.json - Nx compliant)
+./services/backend/railpack.json
+./services/ml/railpack.json
+(three railpack.json files - one per service, Nx compliant)
 ```
 
-### Multi-Service Configuration
+### Railpack.json Specification Compliance
 ```bash
-$ jq '.services | keys' railpack.json
-[
-  "frontend",
-  "backend",
-  "ml"
-]
+$ jq '.["$schema"]' railpack.json services/backend/railpack.json services/ml/railpack.json
+"https://schema.railpack.com"
+"https://schema.railpack.com"
+"https://schema.railpack.com"
+
+$ jq '.version' railpack.json services/backend/railpack.json services/ml/railpack.json
+"1"
+"1"
+"1"
 ```
 
 ## Next.js Best Practices
@@ -235,9 +276,10 @@ $ jq '.services | keys' railpack.json
 3. Updated Python version requirements to >=3.12
 4. Verified Next.js configuration follows best practices
 5. Confirmed no build system conflicts
-6. **Consolidated to single root railpack.json (Nx + Railway best practice)**
-7. **Removed all conflicting railpack files**
-8. **Configured multi-service deployment (frontend, backend, ml)**
+6. **Created service-specific railpack.json files per railpack.com spec**
+7. **Removed non-standard 'services' key from railpack.json**
+8. **Each service independently deployable via Railway root paths**
+9. **All railpack.json files follow official https://railpack.com/config/file/ specification**
 
 ### Future Enhancements
 1. Consider migrating to Yarn PnP for faster installs
