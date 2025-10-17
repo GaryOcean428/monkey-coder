@@ -9,7 +9,7 @@
 ## 🏗️ Architecture & Development
 
 - [Advanced Features](ADVANCED_FEATURES.md) - Platform capabilities and features
-- [Model Manifest](../MODEL_MANIFEST.md) - AI model configurations and capabilities
+- [Model Manifest](MODEL_MANIFEST.md) - AI model configurations and capabilities
 - [API Documentation](api-documentation.md) - API reference and usage
 - [Microsoft Agent Framework Integration](MICROSOFT_AGENT_FRAMEWORK_INTEGRATION.md) - Agent framework integration
 
@@ -29,7 +29,7 @@
 - **[Comprehensive Roadmap Index](roadmap.md)** - Authoritative roadmap with 36+ detailed sub-documents
   - Version 4.1.0, last updated 2025-08-21
   - Covers all phases, technical specs, implementation guidelines
-- **[Quick Roadmap Summary](../ROADMAP.md)** - Executive summary at repository root
+- **[Quick Roadmap Summary](roadmap/ROADMAP.md)** - Executive summary
 - [Roadmap Details](roadmap/) - Detailed roadmap documentation directory
   - [Current Development](roadmap/current-development.md) - Active work in progress
   - [Backlog & Priorities](roadmap/backlog-and-priorities.md) - Prioritized tasks (P0-P2)
