@@ -12,6 +12,7 @@ export default [
       'out/**',
       'node_modules/**',
       'coverage/**',
+      'next-env.d.ts', // Next.js generated file
     ],
   },
   // JS rules

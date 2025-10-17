@@ -10,8 +10,8 @@
 - 📋 **[Comprehensive Roadmap](docs/roadmap.md)** - Complete roadmap index (authoritative)
 - 🚧 [Current Development](docs/roadmap/current-development.md) - Active work in progress
 - 📊 [Backlog & Priorities](docs/roadmap/backlog-and-priorities.md) - Prioritized tasks
-- ⚡ [Quick Start](AGENTS.md) - Setup and development guide
-- 🚀 [Railway Deployment](RAILWAY_DEPLOYMENT.md) - Authoritative deployment guide
+- ⚡ [Quick Start](../../AGENTS.md) - Setup and development guide
+- 🚀 [Railway Deployment](../deployment/RAILWAY_DEPLOYMENT.md) - Authoritative deployment guide
 
 ## Current Status
 
@@ -145,7 +145,7 @@ cd packages/core && python -m uvicorn monkey_coder.app.main:app --reload
 
 ### Railway Deployment
 
-See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) for comprehensive Railway deployment guide.
+See [../deployment/RAILWAY_DEPLOYMENT.md](../deployment/RAILWAY_DEPLOYMENT.md) for comprehensive Railway deployment guide.
 
 **Quick Deploy:**
 ```bash

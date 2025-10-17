@@ -279,10 +279,10 @@ railway service list
 
 ## 📚 Additional Resources
 
-- **Complete Guide:** [RAILWAY_SERVICE_CONFIGURATION.md](../RAILWAY_SERVICE_CONFIGURATION.md)
-- **Service Settings:** [RAILWAY_SERVICE_SETTINGS.md](../RAILWAY_SERVICE_SETTINGS.md)
-- **Deployment Guide:** [RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md)
-- **Production Checklist:** [RAILWAY_PRODUCTION_CHECKLIST.md](../RAILWAY_PRODUCTION_CHECKLIST.md)
+- **Complete Guide:** [deployment/RAILWAY_SERVICE_CONFIGURATION.md](deployment/RAILWAY_SERVICE_CONFIGURATION.md)
+- **Service Settings:** [deployment/RAILWAY_SERVICE_SETTINGS.md](deployment/RAILWAY_SERVICE_SETTINGS.md)
+- **Deployment Guide:** [deployment/RAILWAY_DEPLOYMENT.md](deployment/RAILWAY_DEPLOYMENT.md)
+- **Production Checklist:** [deployment/RAILWAY_PRODUCTION_CHECKLIST.md](deployment/RAILWAY_PRODUCTION_CHECKLIST.md)
 
 ---
 
