@@ -2,40 +2,127 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder",
-    "description": "Next.js static export frontend - use for root directory deployments"
+    "name": "monkey-coder-monorepo",
+    "description": "Monkey Coder monorepo - Nx-style multi-service deployment"
   },
-  "build": {
-    "provider": "node",
-    "packages": {
-      "node": "20"
-    }
-  },
-  "steps": {
-    "install": {
-      "commands": [
-        "corepack enable && corepack prepare yarn@4.9.2 --activate",
-        "yarn install --immutable"
-      ]
+  "services": {
+    "frontend": {
+      "root": "./packages/web",
+      "build": {
+        "provider": "node",
+        "packages": {
+          "node": "20"
+        }
+      },
+      "steps": {
+        "install": {
+          "commands": [
+            "cd /app",
+            "corepack enable && corepack prepare yarn@4.9.2 --activate",
+            "yarn install --immutable"
+          ]
+        },
+        "build": {
+          "inputs": [{ "step": "install" }],
+          "commands": [
+            "cd /app",
+            "yarn workspace @monkey-coder/web build",
+            "yarn global add serve@14.2.4"
+          ]
+        }
+      },
+      "deploy": {
+        "startCommand": "serve -s packages/web/out -l $PORT --no-clipboard",
+        "healthCheckPath": "/",
+        "healthCheckTimeout": 120,
+        "restartPolicyType": "always",
+        "variables": {
+          "NODE_ENV": "production",
+          "NEXT_OUTPUT_EXPORT": "true",
+          "NEXT_TELEMETRY_DISABLED": "1",
+          "YARN_ENABLE_TELEMETRY": "0"
+        }
+      }
     },
-    "build": {
-      "inputs": [{ "step": "install" }],
-      "commands": [
-        "yarn workspace @monkey-coder/web build",
-        "yarn global add serve@14.2.4"
-      ]
-    }
-  },
-  "deploy": {
-    "startCommand": "serve -s packages/web/out -l $PORT --no-clipboard",
-    "healthcheckPath": "/",
-    "healthcheckTimeout": 120,
-    "restartPolicyType": "always",
-    "variables": {
-      "NODE_ENV": "production",
-      "NEXT_OUTPUT_EXPORT": "true",
-      "NEXT_TELEMETRY_DISABLED": "1",
-      "YARN_ENABLE_TELEMETRY": "0"
+    "backend": {
+      "root": "./services/backend",
+      "build": {
+        "provider": "python",
+        "packages": {
+          "python": "3.12"
+        }
+      },
+      "steps": {
+        "install": {
+          "commands": [
+            "pip install -U pip uv",
+            "uv pip install -r services/backend/requirements.txt --system"
+          ]
+        },
+        "build": {
+          "inputs": [{ "step": "install" }],
+          "commands": []
+        }
+      },
+      "deploy": {
+        "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT --workers 2 --loop uvloop",
+        "healthCheckPath": "/api/health",
+        "healthCheckTimeout": 305,
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 3,
+        "variables": {
+          "PYTHONPATH": "/app:/app/packages/core",
+          "PYTHONUNBUFFERED": "1",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "LOG_LEVEL": "INFO",
+          "ML_SERVICE_URL": "http://${{ml.RAILWAY_PRIVATE_DOMAIN}}"
+        }
+      }
+    },
+    "ml": {
+      "root": "./services/ml",
+      "build": {
+        "provider": "python",
+        "packages": {
+          "python": "3.12"
+        },
+        "cache": {
+          "paths": [
+            ".cache/huggingface",
+            "__pycache__"
+          ]
+        }
+      },
+      "steps": {
+        "install": {
+          "commands": [
+            "pip install -U pip uv",
+            "uv pip install -r services/ml/requirements.txt --system"
+          ]
+        },
+        "build": {
+          "inputs": [{ "step": "install" }],
+          "commands": [
+            "python -c 'import torch; print(f\"PyTorch {torch.__version__}\")'"
+          ]
+        }
+      },
+      "deploy": {
+        "startCommand": "python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT --workers 1",
+        "healthCheckPath": "/api/health",
+        "healthCheckTimeout": 600,
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 3,
+        "variables": {
+          "PYTHONPATH": "/app:/app/services/ml",
+          "PYTHONUNBUFFERED": "1",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "LOG_LEVEL": "INFO",
+          "TRANSFORMERS_CACHE": "/app/.cache/huggingface",
+          "HF_HOME": "/app/.cache/huggingface",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      }
     }
   }
 }
