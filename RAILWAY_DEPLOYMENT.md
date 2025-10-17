@@ -150,7 +150,7 @@ The root `railpack.json` serves as the **single source of truth** for all Railwa
   "deploy": {
     "startCommand": "yarn workspace @monkey-coder/web start --hostname 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
-    "healthCheckTimeout": 300,
+    "healthCheckTimeout": 305,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

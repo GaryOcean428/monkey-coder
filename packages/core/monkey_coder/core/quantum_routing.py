@@ -91,9 +91,9 @@ class QuantumAdvancedRouter(AdvancedRouter):
         self.quantum_routing_history: List[EnhancedRoutingDecision] = []
         self.performance_metrics: List[QuantumRoutingMetrics] = []
         self.state_vector_cache: Dict[str, np.ndarray] = {}
-    logger.info(f"Initialized QuantumAdvancedRouter with {self.encoding_strategy} encoding")
-    # Simple in-memory routing decision cache (Phase1)
-    self._routing_cache = RoutingDecisionCache()
+        logger.info(f"Initialized QuantumAdvancedRouter with {self.encoding_strategy} encoding")
+        # Simple in-memory routing decision cache (Phase1)
+        self._routing_cache = RoutingDecisionCache()
 
     def route_request(self, request: ExecuteRequest) -> RoutingDecision:
         """

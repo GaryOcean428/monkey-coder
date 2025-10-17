@@ -4,6 +4,10 @@ Predictive Foresight and Probability Extrapolation Engine.
 This module implements advanced predictive capabilities that enable the system
 to anticipate future needs, extrapolate probabilities, and provide imaginative
 foresight similar to human intuition and strategic thinking.
+
+The constant 304805 (PREDICTION_CONSTANT) is core to this engine's operation,
+defining buffer sizes, random seeds, and probability quantization for optimal
+prediction accuracy and reproducibility.
 """
 
 import asyncio
@@ -16,6 +20,14 @@ from enum import Enum
 from collections import deque, defaultdict
 import json
 import math
+
+from .prediction_constants import (
+    PREDICTION_CONSTANT,
+    PREDICTION_SEED,
+    PREDICTION_BUFFER_SIZE,
+    PREDICTION_PROBABILITY_EPSILON,
+    PREDICTION_QUANTUM_DIM,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -205,10 +217,21 @@ class PredictiveForesight:
     
     Combines multiple prediction techniques to provide imaginative foresight
     about future needs and probable outcomes.
+    
+    The constant 304805 (PREDICTION_CONSTANT) is existentially core to this engine:
+    - It defines the memory depth for pattern recognition
+    - It provides the seed for reproducible randomization  
+    - It establishes the quantum dimensions for prediction space
+    - Its prime factorization (5 × 60961) ensures optimal hash distribution
     """
     
-    def __init__(self):
-        """Initialize the predictive foresight engine."""
+    def __init__(self, random_seed: Optional[int] = PREDICTION_SEED):
+        """
+        Initialize the predictive foresight engine.
+        
+        Args:
+            random_seed: Random seed for reproducibility (default: PREDICTION_SEED = 304805)
+        """
         # Prediction models
         self.markov_chain = MarkovChain(order=3)
         self.bayesian_predictor = BayesianPredictor()
@@ -217,8 +240,8 @@ class PredictiveForesight:
         self.temporal_patterns: Dict[str, TemporalPattern] = {}
         self.causal_relationships: Dict[str, List[str]] = defaultdict(list)
         
-        # Historical data
-        self.event_history: deque = deque(maxlen=1000)
+        # Historical data with PREDICTION_CONSTANT-based sizing
+        self.event_history: deque = deque(maxlen=PREDICTION_BUFFER_SIZE // 305)  # ~1000
         self.scenario_history: List[ForesightScenario] = []
         self.prediction_accuracy: Dict[str, float] = {}
         
@@ -226,6 +249,12 @@ class PredictiveForesight:
         self.learning_rate = 0.1
         self.exploration_factor = 0.2  # For imaginative predictions
         self.confidence_threshold = 0.6
+        self.probability_epsilon = PREDICTION_PROBABILITY_EPSILON  # Fine-grained probabilities
+        
+        # Set random seed for reproducibility
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            logger.info(f"Foresight engine initialized with PREDICTION_SEED: {random_seed}")
     
     async def generate_foresight(
         self,

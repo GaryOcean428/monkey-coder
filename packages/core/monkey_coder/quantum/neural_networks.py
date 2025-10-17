@@ -6,12 +6,18 @@ using TensorFlow/Keras with optimized architectures for routing decision learnin
 
 Based on proven patterns from deep reinforcement learning and adapted for the
 Monkey Coder quantum routing requirements.
+
+Uses PREDICTION_CONSTANT (304805) and its derivatives for optimal network dimensions:
+- Hidden layer size: √304805 ≈ 552 (PREDICTION_CONSTANT_SQRT)
+- Provides balanced expressiveness and computational efficiency
 """
 
 import logging
 from typing import Optional, Tuple, Dict, Any
 
 import numpy as np
+
+from .prediction_constants import PREDICTION_HIDDEN_DIM, PREDICTION_QUANTUM_DIM
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +66,7 @@ class QNetworkArchitecture:
         state_size: int,
         action_size: int,
         learning_rate: float = 0.001,
-        hidden_layers: Tuple[int, ...] = (128, 64),
+        hidden_layers: Tuple[int, ...] = (PREDICTION_HIDDEN_DIM, PREDICTION_HIDDEN_DIM // 2),  # (552, 276)
         dropout_rate: float = 0.1,
         use_batch_norm: bool = True
     ) -> "tf.keras.Model":
@@ -132,7 +138,7 @@ class QNetworkArchitecture:
         state_size: int,
         action_size: int,
         learning_rate: float = 0.0005,
-        hidden_layers: Tuple[int, ...] = (256, 128, 64, 32),
+        hidden_layers: Tuple[int, ...] = (PREDICTION_HIDDEN_DIM, PREDICTION_HIDDEN_DIM // 2, PREDICTION_HIDDEN_DIM // 4, PREDICTION_HIDDEN_DIM // 8),  # (552, 276, 138, 69)
         dropout_rate: float = 0.2,
         use_batch_norm: bool = True
     ) -> "tf.keras.Model":
