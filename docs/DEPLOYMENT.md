@@ -1,6 +1,6 @@
 # Deployment Guide
 
-> 📖 **For Railway deployment**, see [../RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md) - the authoritative guide with complete Railway configuration, environment variables, and troubleshooting.
+> 📖 **For Railway deployment**, see [deployment/RAILWAY_DEPLOYMENT.md](deployment/RAILWAY_DEPLOYMENT.md) - the authoritative guide with complete Railway configuration, environment variables, and troubleshooting.
 
 ## Deployment Overview
 
@@ -17,7 +17,7 @@ Choose based on your needs:
 - **Multi-service**: Better scalability, independent scaling, production-ready
 
 **Documentation**:
-- [RAILWAY_DEPLOYMENT.md](../RAILWAY_DEPLOYMENT.md) - Authoritative configuration guide
+- [deployment/RAILWAY_DEPLOYMENT.md](deployment/RAILWAY_DEPLOYMENT.md) - Authoritative configuration guide
 - [deployment/railway-optimization.md](deployment/railway-optimization.md) - Performance monitoring and optimization
 - [deployment/railway-architecture.md](deployment/railway-architecture.md) - Architecture diagrams
 - [deployment/railway-services-setup.md](deployment/railway-services-setup.md) - Service setup details

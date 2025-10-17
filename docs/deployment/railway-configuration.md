@@ -576,7 +576,7 @@ Root Directory: services/backend
 - [Railway Architecture](./railway-architecture.md) - Understanding Railway's build system
 - [Railway Optimization](./railway-optimization.md) - Performance and monitoring
 - [Railway MCP Setup](./railway-services-setup.md) - MCP integration
-- [RAILWAY_DEPLOYMENT.md](../../RAILWAY_DEPLOYMENT.md) - Detailed deployment guide
+- [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) - Detailed deployment guide
 - [RAILWAY_PRODUCTION_CHECKLIST.md](../../RAILWAY_PRODUCTION_CHECKLIST.md) - Pre-deployment checklist
 
 ---

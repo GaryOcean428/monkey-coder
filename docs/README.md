@@ -15,7 +15,7 @@
 
 ## 📦 Deployment
 
-- **[Railway Deployment](../RAILWAY_DEPLOYMENT.md)** - Authoritative Railway configuration guide (root)
+- **[Railway Deployment](deployment/RAILWAY_DEPLOYMENT.md)** - Authoritative Railway configuration guide
 - **[Deployment Guide](DEPLOYMENT.md)** - Overview of deployment architectures and strategies
 - [Production Deployment Guide](production-deployment-guide.md) - Production best practices
 - [Deployment Details](deployment/) - Detailed deployment documentation
