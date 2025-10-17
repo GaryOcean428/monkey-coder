@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-ml",
+    "description": "ML inference service with PyTorch and Transformers"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12"
+    },
+    "cache": {
+      "paths": [
+        ".cache/huggingface",
+        "__pycache__"
+      ]
+    }
+  },
+  "steps": {
+    "install": {
+      "commands": [
+        "pip install -U pip uv",
+        "uv pip install -r services/ml/requirements.txt --system"
+      ]
+    },
+    "build": {
+      "inputs": [{ "step": "install" }],
+      "commands": [
+        "python -c 'import torch; print(f\"PyTorch {torch.__version__}\")'"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT --workers 1",
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 600,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "env": {
+      "PYTHONPATH": "/app:/app/services/ml",
+      "PYTHONUNBUFFERED": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "LOG_LEVEL": "INFO",
+      "TRANSFORMERS_CACHE": "/app/.cache/huggingface",
+      "HF_HOME": "/app/.cache/huggingface",
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  }
+}
