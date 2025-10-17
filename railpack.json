@@ -2,7 +2,7 @@
   "$schema": "https://schema.railpack.com",
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-frontend",
+    "name": "monkey-coder",
     "description": "Next.js static export frontend - use for root directory deployments"
   },
   "build": {
