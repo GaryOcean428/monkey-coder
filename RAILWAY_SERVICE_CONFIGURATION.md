@@ -1,7 +1,20 @@
 # Railway Service Configuration Guide
 
-**Last Updated:** 2025-10-13  
-**Project:** AetherOS Monkey Coder  
+> **⚠️ OUTDATED - SEE UPDATED GUIDE**
+>
+> This document references deprecated root-level `railpack-*.json` files and `RAILWAY_CONFIG_FILE` variables.
+>
+> **For current, accurate configuration, see:**
+> - [docs/deployment/railway-configuration.md](docs/deployment/railway-configuration.md) - Complete guide
+>
+> **Archived:** 2025-10-16
+>
+> This file is preserved for historical reference only.
+
+---
+
+**Last Updated:** 2025-10-13 (Archived 2025-10-16)
+**Project:** AetherOS Monkey Coder
 **Environment:** Production
 
 ## 🎯 Quick Start
