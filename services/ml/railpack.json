@@ -3,41 +3,49 @@
   "version": "1",
   "metadata": {
     "name": "monkey-coder-ml",
-    "description": "ML service with PyTorch, Transformers for code generation and embeddings"
+    "description": "DEPRECATED: Railway should use root railpack.json with rootDirectory='/'"
   },
   "build": {
     "provider": "python",
     "packages": {
-      "python": "3.13"
-    }
-  },
-  "steps": {
-    "install": {
-      "commands": [
-        "pip install -U pip uv",
-        "uv pip install -r services/ml/requirements.txt --system"
+      "python": "3.12"
+    },
+    "cache": {
+      "paths": [
+        "/app/.venv/lib/python3.12/site-packages",
+        "/app/.cache/huggingface"
       ]
     },
-    "build": {
-      "inputs": [{ "step": "install" }],
-      "commands": []
+    "steps": {
+      "install": {
+        "commands": [
+          "echo '⚠️  WARNING: This railpack.json should not be used!'",
+          "echo '⚠️  Configure Railway service with rootDirectory=/ or blank'",
+          "echo '⚠️  Railway will use /railpack.json from repo root'",
+          "cd ../.. && python -m venv .venv",
+          "cd ../.. && .venv/bin/pip install --upgrade pip setuptools wheel",
+          "cd ../.. && .venv/bin/pip install -r services/ml/requirements.txt"
+        ]
+      }
+    },
+    "env": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app:/app/services/ml",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
     }
   },
   "deploy": {
-    "startCommand": "python -m uvicorn services.ml.ml_server:app --host :: --port $PORT --workers 1",
-    "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 600,
+    "startCommand": "cd ../.. && .venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
-    "variables": {
-      "HOSTNAME": "::",
-      "PYTHONPATH": "/app:/app/services/ml",
-      "PYTHONUNBUFFERED": "1",
-      "PYTHONDONTWRITEBYTECODE": "1",
-      "LOG_LEVEL": "INFO",
-      "TRANSFORMERS_CACHE": "/app/.cache/huggingface",
-      "HF_HOME": "/app/.cache/huggingface",
-      "CUDA_VISIBLE_DEVICES": "0"
+    "env": {
+      "LOG_LEVEL": "info",
+      "HEALTH_CHECK_PATH": "/api/health",
+      "CUDA_VISIBLE_DEVICES": "0",
+      "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
     }
   }
 }
