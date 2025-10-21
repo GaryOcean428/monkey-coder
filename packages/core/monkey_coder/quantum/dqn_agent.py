@@ -97,18 +97,18 @@ class RoutingAction:
             (ProviderType.OPENAI, "o4-mini", "cost_efficient"),
             (ProviderType.OPENAI, "o1-mini", "task_optimized"),
             # Anthropic actions
-            (ProviderType.ANTHROPIC, "claude-3-7-sonnet-20250219", "performance"),
-            (ProviderType.ANTHROPIC, "claude-3-5-sonnet-latest", "balanced"),
-            (ProviderType.ANTHROPIC, "claude-3-5-haiku-latest", "cost_efficient"),
+            (ProviderType.ANTHROPIC, "claude-opus-4-1-20250805", "performance"),
+            (ProviderType.ANTHROPIC, "claude-4.5-sonnet-20250930", "balanced"),
+            (ProviderType.ANTHROPIC, "claude-4.5-haiku-20250930", "cost_efficient"),
             # Google actions
-            (ProviderType.GOOGLE, "gemini-2.0-pro-experimental", "performance"),
-            (ProviderType.GOOGLE, "gemini-2.0-flash", "balanced"),
-            (ProviderType.GOOGLE, "gemini-2.0-flash-lite", "cost_efficient"),
+            (ProviderType.GOOGLE, "gemini-2.5-pro", "performance"),
+            (ProviderType.GOOGLE, "gemini-2.5-flash", "balanced"),
+            (ProviderType.GOOGLE, "gemini-2.5-flash-lite", "cost_efficient"),
             # Groq actions
             (ProviderType.GROQ, "llama-3.1-70b-versatile", "task_optimized"),
             (ProviderType.GROQ, "llama-3.2-11b-text-preview", "balanced"),
             # Grok actions
-            (ProviderType.GROK, "grok-2-latest", "performance"),
+            (ProviderType.GROK, "grok-4-latest", "performance"),
         ]
         
         if action_index >= len(actions):
@@ -125,15 +125,15 @@ class RoutingAction:
             (ProviderType.OPENAI, "chatgpt-4.1", "performance"): 0,
             (ProviderType.OPENAI, "o4-mini", "cost_efficient"): 1,
             (ProviderType.OPENAI, "o1-mini", "task_optimized"): 2,
-            (ProviderType.ANTHROPIC, "claude-3-7-sonnet-20250219", "performance"): 3,
-            (ProviderType.ANTHROPIC, "claude-3-5-sonnet-latest", "balanced"): 4,
-            (ProviderType.ANTHROPIC, "claude-3-5-haiku-latest", "cost_efficient"): 5,
-            (ProviderType.GOOGLE, "gemini-2.0-pro-experimental", "performance"): 6,
-            (ProviderType.GOOGLE, "gemini-2.0-flash", "balanced"): 7,
-            (ProviderType.GOOGLE, "gemini-2.0-flash-lite", "cost_efficient"): 8,
+            (ProviderType.ANTHROPIC, "claude-opus-4-1-20250805", "performance"): 3,
+            (ProviderType.ANTHROPIC, "claude-4.5-sonnet-20250930", "balanced"): 4,
+            (ProviderType.ANTHROPIC, "claude-4.5-haiku-20250930", "cost_efficient"): 5,
+            (ProviderType.GOOGLE, "gemini-2.5-pro", "performance"): 6,
+            (ProviderType.GOOGLE, "gemini-2.5-flash", "balanced"): 7,
+            (ProviderType.GOOGLE, "gemini-2.5-flash-lite", "cost_efficient"): 8,
             (ProviderType.GROQ, "llama-3.1-70b-versatile", "task_optimized"): 9,
             (ProviderType.GROQ, "llama-3.2-11b-text-preview", "balanced"): 10,
-            (ProviderType.GROK, "grok-2-latest", "performance"): 11,
+            (ProviderType.GROK, "grok-4-latest", "performance"): 11,
         }
         
         return action_map.get((self.provider, self.model, self.strategy), 0)

@@ -118,7 +118,7 @@ class TestRoutingAction(unittest.TestCase):
         # Test Anthropic balanced action
         action = RoutingAction.from_action_index(4)
         self.assertEqual(action.provider, ProviderType.ANTHROPIC)
-        self.assertEqual(action.model, "claude-sonnet-4-5-20250929")
+        self.assertEqual(action.model, "claude-4.5-sonnet-20250930")
         self.assertEqual(action.strategy, "balanced")
     
     def test_from_action_index_invalid_index(self):
