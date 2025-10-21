@@ -1,0 +1,181 @@
+name: No-Regex Policy Enforcement
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint-policy:
+    name: Lint & Policy Check
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare Yarn
+        run: corepack prepare yarn@4.9.2 --activate
+
+      - name: Verify Yarn version
+        run: yarn --version
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run ESLint
+        run: yarn lint
+        continue-on-error: false
+
+      - name: Run type checking
+        run: yarn typecheck
+        continue-on-error: true
+
+  regex-guard:
+    name: Regex Pattern Guard
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Prepare Yarn
+        run: corepack prepare yarn@4.9.2 --activate
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Check for forbidden regex patterns
+        run: |
+          echo "Checking for forbidden regex patterns in changed files..."
+          
+          # Get list of changed TypeScript/JavaScript files
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD | grep -E '\.(ts|tsx|js|jsx)$' || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No TypeScript/JavaScript files changed."
+            exit 0
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo ""
+          
+          # Initialize error flag
+          HAS_ERRORS=0
+          
+          # Check for dangerous patterns in changed files
+          for file in $CHANGED_FILES; do
+            if [ ! -f "$file" ]; then
+              continue
+            fi
+            
+            # Skip test files, mock files, and explicitly allowed files
+            if [[ "$file" =~ \.test\.(ts|tsx|js|jsx)$ ]] || \
+               [[ "$file" =~ \.spec\.(ts|tsx|js|jsx)$ ]] || \
+               [[ "$file" =~ __tests__/ ]] || \
+               [[ "$file" =~ __mocks__/ ]] || \
+               [[ "$file" =~ src/lib/validation\.ts$ ]] || \
+               [[ "$file" =~ src/components/ui/password-strength\.tsx$ ]] || \
+               [[ "$file" =~ src/constants/colors\.ts$ ]]; then
+              echo "✓ Skipping allowed file: $file"
+              continue
+            fi
+            
+            # Check for new RegExp() usage (dynamic regex construction)
+            if grep -n "new RegExp(" "$file" > /dev/null 2>&1; then
+              echo "❌ ERROR: Dynamic RegExp construction found in $file"
+              grep -n "new RegExp(" "$file"
+              HAS_ERRORS=1
+            fi
+            
+            # Check for catch-all patterns (.*) in regex literals
+            if grep -n '/\.\*/' "$file" > /dev/null 2>&1; then
+              echo "⚠️  WARNING: Catch-all pattern (.*) found in $file"
+              grep -n '/\.\*/' "$file"
+              # Don't fail on this, just warn
+            fi
+            
+            # Check for nested capture groups (very basic check)
+            if grep -n '/.*(\(.*(\|).*)\).*/' "$file" > /dev/null 2>&1; then
+              echo "❌ ERROR: Nested capture groups detected in $file"
+              grep -n '/.*(\(.*(\|).*)\).*/' "$file"
+              HAS_ERRORS=1
+            fi
+          done
+          
+          if [ $HAS_ERRORS -eq 1 ]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "❌ POLICY VIOLATION: Forbidden regex patterns detected"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Please review the no-regex-by-default policy in CONTRIBUTING.md"
+            echo ""
+            echo "Alternatives:"
+            echo "  • Use URL/JSON/DOM parsers instead of regex"
+            echo "  • Use String methods: includes(), startsWith(), endsWith()"
+            echo "  • Use standard libraries: validator, url, json"
+            echo "  • If regex is truly needed, document in PR and keep it anchored/literal"
+            echo ""
+            exit 1
+          else
+            echo ""
+            echo "✅ No policy violations detected"
+          fi
+
+      - name: Run ESLint on changed files
+        run: |
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD | grep -E '\.(ts|tsx|js|jsx)$' || true)
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Running ESLint on changed files..."
+            yarn lint
+          else
+            echo "No files to lint"
+          fi
+
+  policy-summary:
+    name: Policy Summary
+    runs-on: ubuntu-latest
+    needs: [lint-policy, regex-guard]
+    if: always()
+    
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.lint-policy.result }}" == "failure" ] || [ "${{ needs.regex-guard.result }}" == "failure" ]; then
+            echo "❌ Policy checks failed"
+            echo ""
+            echo "Please review:"
+            echo "  • CONTRIBUTING.md - No-Regex-by-Default Policy"
+            echo "  • ESLint errors and warnings"
+            echo "  • Forbidden regex pattern usage"
+            exit 1
+          else
+            echo "✅ All policy checks passed"
+          fi
