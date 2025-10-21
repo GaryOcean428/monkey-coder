@@ -103,7 +103,7 @@ Fine-grained probability calculations:
 ### Balance and Harmony
 
 The constant embodies balance between fundamental forces:
-- **π** (natural order, cycles, geometry) 
+- **π** (natural order, cycles, geometry)
 - **e** (growth, learning, exponential processes)
 - **Prime factorization** (fundamental building blocks)
 

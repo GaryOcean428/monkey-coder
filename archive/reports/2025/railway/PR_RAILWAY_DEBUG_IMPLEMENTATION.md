@@ -60,7 +60,7 @@ bash scripts/railway-debug.sh [--service SERVICE] [--fix] [--verbose]
 python3 scripts/railway-mcp-debug.py [--service SERVICE] [--fix] [--verbose] [--output FILE]
 ```
 
-**Output**: 
+**Output**:
 - Console: Detailed validation results
 - File: `railway-debug-report.json` (configurable, gitignored)
 
@@ -218,7 +218,7 @@ $ python3 scripts/railway-mcp-debug.py --verbose
 #### 2. PORT Binding (Issue 2)
 - **Check**: Validates $PORT in all start commands
 - **Status**: All services compliant
-- **Details**: 
+- **Details**:
   ```json
   "startCommand": "... --port $PORT"
   ```

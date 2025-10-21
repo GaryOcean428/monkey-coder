@@ -51,7 +51,7 @@ python3 scripts/railway-mcp-debug.py --fix
 - Automated recommendations
 - Integration with Railway deployment manager
 
-**Output**: 
+**Output**:
 - Console output with detailed status
 - JSON report: `railway-debug-report.json`
 
@@ -194,12 +194,12 @@ Settings → Config as Code:
 
 ### Issue: Health check failing
 
-**Cause**: 
+**Cause**:
 - Application not starting
 - Health endpoint not implemented
 - Wrong health check path
 
-**Fix**: 
+**Fix**:
 1. Check application logs
 2. Verify health endpoint returns 200
 3. Confirm health check path in railpack.json

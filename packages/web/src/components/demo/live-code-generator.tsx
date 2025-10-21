@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import validator from 'validator'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -96,7 +97,7 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     
     if (!formData.email) {
       newErrors.email = 'Email is required'
-    } else if (!/\\S+@\\S+\\.\\S+/.test(formData.email)) {
+    } else if (!validator.isEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email'
     }
     
@@ -204,7 +205,9 @@ export function LiveCodeGenerator() {
 
     // Simulate progressive generation
     let currentProgress = 0
-    const totalTime = parseInt(selectedExample.estimatedTime.replace(/\D/g, '')) * 1000
+    // Extract digits using string methods instead of regex (no-regex-by-default policy)
+    const timeDigits = selectedExample.estimatedTime.split('').filter(char => char >= '0' && char <= '9').join('')
+    const totalTime = parseInt(timeDigits) * 1000
     const interval = 100
 
     progressRef.current = setInterval(() => {

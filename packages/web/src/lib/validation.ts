@@ -2,14 +2,16 @@
  * Form validation utilities and common validation functions
  */
 
+import validator from 'validator';
+
 // Email validation with detailed feedback
 export function validateEmail(email: string): string | undefined {
   if (!email.trim()) {
     return "Email is required"
   }
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
+  // Use validator library instead of regex (no-regex-by-default policy)
+  if (!validator.isEmail(email)) {
     return "Please enter a valid email address"
   }
   
@@ -41,6 +43,8 @@ export function validateUsername(username: string): string | undefined {
     return "Username must be less than 20 characters"
   }
   
+  // Allowed exception: Simple, anchored pattern for username validation
+  // This is a compile-time literal with exact character class - no backtracking risk
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
     return "Username can only contain letters, numbers, and underscores"
   }
@@ -64,6 +68,8 @@ export function validatePassword(password: string): string | undefined {
     return "Password must be at least 8 characters long"
   }
   
+  // Allowed exception: Simple character class patterns for password validation
+  // These are anchored, literal patterns with no backtracking risk
   const checks = [
     { test: /[A-Z]/, message: "Include at least one uppercase letter" },
     { test: /[a-z]/, message: "Include at least one lowercase letter" },
@@ -107,7 +113,8 @@ export function validateName(name: string, fieldName: string = "Name"): string |
     return `${fieldName} must be less than 50 characters`
   }
   
-  // Check for valid characters (letters, spaces, hyphens, apostrophes)
+  // Allowed exception: Simple, anchored pattern for name validation
+  // This is a compile-time literal with exact character class - no backtracking risk
   if (!/^[a-zA-Z\s\-']+$/.test(name.trim())) {
     return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`
   }
@@ -121,8 +128,9 @@ export function validatePhone(phone: string): string | undefined {
     return "Phone number is required"
   }
   
-  // Remove all non-digit characters
-  const digitsOnly = phone.replace(/\D/g, '')
+  // Use string method instead of regex (no-regex-by-default policy)
+  // Extract only digits using filter and type checking
+  const digitsOnly = phone.split('').filter(char => char >= '0' && char <= '9').join('')
   
   if (digitsOnly.length < 10) {
     return "Phone number must be at least 10 digits"

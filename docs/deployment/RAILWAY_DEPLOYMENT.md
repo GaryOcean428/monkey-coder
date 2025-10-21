@@ -342,7 +342,7 @@ Railway will automatically detect changes and redeploy.
 
 After proper configuration, you should see:
 
-1. **Frontend**: 
+1. **Frontend**:
    - Build completes in 2-3 minutes
    - Static export generated to `packages/web/out`
    - Next.js server starts on `0.0.0.0:$PORT`

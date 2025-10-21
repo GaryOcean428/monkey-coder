@@ -749,7 +749,7 @@ for pkg in packages/*/package.json; do
     PKG_NAME=$(jq -r '.name' "${pkg}")
     echo "### ${PKG_NAME}" >> "${OUTPUT_FILE}"
     echo "" >> "${OUTPUT_FILE}"
-    
+
     # Extract workspace dependencies
     WORKSPACE_DEPS=$(jq -r '.dependencies // {} | to_entries[] | select(.value | startswith("workspace:")) | .key' "${pkg}")
     

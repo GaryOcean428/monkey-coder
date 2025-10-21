@@ -83,7 +83,7 @@ pytest packages/core/tests/agents/test_monkey_coder_a2a.py::TestMonkeyCoderA2AAg
 # Run with coverage
 pytest packages/core/tests/agents/test_monkey_coder_a2a.py --cov=monkey_coder.a2a_server
 ```
-  - `verbose`: Enable verbose output
+- `verbose`: Enable verbose output
 
 ### Health Checks
 

@@ -109,7 +109,7 @@ Both services include comprehensive health monitoring:
 The frontend service is configured for static export to ensure compatibility with Railway's deployment model:
 
 - **Build Command**: Uses `yarn workspace @monkey-coder/web export` instead of `yarn build`
-- **Environment Variables**: 
+- **Environment Variables**:
   - `NEXT_OUTPUT_EXPORT=true` - Enables Next.js static export mode
   - `NEXT_TELEMETRY_DISABLED=1` - Disables Next.js telemetry
 - **Next.js Configuration**: `packages/web/next.config.js` conditionally enables static export

@@ -9,6 +9,7 @@
     "docs"
   ],
   "scripts": {
+    "precommit": "yarn lint && yarn typecheck",
     "build": "tsc --build",
     "build:clean": "tsc --build --clean",
     "build:force": "tsc --build --force",
@@ -91,6 +92,8 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-regexp": "^2.10.0",
+    "fast-check": "^4.3.0",
     "globals": "^16.3.0",
     "jest": "^30.0.5",
     "linkinator": "^6.1.4",

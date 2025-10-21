@@ -121,7 +121,7 @@ Set the config path in Railway Dashboard under "Config as Code".
 A: No - this breaks Yarn workspace commands. Workspaces MUST run from repo root where `package.json` exists.
 
 **Q: How long will deployments take?**  
-A: 
+A:
 - Frontend: 2-3 minutes
 - Backend: ~2 minutes
 - ML: 25+ minutes (first time), 5 minutes (cached)
