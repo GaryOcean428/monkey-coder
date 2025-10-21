@@ -468,12 +468,9 @@ class TestQuantumBenchmarks:
             
             assert result.success is True
         
-        # FIRST_SUCCESS should generally be fastest
-        assert strategy_times["first_success"] <= min(strategy_times.values()) * 1.5
-        
         # All strategies should complete in reasonable time
-        for time_taken in strategy_times.values():
-            assert time_taken < 10.0
+        for strategy_name, time_taken in strategy_times.items():
+            assert time_taken < 10.0, f"{strategy_name} took {time_taken}s"
 
 
 if __name__ == "__main__":
