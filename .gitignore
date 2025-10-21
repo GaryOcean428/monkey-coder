@@ -69,6 +69,8 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+junit.xml
+**/junit.xml
 
 # Translations
 *.mo
@@ -316,3 +318,6 @@ railway.json
 monitoring/build-times/*.log
 monitoring/build-times/build-history.csv
 monitoring/build-times/performance-report.txt
+
+# Test and build artifacts
+docs/WORKSPACE_DEPENDENCIES.md

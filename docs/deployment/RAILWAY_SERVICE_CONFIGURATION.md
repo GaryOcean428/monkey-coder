@@ -431,7 +431,7 @@ python scripts/railway-service-config-updater.py --skip-secrets
 - [Railpack Configuration](https://docs.railway.app/deploy/config-as-code)
 - [Railway Service Discovery](https://docs.railway.app/deploy/environments#railway-provided-variables)
 - [Project README](/README.md)
-- [Railway Deployment Guide](/RAILWAY_DEPLOYMENT.md)
+- [Railway Deployment Guide](RAILWAY_DEPLOYMENT.md)
 - [Railway Production Checklist](/RAILWAY_PRODUCTION_CHECKLIST.md)
 
 ---

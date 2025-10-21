@@ -994,10 +994,10 @@ python scripts/verify-railway-config.py --json > compliance-report.json
 #### Service Configuration Documentation
 
 See comprehensive guides:
-- **[RAILWAY_SERVICE_CONFIGURATION.md](./RAILWAY_SERVICE_CONFIGURATION.md)** - Complete configuration guide
-- **[RAILWAY_SERVICE_SETTINGS.md](./RAILWAY_SERVICE_SETTINGS.md)** - Quick reference
-- **[RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md)** - Deployment guide
-- **[RAILWAY_PRODUCTION_CHECKLIST.md](./RAILWAY_PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+- **[RAILWAY_SERVICE_CONFIGURATION.md](./docs/deployment/RAILWAY_SERVICE_CONFIGURATION.md)** - Complete configuration guide
+- **[RAILWAY_SERVICE_SETTINGS.md](./docs/deployment/RAILWAY_SERVICE_SETTINGS.md)** - Quick reference
+- **[RAILWAY_DEPLOYMENT.md](./docs/deployment/RAILWAY_DEPLOYMENT.md)** - Deployment guide
+- **[RAILWAY_PRODUCTION_CHECKLIST.md](./docs/deployment/RAILWAY_PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
 
 **Service IDs (AetherOS Project):**
 - `monkey-coder` (Frontend): `ccc58ca2-1f4b-4086-beb6-2321ac7dab40`

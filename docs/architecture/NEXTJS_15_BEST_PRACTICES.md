@@ -444,7 +444,7 @@ if (process.env.NODE_ENV === 'development') {
 - [Next.js 15 Documentation](https://nextjs.org/docs)
 - [Next.js 15 Migration Guide](https://nextjs.org/docs/upgrading)
 - [Regex Issue Example](https://github.com/Arcane-Fly/disco/pull/132)
-- [Railway Deployment Best Practices](./RAILWAY_DEPLOYMENT.md)
+- [Railway Deployment Best Practices](../deployment/RAILWAY_DEPLOYMENT.md)
 
 ---
 
