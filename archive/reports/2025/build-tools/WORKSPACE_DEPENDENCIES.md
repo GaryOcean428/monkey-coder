@@ -45,4 +45,3 @@ No internal workspace dependencies
 ### @monkey-coder/web
 
 No internal workspace dependencies
-

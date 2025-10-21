@@ -114,13 +114,13 @@ curl https://monkey-coder-backend-production.up.railway.app/api/health
 **Fix**: Set Root Directory to `/` in Railway Dashboard
 
 ### Issue: Health check failing
-**Fix**: 
+**Fix**:
 1. Check logs: `railway logs --service <name>`
 2. Verify application starts correctly
 3. Test health endpoint locally
 
 ### Issue: Service can't communicate with other services
-**Fix**: 
+**Fix**:
 1. Verify environment variables use `RAILWAY_PUBLIC_DOMAIN` or `RAILWAY_PRIVATE_DOMAIN`
 2. Check variable references: `railway variables --service <name>`
 

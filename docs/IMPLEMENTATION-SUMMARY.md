@@ -2,7 +2,9 @@
 
 ## Overview
 
-This implementation adds comprehensive "No-Regex-by-Default" policy enforcement across the monkey-coder monorepo, replacing problematic regex patterns with safe alternatives and establishing tooling to prevent future violations.
+This implementation adds comprehensive "No-Regex-by-Default" policy enforcement across the
+monkey-coder monorepo, replacing problematic regex patterns with safe alternatives and
+establishing tooling to prevent future violations.
 
 ## What Was Implemented
 
@@ -188,7 +190,10 @@ For developers who need to add new regex:
 
 ## Conclusion
 
-The no-regex-by-default policy is fully implemented and tested. All existing problematic patterns have been replaced, comprehensive documentation is in place, and automatic enforcement through linting and CI ensures future compliance. The codebase is now more secure, maintainable, and easier to review.
+The no-regex-by-default policy is fully implemented and tested. All existing problematic
+patterns have been replaced, comprehensive documentation is in place, and automatic enforcement
+through linting and CI ensures future compliance. The codebase is now more secure, maintainable,
+and easier to review.
 
 **Status: READY FOR MERGE** 🚀
 

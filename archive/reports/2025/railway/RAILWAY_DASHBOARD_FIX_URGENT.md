@@ -31,7 +31,7 @@ Cause: ML service using FRONTEND config instead of railpack-ml.json
 
 1. **Go to:** Railway Dashboard → monkey-coder project → **monkey-coder** service
 2. **Click:** Settings tab
-3. **Root Directory:** 
+3. **Root Directory:**
    - Current: May show `/packages/web` ❌
    - **Change to:** `/` (just a forward slash) ✅
    - Or **LEAVE BLANK** ✅

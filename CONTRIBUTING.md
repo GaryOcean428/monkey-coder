@@ -79,7 +79,7 @@ Regex is permitted **only** for:
      - `const STATUS = /^(OK|FAIL)$/;` ✓
      - `const CODE = /^[A-Z]{3}-\d{4}$/;` ✓ (exact length, no `+` or `*`)
      - `const HEX_COLOR = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;` ✓
-   
+
 2. **Validation only** (not parsing) where no standard library exists
 
 3. **Compile-time constants only** (never dynamic construction)
@@ -119,7 +119,7 @@ Regex is permitted **only** for:
 
 ### Examples
 
-#### ✅ Good: Using Standard APIs
+#### ✅ Good Examples: Using Standard APIs
 
 ```typescript
 // URL parsing
@@ -143,7 +143,7 @@ if (str.includes('error')) { /* ... */ }
 if (str.startsWith('prefix')) { /* ... */ }
 ```
 
-#### ❌ Bad: Regex for Structured Data
+#### ❌ Bad Examples: Regex for Structured Data
 
 ```typescript
 // DON'T: Regex for URL parsing
@@ -159,7 +159,7 @@ const titles = html.match(/<h2>(.*?)<\/h2>/g);
 const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 ```
 
-#### ✅ Allowed Exception: Simple Validation
+#### ✅ Allowed Exception Examples: Simple Validation
 
 ```typescript
 // Password strength checks - ALLOWED (validation, anchored, literal)
@@ -216,7 +216,7 @@ The policy is enforced via:
 
 ## Code Style
 
-### TypeScript/JavaScript
+### TypeScript/JavaScript Style
 
 - Use **strict mode** with full type coverage
 - Follow ESLint configuration
@@ -225,7 +225,7 @@ The policy is enforced via:
 - Prefer `const` over `let`
 - Use async/await over callbacks
 
-### Python
+### Python Style
 
 - Follow **PEP 8** (enforced by Black)
 - Use **type hints** for all functions
@@ -308,7 +308,7 @@ describe('Feature', () => {
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
-```
+```text
 <type>(<scope>): <description>
 
 [optional body]
@@ -336,7 +336,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) format:
 - `deploy`: Deployment configuration
 - `docs`: Documentation
 
-### Examples
+### Commit Message Examples
 
 ```bash
 feat(cli): add new command for code analysis

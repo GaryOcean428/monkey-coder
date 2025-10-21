@@ -327,7 +327,7 @@ Before deploying, verify:
 - [ ] Backend has all CRITICAL secrets set
 - [ ] PostgreSQL plugin added (DATABASE_URL auto-populated)
 - [ ] Redis plugin added if using session persistence
-- [ ] No NIXPACK_* or RAILPACK_* override variables
+- [ ] No NIXPACK_*or RAILPACK_* override variables
 - [ ] Health check paths configured correctly
 
 ---

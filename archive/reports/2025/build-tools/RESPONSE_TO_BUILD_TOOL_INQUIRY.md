@@ -273,7 +273,7 @@ You mentioned:
 
 ## When We Would Reconsider (Based on Your Matrix)
 
-### Nx Would Make Sense When:
+### Nx Would Make Sense When
 - [ ] Package count exceeds 10 (shared UI/libs coupling increases)
 - [ ] Team grows beyond 15 engineers (scale/coordination needs)
 - [ ] Build times exceed 10 minutes (performance becomes critical)
@@ -281,7 +281,7 @@ You mentioned:
 
 **Estimated Timeframe:** 12-18 months if growth continues
 
-### Bazel/Pants Would Make Sense When:
+### Bazel/Pants Would Make Sense When
 - [ ] Package count exceeds 50
 - [ ] Multiple languages beyond TS+Python (Go, Rust, Java)
 - [ ] Hermetic builds become compliance requirement
@@ -290,7 +290,7 @@ You mentioned:
 
 **Estimated Timeframe:** 2-3 years, if ever
 
-### Hybrid Approach Would Make Sense When:
+### Hybrid Approach Would Make Sense When
 - [ ] Frontend packages exceed 10 (Nx for frontend)
 - [ ] Backend Python packages exceed 5 (Bazel for backend)
 - [ ] Clear separation between frontend/backend teams
@@ -320,13 +320,13 @@ You mentioned:
 
 ## Key Takeaways from Your Matrix
 
-### What You Got Right for Our Context:
+### What You Got Right for Our Context
 1. ✅ "JS-first monorepo" → Nx gives benefits (true, but we're too small)
 2. ✅ "Developer experience priority" → Nx better UX (true, but migration cost too high)
 3. ✅ "Mixed language" → Bazel better (true, but overkill for our mix)
 4. ✅ "Migration friction" → Nx lower than Bazel (true, still too high for us)
 
-### Where Your Matrix Led Us:
+### Where Your Matrix Led Us
 - **Recognition:** We're at the small end of the scale spectrum
 - **Insight:** All advanced tools are designed for larger scale
 - **Decision:** Optimize what we have rather than adopt tools built for bigger problems
@@ -357,7 +357,7 @@ Thank you for the comprehensive framework - it validated that we should stay the
 
 ---
 
-## Questions? See:
+## Questions? See
 
 - **"Why not Nx?"** → [FAQ in DECISION_SUMMARY.md](./BUILD_TOOL_DECISION_SUMMARY.md#faq)
 - **"What about future growth?"** → [Reevaluation Triggers in EVALUATION.md](./BUILD_TOOL_EVALUATION.md#future-reevaluation-triggers)

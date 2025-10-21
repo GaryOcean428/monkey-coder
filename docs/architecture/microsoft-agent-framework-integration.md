@@ -58,7 +58,7 @@ Maintains metadata about agents including:
 
 **Current Implementation**: `packages/core/monkey_coder/core/context_manager.py`
 
-**Enhancement Plan**: 
+**Enhancement Plan**:
 - Extend for long-running agent sessions
 - Add conversation thread management
 - Implement persistent state storage
@@ -213,7 +213,7 @@ Maintains metadata about agents including:
 
 **Current Approach**: Monolithic with internal agent modules
 
-**Microsoft Agent Framework Guidance**: 
+**Microsoft Agent Framework Guidance**:
 - Small systems: Co-located agents in single process
 - Large scale: Microservice architecture with independent scaling
 
@@ -236,7 +236,7 @@ Maintains metadata about agents including:
 
 **Current Approach**: Async by default (Python asyncio)
 
-**Microsoft Agent Framework Guidance**: 
+**Microsoft Agent Framework Guidance**:
 - Synchronous: When immediate response needed
 - Asynchronous: For long-running tasks, fire-and-forget
 

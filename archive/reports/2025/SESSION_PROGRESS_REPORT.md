@@ -106,6 +106,7 @@
 - **Documentation**: Comprehensive guide created ✅
 
 ### Railway Service Configuration
+
 | Service | Root Dir | Config Path | Env Vars | Status |
 |---------|----------|-------------|----------|--------|
 | monkey-coder | / | railpack.json | 5 | ✅ Ready |
