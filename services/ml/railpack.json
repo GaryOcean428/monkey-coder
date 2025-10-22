@@ -3,7 +3,7 @@
   "version": "1",
   "metadata": {
     "name": "monkey-coder-ml",
-    "description": "DEPRECATED: Railway should use root railpack.json with rootDirectory='/'"
+    "description": "ML service with transformer models and GPU support"
   },
   "build": {
     "provider": "python",
@@ -12,19 +12,16 @@
     },
     "cache": {
       "paths": [
-        "/app/.venv/lib/python3.12/site-packages",
+        "/app/.venv",
         "/app/.cache/huggingface"
       ]
     },
     "steps": {
       "install": {
         "commands": [
-          "echo '⚠️  WARNING: This railpack.json should not be used!'",
-          "echo '⚠️  Configure Railway service with rootDirectory=/ or blank'",
-          "echo '⚠️  Railway will use /railpack.json from repo root'",
-          "cd ../.. && python -m venv .venv",
-          "cd ../.. && .venv/bin/pip install --upgrade pip setuptools wheel",
-          "cd ../.. && .venv/bin/pip install -r services/ml/requirements.txt"
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt"
         ]
       }
     },
@@ -36,7 +33,7 @@
     }
   },
   "deploy": {
-    "startCommand": "cd ../.. && .venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "/app/.venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
@@ -44,6 +41,9 @@
     "env": {
       "LOG_LEVEL": "info",
       "HEALTH_CHECK_PATH": "/api/health",
+      "PYTHONPATH": "/app:/app/services/ml",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin",
       "CUDA_VISIBLE_DEVICES": "0",
       "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
     }

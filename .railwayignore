@@ -13,8 +13,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
-.venv/
-venv/
+# Note: .venv is created during build and must persist to runtime
+# Do not exclude .venv here
 
 # Build outputs
 dist/

@@ -3,22 +3,24 @@
   "version": "1",
   "metadata": {
     "name": "monkey-coder-backend",
-    "description": "DEPRECATED: Railway should use root railpack.json with rootDirectory='/'"
+    "description": "Backend API service using FastAPI and Python"
   },
   "build": {
     "provider": "python",
     "packages": {
       "python": "3.12"
     },
+    "cache": {
+      "paths": [
+        "/app/.venv"
+      ]
+    },
     "steps": {
       "install": {
         "commands": [
-          "echo '⚠️  WARNING: This railpack.json should not be used!'",
-          "echo '⚠️  Configure Railway service with rootDirectory=/ or blank'",
-          "echo '⚠️  Railway will use /railpack.json from repo root'",
-          "cd ../.. && python -m venv .venv",
-          "cd ../.. && .venv/bin/pip install --upgrade pip setuptools wheel",
-          "cd ../.. && .venv/bin/pip install -r requirements.txt"
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt"
         ]
       }
     },
@@ -30,7 +32,7 @@
     }
   },
   "deploy": {
-    "startCommand": "cd ../.. && .venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "/app/.venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
@@ -38,6 +40,9 @@
     "env": {
       "LOG_LEVEL": "info",
       "HEALTH_CHECK_PATH": "/api/health",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin",
       "ML_SERVICE_URL": "http://${{monkey-coder-ml.RAILWAY_PRIVATE_DOMAIN}}"
     }
   }
