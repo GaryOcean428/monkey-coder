@@ -7,8 +7,8 @@
   },
   "build": {
     "provider": "node",
-    "node": {
-      "version": "20"
+    "packages": {
+      "node": "20"
     },
     "cache": {
       "paths": [
@@ -18,8 +18,21 @@
         "packages/web/out"
       ]
     },
-    "installCommand": "corepack enable && corepack prepare yarn@4.9.2 --activate && yarn install --immutable",
-    "buildCommand": "yarn workspace @monkey-coder/web build && npm install -g serve@14.2.4",
+    "steps": {
+      "install": {
+        "commands": [
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn install --immutable"
+        ]
+      },
+      "build": {
+        "commands": [
+          "yarn workspace @monkey-coder/web build",
+          "npm install -g serve@14.2.4"
+        ]
+      }
+    },
     "env": {
       "NODE_ENV": "production",
       "NEXT_OUTPUT_EXPORT": "true",
