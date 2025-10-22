@@ -63,8 +63,8 @@ docker-compose*.yml
 
 # Prevent build system conflicts
 nixpacks*
-railway.toml
 railway.json
+!railway.toml
 !railpack.json
 
 # Git files
