@@ -308,9 +308,8 @@ smoke_test_results.json
 .vscode/settings.json
 
 # Railway build system prevention
-nixpacks.toml
 nixpacks*.toml
-railway.toml
+!railway.toml
 railway.json
 !railpack.json
 

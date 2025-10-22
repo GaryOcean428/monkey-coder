@@ -7,40 +7,19 @@
   },
   "build": {
     "provider": "node",
-    "packages": {
-      "node": "20",
-      "python": "3.13"
+    "node": {
+      "version": "20"
     },
     "cache": {
       "paths": [
         "node_modules",
         ".yarn/cache",
-        "packages/web/.next",
-        "packages/web/out",
-        ".venv",
-        "__pycache__"
+        "packages/web/.next/cache",
+        "packages/web/out"
       ]
     },
-    "steps": {
-      "install": {
-        "commands": [
-          "echo '📦 Installing dependencies for Monkey Coder...'",
-          "corepack enable",
-          "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable",
-          "echo '✅ Dependencies installed'"
-        ]
-      },
-      "build": {
-        "commands": [
-          "echo '🔨 Building frontend (Next.js static export)...'",
-          "yarn workspace @monkey-coder/web build",
-          "echo '📦 Installing serve for static file serving...'",
-          "yarn global add serve@14.2.4",
-          "echo '✅ Frontend build complete - static files in packages/web/out/'"
-        ]
-      }
-    },
+    "installCommand": "corepack enable && corepack prepare yarn@4.9.2 --activate && yarn install --immutable",
+    "buildCommand": "yarn workspace @monkey-coder/web build && npm install -g serve@14.2.4",
     "env": {
       "NODE_ENV": "production",
       "NEXT_OUTPUT_EXPORT": "true",
