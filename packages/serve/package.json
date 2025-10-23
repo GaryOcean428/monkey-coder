@@ -1,0 +1,9 @@
+{
+  "name": "serve",
+  "version": "14.2.4",
+  "description": "Lightweight static file server for Monkey Coder Railway deployments.",
+  "bin": {
+    "serve": "./bin/serve.js"
+  },
+  "license": "MIT"
+}
