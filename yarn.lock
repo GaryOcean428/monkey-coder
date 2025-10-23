@@ -18410,6 +18410,7 @@ __metadata:
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     search-insights: "npm:^2.17.3"
+    serve: "workspace:14.2.4"
     ts-jest: "npm:^29.4.0"
     typescript: "npm:^5.8.3"
     webpack: "npm:^5.101.0"
@@ -22190,6 +22191,14 @@ __metadata:
   checksum: 10/7fa9d9c68090f6289976b34fc13c50ac8cd7f16ae6bce08d16459300f7fc61fbc2d7ebfa02884c073ec9d6ab9e7e704c89561882bbe338e99fcacb2912fde737
   languageName: node
   linkType: hard
+
+"serve@workspace:14.2.4, serve@workspace:packages/serve":
+  version: 0.0.0-use.local
+  resolution: "serve@workspace:packages/serve"
+  bin:
+    serve: ./bin/serve.js
+  languageName: unknown
+  linkType: soft
 
 "server-destroy@npm:^1.0.1":
   version: 1.0.1

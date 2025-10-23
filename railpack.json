@@ -39,7 +39,7 @@
     }
   },
   "deploy": {
-    "startCommand": "npx serve@14.2.4 -s packages/web/out -l $PORT -c serve.json",
+    "startCommand": "yarn start",
     "healthCheckPath": "/",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
