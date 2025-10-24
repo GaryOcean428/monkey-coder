@@ -122,9 +122,71 @@ After applying the fixes:
 ## Files Modified in This Fix
 
 - ✅ `railpack.json` - Changed frontend startCommand from `yarn start` to direct Node.js command using bundled serve
-- ✅ `services/backend/railpack.json` - Already correct, no changes needed
-- ✅ `services/ml/railpack.json` - Already correct, no changes needed
+- ✅ `railpack.json` - Updated to use correct official Railpack schema structure (removed `version`, `metadata`, moved `provider` and `steps` to root)
+- ✅ `services/backend/railpack.json` - Updated to use correct official Railpack schema structure
+- ✅ `services/ml/railpack.json` - Updated to use correct official Railpack schema structure
 - ✅ `RAILWAY_DEPLOYMENT_FIX.md` - Updated documentation to reflect the actual fix
+
+## Railpack.json Structure Corrections
+
+All railpack.json files have been updated to match the official Railpack schema:
+
+### ❌ Old (Incorrect) Structure
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",                    // ❌ Not in official schema
+  "metadata": {                      // ❌ Not in official schema
+    "name": "...",
+    "description": "..."
+  },
+  "build": {                         // ❌ Incorrect nesting
+    "provider": "node",
+    "steps": { ... }
+  }
+}
+```
+
+### ✅ New (Correct) Structure
+```json
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",                // ✅ At root level
+  "packages": {
+    "node": "20"
+  },
+  "steps": {                         // ✅ At root level
+    "install": {
+      "commands": [...],
+      "cache": { "paths": [...] }
+    },
+    "build": {
+      "inputs": [{ "step": "install" }],
+      "commands": [...],
+      "cache": { "paths": [...] }
+    }
+  },
+  "deploy": {
+    "startCommand": "...",
+    "variables": { ... },            // ✅ Use variables instead of env
+    "paths": [...]                   // ✅ For PATH additions
+  }
+}
+```
+
+### Key Changes:
+1. **Removed** `version` field (not in official schema)
+2. **Removed** `metadata` object (not in official schema)
+3. **Moved** `provider` to root level (was nested under `build`)
+4. **Moved** `steps` to root level (was nested under `build`)
+5. **Moved** `packages` to root level (was nested under `build`)
+6. **Changed** `env` to `variables` in deploy section (correct field name)
+7. **Added** `cache` per-step instead of global (more granular control)
+8. **Added** `inputs` to define step dependencies
+9. **Added** `paths` in deploy for PATH modifications
+10. **Removed** unsupported fields: `healthCheckPath`, `healthCheckTimeout`, `restartPolicyType`, `restartPolicyMaxRetries` (these may be Railway-specific, not Railpack)
+
+**Note**: Health check configuration should be done through Railway Dashboard service settings, not in railpack.json.
 
 ## Next Steps
 

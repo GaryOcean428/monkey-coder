@@ -88,31 +88,31 @@ if [ -f "railpack.json" ]; then
     echo "❌ railpack.json has invalid JSON syntax"
   fi
 
-  # Extract values from current schema
-  HEALTH_PATH=$(jq -r '.deploy.healthCheckPath // empty' railpack.json 2>/dev/null || echo "")
+  # Extract values from current schema (updated for official Railpack structure)
   START_CMD=$(jq -r '.deploy.startCommand // empty' railpack.json 2>/dev/null || echo "")
-  PY_VER=$(jq -r '.build.packages.python // empty' railpack.json 2>/dev/null || echo "")
-  NODE_VER=$(jq -r '.build.packages.node // empty' railpack.json 2>/dev/null || echo "")
+  PY_VER=$(jq -r '.packages.python // empty' railpack.json 2>/dev/null || echo "")
+  NODE_VER=$(jq -r '.packages.node // empty' railpack.json 2>/dev/null || echo "")
+  PROVIDER=$(jq -r '.provider // empty' railpack.json 2>/dev/null || echo "")
 
-  if [ -n "$HEALTH_PATH" ]; then
-    echo "✅ Health check path configured: $HEALTH_PATH"
-  else
-    echo "❌ Health check path not configured in railpack.json (.deploy.healthCheckPath)"
-  fi
+  # Note: Health check configuration is now done via Railway Dashboard, not railpack.json
+  echo "ℹ️  Health check path should be configured in Railway Dashboard (not in railpack.json)"
+  
   if [ -n "$START_CMD" ]; then
     echo "✅ Start command configured: $START_CMD"
   else
     echo "❌ Start command not configured in railpack.json (.deploy.startCommand)"
   fi
+  if [ -n "$PROVIDER" ]; then
+    echo "✅ Provider configured: $PROVIDER"
+  fi
   if [ -n "$PY_VER" ]; then
     echo "✅ Python version: $PY_VER"
-  else
-    echo "⚠️  Python version not specified under .build.packages.python"
   fi
   if [ -n "$NODE_VER" ]; then
     echo "✅ Node.js version: $NODE_VER"
-  else
-    echo "⚠️  Node.js version not specified under .build.packages.node"
+  fi
+  if [ -z "$PY_VER" ] && [ -z "$NODE_VER" ]; then
+    echo "⚠️  No language version specified under .packages"
   fi
 else
   echo "❌ railpack.json not found"
