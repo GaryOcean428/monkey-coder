@@ -39,7 +39,7 @@
     }
   },
   "deploy": {
-    "startCommand": "yarn start",
+    "startCommand": "node packages/serve/bin/serve.js -s packages/web/out -l $PORT -c serve.json",
     "healthCheckPath": "/",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
