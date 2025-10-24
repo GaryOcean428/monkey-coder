@@ -1,26 +1,33 @@
-# Railway Deployment Health Check Failures - Fix Guide
+# Railway Deployment Fix - Yarn Command Not Found
 
 ## Issue Summary
 
-Both `monkey-coder-backend` and `monkey-coder` (frontend) services are failing health checks with the error:
+Both `monkey-coder-backend` and `monkey-coder` (frontend) services are failing with the error:
 
 ```
-/bin/bash: line 1: serve: command not found
+/bin/bash: line 1: yarn: command not found
 ```
 
 ## Root Causes
 
-### 1. Backend Service Issue
-The backend service is trying to run the `serve` command instead of `uvicorn`, which indicates it's reading the **wrong railpack.json file** (the root one for frontend instead of `services/backend/railpack.json`).
+### 1. Frontend Service Issue (FIXED)
+The frontend service's `railpack.json` had `"startCommand": "yarn start"`. 
+
+**Root Cause**: Yarn is only available during the build phase, not the deploy phase in Railway.
+
+**Fix Applied**: Changed to use direct Node.js command:
+```json
+"startCommand": "node packages/serve/bin/serve.js -s packages/web/out -l $PORT -c serve.json"
+```
+
+This uses the bundled serve package in the repository, which is reliable and doesn't require yarn, npm, or npx.
+
+### 2. Backend Service Issue (REQUIRES CONFIGURATION)
+If the backend service is showing "yarn: command not found", it's reading the **wrong railpack.json file** (the root one for frontend instead of `services/backend/railpack.json`).
 
 **Root Cause**: The Railway service Root Directory setting is incorrect.
 
-### 2. Frontend Service Issue
-The frontend service is correctly trying to run `serve`, but the package wasn't installed properly in the build.
-
-**Root Cause**: The `npm install -g serve` command in build steps doesn't work reliably in Railpack environments.
-
-**Fix Applied**: Changed to use `npx serve@14.2.4` which downloads and runs the package on-the-fly.
+**Fix Required**: Configure the Railway dashboard to use the correct root directory.
 
 ## Required Railway Dashboard Configuration
 
@@ -71,7 +78,7 @@ Status: ✅ Healthy
 ### Frontend Service
 ```
 Deploy Command:
-npx serve@14.2.4 -s packages/web/out -l $PORT -c serve.json
+node packages/serve/bin/serve.js -s packages/web/out -l $PORT -c serve.json
 
 Health Check:
 Path: /
@@ -98,11 +105,11 @@ After applying the fixes:
 1. **Trigger new deployments** for both frontend and backend services
 2. **Monitor build logs** to verify:
    - Backend: Should show Python installation and uvicorn command
-   - Frontend: Should show Node.js build and npx serve command
+   - Frontend: Should show Node.js build and direct node serve command
 3. **Check health checks**:
    - Backend: `https://monkey-coder-backend-production.up.railway.app/api/health`
    - Frontend: `https://coder.fastmonkey.au/`
-4. **Verify logs** show services starting correctly without "serve: command not found" errors
+4. **Verify logs** show services starting correctly without "yarn: command not found" errors
 
 ## Configuration Summary
 
@@ -114,9 +121,10 @@ After applying the fixes:
 
 ## Files Modified in This Fix
 
-- ✅ `railpack.json` - Changed frontend startCommand to use `npx serve@14.2.4`
+- ✅ `railpack.json` - Changed frontend startCommand from `yarn start` to direct node command using bundled serve
 - ✅ `services/backend/railpack.json` - Already correct, no changes needed
 - ✅ `services/ml/railpack.json` - Already correct, no changes needed
+- ✅ `RAILWAY_DEPLOYMENT_FIX.md` - Updated documentation to reflect the actual fix
 
 ## Next Steps
 
