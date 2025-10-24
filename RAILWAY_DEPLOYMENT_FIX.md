@@ -105,7 +105,7 @@ After applying the fixes:
 1. **Trigger new deployments** for both frontend and backend services
 2. **Monitor build logs** to verify:
    - Backend: Should show Python installation and uvicorn command
-   - Frontend: Should show Node.js build and direct node serve command
+   - Frontend: Should show Node.js build and direct Node.js serve command
 3. **Check health checks**:
    - Backend: `https://monkey-coder-backend-production.up.railway.app/api/health`
    - Frontend: `https://coder.fastmonkey.au/`
@@ -121,7 +121,7 @@ After applying the fixes:
 
 ## Files Modified in This Fix
 
-- ✅ `railpack.json` - Changed frontend startCommand from `yarn start` to direct node command using bundled serve
+- ✅ `railpack.json` - Changed frontend startCommand from `yarn start` to direct Node.js command using bundled serve
 - ✅ `services/backend/railpack.json` - Already correct, no changes needed
 - ✅ `services/ml/railpack.json` - Already correct, no changes needed
 - ✅ `RAILWAY_DEPLOYMENT_FIX.md` - Updated documentation to reflect the actual fix
