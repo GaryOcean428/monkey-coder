@@ -1,18 +1,23 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "node",
+  "provider": "python",
   "packages": {
+    "python": "3.12",
     "node": "20"
   },
   "steps": {
     "install": {
       "commands": [
+        "python -m venv /app/.venv",
+        "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+        "/app/.venv/bin/pip install -r /app/requirements.txt",
         "corepack enable",
         "corepack prepare yarn@4.9.2 --activate",
         "yarn install --immutable"
       ],
       "cache": {
         "paths": [
+          "/app/.venv",
           "node_modules",
           ".yarn/cache"
         ]
@@ -32,11 +37,20 @@
     }
   },
   "deploy": {
-    "startCommand": "node packages/serve/bin/serve.js -s packages/web/out -l $PORT -c serve.json",
+    "startCommand": "/app/.venv/bin/python run_server.py",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
     "variables": {
+      "PYTHON_ENV": "production",
       "NODE_ENV": "production",
       "NEXT_OUTPUT_EXPORT": "true",
-      "NEXT_TELEMETRY_DISABLED": "1"
-    }
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "VIRTUAL_ENV": "/app/.venv"
+    },
+    "paths": [
+      "/app/.venv/bin"
+    ]
   }
 }
