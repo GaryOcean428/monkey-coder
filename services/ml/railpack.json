@@ -9,7 +9,7 @@
       "commands": [
         "python -m venv /app/.venv",
         "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-        "/app/.venv/bin/pip install -r requirements.txt"
+        "/app/.venv/bin/pip install -r /app/requirements.txt"
       ],
       "cache": {
         "paths": [
@@ -20,13 +20,15 @@
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "cd /app/services/ml && /app/.venv/bin/python -m uvicorn ml_server:app --host 0.0.0.0 --port $PORT",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
     "variables": {
       "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/services/ml",
+      "PYTHONPATH": "/app:/app/packages/core:/app/services/ml",
       "VIRTUAL_ENV": "/app/.venv",
       "LOG_LEVEL": "info",
-      "HEALTH_CHECK_PATH": "/api/health",
       "CUDA_VISIBLE_DEVICES": "0",
       "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
     },
