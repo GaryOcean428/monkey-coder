@@ -9,7 +9,7 @@
       "commands": [
         "python -m venv /app/.venv",
         "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-        "/app/.venv/bin/pip install -r requirements.txt"
+        "/app/.venv/bin/pip install -r /app/requirements.txt"
       ],
       "cache": {
         "paths": [
@@ -20,12 +20,14 @@
   },
   "deploy": {
     "startCommand": "/app/.venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
     "variables": {
       "PYTHON_ENV": "production",
       "PYTHONPATH": "/app:/app/packages/core",
       "VIRTUAL_ENV": "/app/.venv",
       "LOG_LEVEL": "info",
-      "HEALTH_CHECK_PATH": "/api/health",
       "ML_SERVICE_URL": "http://${{monkey-coder-ml.RAILWAY_PRIVATE_DOMAIN}}"
     },
     "paths": [
