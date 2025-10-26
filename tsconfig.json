@@ -27,6 +27,8 @@
   "references": [
     { "path": "./packages/cli" },
     { "path": "./packages/sdk" },
-    { "path": "./packages/web" }
+    { "path": "./packages/shared-types" },
+    { "path": "./packages/shared-utils" },
+    { "path": "./services/frontend" }
   ]
 }

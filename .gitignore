@@ -202,6 +202,8 @@ node_modules/
 .next/
 packages/web/.next/
 packages/web/out/
+services/frontend/.next/
+services/frontend/out/
 
 # Next.js cache and build artifacts
 .next/cache/
