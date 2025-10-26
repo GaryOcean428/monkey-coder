@@ -14,8 +14,7 @@
         "commands": [
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
-          "cd ../.. && yarn install --immutable",
-          "yarn global add serve"
+          "cd ../.. && yarn install --immutable"
         ],
         "cache": {
           "paths": ["../../node_modules", "../../.yarn/cache"]
@@ -24,7 +23,8 @@
       "build": {
         "commands": [
           "cd ../.. && yarn workspace @monkey-coder/frontend build",
-          "cd ../.. && yarn workspace @monkey-coder/frontend run export"
+          "cd ../.. && yarn workspace @monkey-coder/frontend run export",
+          "test -d out && echo '✅ Frontend build output verified' || (echo '❌ Build output directory missing' && exit 1)"
         ],
         "cache": {
           "paths": ["out", ".next/cache"]
@@ -37,7 +37,7 @@
     }
   },
   "deploy": {
-    "startCommand": "serve -s out -l $PORT",
+    "startCommand": "npx serve -s out -l $PORT --no-clipboard",
     "healthCheckPath": "/",
     "healthCheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",

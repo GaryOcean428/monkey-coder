@@ -15,7 +15,8 @@
         "commands": [
           "pip install --upgrade uv",
           "uv pip install -r /app/requirements-deploy.txt --system",
-          "cd /app/packages/core && uv pip install -e . --system"
+          "cd /app/packages/core && uv pip install -e . --system",
+          "python -c 'import monkey_coder; print(\"✅ monkey_coder module installed:\", monkey_coder.__file__)' || (echo '❌ Failed to import monkey_coder module' && exit 1)"
         ],
         "cache": {
           "paths": ["/root/.cache/uv"]
