@@ -23,8 +23,8 @@
       },
       "build": {
         "commands": [
-          "cd ../.. && yarn workspace @monkey-coder/web build",
-          "cd ../.. && yarn workspace @monkey-coder/web run export"
+          "cd ../.. && yarn workspace @monkey-coder/frontend build",
+          "cd ../.. && yarn workspace @monkey-coder/frontend run export"
         ],
         "cache": {
           "paths": ["out", ".next/cache"]
@@ -44,5 +44,3 @@
     "restartPolicyMaxRetries": 3
   }
 }
-
-jq empty packages/web/railpack.json && echo "✅ Valid JSON" || echo "❌ Invalid JSON"

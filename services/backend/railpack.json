@@ -1,29 +1,41 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",
-  "packages": {
-    "python": "3.12"
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-backend",
+    "description": "FastAPI backend for Monkey Coder (uses packages/core library)"
   },
-  "steps": {
-    "install": {
-      "commands": [
-        "pip install --upgrade uv",
-        "uv pip install -r /app/requirements.txt --system"
-      ],
-      "cache": {
-        "paths": ["/root/.cache/uv"]
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "pip install --upgrade uv",
+          "uv pip install -r /app/requirements-deploy.txt --system",
+          "cd /app/packages/core && uv pip install -e . --system"
+        ],
+        "cache": {
+          "paths": ["/root/.cache/uv"]
+        }
       }
+    },
+    "env": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "PYTHONUNBUFFERED": "1",
+      "LOG_LEVEL": "info"
     }
   },
   "deploy": {
     "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
-    "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 120,
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
-    "variables": {
-      "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/packages/core",
-      "LOG_LEVEL": "info",
+    "restartPolicyMaxRetries": 3,
+    "env": {
       "ML_SERVICE_URL": "http://${{monkey-coder-ml.RAILWAY_PRIVATE_DOMAIN}}"
     }
   }

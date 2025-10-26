@@ -4930,9 +4930,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monkey-coder/web@workspace:packages/web":
+"@monkey-coder/frontend@workspace:services/frontend":
   version: 0.0.0-use.local
-  resolution: "@monkey-coder/web@workspace:packages/web"
+  resolution: "@monkey-coder/frontend@workspace:services/frontend"
   dependencies:
     "@auth/prisma-adapter": "npm:^2.10.0"
     "@hookform/resolvers": "npm:^5.2.0"
@@ -5013,6 +5013,22 @@ __metadata:
     typescript-eslint: "npm:^8.38.0"
     validator: "npm:^13.15.15"
     zod: "npm:^4.0.10"
+  languageName: unknown
+  linkType: soft
+
+"@monkey-coder/shared-types@workspace:packages/shared-types":
+  version: 0.0.0-use.local
+  resolution: "@monkey-coder/shared-types@workspace:packages/shared-types"
+  dependencies:
+    typescript: "npm:^5.8.3"
+  languageName: unknown
+  linkType: soft
+
+"@monkey-coder/shared-utils@workspace:packages/shared-utils":
+  version: 0.0.0-use.local
+  resolution: "@monkey-coder/shared-utils@workspace:packages/shared-utils"
+  dependencies:
+    typescript: "npm:^5.8.3"
   languageName: unknown
   linkType: soft
 

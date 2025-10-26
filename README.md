@@ -160,16 +160,21 @@ Policies enforced:
 
 ```text
 monkey-coder/
-├─ packages/
-│  ├─ cli/              # TypeScript CLI tools
-│  ├─ core/             # Python orchestration engine
-│  └─ sdk/              # TypeScript/Python client SDKs
-├─ services/            # Optional microservices
-├─ docs/                # MkDocs documentation
-├─ examples/            # Usage examples (from original repo)
-├─ qwencoder-eval/      # Evaluation benchmarks (from original repo)
-└─ demo/                # Demo applications (from original repo)
-```text
+├─ packages/              # Reusable libraries and published packages
+│  ├─ cli/                # CLI tool (published to npm as monkey-coder-cli)
+│  ├─ core/               # Python library (published to PyPI as monkey-coder-core)
+│  ├─ sdk/                # Client SDK (published to npm/PyPI)
+│  ├─ shared-types/       # Shared TypeScript types
+│  └─ shared-utils/       # Shared utility functions
+├─ services/              # Deployable applications (Railway services)
+│  ├─ frontend/           # Next.js web application (formerly packages/web)
+│  ├─ backend/            # FastAPI backend (uses packages/core library)
+│  ├─ ml/                 # ML inference service
+│  └─ sandbox/            # Code execution sandbox
+├─ docs/                  # Docusaurus documentation
+├─ scripts/               # Build and deployment scripts
+└─ tests/                 # Integration and E2E tests
+```
 
 ## Introduction
 
@@ -287,7 +292,7 @@ npm install -g monkey-coder-cli
    cd packages/core && python -m monkey_coder.app.main
 
    # In another terminal, start Next.js frontend (optional)
-   yarn workspace @monkey-coder/web dev
+   yarn workspace @monkey-coder/frontend dev
    ```
 
 ### Python Dependency Management (uv)
@@ -372,7 +377,7 @@ The script `railway_provisioning_orchestrator.py` performs a local preflight bef
 
 What it validates now:
 - Required environment variables (presence vs defaults) for production deployment
-- Frontend static export integrity (`packages/web/out/index.html` + `_next` directory)
+- Frontend static export integrity (`services/frontend/out/index.html` + `_next` directory)
 - Generates `railway_provisioning_plan.json` with a readiness summary
 
 Run it:
@@ -1035,7 +1040,7 @@ yarn constraints --fix
 yarn npm audit --all
 
 # Run command in specific workspace
-yarn workspace @monkey-coder/web dev
+yarn workspace @monkey-coder/frontend dev
 
 # Run command in all workspaces
 yarn workspaces foreach -At run build
