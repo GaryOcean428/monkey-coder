@@ -5,6 +5,7 @@ Thank you for your interest in contributing to Monkey Coder! This document outli
 ## Table of Contents
 
 - [Development Setup](#development-setup)
+- [Monorepo Structure Guidelines](#monorepo-structure-guidelines)
 - [No-Regex-by-Default Policy](#no-regex-by-default-policy)
 - [Code Style](#code-style)
 - [Testing](#testing)
@@ -45,6 +46,74 @@ yarn dev
 ```
 
 For more detailed setup instructions, see [AGENTS.md](./AGENTS.md).
+
+## Monorepo Structure Guidelines
+
+### Understanding the Structure
+
+Monkey Coder follows a clear separation between reusable libraries and deployable applications:
+
+```text
+packages/              # Reusable libraries and published packages
+├─ cli/                # CLI tool (published to npm)
+├─ core/               # Python library (published to PyPI)
+├─ sdk/                # Client SDK (published to npm/PyPI)
+├─ shared-types/       # Shared TypeScript types
+└─ shared-utils/       # Shared utility functions
+
+services/              # Deployable applications (Railway services)
+├─ frontend/           # Next.js web application
+├─ backend/            # FastAPI backend (uses packages/core)
+├─ ml/                 # ML inference service
+└─ sandbox/            # Code execution sandbox
+```
+
+### Where to Add New Code
+
+**Adding a new feature shared across services?**
+→ `packages/shared-utils/` or `packages/shared-types/`
+
+**Adding a new API endpoint?**
+→ `services/backend/` (which imports from `packages/core`)
+
+**Adding a new UI component?**
+→ `services/frontend/src/components/`
+
+**Creating a new deployed microservice?**
+→ `services/<name>/` with its own `railpack.json`
+
+**Creating a new published library?**
+→ `packages/<name>/` with `package.json` (JS/TS) or `pyproject.toml` (Python)
+
+### Key Principles
+
+1. **Packages are importable:** Code in `packages/` should be usable by multiple services
+2. **Services are deployable:** Code in `services/` runs as separate processes on Railway
+3. **No circular dependencies:** Services can import from packages, but packages should not import from services
+4. **Shared code goes in packages:** If two services need the same utility, put it in `packages/shared-utils/`
+
+### Examples
+
+**✅ Good:**
+```typescript
+// services/frontend/src/pages/api/health.ts
+import { HealthCheckResponse } from '@monkey-coder/shared-types';
+
+export default function handler(req, res) {
+  const response: HealthCheckResponse = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  };
+  res.json(response);
+}
+```
+
+**❌ Bad:**
+```typescript
+// packages/shared-utils/frontend-helper.ts
+// DON'T: Packages should not import from services
+import { UserProfile } from '../../../services/frontend/src/types/user';
+```
 
 ## No-Regex-by-Default Policy
 
@@ -260,7 +329,7 @@ yarn test:coverage
 
 # Test specific package
 yarn workspace @monkey-coder/cli test
-yarn workspace @monkey-coder/web test
+yarn workspace @monkey-coder/frontend test
 ```
 
 ### Writing Tests
@@ -331,8 +400,10 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 - `cli`: CLI package changes
 - `core`: Python core package changes
-- `web`: Web frontend changes
+- `frontend`: Web frontend changes (services/frontend)
+- `backend`: Backend service changes (services/backend)
 - `sdk`: SDK package changes
+- `shared`: Shared packages (shared-types, shared-utils)
 - `deploy`: Deployment configuration
 - `docs`: Documentation
 
@@ -340,10 +411,11 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```bash
 feat(cli): add new command for code analysis
-fix(web): resolve authentication redirect issue
+fix(frontend): resolve authentication redirect issue
 docs(readme): update setup instructions
 refactor(sdk): simplify API client initialization
 test(cli): add property tests for validation functions
+feat(shared): add logger utility to shared-utils
 ```
 
 ## Questions?

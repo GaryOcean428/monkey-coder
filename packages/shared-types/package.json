@@ -1,0 +1,16 @@
+{
+  "name": "@monkey-coder/shared-types",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared TypeScript types used across Monkey Coder services",
+  "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

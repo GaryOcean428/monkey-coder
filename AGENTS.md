@@ -112,7 +112,7 @@ yarn build
 # Build specific workspace
 yarn workspace @monkey-coder/cli build
 yarn workspace @monkey-coder/core build  # Python build
-yarn workspace @monkey-coder/web build
+yarn workspace @monkey-coder/frontend build
 
 # Development mode with hot reload
 yarn dev
@@ -126,7 +126,7 @@ yarn dev
 
 # 2. In separate terminals:
 # - Backend: packages/core runs on http://localhost:8000
-# - Frontend: packages/web runs on http://localhost:3000
+# - Frontend: services/frontend runs on http://localhost:3000
 # - CLI: yarn workspace @monkey-coder/cli dev
 
 # 3. Validate changes
@@ -174,11 +174,11 @@ yarn build
 
 # Build specific package
 yarn workspace @monkey-coder/cli build
-yarn workspace @monkey-coder/web build
+yarn workspace @monkey-coder/frontend build
 
 # Development builds with watch mode
 yarn dev                                    # All packages in watch mode
-yarn workspace @monkey-coder/web dev        # Web frontend only
+yarn workspace @monkey-coder/frontend dev        # Web frontend only
 ```bash
 
 ### 3. Development Workflow
@@ -192,7 +192,7 @@ cd packages/core
 python -m uvicorn monkey_coder.app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Terminal 2: Start the Next.js frontend
-cd packages/web
+cd services/frontend
 yarn dev
 
 # Terminal 3: Test the CLI
@@ -231,7 +231,7 @@ yarn test:coverage
 
 # Run tests for specific package
 yarn workspace @monkey-coder/cli test
-yarn workspace @monkey-coder/web test
+yarn workspace @monkey-coder/frontend test
 ```text
 
 ### Test Structure
@@ -531,7 +531,7 @@ cd packages/cli
 yarn build && node dist/cli.js --help
 
 # Check frontend build
-cd packages/web
+cd services/frontend
 yarn build && yarn start
 ```
 
@@ -540,7 +540,7 @@ yarn build && yarn start
 #### Frontend Build
 ```bash
 # Enable Next.js build analysis
-cd packages/web
+cd services/frontend
 npm_config_bundle_analyze=true yarn build
 ```
 
