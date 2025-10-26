@@ -1,5 +1,3 @@
-# Create packages/web/railpack.json
-cat > packages/web/railpack.json << 'EOF'
 {
   "version": "1",
   "metadata": {
@@ -46,7 +44,5 @@ cat > packages/web/railpack.json << 'EOF'
     "restartPolicyMaxRetries": 3
   }
 }
-EOF
 
-# Verify JSON syntax
 jq empty packages/web/railpack.json && echo "✅ Valid JSON" || echo "❌ Invalid JSON"
