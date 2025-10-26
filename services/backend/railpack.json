@@ -8,7 +8,7 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "uv pip install -r ../../requirements.txt --system"
+        "uv pip install -r /app/requirements.txt --system"
       ],
       "cache": {
         "paths": ["/root/.cache/uv"]
