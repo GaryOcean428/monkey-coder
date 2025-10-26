@@ -1,39 +1,51 @@
 {
   "$schema": "https://schema.railpack.com",
-  "provider": "python",
-  "packages": {
-    "python": "3.12"
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-ml",
+    "description": "ML service with transformer models and GPU support"
   },
-  "steps": {
-    "install": {
-      "commands": [
-        "python -m venv /app/.venv",
-        "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-        "/app/.venv/bin/pip install -r /app/requirements.txt"
-      ],
-      "cache": {
-        "paths": [
-          "/app/.venv",
-          "/app/.cache/huggingface"
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12"
+    },
+    "cache": {
+      "paths": [
+        "/app/.venv",
+        "/app/.cache/huggingface"
+      ]
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "python -m venv /app/.venv",
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r requirements.txt"
         ]
       }
+    },
+    "env": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app:/app/services/ml",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
     }
   },
   "deploy": {
-    "startCommand": "cd /app/services/ml && /app/.venv/bin/python -m uvicorn ml_server:app --host 0.0.0.0 --port $PORT",
-    "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 120,
+    "startCommand": "/app/.venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
-    "variables": {
-      "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/packages/core:/app/services/ml",
-      "VIRTUAL_ENV": "/app/.venv",
+    "restartPolicyMaxRetries": 3,
+    "env": {
       "LOG_LEVEL": "info",
+      "HEALTH_CHECK_PATH": "/api/health",
+      "PYTHONPATH": "/app:/app/services/ml",
+      "VIRTUAL_ENV": "/app/.venv",
+      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin",
       "CUDA_VISIBLE_DEVICES": "0",
       "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
-    },
-    "paths": [
-      "/app/.venv/bin"
-    ]
+    }
   }
 }
