@@ -1,0 +1,36 @@
+{
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-backend",
+    "description": "FastAPI backend for Monkey Coder"
+  },
+  "build": {
+    "provider": "python",
+    "packages": {
+      "python": "3.12"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
+          "/app/.venv/bin/pip install -r ../../requirements-deploy.txt",
+          "/app/.venv/bin/pip install -e ."
+        ],
+        "cache": {
+          "paths": ["/app/.venv/lib/python3.12/site-packages"]
+        }
+      }
+    },
+    "env": {
+      "PYTHONUNBUFFERED": "1",
+      "PYTHONPATH": "/app:/app/packages/core"
+    }
+  },
+  "deploy": {
+    "startCommand": "/app/.venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
