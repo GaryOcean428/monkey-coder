@@ -1,0 +1,52 @@
+# Create packages/web/railpack.json
+cat > packages/web/railpack.json << 'EOF'
+{
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-frontend",
+    "description": "Next.js frontend for Monkey Coder"
+  },
+  "build": {
+    "provider": "node",
+    "packages": {
+      "node": "22"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "cd ../.. && yarn install --immutable",
+          "yarn global add serve"
+        ],
+        "cache": {
+          "paths": ["../../node_modules", "../../.yarn/cache"]
+        }
+      },
+      "build": {
+        "commands": [
+          "cd ../.. && yarn workspace @monkey-coder/web build",
+          "cd ../.. && yarn workspace @monkey-coder/web run export"
+        ],
+        "cache": {
+          "paths": ["out", ".next/cache"]
+        }
+      }
+    },
+    "env": {
+      "NODE_ENV": "production",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "deploy": {
+    "startCommand": "serve -s out -l $PORT",
+    "healthCheckPath": "/",
+    "healthCheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
+EOF
+
+# Verify JSON syntax
+jq empty packages/web/railpack.json && echo "✅ Valid JSON" || echo "❌ Invalid JSON"
