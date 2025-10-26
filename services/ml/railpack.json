@@ -12,28 +12,25 @@
     },
     "cache": {
       "paths": [
-        "/app/.venv",
+        "/root/.cache/uv",
         "/app/.cache/huggingface"
       ]
     },
     "steps": {
       "install": {
         "commands": [
-          "python -m venv /app/.venv",
-          "/app/.venv/bin/pip install --upgrade pip setuptools wheel",
-          "/app/.venv/bin/pip install -r requirements.txt"
+          "pip install --upgrade uv",
+          "uv pip install -r /app/requirements.txt --system"
         ]
       }
     },
     "env": {
       "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/services/ml",
-      "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+      "PYTHONPATH": "/app:/app/services/ml"
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "python -m uvicorn services.ml.ml_server:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
@@ -42,8 +39,6 @@
       "LOG_LEVEL": "info",
       "HEALTH_CHECK_PATH": "/api/health",
       "PYTHONPATH": "/app:/app/services/ml",
-      "VIRTUAL_ENV": "/app/.venv",
-      "PATH": "/app/.venv/bin:/usr/local/bin:/usr/bin:/bin",
       "CUDA_VISIBLE_DEVICES": "0",
       "TRANSFORMERS_CACHE": "/app/.cache/huggingface"
     }
