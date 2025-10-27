@@ -1,59 +1,40 @@
 {
   "$schema": "https://schema.railpack.com",
-  "version": "1",
-  "metadata": {
-    "name": "monkey-coder-backend",
-    "description": "FastAPI backend for Monkey Coder (uses packages/core library)"
+  "provider": "python",
+  "packages": {
+    "python": "3.12"
   },
-  "build": {
-    "provider": "python",
-    "packages": {
-      "python": "3.12"
+  "caches": {
+    "uv-cache": {
+      "directory": "/root/.cache/uv",
+      "type": "shared"
     },
-    "steps": {
-      "install": {
-        "commands": [
-          "echo '📦 Step 1: Install uv package manager'",
-          "pip install --upgrade uv",
-          "uv --version",
-          "",
-          "echo '📦 Step 2: Install deployment dependencies'",
-          "uv pip install -r /app/requirements-deploy.txt",
-          "",
-          "echo '📦 Step 3: Verify packages/core structure'",
-          "ls -la /app/packages/core/",
-          "ls -la /app/packages/core/monkey_coder/",
-          "",
-          "echo '📦 Step 4: Install monkey-coder-core in editable mode'",
-          "cd /app/packages/core && uv pip install -e . --verbose",
-          "",
-          "echo '📦 Step 5: Verify installation'",
-          "python -c 'import sys; print(\"Python path:\", sys.path)'",
-          "python -c 'import monkey_coder; print(\"✅ monkey_coder installed at:\", monkey_coder.__file__)'",
-          "python -c 'from monkey_coder.app.main import app; print(\"✅ FastAPI app importable\")'",
-          "",
-          "echo '✅ All installation steps completed successfully'"
-        ],
-        "cache": {
-          "paths": ["/root/.cache/uv", ".venv"]
-        }
+    "venv": {
+      "directory": ".venv",
+      "type": "shared"
+    }
+  },
+  "steps": {
+    "install": {
+      "commands": [
+        "pip install --upgrade uv",
+        "uv pip install -r /app/requirements-deploy.txt",
+        "cd /app/packages/core && uv pip install -e .",
+        "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
+      ],
+      "caches": ["uv-cache", "venv"],
+      "variables": {
+        "PYTHON_ENV": "production",
+        "PYTHONPATH": "/app:/app/packages/core",
+        "PYTHONUNBUFFERED": "1",
+        "LOG_LEVEL": "info",
+        "UV_SYSTEM_PYTHON": "1"
       }
-    },
-    "env": {
-      "PYTHON_ENV": "production",
-      "PYTHONPATH": "/app:/app/packages/core",
-      "PYTHONUNBUFFERED": "1",
-      "LOG_LEVEL": "info",
-      "UV_SYSTEM_PYTHON": "1"
     }
   },
   "deploy": {
     "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
-    "healthCheckPath": "/health",
-    "healthCheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3,
-    "env": {
+    "variables": {
       "ML_SERVICE_URL": "http://${{monkey-coder-ml.RAILWAY_PRIVATE_DOMAIN}}"
     }
   }
