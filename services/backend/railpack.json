@@ -14,8 +14,8 @@
       "install": {
         "commands": [
           "pip install --upgrade uv",
-          "uv pip install -r /app/requirements-deploy.txt --system",
-          "cd /app/packages/core && uv pip install -e . --system",
+          "uv pip install -r /app/requirements-deploy.txt",
+          "cd /app/packages/core && uv pip install -e .",
           "python -c 'import monkey_coder; print(\"✅ monkey_coder module installed:\", monkey_coder.__file__)' || (echo '❌ Failed to import monkey_coder module' && exit 1)"
         ],
         "cache": {
@@ -31,7 +31,7 @@
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/health",
     "healthCheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
