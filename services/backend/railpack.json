@@ -19,7 +19,7 @@
       "commands": [
         "pip install --upgrade uv",
         "python -m uv pip install -r requirements-deploy.txt",
-        "cd /app/packages/core && python -m uv pip install -e .",
+        "python -m uv pip install -e ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
       ],
       "caches": ["uv-cache", "venv"],
