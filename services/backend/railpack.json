@@ -13,13 +13,29 @@
     "steps": {
       "install": {
         "commands": [
+          "echo '📦 Step 1: Install uv package manager'",
           "pip install --upgrade uv",
+          "uv --version",
+          "",
+          "echo '📦 Step 2: Install deployment dependencies'",
           "uv pip install -r /app/requirements-deploy.txt",
-          "cd /app/packages/core && uv pip install -e .",
-          "python -c 'import monkey_coder; print(\"✅ monkey_coder module installed:\", monkey_coder.__file__)' || (echo '❌ Failed to import monkey_coder module' && exit 1)"
+          "",
+          "echo '📦 Step 3: Verify packages/core structure'",
+          "ls -la /app/packages/core/",
+          "ls -la /app/packages/core/monkey_coder/",
+          "",
+          "echo '📦 Step 4: Install monkey-coder-core in editable mode'",
+          "cd /app/packages/core && uv pip install -e . --verbose",
+          "",
+          "echo '📦 Step 5: Verify installation'",
+          "python -c 'import sys; print(\"Python path:\", sys.path)'",
+          "python -c 'import monkey_coder; print(\"✅ monkey_coder installed at:\", monkey_coder.__file__)'",
+          "python -c 'from monkey_coder.app.main import app; print(\"✅ FastAPI app importable\")'",
+          "",
+          "echo '✅ All installation steps completed successfully'"
         ],
         "cache": {
-          "paths": ["/root/.cache/uv"]
+          "paths": ["/root/.cache/uv", ".venv"]
         }
       }
     },
@@ -27,7 +43,8 @@
       "PYTHON_ENV": "production",
       "PYTHONPATH": "/app:/app/packages/core",
       "PYTHONUNBUFFERED": "1",
-      "LOG_LEVEL": "info"
+      "LOG_LEVEL": "info",
+      "UV_SYSTEM_PYTHON": "1"
     }
   },
   "deploy": {
