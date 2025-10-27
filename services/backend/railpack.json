@@ -15,23 +15,22 @@
     }
   },
   "steps": {
-    "install": {
-      "commands": [
-        "pip install --upgrade uv",
-        "uv pip install -r /app/requirements-deploy.txt",
-        "cd /app/packages/core && uv pip install -e .",
-        "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
-      ],
-      "caches": ["uv-cache", "venv"],
-      "variables": {
-        "PYTHON_ENV": "production",
-        "PYTHONPATH": "/app:/app/packages/core",
-        "PYTHONUNBUFFERED": "1",
-        "LOG_LEVEL": "info",
-        "UV_SYSTEM_PYTHON": "1"
-      }
+  "install": {
+    "commands": [
+      "pip install --upgrade uv",
+      "python -m uv pip install -r /app/requirements-deploy.txt",
+      "cd /app/packages/core && python -m uv pip install -e .",
+      "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
+    ],
+    "caches": ["uv-cache", "venv"],
+    "variables": {
+      "PYTHON_ENV": "production",
+      "PYTHONPATH": "/app:/app/packages/core",
+      "PYTHONUNBUFFERED": "1",
+      "LOG_LEVEL": "info"
     }
-  },
+  }
+}
   "deploy": {
     "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "variables": {
