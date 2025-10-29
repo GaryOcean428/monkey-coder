@@ -1,0 +1,30 @@
+{
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-build-orchestrator",
+    "description": "Yarn workspace build orchestration (Node.js 22 + Yarn 4.9.2)"
+  },
+  "build": {
+    "provider": "node",
+    "packages": {
+      "node": "22"
+    },
+    "steps": {
+      "install": {
+        "commands": [
+          "corepack enable",
+          "corepack prepare yarn@4.9.2 --activate",
+          "yarn install --immutable",
+          "cp requirements-deploy.txt services/backend/requirements-deploy.txt",
+          "cp requirements.txt services/backend/requirements.txt"
+        ],
+        "cache": {
+          "paths": ["node_modules", ".yarn/cache"]
+        }
+      }
+    },
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
