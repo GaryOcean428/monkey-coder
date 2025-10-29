@@ -28,6 +28,7 @@ Even though this file is archived, teams regularly reference it when debugging R
 1. **Root Orchestrator** (`/railpack.json`)
    - Runs Yarn workspace install with Node.js 22 + Yarn 4.9.2
    - Copies shared deployment artifacts (for example `requirements-deploy.txt`) into service directories
+   - Fails fast with a POSIX-compatible guard if the backend requirements file is missing
    - Does **not** correspond to a Railway service; acts purely as build bootstrapper
 2. **Service Railpacks** (`services/*/railpack.json`)
    - Railway reads the respective config for each service deployment
