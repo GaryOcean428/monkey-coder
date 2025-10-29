@@ -18,7 +18,8 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "if [ -f requirements-deploy.txt ]; then python -m uv pip install -r requirements-deploy.txt; else echo '⚠️ requirements-deploy.txt missing. Falling back to requirements.txt'; python -m uv pip install -r requirements.txt; fi",
+        "test -f requirements-deploy.txt || (echo 'ERROR: requirements-deploy.txt not found' && exit 1)",
+        "python -m uv pip install -r requirements-deploy.txt",
         "python -m uv pip install -e ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
       ],
