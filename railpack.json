@@ -15,7 +15,8 @@
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
           "yarn install --immutable",
-          "if [ -f requirements-deploy.txt ]; then echo '✅ Found backend requirements-deploy.txt'; else echo '❌ Missing backend requirements-deploy.txt'; exit 1; fi",
+          "if [ ! -f requirements-deploy.txt ]; then echo '❌ Missing backend requirements-deploy.txt'; exit 1; fi",
+          "echo '✅ Found backend requirements-deploy.txt'",
           "cp requirements-deploy.txt services/backend/"
         ],
         "cache": {
