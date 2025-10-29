@@ -1,8 +1,8 @@
 {
   "version": "1",
   "metadata": {
-    "name": "monkey-coder-monorepo",
-    "description": "Monorepo orchestration config"
+    "name": "monkey-coder-build-orchestrator",
+    "description": "Yarn workspace build orchestration (Node.js 22 + Yarn 4.9.2) - not a Railway service"
   },
   "build": {
     "provider": "node",
@@ -14,7 +14,8 @@
         "commands": [
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
-          "yarn install --immutable"
+          "yarn install --immutable",
+          "cp requirements-deploy.txt services/backend/ || { echo '❌ Missing backend requirements-deploy.txt'; exit 1; }"
         ],
         "cache": {
           "paths": ["node_modules", ".yarn/cache"]

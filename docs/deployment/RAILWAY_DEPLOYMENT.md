@@ -11,6 +11,49 @@
 >
 > This file is preserved for historical reference only.
 
+## Railway Service Architecture (2025-10 Update)
+
+Even though this file is archived, teams regularly reference it when debugging Railway deployments. This section captures the **current, authoritative mapping** between Railway services and their `railpack.json` definitions so engineers do not need to cross-reference multiple dashboards.
+
+### Service Mapping
+
+| Railway Service Name    | Purpose        | Railpack Config                     | Build Provider |
+|-------------------------|----------------|-------------------------------------|----------------|
+| `monkey-coder`          | Frontend UI    | `services/frontend/railpack.json`   | Node.js 22     |
+| `monkey-coder-backend`  | API Backend    | `services/backend/railpack.json`    | Python 3.12    |
+| `monkey-coder-ml`       | ML Inference   | `services/ml/railpack.json`         | Python 3.12    |
+
+### Build Flow Overview
+
+1. **Root Orchestrator** (`/railpack.json`)
+   - Runs Yarn workspace install with Node.js 22 + Yarn 4.9.2
+   - Copies shared deployment artifacts (for example `requirements-deploy.txt`) into service directories
+   - Does **not** correspond to a Railway service; acts purely as build bootstrapper
+2. **Service Railpacks** (`services/*/railpack.json`)
+   - Railway reads the respective config for each service deployment
+   - Installs service-specific dependencies (Python via `uv`, Node via Yarn)
+   - Defines the `startCommand` executed on Railway
+
+### Service Identifiers
+
+- `monkey-coder`: Frontend/UI service
+- `monkey-coder-backend`: Backend API service (Railway ID `6af98d25-621b-4a2d-bbcb-7acb314fbfed`)
+- `monkey-coder-ml`: ML inference service
+
+### Managing Service Environment Variables
+
+Each service maintains isolated environment variables. Use the Railway CLI to manage them safely:
+
+```bash
+# Set a variable on the backend service
+railway vars set API_KEY=xxx --service monkey-coder-backend
+
+# List variables for the backend service
+railway vars --service monkey-coder-backend
+```
+
+Refer to the dedicated deployment guides in `docs/deployment/` for more detail on service-specific configuration.
+
 ---
 
 # Railway Deployment Configuration - HISTORICAL
