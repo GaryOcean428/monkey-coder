@@ -15,7 +15,8 @@
           "corepack enable",
           "corepack prepare yarn@4.9.2 --activate",
           "yarn install --immutable",
-          "cp requirements-deploy.txt services/backend/ || { echo '❌ Missing backend requirements-deploy.txt'; exit 1; }"
+          "test -f requirements-deploy.txt || (echo '❌ Missing backend requirements-deploy.txt'; exit 1)",
+          "cp requirements-deploy.txt services/backend/"
         ],
         "cache": {
           "paths": ["node_modules", ".yarn/cache"]
