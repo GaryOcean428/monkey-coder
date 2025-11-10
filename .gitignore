@@ -258,7 +258,6 @@ secrets.json
 
 # Railway tokens and config
 .railway/
-railway.json
 
 # API Keys and service credentials
 **/api_keys.txt
@@ -312,7 +311,7 @@ smoke_test_results.json
 # Railway build system prevention
 nixpacks*.toml
 !railway.toml
-railway.json
+!railway.json
 !railpack.json
 
 # Build monitoring (keep directory structure, ignore logs and history)
