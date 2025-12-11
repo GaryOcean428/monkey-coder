@@ -6,17 +6,31 @@
  * Get API base URL for the current environment
  */
 export function getApiBaseUrl(): string {
-  // In browser, detect the current origin
+  // Always prefer the explicitly set environment variable
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // In browser, use environment variable or fallback to backend service
   if (typeof window !== 'undefined') {
-    const { protocol, hostname, port } = window.location;
+    const { protocol, hostname } = window.location;
     
     // Production check - if we're on Railway or fastmonkey domain
-    if (hostname.includes('railway.app') || hostname.includes('fastmonkey.au')) {
+    // In production, the backend is a separate service
+    if (hostname.includes('railway.app')) {
+      // Frontend is at monkey-coder.up.railway.app
+      // Backend is at monkey-coder-backend-production.up.railway.app
+      const backendHost = hostname.replace(/^[^.]+/, 'monkey-coder-backend-production');
+      return `${protocol}//${backendHost}`;
+    }
+    
+    if (hostname.includes('fastmonkey.au')) {
+      // Custom domain - use the same domain (backend handles routing)
       return `${protocol}//${hostname}`;
     }
     
-    // Development - use current origin
-    return window.location.origin;
+    // Development - use localhost backend
+    return 'http://localhost:8000';
   }
   
   // Server-side fallback
@@ -27,19 +41,31 @@ export function getApiBaseUrl(): string {
  * Get WebSocket URL for the current environment
  */
 export function getWebSocketUrl(): string {
-  // In browser, detect the current origin
+  // Always prefer the explicitly set environment variable
+  if (process.env.NEXT_PUBLIC_WS_URL) {
+    return process.env.NEXT_PUBLIC_WS_URL;
+  }
+  
+  // In browser, use environment variable or fallback to backend service
   if (typeof window !== 'undefined') {
-    const { protocol, hostname, port } = window.location;
+    const { protocol, hostname } = window.location;
+    const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
     
     // Production check - if we're on Railway or fastmonkey domain
-    if (hostname.includes('railway.app') || hostname.includes('fastmonkey.au')) {
-      const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+    if (hostname.includes('railway.app')) {
+      // Frontend is at monkey-coder.up.railway.app
+      // Backend is at monkey-coder-backend-production.up.railway.app
+      const backendHost = hostname.replace(/^[^.]+/, 'monkey-coder-backend-production');
+      return `${wsProtocol}//${backendHost}`;
+    }
+    
+    if (hostname.includes('fastmonkey.au')) {
+      // Custom domain - use the same domain (backend handles routing)
       return `${wsProtocol}//${hostname}`;
     }
     
-    // Development - use WebSocket protocol
-    const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${wsProtocol}//${hostname}${port ? `:${port}` : ''}`;
+    // Development - use localhost backend
+    return 'ws://localhost:8000';
   }
   
   // Server-side fallback
@@ -97,13 +123,54 @@ export class APIError extends Error {
  */
 export async function handleApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      } else {
+        // Response is not JSON (likely HTML error page)
+        const text = await response.text();
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          errorMessage = `API endpoint not found or returned HTML instead of JSON. Check that the backend service is running and the API URL is correct.`;
+        } else {
+          errorMessage = `${errorMessage} (Received non-JSON response)`;
+        }
+      }
+    } catch (e) {
+      // If parsing fails, use the status text
+    }
+    
     throw new APIError(
-      errorData.detail || `HTTP ${response.status}: ${response.statusText}`,
+      errorMessage,
       response.status,
       response.statusText
     );
   }
 
-  return response.json();
+  // Parse JSON response
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // If it's not JSON, check if it's HTML
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      throw new APIError(
+        'API returned HTML instead of JSON. Check that the backend service is running and the API URL is correct.',
+        response.status,
+        response.statusText
+      );
+    }
+    throw new APIError(
+      'Failed to parse API response as JSON',
+      response.status,
+      response.statusText
+    );
+  }
 }
