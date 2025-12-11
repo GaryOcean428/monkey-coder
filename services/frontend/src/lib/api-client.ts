@@ -20,13 +20,26 @@ class APIClient {
     // Determine backend URL based on environment
     if (typeof window !== 'undefined') {
       // Client-side: use environment variable or infer from current domain
-      this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 
-                     (window.location.hostname === 'localhost' 
-                       ? 'http://localhost:8000' 
-                       : '');
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        this.baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      } else if (window.location.hostname === 'localhost') {
+        this.baseUrl = 'http://localhost:8000';
+      } else if (window.location.hostname.includes('railway.app')) {
+        // Frontend is at monkey-coder.up.railway.app
+        // Backend is at monkey-coder-backend-production.up.railway.app
+        const protocol = window.location.protocol;
+        const backendHost = window.location.hostname.replace(/^[^.]+/, 'monkey-coder-backend-production');
+        this.baseUrl = `${protocol}//${backendHost}`;
+      } else if (window.location.hostname.includes('fastmonkey.au')) {
+        // Custom domain - backend is on the same domain
+        this.baseUrl = window.location.origin;
+      } else {
+        // Fallback for other domains
+        this.baseUrl = window.location.origin;
+      }
     } else {
       // Server-side: use internal API URL if available
-      this.baseUrl = process.env.API_URL || 'http://localhost:8000';
+      this.baseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     }
   }
 
@@ -48,17 +61,42 @@ class APIClient {
     if (!response.ok) {
       let errorMessage = `Request failed: ${response.statusText}`;
       try {
-        const errorData = await response.json();
-        errorMessage = errorData.detail || errorData.message || errorMessage;
-      } catch {
-        // If response isn't JSON, use status text
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } else {
+          // Response is not JSON (likely HTML error page)
+          const text = await response.text();
+          if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+            errorMessage = `API endpoint not found or returned HTML instead of JSON. Check that the backend service is running and the API URL is correct. (URL: ${url})`;
+          } else {
+            errorMessage = `${errorMessage} (Received non-JSON response)`;
+          }
+        }
+      } catch (e) {
+        // If parsing fails, use the status text
+        errorMessage = `${errorMessage} (Failed to parse error response)`;
       }
       throw new Error(errorMessage);
     }
 
     // Handle empty responses
     const text = await response.text();
-    return text ? JSON.parse(text) : {} as T;
+    if (!text) {
+      return {} as T;
+    }
+    
+    // Check if response is JSON
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // If it's not JSON, check if it's HTML
+      if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+        throw new Error(`API returned HTML instead of JSON. Check that the backend service is running and the API URL is correct. (URL: ${url})`);
+      }
+      throw new Error(`Failed to parse API response as JSON (URL: ${url})`);
+    }
   }
 
   // Auth endpoints with cookie support
