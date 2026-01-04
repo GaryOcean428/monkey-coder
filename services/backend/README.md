@@ -87,22 +87,42 @@ Update `services/backend/requirements-deploy.txt` whenever:
 2. Dependency versions are updated
 3. The root `requirements-deploy.txt` changes
 
-### Sync Command
+### Automated Sync Scripts
+
+Two scripts are available to manage requirements file synchronization:
+
+#### 1. Verify Sync Status
+```bash
+# Check if files are in sync
+./scripts/verify-requirements-sync.sh
+```
+This script will:
+- ✅ Verify both files exist
+- ✅ Check if they're identical
+- ❌ Exit with error if out of sync (with diff output)
+
+#### 2. Sync Files
+```bash
+# Sync requirements-deploy.txt from root to services/backend
+./scripts/sync-requirements-deploy.sh
+```
+This script will:
+- 📋 Copy the root requirements-deploy.txt to services/backend/
+- 💾 Create a backup of the existing backend file
+- ✅ Verify the sync was successful
+- 📝 Show git status and commit instructions
+
+### Manual Sync (Alternative)
 ```bash
 # Copy updated requirements from root to backend service
 cp requirements-deploy.txt services/backend/requirements-deploy.txt
 ```
 
-### Automated Sync (Future Enhancement)
-Consider adding a pre-commit hook or CI check to ensure both files stay in sync:
+### Pre-Commit Integration
+Add this to `.githooks/pre-commit` or `.husky/pre-commit`:
 ```bash
-# .githooks/pre-commit (example)
-#!/bin/bash
-if ! diff -q requirements-deploy.txt services/backend/requirements-deploy.txt > /dev/null; then
-  echo "⚠️  requirements-deploy.txt out of sync!"
-  echo "Run: cp requirements-deploy.txt services/backend/requirements-deploy.txt"
-  exit 1
-fi
+# Verify requirements-deploy.txt is in sync
+./scripts/verify-requirements-sync.sh || exit 1
 ```
 
 ## Troubleshooting
