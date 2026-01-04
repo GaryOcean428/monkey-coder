@@ -996,6 +996,41 @@ python scripts/verify-railway-config.py --json > compliance-report.json
 - ✅ Health check configuration
 - ✅ Service settings compliance
 
+#### Requirements File Synchronization
+
+The backend service requires `requirements-deploy.txt` to be present in `services/backend/` directory for Railway deployments. Since Railway builds services in isolated contexts, each service needs its own copy of required files.
+
+**Verify Files Are In Sync:**
+```bash
+# Check if requirements-deploy.txt is synchronized
+./scripts/verify-requirements-sync.sh
+```
+
+**Sync Requirements File:**
+```bash
+# Copy requirements-deploy.txt from root to services/backend/
+./scripts/sync-requirements-deploy.sh
+```
+
+**Why This Matters:**
+- Railway sets root directory to `services/backend` for the backend service
+- Build commands run from that context and cannot access files outside it
+- Keeping files in sync prevents "File not found" deployment errors
+
+**Best Practice:**
+Run verification before committing changes to `requirements-deploy.txt`:
+```bash
+# Update root requirements
+vim requirements-deploy.txt
+
+# Sync to backend service
+./scripts/sync-requirements-deploy.sh
+
+# Commit both files
+git add requirements-deploy.txt services/backend/requirements-deploy.txt
+git commit -m "Update deployment requirements"
+```
+
 #### Service Configuration Documentation
 
 See comprehensive guides:
