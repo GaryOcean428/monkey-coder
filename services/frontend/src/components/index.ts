@@ -3,6 +3,9 @@
  * Simplifies imports: import { SiteHeader, SiteFooter, ThemeProvider } from '@/components'
  */
 
+// Error Handling
+export { ErrorBoundary } from './ErrorBoundary';
+
 // Layout components
 export { default as SiteHeader } from './site-header';
 export { default as SiteFooter } from './site-footer';
