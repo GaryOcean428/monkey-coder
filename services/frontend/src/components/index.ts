@@ -6,6 +6,12 @@
 // Error Handling
 export { ErrorBoundary } from './ErrorBoundary';
 
+// Accessibility
+export { VisuallyHidden } from './VisuallyHidden';
+
+// Advanced UI
+export { CommandPalette, useCommandPalette } from './CommandPalette';
+
 // Layout components
 export { default as SiteHeader } from './site-header';
 export { default as SiteFooter } from './site-footer';
@@ -19,3 +25,6 @@ export { default as NeonShowcase } from './NeonShowcase';
 
 // UI components (re-export from ui directory)
 export * from './ui';
+
+// Export types
+export type { CommandItem, CommandPaletteProps } from './CommandPalette';

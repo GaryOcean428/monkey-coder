@@ -28,5 +28,17 @@ export {
 } from './skeleton';
 export { EmptyState, EmptyStateIcons } from './empty-state';
 
+// Navigation components
+export { Breadcrumb, generateBreadcrumbs } from './breadcrumb';
+
+// Overlay components
+export { Tooltip, SimpleTooltip } from './tooltip';
+export { Modal, ConfirmDialog } from './modal';
+
 // Theme
 export { ThemeToggle } from './theme-toggle';
+
+// Export types
+export type { BreadcrumbItem, BreadcrumbProps } from './breadcrumb';
+export type { TooltipProps } from './tooltip';
+export type { ModalProps, ConfirmDialogProps } from './modal';
