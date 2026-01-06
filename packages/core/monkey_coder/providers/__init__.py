@@ -134,8 +134,10 @@ class ProviderRegistry:
     async def initialize_all(self) -> None:
         """Initialize all configured providers."""
         from .openai_adapter import OpenAIProvider
+        from .gpt52_provider import GPT52Provider
         from .anthropic_adapter import AnthropicProvider  
         from .google_adapter import GoogleProvider
+        from .gemini3_provider import Gemini3Provider
         from .groq_provider import GroqProvider
         from .grok_adapter import GrokProvider
         
@@ -144,17 +146,21 @@ class ProviderRegistry:
         
         providers_to_init = []
         
-        # OpenAI
+        # OpenAI - Standard models
         if openai_key := os.getenv("OPENAI_API_KEY"):
             providers_to_init.append(OpenAIProvider(openai_key))
+            # Add GPT-5.2 provider
+            providers_to_init.append(GPT52Provider(openai_key))
         
-        # Anthropic
+        # Anthropic - Claude models with Opus 4.5 support
         if anthropic_key := os.getenv("ANTHROPIC_API_KEY"):
             providers_to_init.append(AnthropicProvider(anthropic_key))
         
-        # Google
+        # Google - Standard Gemini models
         if google_key := os.getenv("GOOGLE_API_KEY"):
             providers_to_init.append(GoogleProvider(google_key))
+            # Add Gemini 3 Pro provider
+            providers_to_init.append(Gemini3Provider(google_key))
         
         # Groq - Hardware-accelerated inference for Llama, Qwen, and Kimi models
         if groq_key := os.getenv("GROQ_API_KEY"):

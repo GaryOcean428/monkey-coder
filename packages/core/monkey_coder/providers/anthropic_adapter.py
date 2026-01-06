@@ -47,6 +47,20 @@ class AnthropicProvider(BaseProvider):
 
     # Official Anthropic model names validated against API documentation (3.5+ only)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        "claude-opus-4-5": {
+            "name": "claude-opus-4-5",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 5.00,  # per 1M tokens
+            "output_cost": 25.00,  # per 1M tokens
+            "description": "Claude Opus 4.5 - 80.9% SWE-bench with effort control (low, medium, high)",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking", "effort_control", "computer_use"],
+            "version": "4.5-opus",
+            "release_date": datetime(2025, 11, 1),
+            "max_output": 16000,
+            "training_cutoff": "Jan 2025",
+            "supports_effort": True,  # Unique to Opus 4.5
+        },
         "claude-opus-4-1-20250805": {
             "name": "claude-opus-4-1-20250805",
             "type": "chat",
@@ -142,9 +156,12 @@ class AnthropicProvider(BaseProvider):
 
     # Model aliases for convenience (pointing to latest versions)
     MODEL_ALIASES: Dict[str, str] = {
+        "claude-opus-4.5": "claude-opus-4-5",
+        "claude-opus-4-5-latest": "claude-opus-4-5",
+        "opus-4.5": "claude-opus-4-5",
         "claude-opus-4-1": "claude-opus-4-1-20250805",
         "claude-opus-4.1": "claude-opus-4-1-20250805",
-        "claude-opus-latest": "claude-opus-4-1-20250805",
+        "claude-opus-latest": "claude-opus-4-5",  # Updated to point to 4.5
         "claude-opus-4-0": "claude-opus-4-20250514",
         "claude-sonnet-4-0": "claude-sonnet-4-20250514",
         "claude-3-7-sonnet-latest": "claude-3-7-sonnet-20250219",
@@ -330,6 +347,29 @@ class AnthropicProvider(BaseProvider):
                 "max_tokens": max_tokens,
                 "temperature": kwargs.get("temperature", 0.0),
             }
+
+            # Add effort parameter for Claude Opus 4.5 (beta feature)
+            effort = kwargs.get("effort")
+            if effort and model_info.get("supports_effort"):
+                valid_efforts = ["low", "medium", "high"]
+                if effort in valid_efforts:
+                    params["effort"] = effort
+                    logger.info(f"Using effort level: {effort} for {actual_model}")
+                else:
+                    logger.warning(
+                        f"Invalid effort '{effort}' for {actual_model}. "
+                        f"Valid options: {valid_efforts}. Ignoring."
+                    )
+
+            # Add extended thinking support
+            extended_thinking = kwargs.get("extended_thinking", False)
+            thinking_budget = kwargs.get("thinking_budget", 10000)
+            if extended_thinking:
+                params["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": min(thinking_budget, 32000)  # Max 32K thinking tokens
+                }
+                logger.info(f"Extended thinking enabled with budget: {thinking_budget} tokens")
 
             # Only add optional parameters if they're provided
             if kwargs.get("top_p") is not None:
