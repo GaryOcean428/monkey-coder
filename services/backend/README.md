@@ -47,8 +47,8 @@ When Railway builds the backend service:
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "python -m uv pip install -r ../../requirements-deploy.txt",  // ← References root (primary)
-        "python -m uv pip install -e ../../packages/core",            // ← Relative path to core
+        "python -m uv pip install -r ../../requirements-deploy.txt",
+        "python -m uv pip install -e ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
       ]
     }
@@ -56,7 +56,10 @@ When Railway builds the backend service:
 }
 ```
 
-**Note**: The local `requirements-deploy.txt` in `services/backend/` serves as a fallback if the relative path fails.
+**Key Points**:
+- First command: References root directory (`../../requirements-deploy.txt`) as primary path
+- Second command: Installs core package via relative path
+- Local `requirements-deploy.txt` in `services/backend/` serves as fallback if relative path fails
 
 ### 3. Expected Output
 ```
@@ -115,6 +118,13 @@ This script will:
 - ✅ Check if they're identical
 - ❌ Exit with error if out of sync (with diff output)
 
+**Example Usage**:
+```bash
+cd /path/to/monkey-coder
+./scripts/verify-requirements-sync.sh
+# Output: ✅ Requirements files are in sync
+```
+
 #### 2. Sync Files
 ```bash
 # Sync requirements-deploy.txt from root to services/backend
@@ -125,6 +135,20 @@ This script will:
 - 💾 Create a backup of the existing backend file
 - ✅ Verify the sync was successful
 - 📝 Show git status and commit instructions
+
+**Example Workflow**:
+```bash
+# 1. Make changes to root requirements-deploy.txt
+vim requirements-deploy.txt
+
+# 2. Run sync script
+./scripts/sync-requirements-deploy.sh
+
+# 3. Commit both files
+git add requirements-deploy.txt services/backend/requirements-deploy.txt
+git commit -m "chore(deps): update deployment requirements"
+git push
+```
 
 ### Manual Sync (Alternative)
 ```bash
