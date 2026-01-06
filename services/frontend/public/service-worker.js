@@ -1,3 +1,4 @@
+/* eslint-env serviceworker */
 /**
  * Service Worker for Progressive Web App
  * 

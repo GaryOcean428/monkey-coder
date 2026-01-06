@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { describe, it, expect, vi } from '@jest/globals'
+import { describe, it, expect, jest } from '@jest/globals'
 import { 
   parseApiError, 
   formatErrorMessage,
@@ -85,7 +85,7 @@ describe('API Error Handling', () => {
 
   describe('retryWithBackoff', () => {
     it('should succeed on first try', async () => {
-      const fn = vi.fn().mockResolvedValue('success')
+      const fn = jest.fn().mockResolvedValue('success')
       
       const result = await retryWithBackoff(fn, { maxRetries: 3 })
       
@@ -94,7 +94,7 @@ describe('API Error Handling', () => {
     })
 
     it('should retry on retriable errors', async () => {
-      const fn = vi.fn()
+      const fn = jest.fn()
         .mockRejectedValueOnce({ code: 'NETWORK_ERROR' })
         .mockRejectedValueOnce({ code: 'NETWORK_ERROR' })
         .mockResolvedValue('success')
@@ -109,7 +109,7 @@ describe('API Error Handling', () => {
     })
 
     it('should not retry on non-retriable errors', async () => {
-      const fn = vi.fn().mockRejectedValue({ code: 'UNAUTHORIZED' })
+      const fn = jest.fn().mockRejectedValue({ code: 'UNAUTHORIZED' })
       
       await expect(
         retryWithBackoff(fn, { maxRetries: 3 })
@@ -119,7 +119,7 @@ describe('API Error Handling', () => {
     })
 
     it('should throw after max retries', async () => {
-      const fn = vi.fn().mockRejectedValue({ code: 'NETWORK_ERROR' })
+      const fn = jest.fn().mockRejectedValue({ code: 'NETWORK_ERROR' })
       
       await expect(
         retryWithBackoff(fn, { 

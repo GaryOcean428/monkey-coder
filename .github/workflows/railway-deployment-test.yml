@@ -308,7 +308,7 @@ jobs:
           
           // Smoke test results
           commentBody += '### 🧪 Smoke Test Results\n';
-          commentBody += `**Status:** ${healthCheckStatus === 'success' ? '✅ Passed' : '❌ Failed'}\n\n';
+          commentBody += `**Status:** ${healthCheckStatus === 'success' ? '✅ Passed' : '❌ Failed'}\n\n`;
           
           // Try to read smoke test results
           try {
