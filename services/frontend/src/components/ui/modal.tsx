@@ -233,6 +233,9 @@ export function ConfirmDialog({
           </Button>
         </>
       }
-    />
+    >
+      {/* Empty children - content is in description */}
+      <></>
+    </Modal>
   )
 }

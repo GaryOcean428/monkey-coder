@@ -16,10 +16,16 @@ export {
 // Navigation Configuration
 export {
   mainNavigation,
-  footerNavigation,
-  docsNavigation,
-  type NavItem,
-  type FooterSection,
+  productNavigation,
+  companyNavigation,
+  legalNavigation,
+  socialNavigation,
+  navigationConfig,
+  unifiedNavigation,
+  simpleNavigation,
+  type NavigationItem,
+  type SocialItem,
+  type NavigationConfig,
 } from './navigation';
 
 // Stripe Configuration (if exists)
