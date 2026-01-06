@@ -340,6 +340,10 @@ load_pricing_from_file()
 # Mount Stripe Checkout routes with /api prefix
 app.include_router(stripe_checkout.router, prefix="/api/v1/stripe", tags=["stripe"])
 
+# Mount Device Auth routes for CLI authentication
+from .routes import device_auth
+app.include_router(device_auth.router, tags=["device-auth"])
+
 # Mount streaming endpoints with /api prefix
 app.include_router(streaming_router, prefix="/api")
 app.include_router(streaming_execute_router, prefix="/api")
