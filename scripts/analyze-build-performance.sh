@@ -5,17 +5,14 @@
 LOG_DIR="monitoring/build-times"
 HISTORY_FILE="${LOG_DIR}/build-history.csv"
 REPORT_FILE="${LOG_DIR}/performance-report.txt"
+CSV_HEADER="timestamp,status,duration_seconds"
 
-if [ ! -f "${HISTORY_FILE}" ]; then
+# Create history file if it doesn't exist or is empty
+if [ ! -f "${HISTORY_FILE}" ] || [ ! -s "${HISTORY_FILE}" ]; then
     echo "No build history found at ${HISTORY_FILE}"
     echo "Creating new build history file..."
     mkdir -p "${LOG_DIR}"
-    echo "timestamp,status,duration_seconds" > "${HISTORY_FILE}"
-fi
-
-# Create header if needed
-if [ ! -s "${HISTORY_FILE}" ]; then
-    echo "timestamp,status,duration_seconds" > "${HISTORY_FILE}"
+    echo "${CSV_HEADER}" > "${HISTORY_FILE}"
 fi
 
 # Calculate statistics
