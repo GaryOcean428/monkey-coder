@@ -8,7 +8,9 @@ REPORT_FILE="${LOG_DIR}/performance-report.txt"
 
 if [ ! -f "${HISTORY_FILE}" ]; then
     echo "No build history found at ${HISTORY_FILE}"
-    exit 1
+    echo "Creating new build history file..."
+    mkdir -p "${LOG_DIR}"
+    echo "timestamp,status,duration_seconds" > "${HISTORY_FILE}"
 fi
 
 # Create header if needed
