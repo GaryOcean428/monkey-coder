@@ -147,9 +147,9 @@ validate_railpack() {
 }
 
 # Validate all railpack files
-validate_railpack "$PROJECT_ROOT/railpack.json" "Frontend (monkey-coder)"
-validate_railpack "$PROJECT_ROOT/railpack-backend.json" "Backend (monkey-coder-backend)"
-validate_railpack "$PROJECT_ROOT/railpack-ml.json" "ML Service (monkey-coder-ml)"
+validate_railpack "$PROJECT_ROOT/services/frontend/railpack.json" "Frontend (monkey-coder)"
+validate_railpack "$PROJECT_ROOT/services/backend/railpack.json" "Backend (monkey-coder-backend)"
+validate_railpack "$PROJECT_ROOT/services/ml/railpack.json" "ML Service (monkey-coder-ml)"
 
 # Step 3: Check for competing build files
 echo -e "${BOLD}🔧 Step 3: Build System Conflicts Check${NC}"
