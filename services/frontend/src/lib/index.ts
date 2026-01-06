@@ -41,12 +41,14 @@ export {
   validateEmail,
   validatePassword,
   validateUsername,
-  validateRequired,
-  validateMinLength,
-  validateMaxLength,
-  validatePattern,
-  type ValidationResult,
-  type ValidationRule,
+  validateConfirmPassword,
+  validateName,
+  validatePhone,
+  checkEmailAvailability,
+  checkUsernameAvailability,
+  createValidationState,
+  updateValidationState,
+  type ValidationState,
 } from './validation';
 
 // Utilities

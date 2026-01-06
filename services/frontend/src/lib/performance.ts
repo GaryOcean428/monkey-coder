@@ -323,12 +323,13 @@ export interface WebVitals {
 
 export function reportWebVitals(onPerfEntry?: (metric: WebVitals) => void) {
   if (onPerfEntry && typeof window !== 'undefined') {
+    // @ts-expect-error - web-vitals is optional and loaded dynamically
     import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
-      getCLS(metric => onPerfEntry({ CLS: metric.value }))
-      getFID(metric => onPerfEntry({ FID: metric.value }))
-      getFCP(metric => onPerfEntry({ FCP: metric.value }))
-      getLCP(metric => onPerfEntry({ LCP: metric.value }))
-      getTTFB(metric => onPerfEntry({ TTFB: metric.value }))
+      getCLS((metric: any) => onPerfEntry({ CLS: metric.value }))
+      getFID((metric: any) => onPerfEntry({ FID: metric.value }))
+      getFCP((metric: any) => onPerfEntry({ FCP: metric.value }))
+      getLCP((metric: any) => onPerfEntry({ LCP: metric.value }))
+      getTTFB((metric: any) => onPerfEntry({ TTFB: metric.value }))
     }).catch(() => {
       // web-vitals not available
     })

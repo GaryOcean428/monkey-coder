@@ -17,7 +17,7 @@ export { Select } from './select';
 // Form components
 export { FormField } from './form-field';
 export { FormStatus, useFormStatus } from './form-status';
-export { PasswordStrength } from './password-strength';
+export { PasswordStrengthIndicator, getPasswordStrength } from './password-strength';
 
 // Loading & feedback components
 export { 
