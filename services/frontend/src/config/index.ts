@@ -16,15 +16,9 @@ export {
 // Navigation Configuration
 export {
   mainNavigation,
-  productNavigation,
-  companyNavigation,
-  legalNavigation,
-  socialNavigation,
   navigationConfig,
   unifiedNavigation,
-  simpleNavigation,
   type NavigationItem,
-  type SocialItem,
   type NavigationConfig,
 } from './navigation';
 

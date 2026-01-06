@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import validator from 'validator'
 
 // Simple in-memory rate limiter (use Redis in production)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
@@ -154,12 +155,10 @@ export function sanitizeInput(input: string): string {
 }
 
 /**
- * Validate email format
+ * Validate email format using validator library (no-regex-by-default policy)
  */
 export function isValidEmail(email: string): boolean {
-  // Use a simpler, more secure pattern to avoid backtracking
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-  return emailRegex.test(email)
+  return validator.isEmail(email)
 }
 
 /**

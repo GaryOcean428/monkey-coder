@@ -10,7 +10,7 @@ export interface ModalProps {
   onClose: () => void
   title?: string
   description?: string
-  children: ReactNode
+  children?: ReactNode
   footer?: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
   closeOnEscape?: boolean
