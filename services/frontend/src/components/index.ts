@@ -13,13 +13,13 @@ export { VisuallyHidden } from './VisuallyHidden';
 export { CommandPalette, useCommandPalette } from './CommandPalette';
 
 // Layout components
-export { default as SiteHeader } from './site-header';
-export { default as SiteFooter } from './site-footer';
+export { SiteHeader } from './site-header';
+export { SiteFooter } from './site-footer';
 export { ThemeProvider } from './theme-provider';
 export { ThemeToggle } from './theme-toggle';
 
 // Marketing components
-export { default as PricingCard } from './pricing-card';
+export { PricingCard } from './pricing-card';
 export { default as ColorPalette } from './ColorPalette';
 export { default as NeonShowcase } from './NeonShowcase';
 
