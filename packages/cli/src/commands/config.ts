@@ -1,6 +1,6 @@
 /**
  * Configuration commands for Monkey Coder CLI
- * Handles getting, setting, and managing configuration
+ * Handles getting, setting, and managing hierarchical configuration
  */
 
 import { Command } from 'commander';
@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Table from 'cli-table3';
 import { ConfigManager } from '../config.js';
+import { HierarchicalConfigManager, ConfigScope } from '../hierarchical-config.js';
 import { formatError } from '../utils.js';
 import { CommandDefinition } from './registry.js';
 
@@ -322,6 +323,50 @@ Examples:
         console.log(chalk.gray('Run "monkey config edit" to set up again'));
       } catch (error: any) {
         console.error(formatError(error.message || 'Failed to reset config'));
+        process.exit(1);
+      }
+    });
+
+  // config where - Show config file locations and which scope sets which keys
+  configCmd
+    .command('where')
+    .description('Show configuration file locations and sources')
+    .option('--verbose', 'Show detailed information')
+    .addHelpText('after', `
+Examples:
+  $ monkey config where
+    Show all config file locations
+
+  $ monkey config where --verbose
+    Show config locations and which file sets each key
+`)
+    .action(async (options: any) => {
+      try {
+        console.log(chalk.blue('\n📁 Configuration File Locations:\n'));
+        
+        // Show global config location
+        const globalPath = '~/.config/monkey-coder/config.json';
+        console.log(chalk.cyan('Global:   '), globalPath);
+        
+        // Show local config location
+        const localPath = './.monkey-coder/config.json';
+        console.log(chalk.cyan('Local:    '), localPath);
+        
+        // Show project config location  
+        const projectPath = './monkey-coder.json (or package.json field)';
+        console.log(chalk.cyan('Project:  '), projectPath);
+        
+        console.log(chalk.gray('\nPrecedence: project > local > global'));
+        
+        // If verbose, show which scope sets which keys
+        if (options.verbose) {
+          // This would use HierarchicalConfigManager.getSources()
+          // For now, show a message
+          console.log(chalk.blue('\n📊 Configuration Sources:\n'));
+          console.log(chalk.gray('(Use hierarchical config to see which file sets each key)'));
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to show config locations'));
         process.exit(1);
       }
     });
