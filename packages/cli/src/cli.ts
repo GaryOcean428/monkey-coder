@@ -34,6 +34,9 @@ import { createConfigCommand } from './commands/config.js';
 import { createGitCommand } from './commands/git.js';
 import { createPRCommand } from './commands/pr.js';
 import { createIssueCommand } from './commands/issue.js';
+import { createSearchCommand } from './commands/search.js';
+import { createReleaseCommand } from './commands/release.js';
+import { createWorkflowCommand } from './commands/workflow.js';
 import { printSplashSync } from './splash.js';
 
 // Read package version
@@ -690,6 +693,9 @@ program.addCommand(createConfigCommand(config));
 program.addCommand(createGitCommand(config));
 program.addCommand(createPRCommand(config));
 program.addCommand(createIssueCommand(config));
+program.addCommand(createSearchCommand(config));
+program.addCommand(createReleaseCommand(config));
+program.addCommand(createWorkflowCommand(config));
 
 // Require authentication for main commands
 const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];
