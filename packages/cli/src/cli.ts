@@ -29,6 +29,11 @@ import { validateTaskType, validatePersona } from './type-guards.js';
 import { createAuthCommand, requireAuth } from './commands/auth.js';
 import { createUsageCommand, createBillingCommand } from './commands/usage.js';
 import { createMCPCommand } from './commands/mcp.js';
+import { createRepoCommand } from './commands/repo.js';
+import { createConfigCommand } from './commands/config.js';
+import { createGitCommand } from './commands/git.js';
+import { createPRCommand } from './commands/pr.js';
+import { createIssueCommand } from './commands/issue.js';
 import { printSplashSync } from './splash.js';
 
 // Read package version
@@ -525,75 +530,8 @@ program
     }
   });
 
-// Command: config
-program
-  .command('config')
-  .description('Manage CLI configuration')
-  .addCommand(
-    new Command('set')
-      .description('Set configuration value')
-      .argument('<key>', 'Configuration key')
-      .argument('<value>', 'Configuration value')
-      .action(async (key: string, value: string) => {
-        try {
-          // Handle boolean conversion for showSplash
-          if (key === 'showSplash') {
-            const booleanValue = value.toLowerCase() === 'true';
-            config.set(key, booleanValue);
-          } else {
-            config.set(key as any, value);
-          }
-          await config.saveConfig();
-          console.log(chalk.green(`✓ Set ${key} = ${value}`));
-        } catch (error: any) {
-          console.error(formatError(error));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('get')
-      .description('Get configuration value')
-      .argument('<key>', 'Configuration key')
-      .action((key: string) => {
-        try {
-          const value = config.get(key as any);
-          console.log(value !== undefined ? value : chalk.gray('(not set)'));
-        } catch (error: any) {
-          console.error(formatError(error));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('list')
-      .description('List all configuration values')
-      .action(() => {
-        try {
-          const allConfig = config.getAll();
-          console.log(chalk.cyan('Current configuration:'));
-          Object.entries(allConfig).forEach(([key, value]) => {
-            console.log(`  ${key}: ${value}`);
-          });
-        } catch (error: any) {
-          console.error(formatError(error));
-          process.exit(1);
-        }
-      })
-  )
-  .addCommand(
-    new Command('reset')
-      .description('Reset configuration to defaults')
-      .action(async () => {
-        try {
-          await config.reset();
-          console.log(chalk.green('✓ Configuration reset to defaults'));
-        } catch (error: any) {
-          console.error(formatError(error));
-          process.exit(1);
-        }
-      })
-  );
+// Enhanced configuration command (replaced with new hierarchical version)
+// Note: Old inline config command removed in favor of createConfigCommand
 
 // Command: health
 program
@@ -745,6 +683,13 @@ program.addCommand(createBillingCommand(config));
 
 // Add MCP command
 program.addCommand(createMCPCommand(config));
+
+// Add new hierarchical command groups (Phase 1 implementation)
+program.addCommand(createRepoCommand(config));
+program.addCommand(createConfigCommand(config));
+program.addCommand(createGitCommand(config));
+program.addCommand(createPRCommand(config));
+program.addCommand(createIssueCommand(config));
 
 // Require authentication for main commands
 const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];
