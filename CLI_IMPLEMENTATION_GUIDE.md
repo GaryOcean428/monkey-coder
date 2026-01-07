@@ -1656,17 +1656,17 @@ export class HierarchicalConfigManager {
     };
   }
 
-  private async loadConfig(path: string): Promise<any> {
+  private async loadConfig(filePath: string): Promise<any> {
     try {
-      return await fs.readJson(path);
+      return await fs.readJson(filePath);
     } catch {
       return {};
     }
   }
 
-  private async saveConfig(path: string, config: any): Promise<void> {
-    await fs.ensureDir(path.dirname(path));
-    await fs.writeJson(path, config, { spaces: 2 });
+  private async saveConfig(filePath: string, config: any): Promise<void> {
+    await fs.ensureDir(path.dirname(filePath));
+    await fs.writeJson(filePath, config, { spaces: 2 });
   }
 
   private getValue(scope: string, key: string): any {
