@@ -5,9 +5,12 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import Table from 'cli-table3';
+import open from 'open';
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
 import { CommandDefinition } from './registry.js';
+import { getGitHubClient } from '../github-client.js';
 
 /**
  * Create the workflow command group
@@ -17,30 +20,84 @@ export function createWorkflowCommand(config: ConfigManager): Command {
     .description('Manage GitHub Actions workflows')
     .alias('wf');
 
+  /**
+   * Parse owner/repo from option or error
+   */
+  function parseOwnerRepo(repoOption?: string): { owner: string; repo: string } {
+    if (!repoOption) {
+      console.error(chalk.red('Error: --repo option is required (format: owner/repo)'));
+      console.log(chalk.gray('Example: --repo microsoft/vscode'));
+      process.exit(1);
+    }
+
+    const parts = repoOption.split('/');
+    if (parts.length !== 2) {
+      console.error(chalk.red('Error: Invalid repository format'));
+      console.log(chalk.gray('Expected format: owner/repo'));
+      console.log(chalk.gray('Example: --repo microsoft/vscode'));
+      process.exit(1);
+    }
+
+    return { owner: parts[0]!, repo: parts[1]! };
+  }
+
   // workflow list
   workflow
     .command('list')
     .description('List workflows')
     .alias('ls')
-    .option('--repo <owner/repo>', 'Repository (defaults to current)')
+    .option('--repo <owner/repo>', 'Repository (required)')
     .option('--all', 'Show disabled workflows too')
     .addHelpText('after', `
 Examples:
-  $ monkey workflow list
+  $ monkey workflow list --repo owner/repo
     List all active workflows
 
-  $ monkey workflow list --all
+  $ monkey workflow list --all --repo owner/repo
     List all workflows including disabled
-
-  $ monkey workflow list --repo owner/repo
-    List workflows for specific repository
 `)
     .action(async (options: any) => {
       try {
-        console.log(chalk.blue('📋 Listing workflows...'));
+        const { owner, repo } = parseOwnerRepo(options.repo);
         
-        console.log(chalk.yellow('\n⚠️  Workflow listing not yet implemented'));
-        console.log(chalk.gray('This will use GitHub Actions API in a future update'));
+        console.log(chalk.blue(`📋 Listing workflows for ${owner}/${repo}...`));
+        
+        const github = getGitHubClient();
+        const result = await github.listWorkflows(owner, repo);
+
+        const workflows = options.all 
+          ? result.workflows
+          : result.workflows.filter(w => w.state !== 'disabled_manually');
+
+        if (workflows.length === 0) {
+          console.log(chalk.yellow('\n No workflows found'));
+          return;
+        }
+
+        console.log(chalk.green(`\n✓ Found ${workflows.length} workflows\n`));
+
+        const table = new Table({
+          head: [chalk.cyan('Name'), chalk.cyan('Path'), chalk.cyan('State')],
+          colWidths: [40, 50, 15],
+          wordWrap: true,
+        });
+
+        for (const wf of workflows) {
+          const stateColor = wf.state === 'active' ? chalk.green : chalk.gray;
+          table.push([
+            chalk.bold(wf.name),
+            wf.path,
+            stateColor(wf.state),
+          ]);
+        }
+
+        console.log(table.toString());
+        
+        // Show rate limit info
+        const rateLimit = github.getRateLimitInfo();
+        if (rateLimit) {
+          console.log(chalk.gray(`\nAPI: ${rateLimit.remaining}/${rateLimit.limit} requests remaining`));
+        }
       } catch (error: any) {
         console.error(formatError(error.message || 'Workflow listing failed'));
         process.exit(1);
@@ -164,41 +221,83 @@ Examples:
     .command('runs')
     .description('List workflow runs')
     .argument('[workflow]', 'Workflow ID or name (optional)')
-    .option('--status <status>', 'Filter by status (success, failure, in_progress)')
+    .option('--status <status>', 'Filter by status (completed, in_progress, queued)')
     .option('--branch <branch>', 'Filter by branch')
     .option('--limit <limit>', 'Number of runs to show', parseInt, 30)
-    .option('--repo <owner/repo>', 'Repository (defaults to current)')
+    .option('--repo <owner/repo>', 'Repository (required)')
     .addHelpText('after', `
 Examples:
-  $ monkey workflow runs
+  $ monkey workflow runs --repo owner/repo
     List recent workflow runs
 
-  $ monkey workflow runs ci.yml
+  $ monkey workflow runs ci.yml --repo owner/repo
     List runs for specific workflow
 
-  $ monkey workflow runs --status failure --limit 10
-    List last 10 failed runs
+  $ monkey workflow runs --status completed --limit 10 --repo owner/repo
+    List last 10 completed runs
 
-  $ monkey workflow runs --branch main
+  $ monkey workflow runs --branch main --repo owner/repo
     List runs on main branch
 `)
-    .action(async (workflow: string | undefined, options: any) => {
+    .action(async (workflowId: string | undefined, options: any) => {
       try {
-        if (workflow) {
-          console.log(chalk.blue(`📋 Listing runs for: ${workflow}`));
+        const { owner, repo } = parseOwnerRepo(options.repo);
+
+        if (workflowId) {
+          console.log(chalk.blue(`📋 Listing runs for ${workflowId} in ${owner}/${repo}...`));
         } else {
-          console.log(chalk.blue('📋 Listing all workflow runs...'));
-        }
-        
-        if (options.status) {
-          console.log(chalk.gray(`Status: ${options.status}`));
-        }
-        if (options.branch) {
-          console.log(chalk.gray(`Branch: ${options.branch}`));
+          console.log(chalk.blue(`📋 Listing all workflow runs for ${owner}/${repo}...`));
         }
 
-        console.log(chalk.yellow('\n⚠️  Workflow runs listing not yet implemented'));
-        console.log(chalk.gray('This will use GitHub Actions API in a future update'));
+        const github = getGitHubClient();
+        const result = await github.listWorkflowRuns(owner, repo, workflowId, {
+          status: options.status as any,
+          branch: options.branch,
+          per_page: options.limit,
+        });
+
+        if (result.workflow_runs.length === 0) {
+          console.log(chalk.yellow('\n No workflow runs found'));
+          return;
+        }
+
+        console.log(chalk.green(`\n✓ Found ${result.total_count} runs (showing ${result.workflow_runs.length})\n`));
+
+        const table = new Table({
+          head: [chalk.cyan('Name'), chalk.cyan('Branch'), chalk.cyan('Status'), chalk.cyan('Conclusion'), chalk.cyan('Created')],
+          colWidths: [30, 20, 15, 15, 20],
+          wordWrap: true,
+        });
+
+        for (const run of result.workflow_runs) {
+          let statusColor = chalk.gray;
+          if (run.status === 'completed') {
+            statusColor = run.conclusion === 'success' ? chalk.green : chalk.red;
+          } else if (run.status === 'in_progress') {
+            statusColor = chalk.yellow;
+          }
+
+          const conclusionText = run.conclusion || chalk.gray('-');
+          const conclusionColor = run.conclusion === 'success' ? chalk.green 
+            : run.conclusion === 'failure' ? chalk.red 
+            : chalk.gray;
+
+          table.push([
+            chalk.bold(run.name),
+            run.head_branch,
+            statusColor(run.status),
+            conclusionColor(conclusionText),
+            new Date(run.created_at).toLocaleDateString(),
+          ]);
+        }
+
+        console.log(table.toString());
+        
+        // Show rate limit info
+        const rateLimit = github.getRateLimitInfo();
+        if (rateLimit) {
+          console.log(chalk.gray(`\nAPI: ${rateLimit.remaining}/${rateLimit.limit} requests remaining`));
+        }
       } catch (error: any) {
         console.error(formatError(error.message || 'Workflow runs listing failed'));
         process.exit(1);
