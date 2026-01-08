@@ -56,6 +56,7 @@ export interface GitHubRelease {
     name: string;
     size: number;
     browser_download_url: string;
+    download_count?: number;
   }>;
 }
 
