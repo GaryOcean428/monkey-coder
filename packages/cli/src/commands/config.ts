@@ -113,13 +113,18 @@ Examples:
     .command('list')
     .description('List all configuration values')
     .alias('ls')
-    .option('--global', 'Show global config')
-    .option('--local', 'Show local config')
+    .option('--global', 'Show global config only')
+    .option('--local', 'Show local config only')
+    .option('--project', 'Show project config only')
+    .option('--show-sources', 'Show which file each value comes from')
     .option('--show-secrets', 'Show full values for sensitive keys')
     .addHelpText('after', `
 Examples:
   $ monkey config list
-    List all configuration
+    List all effective configuration
+
+  $ monkey config list --show-sources
+    Show which file each config value comes from
 
   $ monkey config list --global
     List global configuration only
@@ -129,42 +134,94 @@ Examples:
 `)
     .action(async (options: any) => {
       try {
-        const allConfig = config.getAll();
-        
-        if (Object.keys(allConfig).length === 0) {
-          console.log(chalk.yellow('No configuration set'));
-          console.log(chalk.gray('\nRun "monkey config set <key> <value>" to configure'));
-          return;
-        }
-
-        console.log(chalk.blue('\n📋 Configuration:'));
-        
-        const table = new Table({
-          head: [chalk.cyan('Key'), chalk.cyan('Value')],
-          colWidths: [30, 50]
-        });
-
-        const sensitiveKeys = ['apiKey', 'refreshToken', 'password'];
-        
-        for (const [key, value] of Object.entries(allConfig)) {
-          let displayValue = String(value);
+        // If showing sources, use getEffectiveConfig()
+        if (options.showSources) {
+          const effectiveConfig = config.getEffectiveConfig();
           
-          // Mask sensitive values unless --show-secrets is used
-          if (!options.showSecrets && sensitiveKeys.includes(key) && displayValue) {
-            if (displayValue.length > 12) {
-              displayValue = displayValue.substring(0, 8) + '...' + displayValue.substring(displayValue.length - 4);
-            } else {
-              displayValue = '***';
+          if (Object.keys(effectiveConfig).length === 0) {
+            console.log(chalk.yellow('No configuration set'));
+            console.log(chalk.gray('\nRun "monkey config set <key> <value>" to configure'));
+            return;
+          }
+
+          console.log(chalk.blue('\n📋 Configuration with Sources:'));
+          
+          const table = new Table({
+            head: [chalk.cyan('Key'), chalk.cyan('Value'), chalk.cyan('Source')],
+            colWidths: [25, 35, 40]
+          });
+
+          const sensitiveKeys = ['apiKey', 'refreshToken', 'password'];
+          
+          for (const [key, { value, source }] of Object.entries(effectiveConfig)) {
+            let displayValue = String(value);
+            
+            // Mask sensitive values unless --show-secrets is used
+            if (!options.showSecrets && sensitiveKeys.includes(key) && displayValue) {
+              if (displayValue.length > 12) {
+                displayValue = displayValue.substring(0, 8) + '...' + displayValue.substring(displayValue.length - 4);
+              } else {
+                displayValue = '***';
+              }
             }
+            
+            table.push([key, displayValue || chalk.gray('(not set)'), chalk.gray(source)]);
+          }
+
+          console.log(table.toString());
+          
+          const locations = config.getConfigLocations();
+          if (locations.length > 0) {
+            console.log(chalk.blue('\n📂 Config Files (in priority order):'));
+            locations.forEach((loc, idx) => {
+              console.log(chalk.gray(`  ${idx + 1}. ${loc}`));
+            });
           }
           
-          table.push([key, displayValue || chalk.gray('(not set)')]);
-        }
+          if (!options.showSecrets) {
+            console.log(chalk.gray('\nSensitive values are masked. Use --show-secrets to reveal.'));
+          }
+        } else {
+          // Original simple list
+          const allConfig = config.getAll();
+          
+          if (Object.keys(allConfig).length === 0) {
+            console.log(chalk.yellow('No configuration set'));
+            console.log(chalk.gray('\nRun "monkey config set <key> <value>" to configure'));
+            return;
+          }
 
-        console.log(table.toString());
-        
-        if (!options.showSecrets) {
-          console.log(chalk.gray('\nSensitive values are masked. Use --show-secrets to reveal.'));
+          console.log(chalk.blue('\n📋 Configuration:'));
+          
+          const table = new Table({
+            head: [chalk.cyan('Key'), chalk.cyan('Value')],
+            colWidths: [30, 50]
+          });
+
+          const sensitiveKeys = ['apiKey', 'refreshToken', 'password'];
+          
+          for (const [key, value] of Object.entries(allConfig)) {
+            let displayValue = String(value);
+            
+            // Mask sensitive values unless --show-secrets is used
+            if (!options.showSecrets && sensitiveKeys.includes(key) && displayValue) {
+              if (displayValue.length > 12) {
+                displayValue = displayValue.substring(0, 8) + '...' + displayValue.substring(displayValue.length - 4);
+              } else {
+                displayValue = '***';
+              }
+            }
+            
+            table.push([key, displayValue || chalk.gray('(not set)')]);
+          }
+
+          console.log(table.toString());
+          
+          if (!options.showSecrets) {
+            console.log(chalk.gray('\nSensitive values are masked. Use --show-secrets to reveal.'));
+          }
+          
+          console.log(chalk.gray('\nTip: Use --show-sources to see which file each value comes from'));
         }
       } catch (error: any) {
         console.error(formatError(error.message || 'Failed to list config'));

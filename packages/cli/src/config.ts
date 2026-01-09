@@ -28,8 +28,12 @@ export class ConfigManager {
   private configPath: string;
   private config: ConfigFile;
   private encryptionKey?: Buffer;
+  private workingDir: string;
 
-  constructor() {
+  constructor(workingDir?: string) {
+    // Working directory for finding local/project configs
+    this.workingDir = workingDir || process.cwd();
+
     // Use XDG config directory or fallback to ~/.config
     const xdgConfigHome = process.env.XDG_CONFIG_HOME;
     this.configDir = xdgConfigHome
@@ -42,7 +46,7 @@ export class ConfigManager {
     // Initialize encryption key from machine-specific data
     this.initializeEncryption();
 
-    // Load config synchronously to ensure it's available immediately
+    // Load config with hierarchy (global -> local -> project)
     this.loadConfigSync();
   }
 
@@ -115,6 +119,134 @@ export class ConfigManager {
   }
 
   /**
+   * Find local config file by traversing up directory tree
+   * Looks for .monkey-coder/config.json
+   */
+  private findLocalConfigPath(): string | null {
+    let currentDir = this.workingDir;
+    const root = path.parse(currentDir).root;
+
+    while (currentDir !== root) {
+      const localConfigPath = path.join(currentDir, '.monkey-coder', 'config.json');
+      if (fs.pathExistsSync(localConfigPath)) {
+        return localConfigPath;
+      }
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) break; // Safety check
+      currentDir = parentDir;
+    }
+
+    return null;
+  }
+
+  /**
+   * Find project config file in current directory
+   * Looks for monkey-coder.json or package.json with monkey-coder field
+   */
+  private findProjectConfigPath(): string | null {
+    // First check for dedicated monkey-coder.json
+    const monkeyCoderJson = path.join(this.workingDir, 'monkey-coder.json');
+    if (fs.pathExistsSync(monkeyCoderJson)) {
+      return monkeyCoderJson;
+    }
+
+    // Then check for package.json with monkey-coder field
+    const packageJson = path.join(this.workingDir, 'package.json');
+    if (fs.pathExistsSync(packageJson)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packageJson, 'utf-8'));
+        if (pkg['monkey-coder']) {
+          return packageJson;
+        }
+      } catch (error) {
+        // Ignore invalid package.json
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Load configuration from file synchronously
+   */
+  private loadConfigSync(): void {
+    // Start with empty config
+    this.config = {};
+
+    // 1. Load global config (lowest priority)
+    this.mergeConfigFromFile(this.configPath, true);
+
+    // 2. Load local config (medium priority)
+    const localConfigPath = this.findLocalConfigPath();
+    if (localConfigPath) {
+      this.mergeConfigFromFile(localConfigPath, true);
+    }
+
+    // 3. Load project config (highest priority)
+    const projectConfigPath = this.findProjectConfigPath();
+    if (projectConfigPath) {
+      if (projectConfigPath.endsWith('package.json')) {
+        // Extract monkey-coder field from package.json
+        try {
+          const pkg = JSON.parse(fs.readFileSync(projectConfigPath, 'utf-8'));
+          if (pkg['monkey-coder']) {
+            Object.assign(this.config, pkg['monkey-coder']);
+          }
+        } catch (error) {
+          // Ignore errors
+        }
+      } else {
+        // Load dedicated config file
+        this.mergeConfigFromFile(projectConfigPath, false);
+      }
+    }
+
+    // 4. Environment variables override everything
+    this.mergeFromEnvironment();
+  }
+
+  /**
+   * Merge config from a file into current config
+   */
+  private mergeConfigFromFile(filePath: string, encrypted: boolean): void {
+    try {
+      if (fs.pathExistsSync(filePath)) {
+        const configData = fs.readFileSync(filePath, 'utf-8');
+        const rawConfig = JSON.parse(configData);
+        
+        if (encrypted) {
+          const decryptedConfig = this.decryptConfig(rawConfig);
+          Object.assign(this.config, decryptedConfig);
+        } else {
+          // Project configs are not encrypted
+          Object.assign(this.config, rawConfig);
+        }
+      }
+    } catch (error) {
+      // Silently ignore errors for non-critical configs
+    }
+  }
+
+  /**
+   * Merge config from environment variables
+   */
+  private mergeFromEnvironment(): void {
+    // Environment variables take highest priority
+    if (process.env.MONKEY_CODER_API_KEY) {
+      this.config.apiKey = process.env.MONKEY_CODER_API_KEY;
+    }
+    if (process.env.MONKEY_CODER_BASE_URL) {
+      this.config.baseUrl = process.env.MONKEY_CODER_BASE_URL;
+    }
+    if (process.env.MONKEY_CODER_DEFAULT_MODEL) {
+      this.config.defaultModel = process.env.MONKEY_CODER_DEFAULT_MODEL;
+    }
+    if (process.env.MONKEY_CODER_DEFAULT_PROVIDER) {
+      this.config.defaultProvider = process.env.MONKEY_CODER_DEFAULT_PROVIDER;
+    }
+  }
+
+  /**
    * Load configuration from file
    */
   private async loadConfig(): Promise<void> {
@@ -126,22 +258,6 @@ export class ConfigManager {
       }
     } catch (error) {
       console.warn('Warning: Failed to load config file, using defaults');
-      this.config = {};
-    }
-  }
-
-  /**
-   * Load configuration from file synchronously
-   */
-  private loadConfigSync(): void {
-    try {
-      if (fs.pathExistsSync(this.configPath)) {
-        const configData = fs.readFileSync(this.configPath, 'utf-8');
-        const rawConfig: SecureConfigFile = JSON.parse(configData);
-        this.config = this.decryptConfig(rawConfig);
-      }
-    } catch (error) {
-      // Silently use defaults for sync loading
       this.config = {};
     }
   }
@@ -340,5 +456,106 @@ export class ConfigManager {
    */
   getConfigPath(): string {
     return this.configPath;
+  }
+
+  /**
+   * Get all config locations in priority order (lowest to highest)
+   * Returns paths of config files that exist and would be loaded
+   */
+  getConfigLocations(): string[] {
+    const locations: string[] = [];
+
+    // Global config
+    if (fs.pathExistsSync(this.configPath)) {
+      locations.push(this.configPath);
+    }
+
+    // Local config
+    const localConfigPath = this.findLocalConfigPath();
+    if (localConfigPath) {
+      locations.push(localConfigPath);
+    }
+
+    // Project config
+    const projectConfigPath = this.findProjectConfigPath();
+    if (projectConfigPath) {
+      locations.push(projectConfigPath);
+    }
+
+    return locations;
+  }
+
+  /**
+   * Get effective config showing which file each value came from
+   */
+  getEffectiveConfig(): { [key: string]: { value: any; source: string } } {
+    const result: { [key: string]: { value: any; source: string } } = {};
+    const configs: { source: string; data: Partial<ConfigFile> }[] = [];
+
+    // Load all configs
+    if (fs.pathExistsSync(this.configPath)) {
+      try {
+        const configData = fs.readFileSync(this.configPath, 'utf-8');
+        const rawConfig = JSON.parse(configData);
+        const decrypted = this.decryptConfig(rawConfig);
+        configs.push({ source: `global (${this.configPath})`, data: decrypted });
+      } catch (error) {
+        // Ignore
+      }
+    }
+
+    const localConfigPath = this.findLocalConfigPath();
+    if (localConfigPath) {
+      try {
+        const configData = fs.readFileSync(localConfigPath, 'utf-8');
+        const rawConfig = JSON.parse(configData);
+        const decrypted = this.decryptConfig(rawConfig);
+        configs.push({ source: `local (${localConfigPath})`, data: decrypted });
+      } catch (error) {
+        // Ignore
+      }
+    }
+
+    const projectConfigPath = this.findProjectConfigPath();
+    if (projectConfigPath) {
+      try {
+        let projectConfig: Partial<ConfigFile>;
+        if (projectConfigPath.endsWith('package.json')) {
+          const pkg = JSON.parse(fs.readFileSync(projectConfigPath, 'utf-8'));
+          projectConfig = pkg['monkey-coder'] || {};
+        } else {
+          const configData = fs.readFileSync(projectConfigPath, 'utf-8');
+          projectConfig = JSON.parse(configData);
+        }
+        configs.push({ source: `project (${projectConfigPath})`, data: projectConfig });
+      } catch (error) {
+        // Ignore
+      }
+    }
+
+    // Build result showing which file each value came from
+    for (const { source, data } of configs) {
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined && value !== null) {
+          result[key] = { value, source };
+        }
+      }
+    }
+
+    // Environment variables
+    if (process.env.MONKEY_CODER_API_KEY) {
+      result.apiKey = { value: process.env.MONKEY_CODER_API_KEY, source: 'environment (MONKEY_CODER_API_KEY)' };
+    }
+    if (process.env.MONKEY_CODER_BASE_URL) {
+      result.baseUrl = { value: process.env.MONKEY_CODER_BASE_URL, source: 'environment (MONKEY_CODER_BASE_URL)' };
+    }
+    if (process.env.MONKEY_CODER_DEFAULT_MODEL) {
+      result.defaultModel = { value: process.env.MONKEY_CODER_DEFAULT_MODEL, source: 'environment (MONKEY_CODER_DEFAULT_MODEL)' };
+    }
+    if (process.env.MONKEY_CODER_DEFAULT_PROVIDER) {
+      result.defaultProvider = { value: process.env.MONKEY_CODER_DEFAULT_PROVIDER, source: 'environment (MONKEY_CODER_DEFAULT_PROVIDER)' };
+    }
+
+    return result;
   }
 }

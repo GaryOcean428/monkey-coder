@@ -381,4 +381,144 @@ describe('ConfigManager', () => {
       expect((allConfig as any)._salt).toBeUndefined();
     });
   });
+
+  describe('hierarchical config', () => {
+    it('finds local config by traversing up directory tree', () => {
+      const testDir = '/home/user/projects/myproject/src';
+      const localConfigPath = '/home/user/projects/myproject/.monkey-coder/config.json';
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === localConfigPath;
+      });
+
+      const manager = new ConfigManager(testDir);
+      const locations = manager.getConfigLocations();
+      
+      expect(locations).toContain(localConfigPath);
+    });
+
+    it('finds project config in current directory', () => {
+      const testDir = '/home/user/projects/myproject';
+      const projectConfigPath = path.join(testDir, 'monkey-coder.json');
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === projectConfigPath;
+      });
+
+      const manager = new ConfigManager(testDir);
+      const locations = manager.getConfigLocations();
+      
+      expect(locations).toContain(projectConfigPath);
+    });
+
+    it('finds config in package.json', () => {
+      const testDir = '/home/user/projects/myproject';
+      const packageJsonPath = path.join(testDir, 'package.json');
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === packageJsonPath;
+      });
+      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+        if (p === packageJsonPath) {
+          return JSON.stringify({
+            name: 'my-project',
+            'monkey-coder': {
+              defaultModel: 'gpt-4',
+              baseUrl: 'https://project-api.com'
+            }
+          });
+        }
+        return '{}';
+      });
+
+      const manager = new ConfigManager(testDir);
+      const locations = manager.getConfigLocations();
+      
+      expect(locations).toContain(packageJsonPath);
+    });
+
+    it('merges configs in correct priority order', () => {
+      const testDir = '/home/user/projects/myproject';
+      const localConfigPath = path.join(testDir, '.monkey-coder', 'config.json');
+      const projectConfigPath = path.join(testDir, 'monkey-coder.json');
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === mockConfigPath || p === localConfigPath || p === projectConfigPath;
+      });
+      
+      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+        if (p === mockConfigPath) {
+          return JSON.stringify({ baseUrl: 'global-url', defaultModel: 'global-model' });
+        }
+        if (p === localConfigPath) {
+          return JSON.stringify({ defaultModel: 'local-model', defaultProvider: 'local-provider' });
+        }
+        if (p === projectConfigPath) {
+          return JSON.stringify({ defaultProvider: 'project-provider' });
+        }
+        return '{}';
+      });
+
+      const manager = new ConfigManager(testDir);
+      
+      // Project config should override local, which overrides global
+      expect(manager.get('baseUrl')).toBe('global-url'); // Only in global
+      expect(manager.get('defaultModel')).toBe('local-model'); // Local overrides global
+      expect(manager.get('defaultProvider')).toBe('project-provider'); // Project overrides local
+    });
+
+    it('environment variables override all config files', () => {
+      process.env.MONKEY_CODER_API_KEY = 'env-api-key';
+      process.env.MONKEY_CODER_BASE_URL = 'env-base-url';
+      
+      const testDir = '/home/user/projects/myproject';
+      const projectConfigPath = path.join(testDir, 'monkey-coder.json');
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === projectConfigPath;
+      });
+      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+        if (p === projectConfigPath) {
+          return JSON.stringify({ apiKey: 'project-api-key', baseUrl: 'project-base-url' });
+        }
+        return '{}';
+      });
+
+      const manager = new ConfigManager(testDir);
+      
+      // Environment variables should override project config
+      expect(manager.get('apiKey')).toBe('env-api-key');
+      expect(manager.get('baseUrl')).toBe('env-base-url');
+      
+      delete process.env.MONKEY_CODER_API_KEY;
+      delete process.env.MONKEY_CODER_BASE_URL;
+    });
+
+    it('getEffectiveConfig shows sources for each value', () => {
+      const testDir = '/home/user/projects/myproject';
+      const localConfigPath = path.join(testDir, '.monkey-coder', 'config.json');
+      
+      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+        return p === mockConfigPath || p === localConfigPath;
+      });
+      
+      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+        if (p === mockConfigPath) {
+          return JSON.stringify({ baseUrl: 'global-url' });
+        }
+        if (p === localConfigPath) {
+          return JSON.stringify({ defaultModel: 'local-model' });
+        }
+        return '{}';
+      });
+
+      const manager = new ConfigManager(testDir);
+      const effectiveConfig = manager.getEffectiveConfig();
+      
+      expect(effectiveConfig.baseUrl?.value).toBe('global-url');
+      expect(effectiveConfig.baseUrl?.source).toContain('global');
+      expect(effectiveConfig.defaultModel?.value).toBe('local-model');
+      expect(effectiveConfig.defaultModel?.source).toContain('local');
+    });
+  });
 });

@@ -9,13 +9,12 @@ Railway builds each service in an **isolated build context**. When deploying the
 - Files outside this directory (e.g., at monorepo root) are not accessible
 - The `railpack.json` configuration references `requirements-deploy.txt` which must exist in the service directory
 
-## Solution (Option C - Dual-Path Approach)
-We've implemented a **robust dual-path strategy** for maximum reliability:
+## Solution (Local File Approach)
+We use the **local requirements file** for Railway deployments:
 
-1. **Primary Path**: `railpack.json` references `../../requirements-deploy.txt` (root directory)
-2. **Fallback Path**: Local copy exists at `services/backend/requirements-deploy.txt`
-
-This ensures Railway can access requirements regardless of build context issues.
+- `railpack.json` references `requirements-deploy.txt` (local copy in `services/backend/`)
+- This file must be kept in sync with the root `requirements-deploy.txt`
+- Railway's build isolation requires files to be within the service directory
 
 ### File Locations
 ```
@@ -23,8 +22,8 @@ monkey-coder/
 ├── requirements-deploy.txt           # Source of truth (monorepo root) ⭐
 └── services/
     └── backend/
-        ├── railpack.json              # References ../../requirements-deploy.txt 🔗
-        ├── requirements-deploy.txt    # Synced copy for fallback ✅
+        ├── railpack.json              # References local requirements-deploy.txt 🔗
+        ├── requirements-deploy.txt    # MUST be synced with root version ✅
         └── requirements.txt           # Alternative lighter requirements
 ```
 
@@ -47,7 +46,7 @@ When Railway builds the backend service:
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "python -m uv pip install -r ../../requirements-deploy.txt",
+        "python -m uv pip install -r requirements-deploy.txt",
         "python -m uv pip install -e ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Installed:\", monkey_coder.__file__)'"
       ]
@@ -57,9 +56,9 @@ When Railway builds the backend service:
 ```
 
 **Key Points**:
-- First command: References root directory (`../../requirements-deploy.txt`) as primary path
-- Second command: Installs core package via relative path
-- Local `requirements-deploy.txt` in `services/backend/` serves as fallback if relative path fails
+- First command: Uses local `requirements-deploy.txt` (Railway requires files within service directory)
+- Second command: Installs core package via relative path (Railway allows access to sibling directories)
+- The local requirements file MUST be kept in sync with root version
 
 ### 3. Expected Output
 ```
@@ -91,10 +90,10 @@ ls -ld services/backend/../../packages/core
 
 ## Maintenance
 
-### Dual-Path Strategy Benefits
-1. **Primary**: Root reference (`../../requirements-deploy.txt`) ensures single source of truth
-2. **Fallback**: Local copy protects against path resolution issues
-3. **Sync Scripts**: Automated tools keep files in sync
+### Local File Strategy Benefits
+1. **Reliability**: Local file works consistently in Railway's isolated build environment
+2. **Simplicity**: Single file reference without shell fallback logic
+3. **Sync Scripts**: Automated tools keep root and local files in sync
 
 ### When to Update
 Update **both** requirements files whenever:
