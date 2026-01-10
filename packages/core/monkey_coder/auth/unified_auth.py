@@ -31,6 +31,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from passlib.context import CryptContext
 import redis.asyncio as redis
+from itsdangerous import URLSafeTimedSerializer
 
 from ..security import (
     JWTUser,
