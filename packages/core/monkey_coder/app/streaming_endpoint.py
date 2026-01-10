@@ -12,7 +12,7 @@ from typing import AsyncGenerator, Optional
 from fastapi import HTTPException, Request, status
 from sse_starlette.sse import EventSourceResponse
 
-from ..models.api_models import ExecuteRequest
+from ..models import ExecuteRequest
 from ..core.orchestration_coordinator import OrchestrationCoordinator
 from ..core.persona_validation import PersonaValidator
 from ..providers import get_provider_adapter
