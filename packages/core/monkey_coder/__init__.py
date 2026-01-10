@@ -5,7 +5,7 @@ This package provides the core functionality for the Monkey Coder project,
 including AI model integration, code generation, and analysis capabilities.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.2.0"
 
 from .generator import CodeGenerator
 from .analyzer import CodeAnalyzer
