@@ -18,8 +18,8 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "cp ../../requirements-deploy.txt ./requirements-deploy.txt || echo 'Copy failed'",
-        "python -m uv pip install -r ./requirements-deploy.txt",
+        "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/requirements-deploy.txt -o requirements-deploy.txt",
+        "python -m uv pip install -r requirements-deploy.txt",
         "python -m uv pip install --no-cache-dir ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Module installed:\", monkey_coder.__file__); print(\"Version:\", monkey_coder.__version__)'"
       ],
