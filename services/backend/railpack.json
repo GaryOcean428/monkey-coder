@@ -18,6 +18,8 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
+        "ls -la requirements-deploy.txt || echo 'MISSING: requirements-deploy.txt'",
+        "pwd && find . -name 'requirements-deploy.txt' -type f",
         "python -m uv pip install -r requirements-deploy.txt",
         "python -m uv pip install --no-cache-dir ../../packages/core"
       ],
