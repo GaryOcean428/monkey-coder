@@ -18,7 +18,8 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "python -m uv pip install -r requirements-deploy.txt",
+        "ls -la && pwd && echo '=== File check ===' && ls -la requirements-deploy.txt || echo 'NOT FOUND'",
+        "python -m uv pip install -r ./requirements-deploy.txt",
         "python -m uv pip install --no-cache-dir ../../packages/core",
         "python -c 'import monkey_coder; print(\"✅ Module installed:\", monkey_coder.__file__); print(\"Version:\", monkey_coder.__version__)'"
       ],
