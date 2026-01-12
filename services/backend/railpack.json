@@ -20,7 +20,7 @@
         "pip install --upgrade uv",
         "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/requirements-deploy.txt -o requirements-deploy.txt",
         "python -m uv pip install -r requirements-deploy.txt",
-        "python -m uv pip install --no-cache-dir ../../packages/core",
+        "python -m uv pip install --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core",
         "python -c 'import monkey_coder; print(\"✅ Module installed:\", monkey_coder.__file__); print(\"Version:\", monkey_coder.__version__)'"
       ],
       "caches": ["uv-cache", "venv"],
