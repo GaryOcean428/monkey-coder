@@ -102,4 +102,24 @@ export default [
       'no-undef': 'off' // Allow module, require, etc.
     },
   },
+  // Service Worker
+  {
+    files: ['**/service-worker.js', '**/sw.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        clients: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        location: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      'no-undef': 'off',
+    },
+  },
 ];
