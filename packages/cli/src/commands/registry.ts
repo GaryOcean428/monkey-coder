@@ -80,7 +80,7 @@ export class CommandRegistry {
    */
   get(nameOrAlias: string): CommandDefinition | undefined {
     // Try direct lookup
-    let command = this.commands.get(nameOrAlias);
+    const command = this.commands.get(nameOrAlias);
     if (command) return command;
 
     // Try alias lookup
