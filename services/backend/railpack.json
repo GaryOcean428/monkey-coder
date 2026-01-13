@@ -17,8 +17,8 @@
         "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/services/backend/requirements-deploy.txt -o requirements-deploy.txt",
         "test -f requirements-deploy.txt || exit 1",
         "python -m uv venv /app/.venv",
-        "/app/.venv/bin/python -m uv pip install -r requirements-deploy.txt",
-        "/app/.venv/bin/python -m uv pip install --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
+        "python -m uv pip install --python /app/.venv/bin/python -r requirements-deploy.txt",
+        "python -m uv pip install --python /app/.venv/bin/python --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
       ],
       "caches": ["uv-cache"],
       "variables": {
