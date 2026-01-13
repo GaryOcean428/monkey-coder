@@ -16,9 +16,9 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.75.0
+anthropic==0.76.0
     # via monkey-coder-core (pyproject.toml)
-anyio==4.12.0
+anyio==4.12.1
     # via
     #   monkey-coder-core (pyproject.toml)
     #   anthropic
@@ -41,8 +41,6 @@ beautifulsoup4==4.14.3
     # via monkey-coder-core (pyproject.toml)
 billiard==4.2.4
     # via celery
-cachetools==6.2.4
-    # via google-auth
 celery==5.6.2
     # via monkey-coder-core (pyproject.toml)
 certifi==2026.1.4
@@ -88,7 +86,7 @@ fastapi==0.128.0
     # via
     #   monkey-coder-core (pyproject.toml)
     #   sentry-sdk
-filelock==3.20.2
+filelock==3.20.3
     # via
     #   huggingface-hub
     #   torch
@@ -97,13 +95,13 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2025.12.0
+fsspec==2026.1.0
     # via
     #   huggingface-hub
     #   torch
-google-auth==2.46.0
+google-auth==2.47.0
     # via google-genai
-google-genai==1.56.0
+google-genai==1.57.0
     # via monkey-coder-core (pyproject.toml)
 groq==1.0.0
     # via monkey-coder-core (pyproject.toml)
@@ -162,7 +160,7 @@ multidict==6.7.0
     #   yarl
 networkx==3.6.1
     # via torch
-numpy==2.4.0
+numpy==2.4.1
     # via
     #   accelerate
     #   scikit-learn
@@ -206,7 +204,7 @@ nvidia-nvjitlink-cu12==12.8.93
     #   torch
 nvidia-nvtx-cu12==12.8.90
     # via torch
-openai==2.14.0
+openai==2.15.0
     # via monkey-coder-core (pyproject.toml)
 packaging==25.0
     # via
@@ -220,7 +218,7 @@ passlib==1.7.4
     # via monkey-coder-core (pyproject.toml)
 pillow==12.1.0
     # via sentence-transformers
-prometheus-client==0.23.1
+prometheus-client==0.24.0
     # via monkey-coder-core (pyproject.toml)
 prompt-toolkit==3.0.52
     # via click-repl
@@ -306,13 +304,13 @@ safetensors==0.7.0
     #   transformers
 scikit-learn==1.8.0
     # via sentence-transformers
-scipy==1.16.3
+scipy==1.17.0
     # via
     #   scikit-learn
     #   sentence-transformers
 sentence-transformers==2.7.0
     # via monkey-coder-core (pyproject.toml)
-sentry-sdk==2.48.0
+sentry-sdk==2.49.0
     # via monkey-coder-core (pyproject.toml)
 setuptools==80.9.0
     # via
@@ -367,7 +365,7 @@ transformers==4.39.3
     #   sentence-transformers
 triton==3.4.0
     # via torch
-typer==0.21.0
+typer==0.21.1
     # via monkey-coder-core (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -394,7 +392,7 @@ tzdata==2025.3
     # via kombu
 tzlocal==5.3.1
     # via celery
-urllib3==2.6.2
+urllib3==2.6.3
     # via
     #   requests
     #   sentry-sdk

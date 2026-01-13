@@ -85,21 +85,21 @@ describe('API Error Handling', () => {
 
   describe('retryWithBackoff', () => {
     it('should succeed on first try', async () => {
-      const fn = jest.fn().mockResolvedValue('success')
+      const fn = jest.fn<() => Promise<string>>().mockResolvedValue('success')
       
-      const result = await retryWithBackoff(fn, { maxRetries: 3 })
+      const result = await retryWithBackoff<string>(fn, { maxRetries: 3 })
       
       expect(result).toBe('success')
       expect(fn).toHaveBeenCalledTimes(1)
     })
 
     it('should retry on retriable errors', async () => {
-      const fn = jest.fn()
+      const fn = jest.fn<() => Promise<string>>()
         .mockRejectedValueOnce({ code: 'NETWORK_ERROR' })
         .mockRejectedValueOnce({ code: 'NETWORK_ERROR' })
         .mockResolvedValue('success')
       
-      const result = await retryWithBackoff(fn, { 
+      const result = await retryWithBackoff<string>(fn, { 
         maxRetries: 3,
         initialDelay: 10,
       })
@@ -109,20 +109,20 @@ describe('API Error Handling', () => {
     })
 
     it('should not retry on non-retriable errors', async () => {
-      const fn = jest.fn().mockRejectedValue({ code: 'UNAUTHORIZED' })
+      const fn = jest.fn<() => Promise<string>>().mockRejectedValue({ code: 'UNAUTHORIZED' })
       
       await expect(
-        retryWithBackoff(fn, { maxRetries: 3 })
+        retryWithBackoff<string>(fn, { maxRetries: 3 })
       ).rejects.toEqual({ code: 'UNAUTHORIZED' })
       
       expect(fn).toHaveBeenCalledTimes(1)
     })
 
     it('should throw after max retries', async () => {
-      const fn = jest.fn().mockRejectedValue({ code: 'NETWORK_ERROR' })
+      const fn = jest.fn<() => Promise<string>>().mockRejectedValue({ code: 'NETWORK_ERROR' })
       
       await expect(
-        retryWithBackoff(fn, { 
+        retryWithBackoff<string>(fn, { 
           maxRetries: 2,
           initialDelay: 10,
         })

@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import '@testing-library/jest-dom'
 import { describe, it, expect } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import { Skeleton, CardSkeleton, ListSkeleton, TableSkeleton } from '@/components/ui/skeleton'

@@ -146,8 +146,8 @@ describe('Security Middleware', () => {
     it('should validate required fields', () => {
       const body = { name: 'John' }
       const schema = {
-        name: { type: 'string', required: true },
-        age: { type: 'number', required: true },
+        name: { type: 'string' as const, required: true },
+        age: { type: 'number' as const, required: true },
       }
 
       const result = validateRequestBody(body, schema)
@@ -159,7 +159,7 @@ describe('Security Middleware', () => {
     it('should validate field types', () => {
       const body = { name: 123 }
       const schema = {
-        name: { type: 'string', required: true },
+        name: { type: 'string' as const, required: true },
       }
 
       const result = validateRequestBody(body, schema)
@@ -171,7 +171,7 @@ describe('Security Middleware', () => {
     it('should validate string length', () => {
       const body = { password: '123' }
       const schema = {
-        password: { type: 'string', required: true, min: 8 },
+        password: { type: 'string' as const, required: true, min: 8 },
       }
 
       const result = validateRequestBody(body, schema)
@@ -183,7 +183,7 @@ describe('Security Middleware', () => {
     it('should validate number ranges', () => {
       const body = { age: 200 }
       const schema = {
-        age: { type: 'number', required: true, min: 0, max: 120 },
+        age: { type: 'number' as const, required: true, min: 0, max: 120 },
       }
 
       const result = validateRequestBody(body, schema)
@@ -196,7 +196,7 @@ describe('Security Middleware', () => {
       const body = { email: 'invalid-email' }
       const schema = {
         email: { 
-          type: 'string', 
+          type: 'string' as const, 
           required: true, 
           validator: isValidEmail 
         },
@@ -215,9 +215,9 @@ describe('Security Middleware', () => {
         email: 'john@example.com'
       }
       const schema = {
-        name: { type: 'string', required: true, min: 2 },
-        age: { type: 'number', required: true, min: 0, max: 120 },
-        email: { type: 'string', required: true, validator: isValidEmail },
+        name: { type: 'string' as const, required: true, min: 2 },
+        age: { type: 'number' as const, required: true, min: 0, max: 120 },
+        email: { type: 'string' as const, required: true, validator: isValidEmail },
       }
 
       const result = validateRequestBody(body, schema)
