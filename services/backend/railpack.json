@@ -13,12 +13,11 @@
   "steps": {
     "install": {
       "commands": [
-        "python -m venv .venv",
-        ".venv/bin/pip install --upgrade uv",
+        "pip install --upgrade uv",
         "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/services/backend/requirements-deploy.txt -o requirements-deploy.txt",
         "test -f requirements-deploy.txt || exit 1",
-        ".venv/bin/python -m uv pip install -r requirements-deploy.txt",
-        ".venv/bin/python -m uv pip install --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
+        "python -m uv pip install --system -r requirements-deploy.txt",
+        "python -m uv pip install --system --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
       ],
       "caches": ["uv-cache"],
       "variables": {
@@ -29,7 +28,7 @@
     }
   },
   "deploy": {
-    "startCommand": ".venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
