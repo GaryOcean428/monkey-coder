@@ -51,8 +51,8 @@
 ### Why This Works
 
 1. **Build Stage**:
-   - `pip install uv` → Installs UV binary to build Python (mise Python 3.13)
-   - UV binary available at `/mise/installs/python/3.13.11/bin/uv`
+   - `pip install uv` → Installs UV binary to build Python (Railway Python 3.13 provider)
+   - UV binary available in PATH (managed by Railway's Python provider)
    - Binary added to PATH automatically
 
 2. **Venv Creation**:
@@ -73,7 +73,7 @@
 
 ### UV Documentation Reference
 
-According to [UV official documentation](https://docs.astral.sh/uv/pip/environments/):
+According to [UV official documentation](https://docs.astral.sh/uv/pip/environments/) (verified as of January 2026):
 
 > "You can use `--python` with `uv pip install` to install packages directly into the environment tied to a specific Python interpreter:
 > ```bash
