@@ -8,10 +8,6 @@
     "uv-cache": {
       "directory": "/root/.cache/uv",
       "type": "shared"
-    },
-    "venv": {
-      "directory": ".venv",
-      "type": "shared"
     }
   },
   "steps": {
@@ -24,12 +20,11 @@
         ".venv/bin/python -m uv pip install -r requirements-deploy.txt",
         ".venv/bin/python -m uv pip install --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
       ],
-      "caches": ["uv-cache", "venv"],
+      "caches": ["uv-cache"],
       "variables": {
         "PYTHON_ENV": "production",
         "PYTHONUNBUFFERED": "1",
-        "LOG_LEVEL": "info",
-        "_CACHE_BUST": "2026-01-13-explicit-venv"
+        "LOG_LEVEL": "info"
       }
     }
   },
