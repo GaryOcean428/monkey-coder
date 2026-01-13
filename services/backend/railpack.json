@@ -18,8 +18,9 @@
     "install": {
       "commands": [
         "pip install --upgrade uv",
-        "ls -la requirements-deploy.txt || echo 'MISSING: requirements-deploy.txt'",
-        "pwd && find . -name 'requirements-deploy.txt' -type f",
+        "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/services/backend/requirements-deploy.txt -o requirements-deploy.txt || echo 'Fallback: using local file'",
+        "test -f requirements-deploy.txt || (echo 'FATAL: requirements-deploy.txt not found after fetch and fallback' && exit 1)",
+        "echo 'File acquired, proceeding with installation'",
         "python -m uv pip install -r requirements-deploy.txt",
         "python -m uv pip install --no-cache-dir ../../packages/core"
       ],
@@ -27,7 +28,8 @@
       "variables": {
         "PYTHON_ENV": "production",
         "PYTHONUNBUFFERED": "1",
-        "LOG_LEVEL": "info"
+        "LOG_LEVEL": "info",
+        "_CACHE_BUST": "2026-01-13-fix-v2"
       }
     }
   },
