@@ -10,9 +10,10 @@ This module provides the main FastAPI application instance with:
 """
 
 import hashlib
+import os
 import secrets
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from datetime import datetime, timedelta
 
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -21,7 +22,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 
 # In-memory password reset token storage (use Redis in production)
-_PASSWORD_RESET_TOKENS: Dict[str, Dict[str, any]] = {}
+_PASSWORD_RESET_TOKENS: Dict[str, Dict[str, Any]] = {}
 
 def _hash_reset_token(token: str) -> str:
     """Hash a reset token for secure storage."""
@@ -37,7 +38,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),  # Configure via environment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
