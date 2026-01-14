@@ -4,23 +4,15 @@
   "packages": {
     "python": "3.13"
   },
-  "caches": {
-    "uv-cache": {
-      "directory": "/root/.cache/uv",
-      "type": "shared"
-    }
-  },
   "steps": {
     "install": {
       "commands": [
-        "pip install --upgrade uv",
         "curl -fsSL https://raw.githubusercontent.com/GaryOcean428/monkey-coder/main/services/backend/requirements-deploy.txt -o requirements-deploy.txt",
         "test -f requirements-deploy.txt || exit 1",
-        "uv venv /app/.venv",
-        "uv pip install --python /app/.venv/bin/python -r requirements-deploy.txt",
-        "uv pip install --python /app/.venv/bin/python --no-cache-dir git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
+        "mkdir -p /app/.venv/lib/python3.13/site-packages",
+        "pip install --target /app/.venv/lib/python3.13/site-packages -r requirements-deploy.txt",
+        "pip install --target /app/.venv/lib/python3.13/site-packages --no-deps git+https://github.com/GaryOcean428/monkey-coder.git#subdirectory=packages/core"
       ],
-      "caches": ["uv-cache"],
       "variables": {
         "PYTHON_ENV": "production",
         "PYTHONUNBUFFERED": "1",
@@ -29,7 +21,7 @@
     }
   },
   "deploy": {
-    "startCommand": "/app/.venv/bin/python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "PYTHONPATH=/app/.venv/lib/python3.13/site-packages:$PYTHONPATH python -m uvicorn monkey_coder.app.main:app --host 0.0.0.0 --port $PORT",
     "healthCheckPath": "/api/health",
     "healthCheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
