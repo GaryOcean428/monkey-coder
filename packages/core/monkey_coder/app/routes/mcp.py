@@ -45,17 +45,16 @@ async def list_tools() -> Dict[str, List[ToolInfo]]:
     from monkey_coder.mcp.server import mcp
     
     try:
-        tools_result = await mcp.list_tools()
+        tools_list = await mcp.list_tools()
         
         # Convert MCP tools to our response format
         tools = []
-        if hasattr(tools_result, 'tools'):
-            for tool in tools_result.tools:
-                tools.append(ToolInfo(
-                    name=tool.name,
-                    description=tool.description or "",
-                    inputSchema=tool.inputSchema or {}
-                ))
+        for tool in tools_list:
+            tools.append(ToolInfo(
+                name=tool.name,
+                description=tool.description or "",
+                inputSchema=tool.inputSchema or {}
+            ))
         
         return {"tools": tools}
     except Exception as e:
@@ -68,24 +67,29 @@ async def call_tool(request: ToolCallRequest) -> ToolCallResponse:
     from monkey_coder.mcp.server import mcp
     
     try:
-        result = await mcp.call_tool(request.tool_name, request.arguments)
+        result_list = await mcp.call_tool(request.tool_name, request.arguments)
         
         # Convert result to response format
         content = []
-        if hasattr(result, 'content'):
-            for item in result.content:
-                if hasattr(item, 'text'):
-                    content.append({"type": "text", "text": item.text})
-                else:
-                    content.append({"type": "unknown", "data": str(item)})
+        for item in result_list:
+            if hasattr(item, 'text'):
+                content.append({"type": "text", "text": item.text})
+            elif hasattr(item, 'type'):
+                content.append({"type": item.type, "data": str(item)})
+            else:
+                content.append({"type": "unknown", "data": str(item)})
         
         return ToolCallResponse(
-            success=not (hasattr(result, 'isError') and result.isError),
+            success=True,
             content=content,
-            is_error=hasattr(result, 'isError') and result.isError or False
+            is_error=False
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
+        return ToolCallResponse(
+            success=False,
+            content=[{"type": "error", "text": str(e)}],
+            is_error=True
+        )
 
 
 @router.get("/resources")
@@ -94,18 +98,17 @@ async def list_resources() -> Dict[str, List[ResourceInfo]]:
     from monkey_coder.mcp.server import mcp
     
     try:
-        resources_result = await mcp.list_resources()
+        resources_list = await mcp.list_resources()
         
         # Convert MCP resources to our response format
         resources = []
-        if hasattr(resources_result, 'resources'):
-            for resource in resources_result.resources:
-                resources.append(ResourceInfo(
-                    uri=resource.uri,
-                    name=resource.name or resource.uri,
-                    description=resource.description or "",
-                    mimeType=resource.mimeType or "text/plain"
-                ))
+        for resource in resources_list:
+            resources.append(ResourceInfo(
+                uri=str(resource.uri),  # Convert AnyUrl to string
+                name=resource.name or str(resource.uri),
+                description=resource.description or "",
+                mimeType=resource.mimeType or "text/plain"
+            ))
         
         return {"resources": resources}
     except Exception as e:
@@ -118,20 +121,21 @@ async def read_resource(uri: str) -> Dict[str, Any]:
     from monkey_coder.mcp.server import mcp
     
     try:
-        content_result = await mcp.read_resource(uri)
+        content_list = await mcp.read_resource(uri)
         
         # Extract content
         content = ""
-        if hasattr(content_result, 'contents'):
-            for item in content_result.contents:
-                if hasattr(item, 'text'):
-                    content += item.text
-                elif hasattr(item, 'uri'):
-                    content = item.uri
+        mime_type = "text/plain"
+        for item in content_list:
+            if hasattr(item, 'content'):
+                content += str(item.content)
+            if hasattr(item, 'mime_type'):
+                mime_type = item.mime_type
         
         return {
             "uri": uri,
-            "content": content
+            "content": content,
+            "mime_type": mime_type
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Resource not found: {str(e)}")
@@ -145,8 +149,8 @@ async def health_check() -> Dict[str, Any]:
     
     try:
         # Test that MCP server is responsive
-        tools_result = await mcp.list_tools()
-        tool_count = len(tools_result.tools) if hasattr(tools_result, 'tools') else 0
+        tools_list = await mcp.list_tools()
+        tool_count = len(tools_list)
         
         return {
             "status": "healthy",

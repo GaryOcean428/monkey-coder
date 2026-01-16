@@ -81,10 +81,10 @@ async def health_check():
     # Check MCP server status
     try:
         from monkey_coder.mcp.server import mcp
-        tools_result = await mcp.list_tools()
+        tools_list = await mcp.list_tools()
         health_data["mcp_server"] = {
             "status": "operational",
-            "tools_count": len(tools_result.tools) if hasattr(tools_result, 'tools') else 0
+            "tools_count": len(tools_list)
         }
     except Exception as e:
         health_data["mcp_server"] = {
