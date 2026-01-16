@@ -61,8 +61,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
   return (
     <Box flexDirection="column" borderStyle="single" borderColor="gray">
-      <Box backgroundColor="gray" paddingX={1}>
-        <Text bold color="white">{filename}</Text>
+      <Box paddingX={1}>
+        <Text bold color="white" inverse>{filename}</Text>
       </Box>
       <Box flexDirection="column" paddingX={1} paddingY={1}>
         {diff.map((line, i) => (

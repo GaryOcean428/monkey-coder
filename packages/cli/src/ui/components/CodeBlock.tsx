@@ -32,8 +32,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
-      <Box backgroundColor="gray" paddingX={1} marginBottom={1}>
-        <Text bold color="white">{language}</Text>
+      <Box paddingX={1} marginBottom={1}>
+        <Text bold color="white" inverse>{language}</Text>
       </Box>
       {lines.map((line, index) => (
         <Box key={index}>

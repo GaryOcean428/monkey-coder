@@ -95,15 +95,8 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
     ]);
 
     try {
-      // Find which server has this tool
-      const toolInfo = mcpClient.findTool(toolCall.name);
-
-      if (!toolInfo) {
-        throw new Error(`Tool ${toolCall.name} not found`);
-      }
-
+      // Execute the tool
       const result = await mcpClient.executeTool(
-        toolInfo.serverName,
         toolCall.name,
         toolCall.args
       );

@@ -3,8 +3,6 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { render, Box, Text, useInput, useApp } from 'ink';
-import TextInput from 'ink-text-input';
-import Spinner from 'ink-spinner';
 import { MessageComponent } from './components/MessageComponent.js';
 import { ToolApproval } from './components/ToolApproval.js';
 import { TaskList } from './components/TaskList.js';
@@ -37,6 +35,7 @@ export const App: React.FC<AppProps> = ({
   const [status, setStatus] = useState<AppStatus>('idle');
   const [input, setInput] = useState('');
   const [inputEnabled, setInputEnabled] = useState(true);
+  const [isThinking, setIsThinking] = useState(false);
 
   // Session management
   const { sessionId, messages, addMessage, getTokenCount } = useSession({
@@ -65,12 +64,27 @@ export const App: React.FC<AppProps> = ({
   }, [initialPrompt, sessionId]);
 
   // Global keyboard shortcuts
-  useInput((char: string, key: { escape?: boolean; ctrl?: boolean }) => {
+  useInput((char: string, key: { escape?: boolean; ctrl?: boolean; return?: boolean }) => {
     if (key.escape && !pendingToolCall) {
       exit();
     }
     if (key.ctrl && char === 'c') {
       exit();
+    }
+    
+    // Handle input submission
+    if (key.return && inputEnabled && input.trim()) {
+      handleSubmit(input);
+    }
+    
+    // Handle text input (simple character append)
+    if (inputEnabled && !key.return && !key.escape && !key.ctrl && char.length === 1) {
+      setInput(prev => prev + char);
+    }
+    
+    // Handle backspace
+    if (inputEnabled && key.return === undefined && char === '') {
+      setInput(prev => prev.slice(0, -1));
     }
   });
 
@@ -82,6 +96,7 @@ export const App: React.FC<AppProps> = ({
       setInput('');
       setInputEnabled(false);
       setStatus('thinking');
+      setIsThinking(true);
 
       // Add user message
       addMessage('user', userMessage);
@@ -99,6 +114,7 @@ export const App: React.FC<AppProps> = ({
         setStatus('error');
       } finally {
         setInputEnabled(true);
+        setIsThinking(false);
       }
     },
     [sessionId, addMessage, onMessage]
@@ -157,19 +173,15 @@ export const App: React.FC<AppProps> = ({
       )}
 
       {/* Status */}
-      {status === 'thinking' && !isExecuting && (
+      {isThinking && !isExecuting && (
         <Box marginBottom={1}>
-          <Text color="yellow">
-            <Spinner type="dots" /> AI is thinking...
-          </Text>
+          <Text color="yellow">⏳ AI is thinking...</Text>
         </Box>
       )}
 
       {status === 'executing' && currentTool && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text color="yellow">
-            <Spinner type="dots" /> Executing: {currentTool}
-          </Text>
+          <Text color="yellow">⚡ Executing: {currentTool}</Text>
         </Box>
       )}
 
@@ -183,12 +195,10 @@ export const App: React.FC<AppProps> = ({
       <Box borderStyle="single" borderColor="blue" paddingX={1}>
         <Text color="blue">› </Text>
         {inputEnabled ? (
-          <TextInput
-            value={input}
-            onChange={setInput}
-            onSubmit={handleSubmit}
-            placeholder="Type your message..."
-          />
+          <Text>
+            {input}
+            <Text inverse> </Text>
+          </Text>
         ) : (
           <Text color="gray" dimColor>
             Processing...
@@ -199,7 +209,7 @@ export const App: React.FC<AppProps> = ({
       {/* Help text */}
       <Box marginTop={1}>
         <Text color="gray" dimColor>
-          Press ESC or Ctrl+C to exit
+          Press ESC or Ctrl+C to exit | Press Enter to send
         </Text>
       </Box>
     </Box>

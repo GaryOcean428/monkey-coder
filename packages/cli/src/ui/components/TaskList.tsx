@@ -3,7 +3,6 @@
  */
 import React from 'react';
 import { Box, Text } from 'ink';
-import Spinner from 'ink-spinner';
 import { Task } from '../types.js';
 
 interface TaskListProps {
@@ -26,7 +25,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, depth = 0 }) => {
         return '✗';
       case 'running':
       default:
-        return null;
+        return '⏳';
     }
   };
 
@@ -49,13 +48,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, depth = 0 }) => {
   return (
     <Box flexDirection="column" marginLeft={depth * 2}>
       <Box>
-        {task.status === 'running' ? (
-          <Text color={color}>
-            <Spinner type="dots" /> 
-          </Text>
-        ) : (
-          <Text color={color}>{icon} </Text>
-        )}
+        <Text color={color}>{icon} </Text>
         <Text color={color}>{task.title}</Text>
       </Box>
       {task.subtasks && task.subtasks.length > 0 && (
