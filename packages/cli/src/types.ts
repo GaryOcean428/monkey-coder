@@ -106,6 +106,10 @@ export interface CommandOptions {
   baseUrl?: string;
   stream?: boolean;
   framework?: string;
+  // Session management options
+  continue?: boolean;
+  resume?: string;
+  newSession?: boolean;
 }
 
 export interface ConfigFile {

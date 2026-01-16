@@ -37,7 +37,9 @@ import { createIssueCommand } from './commands/issue.js';
 import { createSearchCommand } from './commands/search.js';
 import { createReleaseCommand } from './commands/release.js';
 import { createWorkflowCommand } from './commands/workflow.js';
+import { createSessionCommand } from './commands/session.js';
 import { printSplashSync } from './splash.js';
+import { getSessionManager } from './session-manager.js';
 
 // Read package version
 import { readFileSync } from 'fs';
@@ -582,10 +584,67 @@ program
   .option('--provider <provider>', 'AI provider to use')
   .option('-t, --temperature <temp>', 'Model temperature (0.0-2.0)', parseFloat)
   .option('--stream', 'Enable streaming responses')
+  .option('--continue', 'Continue last session')
+  .option('--resume <id>', 'Resume specific session by ID')
+  .option('--new-session', 'Force new session even if one exists')
   .action(async (options: CommandOptions) => {
     try {
       const client = createAPIClient(options);
-      const sessionId = generateUUID();
+      
+      // Session management
+      const manager = getSessionManager();
+      let sessionId: string;
+      
+      if (options.newSession) {
+        // Force new session
+        const session = manager.createSession({
+          name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+          workingDirectory: process.cwd(),
+        });
+        sessionId = session.id;
+        console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+      } else if (options.resume) {
+        // Resume specific session
+        const sessions = manager.listSessions({ limit: 100 });
+        const session = sessions.find(s => s.id.startsWith(options.resume as string));
+        if (!session) {
+          console.error(chalk.red(`Session not found: ${options.resume}`));
+          console.log(chalk.gray('Run "monkey session list" to see available sessions'));
+          process.exit(1);
+        }
+        manager.setCurrentSessionId(session.id);
+        sessionId = session.id;
+        console.log(chalk.gray(`Resumed session: ${sessionId.slice(0, 8)} (${session.name})`));
+      } else if (options.continue) {
+        // Continue last session
+        const currentId = manager.getCurrentSessionId();
+        if (currentId) {
+          const session = manager.getSession(currentId);
+          if (session) {
+            sessionId = session.id;
+            console.log(chalk.gray(`Continuing session: ${sessionId.slice(0, 8)} (${session.name})`));
+          } else {
+            // Current session not found, create new
+            const newSession = manager.createSession({
+              name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+              workingDirectory: process.cwd(),
+            });
+            sessionId = newSession.id;
+            console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+          }
+        } else {
+          // No current session, create new
+          const newSession = manager.createSession({
+            name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+            workingDirectory: process.cwd(),
+          });
+          sessionId = newSession.id;
+          console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+        }
+      } else {
+        // Default: use UUID for backward compatibility
+        sessionId = generateUUID();
+      }
 
       console.log(chalk.green('🐒 Monkey Coder Chat'));
       console.log(
@@ -696,6 +755,9 @@ program.addCommand(createIssueCommand(config));
 program.addCommand(createSearchCommand(config));
 program.addCommand(createReleaseCommand(config));
 program.addCommand(createWorkflowCommand(config));
+
+// Add session management command
+program.addCommand(createSessionCommand());
 
 // Require authentication for main commands
 const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];
