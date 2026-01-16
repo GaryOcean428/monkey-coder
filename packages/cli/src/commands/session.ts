@@ -17,6 +17,13 @@ const SESSION_DIR_DISPLAY_LENGTH = 30;
 const MESSAGE_PREVIEW_LENGTH = 200;
 
 /**
+ * Format session ID for display (truncate to fixed length)
+ */
+function formatSessionId(sessionId: string): string {
+  return sessionId.slice(0, SESSION_ID_DISPLAY_LENGTH);
+}
+
+/**
  * Create the session command group
  */
 export function createSessionCommand(): Command {
@@ -57,7 +64,7 @@ Examples:
         for (const s of sessions) {
           const messages = manager.getMessages(s.id);
           table.push([
-            s.id.slice(0, SESSION_ID_DISPLAY_LENGTH),
+            formatSessionId(s.id),
             s.name.slice(0, SESSION_NAME_DISPLAY_LENGTH),
             s.workingDirectory.slice(-SESSION_DIR_DISPLAY_LENGTH),
             new Date(s.updatedAt * 1000).toLocaleDateString(),
@@ -94,7 +101,7 @@ Examples:
           workingDirectory: process.cwd(),
         });
         
-        console.log(chalk.green(`✓ Started session: ${newSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
+        console.log(chalk.green(`✓ Started session: ${formatSessionId(newSession.id)}`));
         console.log(`  Name: ${newSession.name}`);
         console.log(`  Directory: ${newSession.workingDirectory}`);
         console.log(chalk.gray('\nUse "monkey chat --continue" to continue this session'));
@@ -139,7 +146,7 @@ Examples:
         manager.setCurrentSessionId(targetSession.id);
         const context = manager.getSessionContext(targetSession.id);
         
-        console.log(chalk.green(`✓ Resumed session: ${targetSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
+        console.log(chalk.green(`✓ Resumed session: ${formatSessionId(targetSession.id)}`));
         console.log(`  Name: ${targetSession.name}`);
         console.log(`  Messages: ${context?.messages.length || 0}`);
         console.log(`  Tokens: ${context?.totalTokens || 0}`);
@@ -275,7 +282,7 @@ Examples:
         }
 
         manager.deleteSession(targetSession.id);
-        console.log(chalk.green(`✓ Deleted session: ${targetSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
+        console.log(chalk.green(`✓ Deleted session: ${formatSessionId(targetSession.id)}`));
       } catch (error: any) {
         console.error(formatError(error.message || 'Failed to delete session'));
         process.exit(1);
