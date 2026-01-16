@@ -37,6 +37,7 @@ import { createIssueCommand } from './commands/issue.js';
 import { createSearchCommand } from './commands/search.js';
 import { createReleaseCommand } from './commands/release.js';
 import { createWorkflowCommand } from './commands/workflow.js';
+import { createAgentCommand } from './commands/agent.js';
 import { printSplashSync } from './splash.js';
 
 // Read package version
@@ -686,6 +687,9 @@ program.addCommand(createBillingCommand(config));
 
 // Add MCP command
 program.addCommand(createMCPCommand(config));
+
+// Add agent command (local agent mode)
+program.addCommand(createAgentCommand());
 
 // Add new hierarchical command groups (Phase 1 implementation)
 program.addCommand(createRepoCommand(config));

@@ -93,7 +93,7 @@ export class MCPClientManager extends EventEmitter {
 
     const client = new Client(
       { name: 'monkey-coder-cli', version: '1.6.0' },
-      { capabilities: { tools: {}, resources: {} } }
+      { capabilities: {} }
     );
 
     let transport;
@@ -290,7 +290,7 @@ export class MCPClientManager extends EventEmitter {
       const executionResult: ToolExecutionResult = {
         success: !result.isError,
         content: result.content as ToolExecutionResult['content'],
-        isError: result.isError,
+        isError: !!result.isError,
       };
 
       this.emit('tool:executed', targetServer, toolName, executionResult);
@@ -334,10 +334,15 @@ export class MCPClientManager extends EventEmitter {
 
     const result = await client.readResource({ uri });
     
-    // Extract text content
+    // Extract text content safely
     const textContent = result.contents
-      .filter(c => c.text)
-      .map(c => c.text)
+      .map(c => {
+        if ('text' in c) {
+          return c.text;
+        }
+        return '';
+      })
+      .filter(text => text)
       .join('\n');
 
     return textContent;
