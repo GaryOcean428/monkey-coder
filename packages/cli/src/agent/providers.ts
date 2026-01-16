@@ -95,12 +95,24 @@ export class OpenAIProvider implements AIProvider {
   async chat(messages: Message[], tools: Tool[], options: ChatOptions = {}): Promise<AIResponse> {
     const model = options.model || this.defaultModel;
 
+    // Convert messages to OpenAI format, handling tool messages properly
+    const openaiMessages = messages.map(m => {
+      if (m.role === 'tool' && m.toolCallId) {
+        return {
+          role: 'tool' as const,
+          content: m.content,
+          tool_call_id: m.toolCallId,
+        };
+      }
+      return {
+        role: m.role as 'system' | 'user' | 'assistant',
+        content: m.content,
+      };
+    });
+
     const response = await this.client.chat.completions.create({
       model,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: openaiMessages,
       tools: tools.length > 0 ? tools.map(t => ({
         type: 'function' as const,
         function: {

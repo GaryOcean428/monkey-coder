@@ -268,8 +268,16 @@ Mode: ${config.mode}`;
         try {
           const mcpResult = await this.mcp.executeTool(call.name, call.arguments);
           
+          // Safely extract text content
           const resultText = mcpResult.content
-            .map(c => c.text || c.data || '')
+            .map(c => {
+              if (typeof c === 'object' && c !== null) {
+                if ('text' in c) return String(c.text || '');
+                if ('data' in c) return String(c.data || '');
+              }
+              return '';
+            })
+            .filter(t => t)
             .join('\n');
 
           console.log(chalk.green(`✅ ${mcpResult.success ? 'Success' : 'Failed'}`));
