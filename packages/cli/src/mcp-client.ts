@@ -94,6 +94,11 @@ export class MCPClientManager extends EventEmitter {
     const client = new Client(
       { name: 'monkey-coder-cli', version: '1.6.0' },
       { capabilities: {} }
+      { 
+        capabilities: {
+          // Client capabilities - we can handle tool calls and resource requests
+        }
+      }
     );
 
     let transport;
@@ -334,9 +339,10 @@ export class MCPClientManager extends EventEmitter {
 
     const result = await client.readResource({ uri });
     
-    // Extract text content
+    // Extract text content - filter for text-based content only
     const textContent = result.contents
       .filter((c): c is { uri: string; text: string; mimeType?: string; _meta?: Record<string, unknown> } => 'text' in c && typeof c.text === 'string')
+      .filter((c): c is { uri: string; text: string; mimeType?: string } => 'text' in c)
       .map(c => c.text)
       .join('\n');
 

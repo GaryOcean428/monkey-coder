@@ -288,6 +288,9 @@ export class LocalToolsExecutor {
           await this.checkpointManager.recordFileEdit(filepath, beforeContent, content);
         } else {
           await this.checkpointManager.recordFileCreate(filepath, content);
+          await this.checkpointManager.recordFileEdit(absolutePath, beforeContent, content);
+        } else {
+          await this.checkpointManager.recordFileCreate(absolutePath, content);
         }
       }
 
@@ -329,6 +332,7 @@ export class LocalToolsExecutor {
       // Record operation
       if (this.checkpointManager) {
         await this.checkpointManager.recordFileDelete(filepath, beforeContent);
+        await this.checkpointManager.recordFileDelete(absolutePath, beforeContent);
       }
 
       return { success: true, output: `Deleted ${filepath}` };
@@ -458,6 +462,7 @@ export class LocalToolsExecutor {
           for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
             const line = lines[i];
             if (line && regex.test(line)) {
+            if (line !== undefined && regex.test(line)) {
               matches.push({
                 file,
                 line: i + 1,
