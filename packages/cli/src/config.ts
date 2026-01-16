@@ -217,6 +217,9 @@ export class ConfigManager {
         if (encrypted) {
           const decryptedConfig = this.decryptConfig(rawConfig);
           Object.assign(this.config, decryptedConfig);
+          // Ensure encryption metadata is not exposed
+          delete (this.config as any)._encrypted;
+          delete (this.config as any)._salt;
         } else {
           // Project configs are not encrypted
           Object.assign(this.config, rawConfig);
@@ -425,7 +428,11 @@ export class ConfigManager {
    * Get all configuration
    */
   getAll(): ConfigFile {
-    return { ...this.config };
+    const config = { ...this.config };
+    // Ensure encryption metadata is never exposed
+    delete (config as any)._encrypted;
+    delete (config as any)._salt;
+    return config;
   }
 
   /**
