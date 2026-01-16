@@ -284,11 +284,11 @@ export class LocalToolsExecutor {
 
       // Record operation
       if (this.checkpointManager) {
-        await this.checkpointManager.recordOperation(
-          beforeContent ? 'file_edit' : 'file_create',
-          filepath,
-          { beforeContent, afterContent: content }
-        );
+        if (beforeContent) {
+          await this.checkpointManager.recordFileEdit(filepath, beforeContent, content);
+        } else {
+          await this.checkpointManager.recordFileCreate(filepath, content);
+        }
       }
 
       return {
@@ -328,9 +328,7 @@ export class LocalToolsExecutor {
 
       // Record operation
       if (this.checkpointManager) {
-        await this.checkpointManager.recordOperation('file_delete', filepath, {
-          beforeContent,
-        });
+        await this.checkpointManager.recordFileDelete(filepath, beforeContent);
       }
 
       return { success: true, output: `Deleted ${filepath}` };
@@ -458,11 +456,12 @@ export class LocalToolsExecutor {
 
           const lines = content.split('\n');
           for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
-            if (regex.test(lines[i])) {
+            const line = lines[i];
+            if (line && regex.test(line)) {
               matches.push({
                 file,
                 line: i + 1,
-                content: lines[i].trim().slice(0, 200),
+                content: line.trim().slice(0, 200),
               });
             }
           }
