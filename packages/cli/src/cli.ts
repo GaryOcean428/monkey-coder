@@ -114,6 +114,20 @@ function createAPIClient(options: CommandOptions): MonkeyCoderAPIClient {
 }
 
 /**
+ * Format session ID for display (truncate to 8 characters)
+ */
+function formatSessionId(sessionId: string): string {
+  return sessionId.slice(0, 8);
+}
+
+/**
+ * Generate a session name with timestamp
+ */
+function generateSessionName(): string {
+  return `Chat ${new Date().toISOString().slice(0, 16)}`;
+}
+
+/**
  * Build execution request from options
  */
 async function buildExecuteRequest(
@@ -598,11 +612,11 @@ program
       if (options.newSession) {
         // Force new session
         const session = manager.createSession({
-          name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+          name: generateSessionName(),
           workingDirectory: process.cwd(),
         });
         sessionId = session.id;
-        console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+        console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
       } else if (options.resume) {
         // Resume specific session
         const sessions = manager.listSessions({ limit: 100 });
@@ -614,7 +628,7 @@ program
         }
         manager.setCurrentSessionId(session.id);
         sessionId = session.id;
-        console.log(chalk.gray(`Resumed session: ${sessionId.slice(0, 8)} (${session.name})`));
+        console.log(chalk.gray(`Resumed session: ${formatSessionId(sessionId)} (${session.name})`));
       } else if (options.continue) {
         // Continue last session
         const currentId = manager.getCurrentSessionId();
@@ -622,24 +636,24 @@ program
           const session = manager.getSession(currentId);
           if (session) {
             sessionId = session.id;
-            console.log(chalk.gray(`Continuing session: ${sessionId.slice(0, 8)} (${session.name})`));
+            console.log(chalk.gray(`Continuing session: ${formatSessionId(sessionId)} (${session.name})`));
           } else {
             // Current session not found, create new
             const newSession = manager.createSession({
-              name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+              name: generateSessionName(),
               workingDirectory: process.cwd(),
             });
             sessionId = newSession.id;
-            console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+            console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
           }
         } else {
           // No current session, create new
           const newSession = manager.createSession({
-            name: `Chat ${new Date().toISOString().slice(0, 16)}`,
+            name: generateSessionName(),
             workingDirectory: process.cwd(),
           });
           sessionId = newSession.id;
-          console.log(chalk.gray(`Created new session: ${sessionId.slice(0, 8)}`));
+          console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
         }
       } else {
         // Default: use UUID for backward compatibility

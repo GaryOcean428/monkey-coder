@@ -10,6 +10,12 @@ import inquirer from 'inquirer';
 import { getSessionManager, Session } from '../session-manager.js';
 import { formatError } from '../utils.js';
 
+// Display constants
+const SESSION_ID_DISPLAY_LENGTH = 8;
+const SESSION_NAME_DISPLAY_LENGTH = 30;
+const SESSION_DIR_DISPLAY_LENGTH = 30;
+const MESSAGE_PREVIEW_LENGTH = 200;
+
 /**
  * Create the session command group
  */
@@ -51,9 +57,9 @@ Examples:
         for (const s of sessions) {
           const messages = manager.getMessages(s.id);
           table.push([
-            s.id.slice(0, 8),
-            s.name.slice(0, 30),
-            s.workingDirectory.slice(-30),
+            s.id.slice(0, SESSION_ID_DISPLAY_LENGTH),
+            s.name.slice(0, SESSION_NAME_DISPLAY_LENGTH),
+            s.workingDirectory.slice(-SESSION_DIR_DISPLAY_LENGTH),
             new Date(s.updatedAt * 1000).toLocaleDateString(),
             messages.length.toString()
           ]);
@@ -88,7 +94,7 @@ Examples:
           workingDirectory: process.cwd(),
         });
         
-        console.log(chalk.green(`✓ Started session: ${newSession.id.slice(0, 8)}`));
+        console.log(chalk.green(`✓ Started session: ${newSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
         console.log(`  Name: ${newSession.name}`);
         console.log(`  Directory: ${newSession.workingDirectory}`);
         console.log(chalk.gray('\nUse "monkey chat --continue" to continue this session'));
@@ -133,7 +139,7 @@ Examples:
         manager.setCurrentSessionId(targetSession.id);
         const context = manager.getSessionContext(targetSession.id);
         
-        console.log(chalk.green(`✓ Resumed session: ${targetSession.id.slice(0, 8)}`));
+        console.log(chalk.green(`✓ Resumed session: ${targetSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
         console.log(`  Name: ${targetSession.name}`);
         console.log(`  Messages: ${context?.messages.length || 0}`);
         console.log(`  Tokens: ${context?.totalTokens || 0}`);
@@ -216,8 +222,8 @@ Examples:
             }[msg.role] || chalk.white;
             
             console.log(roleColor(`[${msg.role}] (${msg.tokenCount} tokens)`));
-            const content = msg.content.slice(0, 200);
-            console.log(content + (msg.content.length > 200 ? '...' : ''));
+            const content = msg.content.slice(0, MESSAGE_PREVIEW_LENGTH);
+            console.log(content + (msg.content.length > MESSAGE_PREVIEW_LENGTH ? '...' : ''));
             console.log('');
           }
         }
@@ -269,7 +275,7 @@ Examples:
         }
 
         manager.deleteSession(targetSession.id);
-        console.log(chalk.green(`✓ Deleted session: ${targetSession.id.slice(0, 8)}`));
+        console.log(chalk.green(`✓ Deleted session: ${targetSession.id.slice(0, SESSION_ID_DISPLAY_LENGTH)}`));
       } catch (error: any) {
         console.error(formatError(error.message || 'Failed to delete session'));
         process.exit(1);
