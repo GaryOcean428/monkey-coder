@@ -93,7 +93,6 @@ export class MCPClientManager extends EventEmitter {
 
     const client = new Client(
       { name: 'monkey-coder-cli', version: '1.6.0' },
-      { capabilities: {} }
       { 
         capabilities: {
           // Client capabilities - we can handle tool calls and resource requests
