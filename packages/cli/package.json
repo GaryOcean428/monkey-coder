@@ -22,6 +22,7 @@
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
+    "@inkjs/ui": "^2.0.0",
     "@modelcontextprotocol/sdk": "^1.24.0",
     "@sentry/node": "^9.42.0",
     "axios": "^1.11.0",
@@ -39,7 +40,6 @@
     "fs-extra": "^11.3.0",
     "fzf": "^0.5.2",
     "ink": "^5.1.0",
-    "@inkjs/ui": "^2.0.0",
     "inquirer": "^12.8.2",
     "isomorphic-git": "^1.27.0",
     "keytar": "^7.9.0",

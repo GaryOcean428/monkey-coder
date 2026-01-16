@@ -37,6 +37,8 @@ import { createIssueCommand } from './commands/issue.js';
 import { createSearchCommand } from './commands/search.js';
 import { createReleaseCommand } from './commands/release.js';
 import { createWorkflowCommand } from './commands/workflow.js';
+import { createInkChatCommand } from './commands/chat-ink.js';
+import { createInkAgentCommand } from './commands/agent-ink.js';
 import { printSplashSync } from './splash.js';
 
 // Read package version
@@ -696,6 +698,10 @@ program.addCommand(createIssueCommand(config));
 program.addCommand(createSearchCommand(config));
 program.addCommand(createReleaseCommand(config));
 program.addCommand(createWorkflowCommand(config));
+
+// Add Ink UI commands
+program.addCommand(createInkChatCommand(config));
+program.addCommand(createInkAgentCommand(config));
 
 // Require authentication for main commands
 const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];

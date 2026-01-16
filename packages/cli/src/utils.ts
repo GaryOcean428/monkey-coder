@@ -493,3 +493,74 @@ export function getSystemLimitsInfo(): Record<string, unknown> {
     ok: result.ok,
   };
 }
+
+/**
+ * Build execution request from options
+ * Exported for use in Ink UI components
+ */
+export async function buildExecuteRequest(
+  taskType: string,
+  prompt: string,
+  files: string[],
+  options: {
+    persona?: string;
+    model?: string;
+    provider?: string;
+    temperature?: number;
+    timeout?: number;
+    stream?: boolean;
+  },
+  config?: {
+    getDefaultTimeout: () => number;
+    getDefaultTemperature: () => number;
+    getDefaultPersona: () => string;
+    getDefaultProvider: () => string;
+  }
+): Promise<any> {
+  const { validateTaskType, validatePersona } = await import('./type-guards.js');
+  
+  const fileData = [];
+
+  // Read file contents if provided
+  for (const filePath of files) {
+    try {
+      await validateFilePath(filePath);
+      const content = await readFileContent(filePath);
+      const language = detectLanguage(filePath);
+      fileData.push({
+        path: filePath,
+        content,
+        type: language,
+      });
+    } catch (error) {
+      throw new Error(`Failed to read file ${filePath}: ${error}`);
+    }
+  }
+
+  return {
+    task_id: generateUUID(),
+    task_type: validateTaskType(taskType),
+    prompt,
+    files: fileData.length > 0 ? fileData : undefined,
+    context: {
+      user_id: 'cli-user',
+      session_id: generateUUID(),
+      environment: 'cli',
+      timeout: options.timeout || config?.getDefaultTimeout() || 300,
+      max_tokens: 4096,
+      temperature: options.temperature || config?.getDefaultTemperature() || 0.7,
+    },
+    persona_config: {
+      persona: validatePersona(options.persona || config?.getDefaultPersona() || 'developer'),
+      slash_commands: [],
+      context_window: 32768,
+      use_markdown_spec: true,
+    },
+    preferred_providers: options.provider
+      ? [options.provider]
+      : [config?.getDefaultProvider() || 'openai'],
+    model_preferences: options.model
+      ? { [options.provider || config?.getDefaultProvider() || 'openai']: options.model }
+      : {},
+  };
+}
