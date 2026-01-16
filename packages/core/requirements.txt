@@ -438,3 +438,4 @@ yarl==1.21.0
     # via aiohttp
 zstandard==0.25.0
     # via langsmith
+mcp[cli]>=1.25.0

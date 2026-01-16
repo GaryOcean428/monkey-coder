@@ -57,6 +57,8 @@ dependencies = [
     "matplotlib>=3.10.6",
     # A2A Agent-to-Agent dependencies
     "python-a2a>=0.5.10",
+    # MCP Server dependencies
+    "mcp[cli]>=1.25.0",
 ]
 
 [project.optional-dependencies]
