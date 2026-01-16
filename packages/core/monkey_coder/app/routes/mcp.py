@@ -123,14 +123,24 @@ async def read_resource(uri: str) -> Dict[str, Any]:
     try:
         content_list = await mcp.read_resource(uri)
         
-        # Extract content
+        # Extract content using correct MCP SDK field names
         content = ""
         mime_type = "text/plain"
+        
         for item in content_list:
-            if hasattr(item, 'content'):
-                content += str(item.content)
-            if hasattr(item, 'mime_type'):
-                mime_type = item.mime_type
+            # Handle TextContent (has 'text' field)
+            if hasattr(item, 'text'):
+                content += str(item.text)
+                # Get mime type if available
+                if hasattr(item, 'mimeType'):
+                    mime_type = item.mimeType
+            # Handle BlobContent (has 'blob' field for binary data)
+            elif hasattr(item, 'blob'):
+                # For blob content, encode as base64 string
+                import base64
+                content = base64.b64encode(item.blob).decode('utf-8')
+                if hasattr(item, 'mimeType'):
+                    mime_type = item.mimeType
         
         return {
             "uri": uri,
