@@ -1,8 +1,8 @@
 /**
- * Checkpoint Manager - Git-based checkpoints with operation journaling
+ * Checkpoint Manager - Git-based checkpointing with operation journaling
  * 
- * Provides undo/restore capabilities for file operations using Git commits
- * as snapshots and operation journaling for fine-grained rollback.
+ * Provides undo/restore capabilities through Git commits and fine-grained
+ * operation journaling for individual file changes.
  */
 
 import * as git from 'isomorphic-git';
@@ -13,421 +13,420 @@ import * as os from 'os';
 import { randomUUID } from 'crypto';
 
 // Types
-export interface CheckpointEntry {
+export interface Operation {
+  id: string;
+  type: 'file_create' | 'file_edit' | 'file_delete' | 'bash_command';
+  timestamp: number;
+  file?: string;
+  beforeContent?: string;
+  afterContent?: string;
+  command?: string;
+  status: 'active' | 'undone';
+}
+
+export interface Checkpoint {
   id: string;
   sha: string;
   message: string;
   timestamp: number;
-  files: string[];
-}
-
-export interface OperationEntry {
-  id: string;
-  checkpointId: string;
-  type: 'file_create' | 'file_edit' | 'file_delete' | 'file_rename';
-  filePath: string;
-  beforeContent?: string;
-  afterContent?: string;
-  oldPath?: string; // For renames
-  timestamp: number;
-  status: 'active' | 'undone';
-}
-
-export interface CheckpointState {
-  checkpoints: CheckpointEntry[];
-  operations: OperationEntry[];
-  currentCheckpointId: string | null;
+  operationCount: number;
 }
 
 // Configuration
 const CONFIG_DIR = path.join(os.homedir(), '.monkey-coder');
 const CHECKPOINTS_DIR = path.join(CONFIG_DIR, 'checkpoints');
-const STATE_FILE = path.join(CHECKPOINTS_DIR, 'state.json');
+const JOURNAL_FILE = path.join(CONFIG_DIR, 'operations.jsonl');
 const MAX_CHECKPOINTS = 50;
-const MAX_AGE_DAYS = 30;
+const MAX_CHECKPOINT_AGE_DAYS = 30;
 
 /**
- * Ensure checkpoint directory exists
- */
-async function ensureCheckpointsDir(): Promise<void> {
-  await fsPromises.mkdir(CHECKPOINTS_DIR, { recursive: true });
-}
-
-/**
- * Load checkpoint state
- */
-async function loadState(): Promise<CheckpointState> {
-  try {
-    await ensureCheckpointsDir();
-    const data = await fsPromises.readFile(STATE_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return {
-      checkpoints: [],
-      operations: [],
-      currentCheckpointId: null,
-    };
-  }
-}
-
-/**
- * Save checkpoint state
- */
-async function saveState(state: CheckpointState): Promise<void> {
-  await ensureCheckpointsDir();
-  await fsPromises.writeFile(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-/**
- * Checkpoint Manager class
+ * Checkpoint Manager for undo/restore functionality
  */
 export class CheckpointManager {
   private workingDir: string;
-  private state: CheckpointState | null = null;
+  private operations: Operation[] = [];
+  private checkpointBranch = 'monkey-coder-checkpoints';
 
   constructor(workingDir: string = process.cwd()) {
     this.workingDir = workingDir;
+    this.ensureDirectories();
+    this.loadOperations();
+  }
+
+  private ensureDirectories(): void {
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(CHECKPOINTS_DIR)) {
+      fs.mkdirSync(CHECKPOINTS_DIR, { recursive: true });
+    }
+  }
+
+  private loadOperations(): void {
+    try {
+      if (fs.existsSync(JOURNAL_FILE)) {
+        const content = fs.readFileSync(JOURNAL_FILE, 'utf-8');
+        this.operations = content
+          .trim()
+          .split('\n')
+          .filter(line => line)
+          .map(line => JSON.parse(line));
+      }
+    } catch (error) {
+      console.error('Failed to load operations journal:', error);
+      this.operations = [];
+    }
+  }
+
+  private async persistOperation(op: Operation): Promise<void> {
+    await fsPromises.appendFile(JOURNAL_FILE, JSON.stringify(op) + '\n');
   }
 
   /**
-   * Initialize and load state
+   * Check if the working directory is a git repository
    */
-  async initialize(): Promise<void> {
-    this.state = await loadState();
-    
-    // Initialize git repo if not exists
-    const gitDir = path.join(this.workingDir, '.git');
-    if (!fs.existsSync(gitDir)) {
-      await git.init({ fs, dir: this.workingDir });
+  async isGitRepo(): Promise<boolean> {
+    try {
+      await git.findRoot({ fs, filepath: this.workingDir });
+      return true;
+    } catch {
+      return false;
     }
   }
 
   /**
-   * Get current state
+   * Initialize git repo if needed
    */
-  private getState(): CheckpointState {
-    if (!this.state) {
-      throw new Error('CheckpointManager not initialized. Call initialize() first.');
+  async ensureGitRepo(): Promise<void> {
+    if (!(await this.isGitRepo())) {
+      await git.init({ fs, dir: this.workingDir, defaultBranch: 'main' });
     }
-    return this.state;
   }
 
   /**
-   * Create a checkpoint before making changes
+   * Record a file creation operation
    */
-  async createCheckpoint(message: string): Promise<CheckpointEntry> {
-    const state = this.getState();
-    const id = randomUUID();
-    const timestamp = Date.now();
+  async recordFileCreate(filePath: string, content: string): Promise<Operation> {
+    const op: Operation = {
+      id: randomUUID(),
+      type: 'file_create',
+      timestamp: Date.now(),
+      file: path.relative(this.workingDir, filePath),
+      afterContent: content,
+      status: 'active',
+    };
+    this.operations.push(op);
+    await this.persistOperation(op);
+    return op;
+  }
 
-    // Get list of modified files
+  /**
+   * Record a file edit operation
+   */
+  async recordFileEdit(filePath: string, before: string, after: string): Promise<Operation> {
+    const op: Operation = {
+      id: randomUUID(),
+      type: 'file_edit',
+      timestamp: Date.now(),
+      file: path.relative(this.workingDir, filePath),
+      beforeContent: before,
+      afterContent: after,
+      status: 'active',
+    };
+    this.operations.push(op);
+    await this.persistOperation(op);
+    return op;
+  }
+
+  /**
+   * Record a file deletion operation
+   */
+  async recordFileDelete(filePath: string, content: string): Promise<Operation> {
+    const op: Operation = {
+      id: randomUUID(),
+      type: 'file_delete',
+      timestamp: Date.now(),
+      file: path.relative(this.workingDir, filePath),
+      beforeContent: content,
+      status: 'active',
+    };
+    this.operations.push(op);
+    await this.persistOperation(op);
+    return op;
+  }
+
+  /**
+   * Record a bash command execution
+   */
+  async recordBashCommand(command: string): Promise<Operation> {
+    const op: Operation = {
+      id: randomUUID(),
+      type: 'bash_command',
+      timestamp: Date.now(),
+      command,
+      status: 'active',
+    };
+    this.operations.push(op);
+    await this.persistOperation(op);
+    return op;
+  }
+
+  /**
+   * Create a git checkpoint
+   */
+  async createCheckpoint(message: string): Promise<Checkpoint> {
+    await this.ensureGitRepo();
+
+    // Stage all changes
     const statusMatrix = await git.statusMatrix({ fs, dir: this.workingDir });
-    const modifiedFiles: string[] = [];
-
+    
     for (const [filepath, headStatus, workdirStatus, stageStatus] of statusMatrix) {
-      // Stage modified files
-      if (workdirStatus !== stageStatus || headStatus !== workdirStatus) {
-        try {
+      if (workdirStatus !== stageStatus) {
+        if (workdirStatus === 0) {
+          await git.remove({ fs, dir: this.workingDir, filepath });
+        } else {
           await git.add({ fs, dir: this.workingDir, filepath });
-          modifiedFiles.push(filepath);
-        } catch {
-          // Skip files that can't be added (e.g., gitignored)
         }
       }
     }
 
-    // Create commit
-    let sha = '';
-    try {
-      sha = await git.commit({
-        fs,
-        dir: this.workingDir,
-        message: `[checkpoint] ${message}`,
-        author: {
-          name: 'Monkey Coder',
-          email: 'checkpoint@monkey-coder.local',
-        },
-      });
-    } catch (error: any) {
-      // If nothing to commit, get current HEAD
-      if (error.message?.includes('nothing to commit')) {
-        const head = await git.resolveRef({ fs, dir: this.workingDir, ref: 'HEAD' });
-        sha = head;
-      } else {
-        throw error;
-      }
-    }
+    const sha = await git.commit({
+      fs,
+      dir: this.workingDir,
+      message: `[checkpoint] ${message}`,
+      author: {
+        name: 'Monkey Coder',
+        email: 'checkpoint@monkey-coder.local',
+      },
+    });
 
-    const checkpoint: CheckpointEntry = {
-      id,
+    const checkpoint: Checkpoint = {
+      id: randomUUID(),
       sha,
       message,
-      timestamp,
-      files: modifiedFiles,
+      timestamp: Date.now(),
+      operationCount: this.operations.filter(o => o.status === 'active').length,
     };
 
-    state.checkpoints.push(checkpoint);
-    state.currentCheckpointId = id;
-
-    // Cleanup old checkpoints
-    await this.cleanupOldCheckpoints();
-    await saveState(state);
+    const checkpointFile = path.join(CHECKPOINTS_DIR, `${checkpoint.id}.json`);
+    await fsPromises.writeFile(checkpointFile, JSON.stringify(checkpoint, null, 2));
 
     return checkpoint;
   }
 
   /**
-   * Record a file operation for fine-grained undo
+   * List all checkpoints
    */
-  async recordOperation(
-    type: OperationEntry['type'],
-    filePath: string,
-    options: {
-      beforeContent?: string;
-      afterContent?: string;
-      oldPath?: string;
-    } = {}
-  ): Promise<OperationEntry> {
-    const state = this.getState();
+  async listCheckpoints(): Promise<Checkpoint[]> {
+    const checkpoints: Checkpoint[] = [];
 
-    const operation: OperationEntry = {
-      id: randomUUID(),
-      checkpointId: state.currentCheckpointId || '',
-      type,
-      filePath,
-      beforeContent: options.beforeContent,
-      afterContent: options.afterContent,
-      oldPath: options.oldPath,
-      timestamp: Date.now(),
-      status: 'active',
-    };
+    try {
+      const files = await fsPromises.readdir(CHECKPOINTS_DIR);
+      
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          const content = await fsPromises.readFile(
+            path.join(CHECKPOINTS_DIR, file),
+            'utf-8'
+          );
+          checkpoints.push(JSON.parse(content));
+        }
+      }
+    } catch (error) {
+      // Directory might not exist yet
+    }
 
-    state.operations.push(operation);
-    await saveState(state);
-
-    return operation;
+    return checkpoints.sort((a, b) => b.timestamp - a.timestamp);
   }
 
   /**
-   * Undo the last operation
+   * Restore to a checkpoint
    */
-  async undoLastOperation(): Promise<OperationEntry | null> {
-    const state = this.getState();
+  async restoreCheckpoint(checkpointId: string): Promise<void> {
+    const checkpoints = await this.listCheckpoints();
+    const checkpoint = checkpoints.find(c => c.id === checkpointId);
 
-    // Find last active operation
-    const lastOp = [...state.operations]
-      .reverse()
-      .find(op => op.status === 'active');
-
-    if (!lastOp) {
-      return null;
-    }
-
-    const fullPath = path.join(this.workingDir, lastOp.filePath);
-
-    switch (lastOp.type) {
-      case 'file_create':
-        // Delete the created file
-        if (fs.existsSync(fullPath)) {
-          await fsPromises.unlink(fullPath);
-        }
-        break;
-
-      case 'file_edit':
-        // Restore previous content
-        if (lastOp.beforeContent !== undefined) {
-          await fsPromises.writeFile(fullPath, lastOp.beforeContent, 'utf-8');
-        }
-        break;
-
-      case 'file_delete':
-        // Recreate the deleted file
-        if (lastOp.beforeContent !== undefined) {
-          await fsPromises.mkdir(path.dirname(fullPath), { recursive: true });
-          await fsPromises.writeFile(fullPath, lastOp.beforeContent, 'utf-8');
-        }
-        break;
-
-      case 'file_rename':
-        // Rename back
-        if (lastOp.oldPath) {
-          const oldFullPath = path.join(this.workingDir, lastOp.oldPath);
-          if (fs.existsSync(fullPath)) {
-            await fsPromises.rename(fullPath, oldFullPath);
-          }
-        }
-        break;
-    }
-
-    lastOp.status = 'undone';
-    await saveState(state);
-
-    return lastOp;
-  }
-
-  /**
-   * Restore to a specific checkpoint
-   */
-  async restoreCheckpoint(checkpointId: string): Promise<boolean> {
-    const state = this.getState();
-
-    const checkpoint = state.checkpoints.find(cp => cp.id === checkpointId);
     if (!checkpoint) {
       throw new Error(`Checkpoint not found: ${checkpointId}`);
     }
 
-    // Checkout the commit
     await git.checkout({
       fs,
       dir: this.workingDir,
       ref: checkpoint.sha,
       force: true,
     });
+  }
 
-    // Mark all operations after this checkpoint as undone
-    for (const op of state.operations) {
-      if (op.timestamp > checkpoint.timestamp) {
-        op.status = 'undone';
-      }
+  /**
+   * Undo the last operation
+   */
+  async undoLast(): Promise<Operation | null> {
+    const lastActive = this.operations.findLast(o => o.status === 'active');
+    
+    if (!lastActive) {
+      return null;
     }
 
-    state.currentCheckpointId = checkpointId;
-    await saveState(state);
+    const filePath = lastActive.file 
+      ? path.join(this.workingDir, lastActive.file)
+      : null;
 
-    return true;
-  }
+    switch (lastActive.type) {
+      case 'file_create':
+        if (filePath && fs.existsSync(filePath)) {
+          await fsPromises.unlink(filePath);
+        }
+        break;
 
-  /**
-   * List all checkpoints
-   */
-  listCheckpoints(): CheckpointEntry[] {
-    return this.getState().checkpoints;
-  }
+      case 'file_edit':
+        if (filePath && lastActive.beforeContent !== undefined) {
+          await fsPromises.writeFile(filePath, lastActive.beforeContent);
+        }
+        break;
 
-  /**
-   * List operations for current checkpoint
-   */
-  listOperations(checkpointId?: string): OperationEntry[] {
-    const state = this.getState();
-    const targetId = checkpointId || state.currentCheckpointId;
+      case 'file_delete':
+        if (filePath && lastActive.beforeContent !== undefined) {
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            await fsPromises.mkdir(dir, { recursive: true });
+          }
+          await fsPromises.writeFile(filePath, lastActive.beforeContent);
+        }
+        break;
 
-    if (!targetId) {
-      return state.operations.filter(op => op.status === 'active');
+      case 'bash_command':
+        console.warn('Cannot automatically undo bash command:', lastActive.command);
+        break;
     }
 
-    return state.operations.filter(
-      op => op.checkpointId === targetId && op.status === 'active'
-    );
+    lastActive.status = 'undone';
+    await this.rewriteJournal();
+
+    return lastActive;
   }
 
   /**
-   * Get the current checkpoint
+   * Redo the last undone operation
    */
-  getCurrentCheckpoint(): CheckpointEntry | null {
-    const state = this.getState();
-    if (!state.currentCheckpointId) return null;
-    return state.checkpoints.find(cp => cp.id === state.currentCheckpointId) || null;
+  async redoLast(): Promise<Operation | null> {
+    const lastUndone = this.operations.findLast(o => o.status === 'undone');
+
+    if (!lastUndone) {
+      return null;
+    }
+
+    const filePath = lastUndone.file
+      ? path.join(this.workingDir, lastUndone.file)
+      : null;
+
+    switch (lastUndone.type) {
+      case 'file_create':
+        if (filePath && lastUndone.afterContent !== undefined) {
+          const dir = path.dirname(filePath);
+          if (!fs.existsSync(dir)) {
+            await fsPromises.mkdir(dir, { recursive: true });
+          }
+          await fsPromises.writeFile(filePath, lastUndone.afterContent);
+        }
+        break;
+
+      case 'file_edit':
+        if (filePath && lastUndone.afterContent !== undefined) {
+          await fsPromises.writeFile(filePath, lastUndone.afterContent);
+        }
+        break;
+
+      case 'file_delete':
+        if (filePath && fs.existsSync(filePath)) {
+          await fsPromises.unlink(filePath);
+        }
+        break;
+
+      case 'bash_command':
+        console.warn('Cannot automatically redo bash command:', lastUndone.command);
+        break;
+    }
+
+    lastUndone.status = 'active';
+    await this.rewriteJournal();
+
+    return lastUndone;
+  }
+
+  private async rewriteJournal(): Promise<void> {
+    const content = this.operations.map(op => JSON.stringify(op)).join('\n') + '\n';
+    await fsPromises.writeFile(JOURNAL_FILE, content);
+  }
+
+  /**
+   * Get recent operations
+   */
+  getRecentOperations(limit: number = 20): Operation[] {
+    return this.operations.slice(-limit);
+  }
+
+  /**
+   * Get active (not undone) operations
+   */
+  getActiveOperations(): Operation[] {
+    return this.operations.filter(o => o.status === 'active');
   }
 
   /**
    * Clean up old checkpoints based on retention policy
    */
-  private async cleanupOldCheckpoints(): Promise<number> {
-    const state = this.getState();
-    const now = Date.now();
-    const cutoff = now - MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
-    let removed = 0;
+  async cleanupOldCheckpoints(): Promise<number> {
+    const checkpoints = await this.listCheckpoints();
+    const cutoff = Date.now() - MAX_CHECKPOINT_AGE_DAYS * 24 * 60 * 60 * 1000;
+    let deleted = 0;
 
-    // Remove checkpoints older than cutoff
-    state.checkpoints = state.checkpoints.filter(cp => {
-      if (cp.timestamp < cutoff) {
-        removed++;
-        return false;
+    for (const checkpoint of checkpoints) {
+      if (checkpoint.timestamp < cutoff) {
+        const file = path.join(CHECKPOINTS_DIR, `${checkpoint.id}.json`);
+        try {
+          await fsPromises.unlink(file);
+          deleted++;
+        } catch {
+          // Ignore errors
+        }
       }
-      return true;
-    });
-
-    // Keep only MAX_CHECKPOINTS most recent
-    if (state.checkpoints.length > MAX_CHECKPOINTS) {
-      const excess = state.checkpoints.length - MAX_CHECKPOINTS;
-      state.checkpoints = state.checkpoints.slice(excess);
-      removed += excess;
     }
 
-    // Clean up orphaned operations
-    const validCheckpointIds = new Set(state.checkpoints.map(cp => cp.id));
-    state.operations = state.operations.filter(
-      op => !op.checkpointId || validCheckpointIds.has(op.checkpointId)
-    );
+    const remaining = checkpoints
+      .filter(c => c.timestamp >= cutoff)
+      .sort((a, b) => b.timestamp - a.timestamp);
 
-    if (removed > 0) {
-      await saveState(state);
+    for (const checkpoint of remaining.slice(MAX_CHECKPOINTS)) {
+      const file = path.join(CHECKPOINTS_DIR, `${checkpoint.id}.json`);
+      try {
+        await fsPromises.unlink(file);
+        deleted++;
+      } catch {
+        // Ignore errors
+      }
     }
 
-    return removed;
+    return deleted;
   }
 
   /**
-   * Get diff between current state and a checkpoint
+   * Clear all operations (for testing or reset)
    */
-  async getDiff(checkpointId: string): Promise<string> {
-    const state = this.getState();
-    const checkpoint = state.checkpoints.find(cp => cp.id === checkpointId);
-
-    if (!checkpoint) {
-      throw new Error(`Checkpoint not found: ${checkpointId}`);
+  async clearOperations(): Promise<void> {
+    this.operations = [];
+    if (fs.existsSync(JOURNAL_FILE)) {
+      await fsPromises.unlink(JOURNAL_FILE);
     }
-
-    // Get current HEAD
-    const head = await git.resolveRef({ fs, dir: this.workingDir, ref: 'HEAD' });
-
-    // Get commit objects
-    const [headCommit, checkpointCommit] = await Promise.all([
-      git.readCommit({ fs, dir: this.workingDir, oid: head }),
-      git.readCommit({ fs, dir: this.workingDir, oid: checkpoint.sha }),
-    ]);
-
-    // Simple diff representation (full diff would require more complex implementation)
-    const changedFiles: string[] = [];
-
-    // Walk trees and compare
-    const headTree = await git.readTree({ fs, dir: this.workingDir, oid: headCommit.commit.tree });
-    const checkpointTree = await git.readTree({ fs, dir: this.workingDir, oid: checkpointCommit.commit.tree });
-
-    const headFiles = new Map(headTree.tree.map(e => [e.path, e.oid]));
-    const checkpointFiles = new Map(checkpointTree.tree.map(e => [e.path, e.oid]));
-
-    // Find changed files
-    for (const [path, oid] of headFiles) {
-      const checkpointOid = checkpointFiles.get(path);
-      if (!checkpointOid) {
-        changedFiles.push(`+ ${path} (added)`);
-      } else if (checkpointOid !== oid) {
-        changedFiles.push(`~ ${path} (modified)`);
-      }
-    }
-
-    for (const [path] of checkpointFiles) {
-      if (!headFiles.has(path)) {
-        changedFiles.push(`- ${path} (deleted)`);
-      }
-    }
-
-    return changedFiles.join('\n') || 'No changes';
   }
 }
 
 // Singleton instance
 let defaultManager: CheckpointManager | null = null;
 
-export async function getCheckpointManager(workingDir?: string): Promise<CheckpointManager> {
-  if (!defaultManager) {
+export function getCheckpointManager(workingDir?: string): CheckpointManager {
+  if (!defaultManager || (workingDir && workingDir !== defaultManager['workingDir'])) {
     defaultManager = new CheckpointManager(workingDir);
-    await defaultManager.initialize();
   }
   return defaultManager;
-}
-
-export function closeCheckpointManager(): void {
-  defaultManager = null;
 }
