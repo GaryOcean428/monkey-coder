@@ -340,6 +340,7 @@ export class MCPClientManager extends EventEmitter {
     
     // Extract text content - filter for text-based content only
     const textContent = result.contents
+      .filter((c): c is { uri: string; text: string; mimeType?: string; _meta?: Record<string, unknown> } => 'text' in c && typeof c.text === 'string')
       .filter((c): c is { uri: string; text: string; mimeType?: string } => 'text' in c)
       .map(c => c.text)
       .join('\n');
