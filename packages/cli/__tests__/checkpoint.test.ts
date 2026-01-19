@@ -31,6 +31,9 @@ describe('CheckpointManager', () => {
     }
     
     manager = new CheckpointManager(testDir);
+    
+    // Clear operations for clean test state
+    manager.clearOperations();
   });
 
   afterEach(async () => {

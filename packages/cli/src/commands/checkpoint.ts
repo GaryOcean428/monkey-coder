@@ -48,8 +48,9 @@ export function createCheckpointCommand(): Command {
         }
 
         console.log(table.toString());
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
@@ -66,8 +67,9 @@ export function createCheckpointCommand(): Command {
         console.log(chalk.green(`✓ Created checkpoint: ${cp.id.slice(0, 8)}`));
         console.log(`  Message: ${cp.message}`);
         console.log(`  Files: ${cp.files.length}`);
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
@@ -106,8 +108,9 @@ export function createCheckpointCommand(): Command {
 
         await manager.restoreCheckpoint(cp.id);
         console.log(chalk.green(`✓ Restored to checkpoint: ${cp.id.slice(0, 8)}`));
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
@@ -127,8 +130,9 @@ export function createCheckpointCommand(): Command {
         }
 
         console.log(chalk.green(`✓ Undone: ${undone.type} on ${undone.file || 'unknown'}`));
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
@@ -154,18 +158,19 @@ export function createCheckpointCommand(): Command {
         console.log('');
         
         for (const line of diff.split('\n')) {
-          if (line.startsWith('+')) {
+          if (line.startsWith('+') || line.includes('(added)')) {
             console.log(chalk.green(line));
-          } else if (line.startsWith('-')) {
+          } else if (line.startsWith('-') || line.includes('(deleted)')) {
             console.log(chalk.red(line));
-          } else if (line.startsWith('~')) {
+          } else if (line.startsWith('~') || line.includes('(modified)')) {
             console.log(chalk.yellow(line));
           } else {
             console.log(line);
           }
         }
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
@@ -200,8 +205,9 @@ export function createCheckpointCommand(): Command {
         }
 
         console.log(table.toString());
-      } catch (error: any) {
-        console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Error: ${message}`));
         process.exit(1);
       }
     });
