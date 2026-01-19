@@ -41,6 +41,7 @@ import { createSessionCommand } from './commands/session.js';
 import { createInkChatCommand } from './commands/chat-ink.js';
 import { createInkAgentCommand } from './commands/agent-ink.js';
 import { createCheckpointCommand } from './commands/checkpoint.js';
+import { createAgentCommand } from './commands/agent.js';
 import { printSplashSync } from './splash.js';
 import { getSessionManager } from './session-manager.js';
 
@@ -780,6 +781,8 @@ program.addCommand(createCheckpointCommand());
 // Add Ink UI commands
 program.addCommand(createInkChatCommand(config));
 program.addCommand(createInkAgentCommand(config));
+// Add agent command
+program.addCommand(createAgentCommand(config));
 
 // Require authentication for main commands
 const authRequiredCommands = ['implement', 'analyze', 'build', 'test', 'chat'];
