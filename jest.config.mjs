@@ -25,6 +25,7 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   extensionsToTreatAsEsm: ['.ts'],
   globals: {
