@@ -40,6 +40,7 @@ import { createWorkflowCommand } from './commands/workflow.js';
 import { createSessionCommand } from './commands/session.js';
 import { createInkChatCommand } from './commands/chat-ink.js';
 import { createInkAgentCommand } from './commands/agent-ink.js';
+import { createCheckpointCommand } from './commands/checkpoint.js';
 import { printSplashSync } from './splash.js';
 import { getSessionManager } from './session-manager.js';
 
@@ -774,6 +775,8 @@ program.addCommand(createWorkflowCommand(config));
 
 // Add session management command
 program.addCommand(createSessionCommand());
+// Add checkpoint management command
+program.addCommand(createCheckpointCommand());
 // Add Ink UI commands
 program.addCommand(createInkChatCommand(config));
 program.addCommand(createInkAgentCommand(config));

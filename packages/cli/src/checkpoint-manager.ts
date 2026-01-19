@@ -30,6 +30,7 @@ export interface Checkpoint {
   message: string;
   timestamp: number;
   operationCount: number;
+  files: string[];
 }
 
 // Configuration
@@ -177,11 +178,13 @@ export class CheckpointManager {
   async createCheckpoint(message: string): Promise<Checkpoint> {
     await this.ensureGitRepo();
 
-    // Stage all changes
+    // Stage all changes and collect changed files
     const statusMatrix = await git.statusMatrix({ fs, dir: this.workingDir });
+    const changedFiles: string[] = [];
     
     for (const [filepath, headStatus, workdirStatus, stageStatus] of statusMatrix) {
       if (workdirStatus !== stageStatus) {
+        changedFiles.push(filepath);
         if (workdirStatus === 0) {
           await git.remove({ fs, dir: this.workingDir, filepath });
         } else {
@@ -206,6 +209,7 @@ export class CheckpointManager {
       message,
       timestamp: Date.now(),
       operationCount: this.operations.filter(o => o.status === 'active').length,
+      files: changedFiles,
     };
 
     const checkpointFile = path.join(CHECKPOINTS_DIR, `${checkpoint.id}.json`);
@@ -354,6 +358,13 @@ export class CheckpointManager {
     return lastUndone;
   }
 
+  /**
+   * Alias for undoLast() to match API naming in issue
+   */
+  async undoLastOperation(): Promise<Operation | null> {
+    return this.undoLast();
+  }
+
   private async rewriteJournal(): Promise<void> {
     const content = this.operations.map(op => JSON.stringify(op)).join('\n') + '\n';
     await fsPromises.writeFile(JOURNAL_FILE, content);
@@ -371,6 +382,57 @@ export class CheckpointManager {
    */
   getActiveOperations(): Operation[] {
     return this.operations.filter(o => o.status === 'active');
+  }
+
+  /**
+   * List all operations with proper naming (alias for getRecentOperations)
+   */
+  listOperations(limit: number = 20): Operation[] {
+    return this.getRecentOperations(limit);
+  }
+
+  /**
+   * Get diff from a checkpoint to current state
+   */
+  async getDiff(checkpointId: string): Promise<string> {
+    const checkpoints = await this.listCheckpoints();
+    const checkpoint = checkpoints.find(c => c.id === checkpointId || c.id.startsWith(checkpointId));
+
+    if (!checkpoint) {
+      throw new Error(`Checkpoint not found: ${checkpointId}`);
+    }
+
+    try {
+      // Get current HEAD
+      const commits = await git.log({ fs, dir: this.workingDir, depth: 1 });
+      const currentSha = commits[0]?.oid || 'HEAD';
+
+      // Get the diff between checkpoint and current state
+      const statusMatrix = await git.statusMatrix({
+        fs,
+        dir: this.workingDir,
+        ref: checkpoint.sha,
+      });
+
+      let diff = '';
+      for (const [filepath, headStatus, workdirStatus] of statusMatrix) {
+        // headStatus: 0=absent, 1=present, 2=modified
+        // workdirStatus: 0=absent, 1=present, 2=modified
+        if (headStatus !== workdirStatus) {
+          if (headStatus === 0 && workdirStatus === 1) {
+            diff += `+ ${filepath} (added)\n`;
+          } else if (headStatus === 1 && workdirStatus === 0) {
+            diff += `- ${filepath} (deleted)\n`;
+          } else if (headStatus === 1 && workdirStatus === 2) {
+            diff += `~ ${filepath} (modified)\n`;
+          }
+        }
+      }
+
+      return diff || 'No changes since checkpoint';
+    } catch (error) {
+      return `Error getting diff: ${error}`;
+    }
   }
 
   /**
