@@ -29,6 +29,7 @@ import { validateTaskType, validatePersona } from './type-guards.js';
 import { createAuthCommand, requireAuth } from './commands/auth.js';
 import { createUsageCommand, createBillingCommand } from './commands/usage.js';
 import { createMCPCommand } from './commands/mcp.js';
+import { createMCPToolsCommand } from './commands/mcp-tools.js';
 import { createRepoCommand } from './commands/repo.js';
 import { createConfigCommand } from './commands/config.js';
 import { createGitCommand } from './commands/git.js';
@@ -763,6 +764,7 @@ program.addCommand(createBillingCommand(config));
 
 // Add MCP command
 program.addCommand(createMCPCommand(config));
+program.addCommand(createMCPToolsCommand());
 
 // Add new hierarchical command groups (Phase 1 implementation)
 program.addCommand(createRepoCommand(config));
