@@ -221,7 +221,7 @@ describe('DockerSandbox', () => {
             stderr.end();
           }),
         },
-      };
+      } as any;
 
       const mockCreateContainer = jest.fn().mockResolvedValue(mockContainer);
       (sandbox as any).docker.createContainer = mockCreateContainer;
@@ -246,7 +246,7 @@ describe('DockerSandbox', () => {
       (getSandbox as any).dockerAvailable = null;
 
       const mockSandbox = new DockerSandbox();
-      const mockIsAvailable = jest.fn().mockResolvedValue(true);
+      const mockIsAvailable = jest.fn().mockResolvedValue(true) as any;
       mockSandbox.isAvailable = mockIsAvailable;
 
       jest.spyOn(global, 'DockerSandbox' as any).mockImplementation(() => mockSandbox);
@@ -264,7 +264,7 @@ describe('DockerSandbox', () => {
       (getSandbox as any).dockerAvailable = null;
 
       const mockSandbox = new DockerSandbox();
-      const mockIsAvailable = jest.fn().mockResolvedValue(false);
+      const mockIsAvailable = jest.fn().mockResolvedValue(false) as any;
       mockSandbox.isAvailable = mockIsAvailable;
 
       jest.spyOn(global, 'DockerSandbox' as any).mockImplementation(() => mockSandbox);
