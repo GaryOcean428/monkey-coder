@@ -7,6 +7,7 @@ This module provides the main FastAPI application instance with:
 - Password reset functionality
 - Rate limiting
 - CORS configuration
+- MCP Server integration
 """
 
 import hashlib
@@ -31,7 +32,7 @@ def _hash_reset_token(token: str) -> str:
 # Create FastAPI app
 app = FastAPI(
     title="Monkey Coder API",
-    description="AI-powered development assistant API",
+    description="AI-powered development assistant API with MCP support",
     version="1.0.0"
 )
 
@@ -43,6 +44,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount MCP server at /mcp endpoint
+try:
+    from monkey_coder.mcp.server import mcp
+    app.mount("/mcp", mcp.streamable_http_app())
+except Exception as e:
+    print(f"Warning: Failed to mount MCP server: {e}")
+
+# Include MCP REST wrapper router
+try:
+    from monkey_coder.app.routes.mcp import router as mcp_router
+    app.include_router(mcp_router)
+except Exception as e:
+    print(f"Warning: Failed to include MCP router: {e}")
 
 # Request models
 class PasswordResetRequest(BaseModel):
@@ -57,11 +72,27 @@ class PasswordResetConfirm(BaseModel):
 @app.get("/health")
 async def health_check():
     """Health check endpoint for load balancers and monitoring."""
-    return {
+    health_data = {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "service": "monkey-coder-api"
     }
+    
+    # Check MCP server status
+    try:
+        from monkey_coder.mcp.server import mcp
+        tools_list = await mcp.list_tools()
+        health_data["mcp_server"] = {
+            "status": "operational",
+            "tools_count": len(tools_list)
+        }
+    except Exception as e:
+        health_data["mcp_server"] = {
+            "status": "unavailable",
+            "error": str(e)
+        }
+    
+    return health_data
 
 # Password reset endpoints
 @app.post("/api/v1/auth/password-reset/request")
