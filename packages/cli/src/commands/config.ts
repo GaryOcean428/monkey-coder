@@ -11,6 +11,7 @@ import { ConfigManager } from '../config.js';
 import { HierarchicalConfigManager, ConfigScope } from '../hierarchical-config.js';
 import { formatError } from '../utils.js';
 import { CommandDefinition } from './registry.js';
+import { loadConfig, initConfig, findProjectConfig, getGlobalConfigPath } from '../config/loader.js';
 
 /**
  * Create the config command group
@@ -428,6 +429,120 @@ Examples:
       }
     });
 
+  // config init - Create .monkey-coder.json file
+  configCmd
+    .command('init')
+    .description('Create .monkey-coder.json in current directory')
+    .option('--force', 'Overwrite existing config file')
+    .addHelpText('after', `
+Examples:
+  $ monkey config init
+    Create a new .monkey-coder.json with default settings
+
+  $ monkey config init --force
+    Overwrite existing config file
+`)
+    .action(async (options: any) => {
+      try {
+        const configPath = await initConfig();
+        console.log(chalk.green(`✓ Created config at ${configPath}`));
+        console.log(chalk.gray('\nEdit this file to customize permissions, MCP servers, and agent defaults.'));
+      } catch (error: any) {
+        if (error.message.includes('already exists') && !options.force) {
+          console.error(chalk.red('Config file already exists. Use --force to overwrite.'));
+          process.exit(1);
+        }
+        console.error(formatError(error.message || 'Failed to initialize config'));
+        process.exit(1);
+      }
+    });
+
+  // config show - Display resolved configuration
+  configCmd
+    .command('show')
+    .description('Show current resolved configuration')
+    .option('--json', 'Output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ monkey config show
+    Display the merged configuration from all sources
+
+  $ monkey config show --json
+    Output configuration as JSON
+`)
+    .action(async (options: any) => {
+      try {
+        const resolvedConfig = await loadConfig();
+        
+        if (options.json) {
+          console.log(JSON.stringify(resolvedConfig, null, 2));
+        } else {
+          console.log(chalk.blue('\n📋 Resolved Configuration:\n'));
+          console.log(chalk.gray('(Merged from global, local, and project configs)\n'));
+          console.log(JSON.stringify(resolvedConfig, null, 2));
+          
+          const projectConfigPath = findProjectConfig();
+          const globalConfigPath = getGlobalConfigPath();
+          
+          console.log(chalk.blue('\n📂 Configuration Sources:\n'));
+          if (projectConfigPath) {
+            console.log(chalk.green(`✓ Project: ${projectConfigPath}`));
+          } else {
+            console.log(chalk.gray('  Project: (none)'));
+          }
+          console.log(chalk.gray(`  Global:  ${globalConfigPath}`));
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to show config'));
+        process.exit(1);
+      }
+    });
+
+  // config path - Show config file locations
+  configCmd
+    .command('path')
+    .description('Show configuration file locations')
+    .addHelpText('after', `
+Examples:
+  $ monkey config path
+    Show where config files are searched for
+`)
+    .action(async () => {
+      try {
+        console.log(chalk.blue('\n📁 Configuration File Search Paths:\n'));
+        console.log(chalk.cyan('Project configs (searched upward from current directory):'));
+        console.log(chalk.gray('  1. .monkey-coder.json'));
+        console.log(chalk.gray('  2. .monkeycoderrc'));
+        console.log(chalk.gray('  3. .monkeycoderrc.json'));
+        
+        console.log(chalk.cyan('\nGlobal config:'));
+        const globalPath = getGlobalConfigPath();
+        console.log(chalk.gray(`  ${globalPath}`));
+        
+        console.log(chalk.blue('\n📊 Current Status:\n'));
+        const projectConfigPath = findProjectConfig();
+        if (projectConfigPath) {
+          console.log(chalk.green(`✓ Project config found: ${projectConfigPath}`));
+        } else {
+          console.log(chalk.yellow('  No project config found'));
+          console.log(chalk.gray('  Run "monkey config init" to create one'));
+        }
+        
+        const globalConfigPath = getGlobalConfigPath();
+        const fs = await import('fs');
+        if (fs.existsSync(globalConfigPath)) {
+          console.log(chalk.green(`✓ Global config found: ${globalConfigPath}`));
+        } else {
+          console.log(chalk.gray(`  No global config (${globalConfigPath})`));
+        }
+        
+        console.log(chalk.gray('\nPrecedence: project > global > defaults'));
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to show paths'));
+        process.exit(1);
+      }
+    });
+
   return configCmd;
 }
 
@@ -504,6 +619,36 @@ export const configCommandDefinition: CommandDefinition = {
       category: 'config',
       options: [
         { flags: '--force', description: 'Skip confirmation' }
+      ]
+    },
+    {
+      name: 'init',
+      description: 'Create .monkey-coder.json in current directory',
+      category: 'config',
+      options: [
+        { flags: '--force', description: 'Overwrite existing config' }
+      ],
+      examples: [
+        { command: 'monkey config init', description: 'Create default config file' }
+      ]
+    },
+    {
+      name: 'show',
+      description: 'Show current resolved configuration',
+      category: 'config',
+      options: [
+        { flags: '--json', description: 'Output as JSON' }
+      ],
+      examples: [
+        { command: 'monkey config show', description: 'Display merged configuration' }
+      ]
+    },
+    {
+      name: 'path',
+      description: 'Show configuration file locations',
+      category: 'config',
+      examples: [
+        { command: 'monkey config path', description: 'Show config file search paths' }
       ]
     }
   ]
