@@ -146,12 +146,22 @@ async def refactor_code(
     # Placeholder implementation - returns code with comment about refactoring
     refactored_code = f"# Refactored according to: {instructions}\n{code}"
     
+    # Generate a simple diff
+    original_lines = code.split('\n')
+    refactored_lines = refactored_code.split('\n')
+    diff_lines = [f"--- original"]
+    diff_lines.append(f"+++ refactored")
+    diff_lines.append(f"@@ -1,{len(original_lines)} +1,{len(refactored_lines)} @@")
+    diff_lines.append(f"+ # Refactored according to: {instructions}")
+    for line in original_lines:
+        diff_lines.append(f"  {line}")
+    
     return {
         "original_code": code,
         "refactored_code": refactored_code,
         "language": language,
         "instructions": instructions,
-        "diff": f"+# Refactored according to: {instructions}\n {code}",
+        "diff": '\n'.join(diff_lines),
         "changes_made": ["Added refactoring comment"]
     }
 
@@ -205,7 +215,6 @@ async def run_tests(
         Test results with passed/failed counts and output
     """
     import os
-    import subprocess
     
     # Placeholder implementation - returns mock test results
     # In a real implementation, this would detect and run the appropriate test framework
