@@ -8,6 +8,7 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 - 🔍 **Code Analysis**: Analyze code for quality, security, and performance issues  
 - 🏗️  **Architecture Building**: Design and build robust code architectures
 - 🧪 **Test Generation**: Automatically generate comprehensive unit tests
+- 💾 **Checkpoint Management**: Git-based checkpoints for safe undo/restore of file operations
 - 📊 **Streaming Output**: Real-time progress updates with Server-Sent Events
 - ⚙️  **Configuration Management**: Persistent settings and preferences
 - 🎭 **Multiple Personas**: Choose from different AI personas (developer, architect, reviewer, tester, etc.)
@@ -165,7 +166,50 @@ Check API server health.
 
 ```bash
 monkey-coder health
+```
+
+### `checkpoint` (alias: `cp`)
+Manage checkpoints for undo/restore functionality. Checkpoints use Git to save the state of your project and allow you to restore to previous states.
+
 ```bash
+# List all checkpoints
+monkey-coder checkpoint list
+monkey-coder cp list --limit 10
+
+# Create a checkpoint
+monkey-coder checkpoint create "Before refactoring"
+monkey-coder cp create "Added new feature"
+
+# Restore to a specific checkpoint
+monkey-coder checkpoint restore abc123
+monkey-coder cp restore abc123 --force
+
+# Undo the last file operation
+monkey-coder checkpoint undo
+monkey-coder cp undo
+
+# Show changes since a checkpoint
+monkey-coder checkpoint diff abc123
+monkey-coder cp diff abc123
+
+# List operations since last checkpoint
+monkey-coder checkpoint operations
+monkey-coder cp operations
+```
+
+**Subcommands:**
+- `list` - List all checkpoints with details (ID, message, timestamp, file count)
+- `create [message]` - Create a new checkpoint with an optional message
+- `restore <id>` - Restore project to a specific checkpoint (use partial ID or full ID)
+- `undo` - Undo the last file operation (create, edit, or delete)
+- `diff <id>` - Show colorized diff of changes since checkpoint
+- `operations` - List file operations since last checkpoint
+
+**Options:**
+- `-n, --limit <n>` - Number of checkpoints to show in list (default: 20)
+- `-f, --force` - Skip confirmation prompt when restoring
+
+**Note:** Checkpoint functionality requires the working directory to be a Git repository. If not already initialized, checkpoints will initialize one automatically.
 
 ## Configuration
 
@@ -255,6 +299,27 @@ monkey-coder test src/api/users.ts src/api/auth.ts \
   --output tests/ \
   --persona tester \
   --stream
+```
+
+### Safe Refactoring with Checkpoints
+```bash
+# Create a checkpoint before major changes
+monkey-coder checkpoint create "Before refactoring user authentication"
+
+# Make your changes...
+# Edit files, run commands, etc.
+
+# Check what changed since checkpoint
+monkey-coder checkpoint diff abc123
+
+# If something went wrong, restore to checkpoint
+monkey-coder checkpoint restore abc123
+
+# Or undo just the last operation
+monkey-coder checkpoint undo
+
+# View all checkpoints
+monkey-coder checkpoint list
 ```
 
 ## Error Handling
