@@ -176,7 +176,9 @@ Agent behavior defaults.
   - Default: `"anthropic"`
   
 - **defaultModel**: Model identifier
-  - Examples: `"claude-sonnet-4-5-20250929"`, `"gpt-4"`, `"gemini-pro"`
+  - Anthropic: `"claude-sonnet-4-5-20250929"`, `"claude-3-5-sonnet-20241022"`, `"claude-opus-4-20250514"`
+  - OpenAI: `"gpt-4o"`, `"gpt-4-turbo"`, `"gpt-3.5-turbo"`
+  - Google: `"gemini-1.5-pro"`, `"gemini-1.5-flash"`
   - Default: `"claude-sonnet-4-5-20250929"`
   
 - **maxIterations**: Maximum agent iterations per task
