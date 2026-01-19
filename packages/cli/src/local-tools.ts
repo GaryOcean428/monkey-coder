@@ -11,7 +11,9 @@ import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import fg from 'fast-glob';
+import chalk from 'chalk';
 import { CheckpointManager, getCheckpointManager } from './checkpoint-manager.js';
+import { getSandbox, DockerSandbox } from './sandbox/docker-executor.js';
 
 // Types
 export interface ToolResult {
@@ -285,6 +287,7 @@ export class LocalToolsExecutor {
   private permissions: PermissionConfig;
   private checkpointManager: CheckpointManager | null = null;
   private approvalCallback?: (message: string) => Promise<boolean>;
+  private sandbox: DockerSandbox | null = null;
 
   constructor(options: {
     basePath?: string;
@@ -297,10 +300,16 @@ export class LocalToolsExecutor {
   }
 
   /**
-   * Initialize with checkpoint manager
+   * Initialize with checkpoint manager and Docker sandbox
    */
   async initialize(): Promise<void> {
     this.checkpointManager = await getCheckpointManager(this.basePath);
+    this.sandbox = await getSandbox();
+    if (this.sandbox) {
+      console.log(chalk.green('✓ Docker sandbox available'));
+    } else {
+      console.log(chalk.yellow('⚠ Docker not available, using basic sandbox'));
+    }
   }
 
   /**
@@ -526,6 +535,30 @@ export class LocalToolsExecutor {
         });
       });
     });
+  }
+
+  /**
+   * Execute a command in Docker sandbox if available
+   */
+  async executeCommandSandboxed(
+    command: string,
+    args: string[] = []
+  ): Promise<ShellResult> {
+    if (this.sandbox) {
+      const result = await this.sandbox.execute([command, ...args], {
+        binds: [`${this.basePath}:/workspace:rw`],
+      });
+      return {
+        success: result.exitCode === 0,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.exitCode,
+        output: result.stdout || result.stderr,
+        error: result.exitCode !== 0 ? result.stderr : undefined,
+      };
+    }
+    // Fallback to basic spawn
+    return this.executeCommand(command, args);
   }
 
   /**
