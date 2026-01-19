@@ -46,7 +46,7 @@ MCPServerConfigSchema = {
 // Agent defaults
 AgentConfigSchema = {
   defaultProvider: 'openai' | 'anthropic' | 'google',
-  defaultModel: string,
+  defaultModel: string,  // e.g., 'claude-sonnet-4-5-20250929', 'gpt-4', 'gemini-pro'
   maxIterations: number,
   autoApprove: boolean,
   sandbox: 'none' | 'basic' | 'docker'
