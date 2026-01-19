@@ -77,7 +77,7 @@ export class DockerSandbox {
       Image: this.config.image,
       Cmd: command,
       WorkingDir: options.workdir || this.config.workdir,
-      Env: Object.entries(options.env || {}).map(([k, v]) => \`\${k}=\${v}\`),
+      Env: Object.entries(options.env || {}).map(([k, v]) => `${k}=${v}`),
       HostConfig: {
         AutoRemove: true,
         Memory: this.config.memory,
@@ -186,7 +186,7 @@ export class DockerSandbox {
 
     const config = configs[language];
     if (!config) {
-      throw new Error(\`Unsupported language: \${language}\`);
+      throw new Error(`Unsupported language: ${language}`);
     }
 
     // Temporarily switch image
