@@ -7,6 +7,7 @@
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "module": "ES2022",
     "target": "ES2022",
+    "moduleResolution": "node",
     "moduleResolution": "bundler",
     "lib": ["ES2023", "DOM"],
     "types": ["node"],

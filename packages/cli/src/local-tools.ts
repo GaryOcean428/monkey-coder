@@ -83,20 +83,84 @@ const DEFAULT_PERMISSIONS: PermissionConfig = {
 
 /**
  * Check if a path matches any pattern in a list
+ * Uses string matching instead of regex for security
  */
 function matchesPattern(filepath: string, patterns: string[]): boolean {
-  const normalizedPath = path.normalize(filepath);
+  const normalizedPath = path.normalize(filepath).replace(/\\/g, '/');
   
   for (const pattern of patterns) {
-    // Simple glob matching (supports * and **)
-    const regex = pattern
-      .replace(/\*\*/g, '<<<GLOBSTAR>>>')
-      .replace(/\*/g, '[^/]*')
-      .replace(/<<<GLOBSTAR>>>/g, '.*')
-      .replace(/\//g, '\\/');
+    const normalizedPattern = pattern.replace(/\\/g, '/');
     
-    if (new RegExp(`^${regex}$`).test(normalizedPath)) {
-      return true;
+    // Handle exact match (no wildcards)
+    if (!normalizedPattern.includes('*')) {
+      if (normalizedPath === normalizedPattern || normalizedPath.startsWith(normalizedPattern + '/')) {
+        return true;
+      }
+      continue;
+    }
+    
+    // Handle ** (match any depth)
+    if (normalizedPattern.includes('**')) {
+      const parts = normalizedPattern.split('**');
+      if (parts.length === 2) {
+        const prefix = parts[0] || '';
+        const suffix = parts[1] || '';
+        const cleanPrefix = prefix.replace(/\/$/, '');
+        const cleanSuffix = suffix.replace(/^\//, '');
+        
+        const matchesPrefix = !cleanPrefix || normalizedPath.startsWith(cleanPrefix);
+        const matchesSuffix = !cleanSuffix || normalizedPath.endsWith(cleanSuffix);
+        
+        if (matchesPrefix && matchesSuffix) {
+          return true;
+        }
+      }
+      continue;
+    }
+    
+    // Handle * (match within segment - does not cross /)
+    if (normalizedPattern.includes('*')) {
+      const parts = normalizedPattern.split('*');
+      let currentIndex = 0;
+      let matches = true;
+      
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (part === '' || part === undefined) {
+          if (i === 0 || i === parts.length - 1) continue;
+        }
+        
+        if (!part) continue;  // Skip empty parts
+        
+        const index = normalizedPath.indexOf(part, currentIndex);
+        if (index === -1) {
+          matches = false;
+          break;
+        }
+        
+        // Check that * doesn't cross directory boundaries
+        const segmentBetween = normalizedPath.slice(currentIndex, index);
+        if (segmentBetween.includes('/')) {
+          matches = false;
+          break;
+        }
+        
+        // First part must match start, last part must match end
+        if (i === 0 && index !== 0) {
+          matches = false;
+          break;
+        }
+        if (i === parts.length - 1 && index + part.length !== normalizedPath.length) {
+          matches = false;
+          break;
+        }
+        
+        currentIndex = index + part.length;
+      }
+      
+      if (matches) {
+        return true;
+      }
     }
   }
   
@@ -105,14 +169,54 @@ function matchesPattern(filepath: string, patterns: string[]): boolean {
 
 /**
  * Check if a command matches any pattern
+ * Uses string matching instead of regex for security
  */
 function commandMatchesPattern(command: string, patterns: string[]): boolean {
   for (const pattern of patterns) {
-    const regex = pattern
-      .replace(/\*/g, '.*')
-      .replace(/\s+/g, '\\s+');
+    // Handle exact match
+    if (!pattern.includes('*')) {
+      if (command === pattern) {
+        return true;
+      }
+      continue;
+    }
     
-    if (new RegExp(`^${regex}$`).test(command)) {
+    // Handle wildcards with string matching
+    const parts = pattern.split('*');
+    let currentIndex = 0;
+    let matches = true;
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part === '' || part === undefined) {
+        if (i === 0 || i === parts.length - 1) continue;
+      }
+      
+      if (!part) continue;  // Skip empty or undefined parts
+      
+      // Handle whitespace pattern matching
+      const normalizedPart = part.replace(/\\s\+/g, ' ');
+      const index = command.indexOf(normalizedPart, currentIndex);
+      
+      if (index === -1) {
+        matches = false;
+        break;
+      }
+      
+      // First part must match start, last part must match end
+      if (i === 0 && index !== 0) {
+        matches = false;
+        break;
+      }
+      if (i === parts.length - 1 && index + normalizedPart.length !== command.length) {
+        matches = false;
+        break;
+      }
+      
+      currentIndex = index + normalizedPart.length;
+    }
+    
+    if (matches) {
       return true;
     }
   }
@@ -285,9 +389,9 @@ export class LocalToolsExecutor {
       // Record operation
       if (this.checkpointManager) {
         if (beforeContent) {
-          await this.checkpointManager.recordFileEdit(absolutePath, beforeContent, content);
+          await this.checkpointManager.recordFileEdit(filepath, beforeContent, content);
         } else {
-          await this.checkpointManager.recordFileCreate(absolutePath, content);
+          await this.checkpointManager.recordFileCreate(filepath, content);
         }
       }
 
@@ -328,6 +432,7 @@ export class LocalToolsExecutor {
 
       // Record operation
       if (this.checkpointManager) {
+        await this.checkpointManager.recordFileDelete(filepath, beforeContent);
         await this.checkpointManager.recordFileDelete(absolutePath, beforeContent);
       }
 
@@ -425,12 +530,13 @@ export class LocalToolsExecutor {
 
   /**
    * Search for text in files
+   * Uses case-insensitive string includes() instead of regex for security
    */
   async searchFiles(
     query: string,
-    options: { pattern?: string; maxResults?: number } = {}
+    options: { pattern?: string; maxResults?: number; caseSensitive?: boolean } = {}
   ): Promise<ToolResult & { matches?: Array<{ file: string; line: number; content: string }> }> {
-    const { pattern = '**/*', maxResults = 100 } = options;
+    const { pattern = '**/*', maxResults = 100, caseSensitive = false } = options;
 
     try {
       const files = await fg(pattern, {
@@ -440,7 +546,7 @@ export class LocalToolsExecutor {
       });
 
       const matches: Array<{ file: string; line: number; content: string }> = [];
-      const regex = new RegExp(query, 'gi');
+      const searchTerm = caseSensitive ? query : query.toLowerCase();
 
       for (const file of files) {
         if (matches.length >= maxResults) break;
@@ -457,7 +563,10 @@ export class LocalToolsExecutor {
           const lines = content.split('\n');
           for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
             const line = lines[i];
-            if (line !== undefined && regex.test(line)) {
+            if (!line) continue;
+            
+            const searchLine = caseSensitive ? line : line.toLowerCase();
+            if (searchLine.includes(searchTerm)) {
               matches.push({
                 file,
                 line: i + 1,

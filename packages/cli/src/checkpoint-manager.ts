@@ -262,7 +262,7 @@ export class CheckpointManager {
    * Undo the last operation
    */
   async undoLast(): Promise<Operation | null> {
-    const lastActive = this.operations.findLast(o => o.status === 'active');
+    const lastActive = this.operations.findLast((o: Operation) => o.status === 'active');
     
     if (!lastActive) {
       return null;
@@ -310,7 +310,7 @@ export class CheckpointManager {
    * Redo the last undone operation
    */
   async redoLast(): Promise<Operation | null> {
-    const lastUndone = this.operations.findLast(o => o.status === 'undone');
+    const lastUndone = this.operations.findLast((o: Operation) => o.status === 'undone');
 
     if (!lastUndone) {
       return null;
