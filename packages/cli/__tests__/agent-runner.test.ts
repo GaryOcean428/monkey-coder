@@ -2,7 +2,52 @@
  * Tests for AgentRunner class
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
+
+// Mock ora before importing AgentRunner
+jest.mock('ora', () => {
+  return jest.fn(() => ({
+    start: jest.fn().mockReturnThis(),
+    stop: jest.fn().mockReturnThis(),
+    succeed: jest.fn().mockReturnThis(),
+    fail: jest.fn().mockReturnThis(),
+    warn: jest.fn().mockReturnThis(),
+    info: jest.fn().mockReturnThis(),
+    text: '',
+  }));
+});
+
+// Mock session-manager
+jest.mock('../src/session-manager', () => ({
+  getSessionManager: jest.fn(() => ({
+    createSession: jest.fn(),
+    getSession: jest.fn(),
+    updateSession: jest.fn(),
+    listSessions: jest.fn(),
+  })),
+  Session: jest.fn(),
+}));
+
+// Mock checkpoint-manager
+jest.mock('../src/checkpoint-manager', () => ({
+  getCheckpointManager: jest.fn(() => ({
+    saveCheckpoint: jest.fn(),
+    loadCheckpoint: jest.fn(),
+    listCheckpoints: jest.fn(),
+  })),
+}));
+
+// Mock tools
+jest.mock('../src/tools/index', () => ({
+  TOOL_REGISTRY: new Map(),
+  ToolResult: jest.fn(),
+}));
+
+// Mock api-client
+jest.mock('../src/api-client', () => ({
+  MonkeyCoderAPIClient: jest.fn(),
+}));
+
 import { AgentRunner } from '../src/agent-runner';
 
 describe('AgentRunner', () => {
