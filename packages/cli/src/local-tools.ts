@@ -14,6 +14,8 @@ import fg from 'fast-glob';
 import chalk from 'chalk';
 import { CheckpointManager, getCheckpointManager } from './checkpoint-manager.js';
 import { getSandbox, DockerSandbox } from './sandbox/docker-executor.js';
+import { loadConfig } from './config/loader.js';
+import { PermissionConfig as ConfigPermissionConfig } from './config/schema.js';
 
 // Types
 export interface ToolResult {
@@ -301,8 +303,23 @@ export class LocalToolsExecutor {
 
   /**
    * Initialize with checkpoint manager and Docker sandbox
+   * Also loads permissions from config file if available
    */
   async initialize(): Promise<void> {
+    // Load config file and merge permissions if available
+    try {
+      const config = await loadConfig(this.basePath);
+      // Merge config permissions with constructor permissions (constructor takes precedence)
+      this.permissions = { 
+        ...DEFAULT_PERMISSIONS, 
+        ...config.permissions,
+        ...this.permissions 
+      };
+    } catch (error) {
+      // Config loading is optional, use defaults if it fails
+      console.warn(chalk.yellow('⚠ Failed to load config, using default permissions'));
+    }
+    
     this.checkpointManager = await getCheckpointManager(this.basePath);
     this.sandbox = await getSandbox();
     if (this.sandbox) {

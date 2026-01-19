@@ -11,6 +11,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { z } from 'zod';
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
+import { loadConfig } from './config/loader.js';
 
 // Types
 export interface MCPServerConfig {
@@ -69,6 +70,25 @@ export class MCPClientManager extends EventEmitter {
 
   constructor() {
     super();
+  }
+
+  /**
+   * Load server configurations from config file
+   * @param cwd - Current working directory to load config from
+   */
+  async loadServersFromConfig(cwd: string = process.cwd()): Promise<void> {
+    try {
+      const config = await loadConfig(cwd);
+      
+      // Register all enabled servers from config
+      for (const serverConfig of config.mcp.servers) {
+        if (serverConfig.enabled !== false) {
+          this.registerServer(serverConfig);
+        }
+      }
+    } catch (error) {
+      console.warn('Warning: Failed to load MCP server configs from file:', error);
+    }
   }
 
   /**
