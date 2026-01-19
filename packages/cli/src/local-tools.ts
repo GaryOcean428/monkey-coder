@@ -9,13 +9,12 @@ import { spawn, SpawnOptions } from 'child_process';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
 import fg from 'fast-glob';
 import chalk from 'chalk';
+
 import { CheckpointManager, getCheckpointManager } from './checkpoint-manager.js';
 import { getSandbox, DockerSandbox } from './sandbox/docker-executor.js';
 import { loadConfig } from './config/loader.js';
-import { PermissionConfig as ConfigPermissionConfig } from './config/schema.js';
 
 // Types
 export interface ToolResult {
