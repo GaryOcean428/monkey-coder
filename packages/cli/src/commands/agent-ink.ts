@@ -2,6 +2,7 @@
  * Agent command with Ink UI
  */
 import { Command } from 'commander';
+import chalk from 'chalk';
 import { renderApp } from '../ui/index.js';
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';
@@ -19,6 +20,7 @@ interface AgentOptions {
   apiKey?: string;
   baseUrl?: string;
   mcpConfig?: string;
+  sandbox?: 'none' | 'basic' | 'docker';
 }
 
 interface MCPServerConfig {
@@ -56,12 +58,26 @@ export function createInkAgentCommand(config: ConfigManager): Command {
     .option('-t, --temperature <temp>', 'Model temperature (0.0-2.0)', parseFloat)
     .option('--stream', 'Enable streaming responses', true)
     .option('--mcp-config <path>', 'Path to MCP servers configuration file')
+    .option('--sandbox <mode>', 'Sandbox mode: none, basic, docker', 'basic')
     .action(async (options: AgentOptions) => {
       const apiKey = options.apiKey || config.getApiKey() || '';
       const baseUrl = options.baseUrl || config.getBaseUrl();
 
       if (!apiKey) {
         console.warn('Warning: No API key provided. Some features may not work.');
+      }
+
+      // Check Docker availability if docker mode is requested
+      if (options.sandbox === 'docker') {
+        const { getSandbox } = await import('../sandbox/docker-executor.js');
+        const sandbox = await getSandbox();
+        if (!sandbox) {
+          console.error(chalk.red('✗ Docker not available for sandbox mode'));
+          console.error(chalk.yellow('→ Falling back to basic sandbox mode'));
+          options.sandbox = 'basic';
+        } else {
+          console.log(chalk.green('✓ Docker sandbox enabled'));
+        }
       }
 
       const client = new MonkeyCoderAPIClient(baseUrl, apiKey);
