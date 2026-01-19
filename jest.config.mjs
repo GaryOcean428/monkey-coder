@@ -31,5 +31,8 @@ export default {
     'ts-jest': {
       useESM: true
     }
-  }
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(ora|chalk|strip-ansi|ansi-regex|cli-cursor|cli-spinners|is-interactive|is-unicode-supported|log-symbols|stdin-discarder|string-width|emoji-regex|strip-final-newline)/)'
+  ]
 };
