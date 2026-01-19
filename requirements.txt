@@ -101,7 +101,7 @@ fsspec==2026.1.0
     #   torch
 google-auth==2.47.0
     # via google-genai
-google-genai==1.57.0
+google-genai==1.59.0
     # via monkey-coder-core (pyproject.toml)
 groq==1.0.0
     # via monkey-coder-core (pyproject.toml)
@@ -218,7 +218,7 @@ passlib==1.7.4
     # via monkey-coder-core (pyproject.toml)
 pillow==12.1.0
     # via sentence-transformers
-prometheus-client==0.24.0
+prometheus-client==0.24.1
     # via monkey-coder-core (pyproject.toml)
 prompt-toolkit==3.0.52
     # via click-repl
@@ -231,7 +231,7 @@ psutil==7.2.1
     # via
     #   monkey-coder-core (pyproject.toml)
     #   accelerate
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   python-jose
@@ -277,7 +277,7 @@ pyyaml==6.0.3
     #   uvicorn
 redis==7.1.0
     # via monkey-coder-core (pyproject.toml)
-regex==2025.11.3
+regex==2026.1.15
     # via transformers
 requests==2.32.5
     # via
@@ -328,15 +328,15 @@ sniffio==1.3.1
     #   google-genai
     #   groq
     #   openai
-soupsieve==2.8.1
+soupsieve==2.8.2
     # via beautifulsoup4
-sse-starlette==3.1.2
+sse-starlette==3.2.0
     # via monkey-coder-core (pyproject.toml)
 starlette==0.50.0
     # via
     #   fastapi
     #   sse-starlette
-stripe==14.1.0
+stripe==14.2.0
     # via monkey-coder-core (pyproject.toml)
 sympy==1.14.0
     # via torch
