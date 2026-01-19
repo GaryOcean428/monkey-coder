@@ -7,9 +7,9 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
-import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
+import fs from 'fs-extra';
 
 import { getMCPManager, MCPServerConfig } from '../mcp-client.js';
 
