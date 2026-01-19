@@ -7,8 +7,8 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Table from 'cli-table3';
+
 import { ConfigManager } from '../config.js';
-import { HierarchicalConfigManager, ConfigScope } from '../hierarchical-config.js';
 import { formatError } from '../utils.js';
 import { CommandDefinition } from './registry.js';
 import { loadConfig, initConfig, findProjectConfig, getGlobalConfigPath } from '../config/loader.js';
