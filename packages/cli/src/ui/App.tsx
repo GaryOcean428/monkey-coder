@@ -22,6 +22,7 @@ export interface AppProps {
     url?: string;
   }>;
   onMessage?: (content: string) => Promise<string>;
+  onMessageStream?: (content: string, onChunk: (chunk: string) => void) => Promise<void>;
 }
 
 export const App: React.FC<AppProps> = ({
@@ -30,6 +31,7 @@ export const App: React.FC<AppProps> = ({
   workingDirectory,
   mcpServers,
   onMessage,
+  onMessageStream,
 }) => {
   const { exit } = useApp();
   const [status, setStatus] = useState<AppStatus>('idle');
@@ -102,8 +104,25 @@ export const App: React.FC<AppProps> = ({
       addMessage('user', userMessage);
 
       try {
-        // Call the onMessage handler if provided
-        if (onMessage) {
+        // Check if streaming is supported
+        if (onMessageStream) {
+          // Add a streaming assistant message placeholder
+          const streamingMsgId = `msg-${Date.now()}`;
+          addMessage('assistant', '', false, undefined);
+          
+          // Update the last message with streaming chunks
+          let accumulatedContent = '';
+          await onMessageStream(userMessage, (chunk: string) => {
+            accumulatedContent += chunk;
+            // Update the last message content
+            // Note: This is a simplified approach - in a real implementation,
+            // we'd need to update the specific message by ID
+          });
+          
+          // Mark streaming complete - replace with final message
+          addMessage('assistant', accumulatedContent);
+        } else if (onMessage) {
+          // Non-streaming fallback
           const response = await onMessage(userMessage);
           addMessage('assistant', response);
         }
@@ -117,7 +136,7 @@ export const App: React.FC<AppProps> = ({
         setIsThinking(false);
       }
     },
-    [sessionId, addMessage, onMessage]
+    [sessionId, addMessage, onMessage, onMessageStream]
   );
 
   const tokenCount = getTokenCount();

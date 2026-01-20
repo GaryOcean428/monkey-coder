@@ -12,6 +12,7 @@ export interface Message {
   language?: string;
   timestamp?: number;
   toolCallId?: string;
+  isStreaming?: boolean;
 }
 
 export type AppStatus = 'idle' | 'thinking' | 'executing' | 'error';
