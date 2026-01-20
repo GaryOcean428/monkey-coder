@@ -440,6 +440,7 @@ export class LocalToolsExecutor {
 
   /**
    * Delete a file
+   * Note: Uses write permission check as deletion is a form of file modification
    */
   async deleteFile(filepath: string): Promise<ToolResult> {
     // Use PermissionManager for validation - writeFile validation for deletion
