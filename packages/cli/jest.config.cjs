@@ -19,7 +19,8 @@ module.exports = {
     'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles)/)'
   ],
   moduleNameMapper: {
-    '^chalk$': '<rootDir>/__mocks__/chalk.js'
+    '^chalk$': '<rootDir>/__mocks__/chalk.js',
+    '^(\\.{1,2}/.*)\\.js$': '$1'
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverageFrom: [

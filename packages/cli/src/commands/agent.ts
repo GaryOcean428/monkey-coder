@@ -6,8 +6,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { AgentRunner } from '../agent-runner';
-import { ConfigManager } from '../config';
+import { AgentRunner } from '../agent-runner.js';
+import { ConfigManager } from '../config.js';
 
 export function createAgentCommand(config: ConfigManager): Command {
   return new Command('agent')

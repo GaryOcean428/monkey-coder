@@ -8,7 +8,7 @@
  */
 
 import { spawn } from 'child_process';
-import { DockerSandbox } from './docker-executor';
+import { DockerSandbox } from './docker-executor.js';
 
 export interface SandboxOptions {
   mode: 'none' | 'spawn' | 'docker';
