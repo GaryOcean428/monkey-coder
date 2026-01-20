@@ -11,6 +11,7 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 import fastGlob from 'fast-glob';
 import { getCheckpointManager } from '../checkpoint-manager.js';
+import { getSandboxExecutor } from '../sandbox/index.js';
 
 // Types
 export interface ToolResult {
@@ -41,6 +42,7 @@ export interface ShellExecuteParams {
   args?: string[];
   cwd?: string;
   timeout?: number;
+  sandboxMode?: 'none' | 'spawn' | 'docker';
 }
 
 export interface GlobSearchParams {
@@ -188,58 +190,35 @@ export async function fileDelete(filePath: string): Promise<ToolResult> {
  * Execute a shell command safely
  */
 export async function shellExecute(params: ShellExecuteParams): Promise<ToolResult> {
-  return new Promise((resolve) => {
-    const checkpointMgr = getCheckpointManager();
-    const timeout = params.timeout || 30000;
-    const cwd = params.cwd || process.cwd();
-    
-    // Use spawn with array args to prevent shell injection
-    const args = params.args || [];
-    const child = spawn(params.command, args, {
-      cwd,
-      shell: false,
-      timeout,
-      env: { ...process.env },
-    });
-    
-    let stdout = '';
-    let stderr = '';
-    
-    child.stdout?.on('data', (data) => {
-      stdout += data.toString();
-    });
-    
-    child.stderr?.on('data', (data) => {
-      stderr += data.toString();
-    });
-    
-    child.on('error', (error) => {
-      resolve({
-        success: false,
-        output: stdout,
-        error: `Command failed: ${error.message}`,
-      });
-    });
-    
-    child.on('close', async (code) => {
-      // Record the command (but we can't auto-undo it)
-      const fullCommand = [params.command, ...args].join(' ');
-      await checkpointMgr.recordBashCommand(fullCommand);
-      
-      if (code === 0) {
-        resolve({
-          success: true,
-          output: stdout || 'Command completed successfully',
-        });
-      } else {
-        resolve({
-          success: false,
-          output: stdout,
-          error: stderr || `Command exited with code ${code}`,
-        });
-      }
-    });
+  const checkpointMgr = getCheckpointManager();
+  
+  // Get sandbox executor with configured mode
+  const sandbox = getSandboxExecutor({
+    mode: params.sandboxMode || 'spawn',
+    timeout: params.timeout || 30000,
+    workdir: params.cwd,
   });
+
+  const args = params.args || [];
+  const result = await sandbox.execute(params.command, args);
+
+  // Record the command for checkpoint tracking
+  const fullCommand = [params.command, ...args].join(' ');
+  await checkpointMgr.recordBashCommand(fullCommand);
+
+  if (result.timedOut) {
+    return {
+      success: false,
+      output: result.stdout,
+      error: `Command timed out after ${params.timeout || 30000}ms`,
+    };
+  }
+
+  return {
+    success: result.exitCode === 0,
+    output: result.stdout || 'Command completed successfully',
+    error: result.stderr || undefined,
+  };
 }
 
 /**
@@ -361,6 +340,11 @@ export const TOOL_REGISTRY = {
         args: { type: 'array', items: { type: 'string' }, description: 'Command arguments' },
         cwd: { type: 'string', description: 'Working directory' },
         timeout: { type: 'number', description: 'Timeout in milliseconds' },
+        sandboxMode: { 
+          type: 'string', 
+          enum: ['none', 'spawn', 'docker'],
+          description: 'Sandbox mode: none (unsafe), spawn (safe), docker (isolated)' 
+        },
       },
       required: ['command'],
     },
