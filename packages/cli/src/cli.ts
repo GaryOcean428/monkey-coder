@@ -39,6 +39,7 @@ import { createSearchCommand } from './commands/search.js';
 import { createReleaseCommand } from './commands/release.js';
 import { createWorkflowCommand } from './commands/workflow.js';
 import { createSessionCommand } from './commands/session.js';
+import { createChatCommand } from './commands/chat.js';
 import { createInkChatCommand } from './commands/chat-ink.js';
 import { createInkAgentCommand } from './commands/agent-ink.js';
 import { createCheckpointCommand } from './commands/checkpoint.js';
@@ -780,7 +781,9 @@ program.addCommand(createWorkflowCommand(config));
 program.addCommand(createSessionCommand());
 // Add checkpoint management command
 program.addCommand(createCheckpointCommand());
-// Add Ink UI commands
+// Add main chat command (uses Ink UI by default)
+program.addCommand(createChatCommand(config));
+// Add chat-ink as alias for backwards compatibility
 program.addCommand(createInkChatCommand(config));
 program.addCommand(createInkAgentCommand(config));
 // Add agent command
