@@ -28,7 +28,6 @@ export async function runTasksWithProgress(
   const {
     concurrent = false,
     exitOnError = true,
-    showTimer = true,
     collapseSubtasks = false,
   } = options;
 
