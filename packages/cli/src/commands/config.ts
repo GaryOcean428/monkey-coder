@@ -543,6 +543,328 @@ Examples:
       }
     });
 
+  // config permissions - Manage permission rules
+  const permissionsCmd = new Command('permissions')
+    .description('Manage permission rules for file access and command execution')
+    .alias('perms');
+
+  // config permissions list
+  permissionsCmd
+    .command('list')
+    .description('List current permission rules')
+    .alias('ls')
+    .option('--global', 'Show only global permissions')
+    .option('--project', 'Show only project permissions')
+    .option('--json', 'Output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ monkey config permissions list
+    Show merged permission rules
+
+  $ monkey config permissions list --global
+    Show only global permission rules
+
+  $ monkey config permissions list --json
+    Output as JSON
+`)
+    .action(async (options: any) => {
+      try {
+        const { PermissionManager } = await import('../permissions.js');
+        const permMgr = new PermissionManager();
+
+        if (options.json) {
+          if (options.global) {
+            console.log(JSON.stringify(permMgr.getGlobalRules(), null, 2));
+          } else if (options.project) {
+            console.log(JSON.stringify(permMgr.getProjectRules() || {}, null, 2));
+          } else {
+            console.log(JSON.stringify(permMgr.getMergedRulesPublic(), null, 2));
+          }
+        } else {
+          console.log(chalk.blue('\n📋 Permission Rules:\n'));
+
+          const rules = options.global 
+            ? permMgr.getGlobalRules() 
+            : options.project 
+              ? permMgr.getProjectRules() 
+              : permMgr.getMergedRulesPublic();
+
+          if (!rules) {
+            console.log(chalk.yellow('No project-specific permissions set'));
+            return;
+          }
+
+          console.log(chalk.cyan('File Read:'));
+          console.log(chalk.green('  Allow:'));
+          (rules.fileRead?.allow || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+          console.log(chalk.red('  Deny:'));
+          (rules.fileRead?.deny || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+
+          console.log(chalk.cyan('\nFile Write:'));
+          console.log(chalk.green('  Allow:'));
+          (rules.fileWrite?.allow || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+          console.log(chalk.red('  Deny:'));
+          (rules.fileWrite?.deny || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+
+          console.log(chalk.cyan('\nShell Execute:'));
+          console.log(chalk.green('  Allow:'));
+          (rules.shellExecute?.allow || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+          console.log(chalk.red('  Deny:'));
+          (rules.shellExecute?.deny || []).forEach(p => console.log(chalk.gray(`    - ${p}`)));
+
+          console.log(chalk.cyan('\nRequire Approval:'));
+          (rules.requireApproval || []).forEach(p => console.log(chalk.gray(`  - ${p}`)));
+
+          console.log(chalk.gray(`\nConfig file: ${permMgr.getPermissionsFilePath()}`));
+          if (!options.global) {
+            console.log(chalk.gray(`Project file: ${permMgr.getProjectRCPath()}`));
+          }
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to list permissions'));
+        process.exit(1);
+      }
+    });
+
+  // config permissions allow
+  permissionsCmd
+    .command('allow')
+    .description('Add a pattern to the allow list')
+    .argument('<category>', 'Category: fileRead, fileWrite, or shellExecute')
+    .argument('<pattern>', 'Glob pattern to allow')
+    .option('--global', 'Add to global permissions')
+    .option('--project', 'Add to project permissions')
+    .addHelpText('after', `
+Examples:
+  $ monkey config permissions allow fileRead "src/**/*.ts"
+    Allow reading TypeScript files in src directory
+
+  $ monkey config permissions allow shellExecute "docker *"
+    Allow docker commands
+
+  $ monkey config permissions allow fileWrite "dist/**/*" --project
+    Allow writing to dist directory (project-specific)
+`)
+    .action(async (category: string, pattern: string, options: any) => {
+      try {
+        const { PermissionManager } = await import('../permissions.js');
+        const permMgr = new PermissionManager();
+
+        if (!['fileRead', 'fileWrite', 'shellExecute'].includes(category)) {
+          console.error(chalk.red('Invalid category. Must be: fileRead, fileWrite, or shellExecute'));
+          process.exit(1);
+        }
+
+        const rules = options.project 
+          ? (permMgr.getProjectRules() || {})
+          : permMgr.getGlobalRules();
+
+        // Get current category rules
+        const currentCategory = rules[category as 'fileRead' | 'fileWrite' | 'shellExecute'];
+        const allowList = Array.isArray(currentCategory) ? [] : (currentCategory?.allow || []);
+
+        const updatedCategory = {
+          allow: [...allowList, pattern],
+          deny: Array.isArray(currentCategory) ? [] : (currentCategory?.deny || [])
+        };
+
+        const updatedRules = {
+          [category]: updatedCategory
+        };
+
+        if (options.project) {
+          await permMgr.saveProjectRules(updatedRules);
+          console.log(chalk.green(`✓ Added "${pattern}" to ${category} allow list (project)`));
+        } else {
+          await permMgr.saveGlobalRules(updatedRules);
+          console.log(chalk.green(`✓ Added "${pattern}" to ${category} allow list (global)`));
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to add permission'));
+        process.exit(1);
+      }
+    });
+
+  // config permissions deny
+  permissionsCmd
+    .command('deny')
+    .description('Add a pattern to the deny list')
+    .argument('<category>', 'Category: fileRead, fileWrite, or shellExecute')
+    .argument('<pattern>', 'Glob pattern to deny')
+    .option('--global', 'Add to global permissions')
+    .option('--project', 'Add to project permissions')
+    .addHelpText('after', `
+Examples:
+  $ monkey config permissions deny fileRead "**/.env*"
+    Deny reading .env files
+
+  $ monkey config permissions deny shellExecute "rm -rf /*"
+    Deny dangerous rm command
+
+  $ monkey config permissions deny fileWrite "**/node_modules/**" --project
+    Deny writing to node_modules (project-specific)
+`)
+    .action(async (category: string, pattern: string, options: any) => {
+      try {
+        const { PermissionManager } = await import('../permissions.js');
+        const permMgr = new PermissionManager();
+
+        if (!['fileRead', 'fileWrite', 'shellExecute'].includes(category)) {
+          console.error(chalk.red('Invalid category. Must be: fileRead, fileWrite, or shellExecute'));
+          process.exit(1);
+        }
+
+        const rules = options.project 
+          ? (permMgr.getProjectRules() || {})
+          : permMgr.getGlobalRules();
+
+        // Get current category rules
+        const currentCategory = rules[category as 'fileRead' | 'fileWrite' | 'shellExecute'];
+        const denyList = Array.isArray(currentCategory) ? [] : (currentCategory?.deny || []);
+
+        const updatedCategory = {
+          allow: Array.isArray(currentCategory) ? [] : (currentCategory?.allow || []),
+          deny: [...denyList, pattern]
+        };
+
+        const updatedRules = {
+          [category]: updatedCategory
+        };
+
+        if (options.project) {
+          await permMgr.saveProjectRules(updatedRules);
+          console.log(chalk.green(`✓ Added "${pattern}" to ${category} deny list (project)`));
+        } else {
+          await permMgr.saveGlobalRules(updatedRules);
+          console.log(chalk.green(`✓ Added "${pattern}" to ${category} deny list (global)`));
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to add permission'));
+        process.exit(1);
+      }
+    });
+
+  // config permissions test
+  permissionsCmd
+    .command('test')
+    .description('Test if a file or command is allowed')
+    .argument('<type>', 'Type: read, write, or command')
+    .argument('<value>', 'File path or command to test')
+    .addHelpText('after', `
+Examples:
+  $ monkey config permissions test read ".env"
+    Test if .env file can be read
+
+  $ monkey config permissions test write "src/index.ts"
+    Test if src/index.ts can be written
+
+  $ monkey config permissions test command "npm install"
+    Test if npm install command is allowed
+`)
+    .action(async (type: string, value: string) => {
+      try {
+        const { PermissionManager } = await import('../permissions.js');
+        const permMgr = new PermissionManager();
+
+        let result: { allowed: boolean; reason?: string; requiresApproval?: boolean };
+
+        if (type === 'read') {
+          result = permMgr.canReadFile(value);
+        } else if (type === 'write') {
+          result = permMgr.canWriteFile(value);
+        } else if (type === 'command') {
+          result = permMgr.canExecuteCommand(value);
+        } else {
+          console.error(chalk.red('Invalid type. Must be: read, write, or command'));
+          process.exit(1);
+        }
+
+        if (result.allowed) {
+          console.log(chalk.green(`✓ Allowed${result.requiresApproval ? ' (requires approval)' : ''}`));
+        } else {
+          console.log(chalk.red(`✗ Denied: ${result.reason}`));
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to test permission'));
+        process.exit(1);
+      }
+    });
+
+  // config permissions reset
+  permissionsCmd
+    .command('reset')
+    .description('Reset permissions to defaults')
+    .option('--global', 'Reset global permissions')
+    .option('--project', 'Reset project permissions')
+    .option('--force', 'Skip confirmation')
+    .addHelpText('after', `
+Examples:
+  $ monkey config permissions reset --global
+    Reset global permissions to defaults
+
+  $ monkey config permissions reset --project
+    Remove all project-specific permissions
+`)
+    .action(async (options: any) => {
+      try {
+        if (!options.force) {
+          const scope = options.project ? 'project' : 'global';
+          const answers = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'confirmed',
+              message: `Are you sure you want to reset ${scope} permissions?`,
+              default: false,
+            }
+          ]);
+          
+          if (!answers.confirmed) {
+            console.log(chalk.yellow('Reset cancelled'));
+            return;
+          }
+        }
+
+        const { PermissionManager } = await import('../permissions.js');
+        const permMgr = new PermissionManager();
+        const fs = await import('fs/promises');
+
+        if (options.project) {
+          // Remove permissions from .monkeyrc.json
+          const rcPath = permMgr.getProjectRCPath();
+          try {
+            const content = await fs.readFile(rcPath, 'utf-8');
+            const rc = JSON.parse(content);
+            delete rc.permissions;
+            await fs.writeFile(rcPath, JSON.stringify(rc, null, 2), 'utf-8');
+            console.log(chalk.green('✓ Project permissions reset'));
+          } catch (error: any) {
+            if (error.code === 'ENOENT') {
+              console.log(chalk.yellow('No project permissions file found'));
+            } else {
+              throw error;
+            }
+          }
+        } else {
+          // Delete global permissions file
+          try {
+            await fs.unlink(permMgr.getPermissionsFilePath());
+            console.log(chalk.green('✓ Global permissions reset to defaults'));
+          } catch (error: any) {
+            if (error.code === 'ENOENT') {
+              console.log(chalk.yellow('Global permissions already at defaults'));
+            } else {
+              throw error;
+            }
+          }
+        }
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to reset permissions'));
+        process.exit(1);
+      }
+    });
+
+  configCmd.addCommand(permissionsCmd);
+
   return configCmd;
 }
 
@@ -649,6 +971,82 @@ export const configCommandDefinition: CommandDefinition = {
       category: 'config',
       examples: [
         { command: 'monkey config path', description: 'Show config file search paths' }
+      ]
+    },
+    {
+      name: 'permissions',
+      aliases: ['perms'],
+      description: 'Manage permission rules for file access and command execution',
+      category: 'config',
+      subcommands: [
+        {
+          name: 'list',
+          aliases: ['ls'],
+          description: 'List current permission rules',
+          category: 'config',
+          options: [
+            { flags: '--global', description: 'Show only global permissions' },
+            { flags: '--project', description: 'Show only project permissions' },
+            { flags: '--json', description: 'Output as JSON' }
+          ],
+          examples: [
+            { command: 'monkey config permissions list', description: 'Show merged permission rules' }
+          ]
+        },
+        {
+          name: 'allow',
+          description: 'Add a pattern to the allow list',
+          category: 'config',
+          arguments: [
+            { name: 'category', description: 'fileRead, fileWrite, or shellExecute', required: true },
+            { name: 'pattern', description: 'Glob pattern to allow', required: true }
+          ],
+          options: [
+            { flags: '--global', description: 'Add to global permissions' },
+            { flags: '--project', description: 'Add to project permissions' }
+          ],
+          examples: [
+            { command: 'monkey config permissions allow fileRead "src/**/*.ts"', description: 'Allow reading TypeScript files' }
+          ]
+        },
+        {
+          name: 'deny',
+          description: 'Add a pattern to the deny list',
+          category: 'config',
+          arguments: [
+            { name: 'category', description: 'fileRead, fileWrite, or shellExecute', required: true },
+            { name: 'pattern', description: 'Glob pattern to deny', required: true }
+          ],
+          options: [
+            { flags: '--global', description: 'Add to global permissions' },
+            { flags: '--project', description: 'Add to project permissions' }
+          ],
+          examples: [
+            { command: 'monkey config permissions deny fileRead "**/.env*"', description: 'Deny reading .env files' }
+          ]
+        },
+        {
+          name: 'test',
+          description: 'Test if a file or command is allowed',
+          category: 'config',
+          arguments: [
+            { name: 'type', description: 'read, write, or command', required: true },
+            { name: 'value', description: 'File path or command to test', required: true }
+          ],
+          examples: [
+            { command: 'monkey config permissions test read ".env"', description: 'Test if .env can be read' }
+          ]
+        },
+        {
+          name: 'reset',
+          description: 'Reset permissions to defaults',
+          category: 'config',
+          options: [
+            { flags: '--global', description: 'Reset global permissions' },
+            { flags: '--project', description: 'Reset project permissions' },
+            { flags: '--force', description: 'Skip confirmation' }
+          ]
+        }
       ]
     }
   ]
