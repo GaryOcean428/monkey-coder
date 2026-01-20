@@ -10,8 +10,8 @@ import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import fastGlob from 'fast-glob';
-import { getCheckpointManager } from '../checkpoint-manager.js';
-import { getSandboxExecutor } from '../sandbox/index.js';
+import { getCheckpointManager } from '../checkpoint-manager';
+import { getSandboxExecutor } from '../sandbox/index';
 
 // Types
 export interface ToolResult {
