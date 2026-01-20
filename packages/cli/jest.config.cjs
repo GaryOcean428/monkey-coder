@@ -19,7 +19,8 @@ module.exports = {
     'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer)/)'
   ],
   moduleNameMapper: {
-    '^chalk$': '<rootDir>/__mocks__/chalk.js'
+    '^chalk$': '<rootDir>/__mocks__/chalk.js',
+    '^@inquirer/prompts$': '<rootDir>/__mocks__/@inquirer/prompts.js'
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverageFrom: [
