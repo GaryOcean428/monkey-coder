@@ -16,6 +16,7 @@ export function createAgentCommand(config: ConfigManager): Command {
     .option('-l, --local', 'Local-only mode (no backend API)', false)
     .option('--no-approval', 'Skip approval prompts (dangerous)')
     .option('-c, --continue', 'Continue previous session', false)
+    .option('-s, --session <id>', 'Resume specific session by ID')
     .option('-m, --model <model>', 'AI model to use', 'claude-sonnet-4')
     .option('--base-url <url>', 'Backend API base URL')
     .option('--api-key <key>', 'API key for authentication')
@@ -38,6 +39,7 @@ export function createAgentCommand(config: ConfigManager): Command {
           localOnly: options.local,
           requireApproval: options.approval !== false,
           continueSession: options.continue,
+          sessionId: options.session,
           model: options.model,
           baseUrl,
           apiKey,

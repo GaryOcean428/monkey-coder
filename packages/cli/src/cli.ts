@@ -605,6 +605,7 @@ program
   .option('--stream', 'Enable streaming responses')
   .option('--continue', 'Continue last session')
   .option('--resume <id>', 'Resume specific session by ID')
+  .option('-s, --session <id>', 'Resume specific session by ID (alias for --resume)')
   .option('--new-session', 'Force new session even if one exists')
   .action(async (options: CommandOptions) => {
     try {
@@ -622,12 +623,13 @@ program
         });
         sessionId = session.id;
         console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
-      } else if (options.resume) {
+      } else if (options.resume || options.session) {
         // Resume specific session
+        const resumeId = options.resume || options.session;
         const sessions = manager.listSessions({ limit: 100 });
-        const session = sessions.find(s => s.id.startsWith(options.resume as string));
+        const session = sessions.find(s => s.id.startsWith(resumeId as string));
         if (!session) {
-          console.error(chalk.red(`Session not found: ${options.resume}`));
+          console.error(chalk.red(`Session not found: ${resumeId}`));
           console.log(chalk.gray('Run "monkey session list" to see available sessions'));
           process.exit(1);
         }

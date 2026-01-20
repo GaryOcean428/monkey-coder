@@ -22,8 +22,10 @@ jest.mock('../src/session-manager', () => ({
   getSessionManager: jest.fn(() => ({
     createSession: jest.fn(),
     getSession: jest.fn(),
+    getOrCreateSession: jest.fn(() => ({ id: 'test-id', name: 'Test Session' })),
     updateSession: jest.fn(),
     listSessions: jest.fn(),
+    addMessage: jest.fn(),
   })),
   Session: jest.fn(),
 }));
@@ -31,6 +33,7 @@ jest.mock('../src/session-manager', () => ({
 // Mock checkpoint-manager
 jest.mock('../src/checkpoint-manager', () => ({
   getCheckpointManager: jest.fn(() => ({
+    createCheckpoint: jest.fn(),
     saveCheckpoint: jest.fn(),
     loadCheckpoint: jest.fn(),
     listCheckpoints: jest.fn(),

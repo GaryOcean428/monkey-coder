@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
+import * as fs from 'fs';
 import { getSessionManager, Session } from '../session-manager.js';
 import { formatError } from '../utils.js';
 
@@ -285,6 +286,85 @@ Examples:
         console.log(chalk.green(`✓ Deleted session: ${formatSessionId(targetSession.id)}`));
       } catch (error: any) {
         console.error(formatError(error.message || 'Failed to delete session'));
+        process.exit(1);
+      }
+    });
+
+  // Export session
+  session
+    .command('export <id>')
+    .description('Export session to JSON or Markdown file')
+    .option('-f, --format <format>', 'Output format (json or markdown)', 'json')
+    .option('-o, --output <file>', 'Output file path')
+    .addHelpText('after', `
+Examples:
+  $ monkey session export abc123
+    Export session to JSON file (session-abc123.json)
+
+  $ monkey session export abc123 --format markdown
+    Export session to Markdown file (session-abc123.md)
+
+  $ monkey session export abc123 --output my-session.json
+    Export session to specific file
+`)
+    .action(async (id, options) => {
+      try {
+        const manager = getSessionManager();
+        
+        // Find session by partial ID
+        const sessions = manager.listSessions({ limit: 100 });
+        const match = sessions.find(s => s.id.startsWith(id));
+        
+        if (!match) {
+          console.error(chalk.red(`Session not found: ${id}`));
+          console.log(chalk.gray('\nRun "monkey session list" to see available sessions'));
+          process.exit(1);
+        }
+
+        const context = manager.getSessionContext(match.id);
+        if (!context) {
+          console.error(chalk.red('Failed to load session context'));
+          process.exit(1);
+        }
+
+        let output: string;
+        let ext: string;
+
+        if (options.format === 'markdown') {
+          ext = 'md';
+          output = `# Session: ${context.session.name}\n\n`;
+          output += `- ID: ${context.session.id}\n`;
+          output += `- Created: ${new Date(context.session.createdAt * 1000).toISOString()}\n`;
+          output += `- Updated: ${new Date(context.session.updatedAt * 1000).toISOString()}\n`;
+          output += `- Working Directory: ${context.session.workingDirectory}\n`;
+          if (context.session.gitBranch) {
+            output += `- Git Branch: ${context.session.gitBranch}\n`;
+          }
+          output += `- Total Tokens: ${context.totalTokens}\n`;
+          output += `\n## Messages (${context.messages.length})\n\n`;
+          
+          for (const msg of context.messages) {
+            output += `### ${msg.role.charAt(0).toUpperCase() + msg.role.slice(1)}\n\n`;
+            output += `*Tokens: ${msg.tokenCount}, Time: ${new Date(msg.createdAt * 1000).toISOString()}*\n\n`;
+            output += `${msg.content}\n\n`;
+            if (msg.toolCallId) {
+              output += `*Tool Call ID: ${msg.toolCallId}*\n\n`;
+            }
+            output += '---\n\n';
+          }
+        } else {
+          ext = 'json';
+          output = JSON.stringify(context, null, 2);
+        }
+
+        const outFile = options.output || `session-${formatSessionId(match.id)}.${ext}`;
+        fs.writeFileSync(outFile, output);
+        console.log(chalk.green(`✓ Exported to: ${outFile}`));
+        console.log(chalk.gray(`  Format: ${options.format}`));
+        console.log(chalk.gray(`  Messages: ${context.messages.length}`));
+        console.log(chalk.gray(`  Total Tokens: ${context.totalTokens}`));
+      } catch (error: any) {
+        console.error(formatError(error.message || 'Failed to export session'));
         process.exit(1);
       }
     });
