@@ -31,6 +31,7 @@ export interface AgentOptions {
   baseUrl?: string;
   apiKey?: string;
   maxIterations?: number;
+  sandboxMode?: 'none' | 'spawn' | 'docker';
 }
 
 interface AIResponse {
@@ -59,6 +60,7 @@ export class AgentRunner {
       baseUrl: process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
       apiKey: process.env.MONKEY_CODER_API_KEY || '',
       maxIterations: 20,
+      sandboxMode: 'spawn',
       ...options,
     };
 
@@ -82,6 +84,7 @@ export class AgentRunner {
 
       console.log(chalk.green('🐒 Monkey Coder Agent'));
       console.log(chalk.gray(`Session: ${session.id.slice(0, 8)}`));
+      console.log(chalk.gray(`Sandbox: ${this.options.sandboxMode}`));
       console.log(chalk.gray(`Task: ${task}`));
       console.log('');
 
@@ -287,8 +290,14 @@ Think step by step and use tools as needed. When the task is complete, provide a
     await this.checkpointMgr.createCheckpoint(`Before ${call.name}`);
 
     try {
+      // Pass sandbox mode to shell_execute tool
+      const toolArgs = call.arguments as any;
+      if (call.name === 'shell_execute' && !toolArgs.sandboxMode) {
+        toolArgs.sandboxMode = this.options.sandboxMode;
+      }
+
       // Execute tool
-      const result = await tool.execute(call.arguments as any);
+      const result = await tool.execute(toolArgs);
 
       if (result.success) {
         console.log(chalk.green(`   ✓ ${result.output.slice(0, 100)}`));
