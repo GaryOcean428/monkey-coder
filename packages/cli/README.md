@@ -8,6 +8,8 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 - 🔍 **Code Analysis**: Analyze code for quality, security, and performance issues  
 - 🏗️  **Architecture Building**: Design and build robust code architectures
 - 🧪 **Test Generation**: Automatically generate comprehensive unit tests
+- 🤖 **Autonomous Agent Mode**: Local-first AI agent with sandboxed execution
+- 🐳 **Docker Sandboxing**: Secure command execution with resource limits
 - 💾 **Checkpoint Management**: Git-based checkpoints for safe undo/restore of file operations
 - 📊 **Streaming Output**: Real-time progress updates with Server-Sent Events
 - ⚙️  **Configuration Management**: Persistent settings and preferences
@@ -140,6 +142,46 @@ monkey-coder test app.js --persona tester --stream
 - `--model <model>` - AI model to use
 - `--provider <provider>` - AI provider to use
 - `--stream` - Enable streaming output
+
+### `agent`
+Start local AI agent for autonomous coding tasks with sandboxed execution.
+
+```bash
+monkey agent [options]
+
+# Examples:
+# Run with default spawn sandboxing (safe)
+monkey agent --task "Implement user authentication"
+
+# Run with Docker sandboxing (maximum security)
+monkey agent --docker --task "Run untrusted code safely"
+
+# Explicit sandbox mode
+monkey agent --sandbox docker --task "Build new feature"
+monkey agent --sandbox spawn --task "Refactor code" --max-iterations 10
+
+# Development mode (no sandboxing - unsafe)
+monkey agent --sandbox none --task "Local test"
+```
+
+**Options:**
+- `-t, --task <description>` - Task to complete
+- `-l, --local` - Local-only mode (no backend API)
+- `--no-approval` - Skip approval prompts (dangerous)
+- `-c, --continue` - Continue previous session
+- `-m, --model <model>` - AI model to use (default: claude-sonnet-4)
+- `--base-url <url>` - Backend API base URL
+- `--api-key <key>` - API key for authentication
+- `--max-iterations <n>` - Maximum agent iterations (default: 20)
+- `--sandbox <mode>` - Sandbox mode (none|spawn|docker) (default: spawn)
+- `--docker` - Use Docker sandboxing (shorthand for --sandbox docker)
+
+**Sandbox Modes:**
+- `spawn` (default): Safe command execution with array args, prevents shell injection
+- `docker`: Full Docker isolation with resource limits, network isolation, and security hardening
+- `none`: No sandboxing (development only, unsafe for untrusted input)
+
+For detailed documentation, see [SANDBOX_EXECUTION.md](./SANDBOX_EXECUTION.md).
 
 ### `config`
 Manage CLI configuration.
