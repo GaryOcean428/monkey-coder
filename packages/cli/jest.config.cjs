@@ -16,7 +16,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles)/)'
+    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer)/)'
   ],
   moduleNameMapper: {
     '^chalk$': '<rootDir>/__mocks__/chalk.js'

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
+    "@inquirer/prompts": "^8.2.0",
     "@modelcontextprotocol/sdk": "^1.24.0",
     "@sentry/node": "^9.42.0",
     "axios": "^1.11.0",
