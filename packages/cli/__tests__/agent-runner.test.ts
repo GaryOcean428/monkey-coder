@@ -42,7 +42,45 @@ jest.mock('../src/checkpoint-manager', () => ({
 
 // Mock tools
 jest.mock('../src/tools/index', () => ({
-  TOOL_REGISTRY: new Map(),
+  TOOL_REGISTRY: {
+    file_read: {
+      name: 'file_read',
+      description: 'Read the contents of a file',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Path to the file to read' },
+        },
+        required: ['path'],
+      },
+      execute: jest.fn(),
+    },
+    file_write: {
+      name: 'file_write',
+      description: 'Write content to a file',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Path to the file to write' },
+          content: { type: 'string', description: 'Content to write' },
+        },
+        required: ['path', 'content'],
+      },
+      execute: jest.fn(),
+    },
+    shell_execute: {
+      name: 'shell_execute',
+      description: 'Execute a shell command',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          command: { type: 'string', description: 'Command to execute' },
+        },
+        required: ['command'],
+      },
+      execute: jest.fn(),
+    },
+  },
   ToolResult: jest.fn(),
 }));
 

@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import ora, { Ora } from 'ora';
 import { confirm } from '@inquirer/prompts';
 
-import { getSessionManager, Session } from './session-manager.js';
+import { getSessionManager } from './session-manager.js';
 import { getCheckpointManager } from './checkpoint-manager.js';
 import { TOOL_REGISTRY, ToolResult } from './tools/index.js';
 import { MonkeyCoderAPIClient } from './api-client.js';
