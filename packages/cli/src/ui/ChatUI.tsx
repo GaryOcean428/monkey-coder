@@ -2,10 +2,10 @@
  * ChatUI - Main chat interface with streaming support
  * Implementation per issue requirements
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { render, Box, Text, useInput, useApp } from 'ink';
+
 import { StreamingText } from './components/StreamingText.js';
-import { CodeBlock } from './components/CodeBlock.js';
 import { isInteractiveTerminal } from './terminal-detection.js';
 
 export interface Message {

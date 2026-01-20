@@ -3,6 +3,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { render, Box, Text, useInput, useApp } from 'ink';
+
 import { MessageComponent } from './components/MessageComponent.js';
 import { ToolApproval } from './components/ToolApproval.js';
 import { TaskList } from './components/TaskList.js';
@@ -49,7 +50,6 @@ export const App: React.FC<AppProps> = ({
     tasks,
     currentTool,
     pendingToolCall,
-    executeTool,
     approveTool,
     rejectTool,
     isExecuting,
@@ -107,7 +107,6 @@ export const App: React.FC<AppProps> = ({
         // Check if streaming is supported
         if (onMessageStream) {
           // Add a streaming assistant message placeholder
-          const streamingMsgId = `msg-${Date.now()}`;
           addMessage('assistant', '', false, undefined);
           
           // Update the last message with streaming chunks
