@@ -21,15 +21,57 @@ export interface PermissionRules {
 const DEFAULT_PERMISSIONS: PermissionRules = {
   fileRead: {
     allow: ['**/*'],
-    deny: ['**/.env*', '**/secrets*', '**/*.pem', '**/*.key', '**/.ssh/**'],
+    deny: [
+      '**/.env*', 
+      '**/secrets*', 
+      '**/*.pem', 
+      '**/*.key', 
+      '**/.ssh/**',
+      '**/*.p12',
+      '**/.aws/**',
+      '**/.gcp/**',
+      '**/id_*',
+      '**/.gnupg/**'
+    ],
   },
   fileWrite: {
     allow: ['**/*'],
-    deny: ['**/.git/**', '**/node_modules/**', '**/.env*', '**/*.pem', '**/*.key'],
+    deny: [
+      '**/.git/**', 
+      '**/node_modules/**', 
+      '**/.env*', 
+      '**/*.pem', 
+      '**/*.key',
+      '**/*.p12',
+      '**/.aws/**',
+      '**/.gcp/**'
+    ],
   },
   shellExecute: {
-    allow: ['npm *', 'yarn *', 'pnpm *', 'git *', 'node *', 'python *', 'pytest *', 'ls *', 'cat *', 'grep *', 'find *'],
-    deny: ['rm -rf /*', 'sudo *', 'curl * | sh', 'wget * | sh', 'dd *', 'mkfs *'],
+    allow: [
+      'npm *', 
+      'yarn *', 
+      'pnpm *', 
+      'git *', 
+      'node *', 
+      'python *', 
+      'pytest *', 
+      'ls *', 
+      'cat *', 
+      'grep *', 
+      'find *'
+    ],
+    deny: [
+      'rm -rf /*', 
+      'sudo *', 
+      'curl * | sh', 
+      'wget * | sh', 
+      'dd *', 
+      'mkfs *',
+      'chmod +x * && *',
+      '* > /dev/sd*',
+      'eval *'
+    ],
   },
   requireApproval: ['shell_execute', 'file_delete', 'file_write'],
 };
