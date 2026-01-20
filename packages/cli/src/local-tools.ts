@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { CheckpointManager, getCheckpointManager } from './checkpoint-manager.js';
 import { getSandbox, DockerSandbox } from './sandbox/docker-executor.js';
 import { loadConfig } from './config/loader.js';
+import { PermissionManager } from './permissions.js';
 
 // Types
 export interface ToolResult {
@@ -286,6 +287,7 @@ function validateCommand(
 export class LocalToolsExecutor {
   private basePath: string;
   private permissions: PermissionConfig;
+  private permissionManager: PermissionManager;
   private checkpointManager: CheckpointManager | null = null;
   private approvalCallback?: (message: string) => Promise<boolean>;
   private sandbox: DockerSandbox | null = null;
@@ -297,6 +299,7 @@ export class LocalToolsExecutor {
   } = {}) {
     this.basePath = options.basePath || process.cwd();
     this.permissions = { ...DEFAULT_PERMISSIONS, ...options.permissions };
+    this.permissionManager = new PermissionManager(this.basePath);
     this.approvalCallback = options.approvalCallback;
   }
 
@@ -349,9 +352,10 @@ export class LocalToolsExecutor {
    * Read a file
    */
   async readFile(filepath: string): Promise<FileReadResult> {
-    const validation = validatePath(filepath, this.basePath, this.permissions);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
+    // Use PermissionManager for validation
+    const permCheck = this.permissionManager.canReadFile(filepath);
+    if (!permCheck.allowed) {
+      return { success: false, error: permCheck.reason };
     }
 
     const absolutePath = path.resolve(this.basePath, filepath);
@@ -383,19 +387,22 @@ export class LocalToolsExecutor {
    * Write to a file
    */
   async writeFile(filepath: string, content: string): Promise<FileWriteResult> {
-    const validation = validatePath(filepath, this.basePath, this.permissions);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
+    // Use PermissionManager for validation
+    const permCheck = this.permissionManager.canWriteFile(filepath);
+    if (!permCheck.allowed) {
+      return { success: false, error: permCheck.reason };
     }
 
     const absolutePath = path.resolve(this.basePath, filepath);
 
-    // Check approval for write operations
-    const approved = await this.requestApproval(
-      `Write ${content.length} bytes to ${filepath}?`
-    );
-    if (!approved) {
-      return { success: false, error: 'Operation not approved', requiresApproval: true };
+    // Check approval for write operations if tool requires it
+    if (this.permissionManager.toolRequiresApproval('file_write')) {
+      const approved = await this.requestApproval(
+        `Write ${content.length} bytes to ${filepath}?`
+      );
+      if (!approved) {
+        return { success: false, error: 'Operation not approved', requiresApproval: true };
+      }
     }
 
     try {
@@ -433,19 +440,23 @@ export class LocalToolsExecutor {
 
   /**
    * Delete a file
+   * Note: Uses write permission check as deletion is a form of file modification
    */
   async deleteFile(filepath: string): Promise<ToolResult> {
-    const validation = validatePath(filepath, this.basePath, this.permissions);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
+    // Use PermissionManager for validation - writeFile validation for deletion
+    const permCheck = this.permissionManager.canWriteFile(filepath);
+    if (!permCheck.allowed) {
+      return { success: false, error: permCheck.reason };
     }
 
     const absolutePath = path.resolve(this.basePath, filepath);
 
-    // Check approval
-    const approved = await this.requestApproval(`Delete file ${filepath}?`);
-    if (!approved) {
-      return { success: false, error: 'Operation not approved', requiresApproval: true };
+    // Check approval if tool requires it
+    if (this.permissionManager.toolRequiresApproval('file_delete')) {
+      const approved = await this.requestApproval(`Delete file ${filepath}?`);
+      if (!approved) {
+        return { success: false, error: 'Operation not approved', requiresApproval: true };
+      }
     }
 
     try {
@@ -494,12 +505,14 @@ export class LocalToolsExecutor {
   async executeCommand(command: string, args: string[] = []): Promise<ShellResult> {
     const fullCommand = args.length > 0 ? `${command} ${args.join(' ')}` : command;
     
-    const validation = validateCommand(fullCommand, this.permissions);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
+    // Use PermissionManager for validation
+    const permCheck = this.permissionManager.canExecuteCommand(fullCommand);
+    if (!permCheck.allowed) {
+      return { success: false, error: permCheck.reason };
     }
 
-    if (validation.requiresApproval) {
+    // Check approval if required
+    if (permCheck.requiresApproval || this.permissionManager.toolRequiresApproval('shell_execute')) {
       const approved = await this.requestApproval(
         `Execute command: ${fullCommand}?`
       );

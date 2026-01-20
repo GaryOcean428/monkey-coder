@@ -5,6 +5,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { Message } from '../types.js';
 import { CodeBlock } from './CodeBlock.js';
+import { StreamingText } from './StreamingText.js';
 
 interface MessageComponentProps {
   message: Message;
@@ -43,6 +44,12 @@ export const MessageComponent: React.FC<MessageComponentProps> = ({ message }) =
       <Box marginLeft={2} flexDirection="column">
         {message.isCode && message.language ? (
           <CodeBlock code={message.content} language={message.language} />
+        ) : message.isStreaming ? (
+          <StreamingText 
+            chunks={[message.content]} 
+            isComplete={false}
+            showCursor={true}
+          />
         ) : (
           <Text>{message.content}</Text>
         )}

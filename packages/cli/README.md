@@ -4,6 +4,7 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 
 ## Features
 
+- 💬 **Interactive Chat**: Rich terminal UI with streaming responses and syntax highlighting
 - 🚀 **Code Implementation**: Generate code based on natural language requirements
 - 🔍 **Code Analysis**: Analyze code for quality, security, and performance issues  
 - 🏗️  **Architecture Building**: Design and build robust code architectures
@@ -15,6 +16,7 @@ A powerful command-line interface for the Monkey Coder AI-powered code generatio
 - ⚙️  **Configuration Management**: Persistent settings and preferences
 - 🎭 **Multiple Personas**: Choose from different AI personas (developer, architect, reviewer, tester, etc.)
 - 🔌 **Provider Support**: Support for multiple AI providers (OpenAI, Anthropic, Google, Qwen)
+- ⌨️  **Enhanced UX**: Keyboard shortcuts, diff visualization, and task progress indicators
 
 ## Installation
 
@@ -61,6 +63,41 @@ monkey-coder implement "Create a TypeScript function that validates email addres
 ```bash
 
 ## Commands
+
+### `chat`
+Interactive chat interface with rich terminal UI powered by Ink.
+
+```bash
+monkey chat [options]
+
+# Examples:
+monkey chat                                    # Start interactive chat
+monkey chat --model gpt-4 --provider openai   # Use specific model
+monkey chat --continue                         # Continue previous session
+monkey chat --no-ink                           # Disable rich UI
+```
+
+**Features:**
+- 🎨 Rich terminal UI with syntax highlighting
+- ⚡ Real-time streaming responses
+- ⌨️  Enhanced keyboard shortcuts (ESC to exit, Enter to send)
+- 🔄 Session continuity with --continue flag
+- 📱 Graceful fallback for non-interactive terminals
+
+**Options:**
+- `-p, --persona <persona>` - AI persona to use (default: developer)
+- `--model <model>` - AI model to use
+- `--provider <provider>` - AI provider to use
+- `-t, --temperature <temp>` - Model temperature (0.0-2.0)
+- `--stream` - Enable streaming responses (default: true)
+- `--continue` - Continue previous chat session
+- `--no-ink` - Disable Ink UI (use basic console output)
+
+**Keyboard Shortcuts:**
+- `Enter` - Send message
+- `ESC` - Exit chat
+- `Ctrl+C` - Exit chat
+- `Backspace` - Delete character
 
 ### `implement`
 Generate code implementation based on requirements.
