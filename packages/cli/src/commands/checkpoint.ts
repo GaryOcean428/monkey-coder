@@ -156,7 +156,7 @@ export function registerCheckpointCommands(program: Command): void {
     .command('history')
     .description('Show recent operations')
     .option('-n, --limit <count>', 'Number of operations to show', '20')
-    .action((options) => {
+    .action(async (options) => {
       const mgr = getCheckpointManager();
       const ops = mgr.getRecentOperations(parseInt(options.limit));
 
@@ -171,12 +171,12 @@ export function registerCheckpointCommands(program: Command): void {
       });
 
       ops.forEach((op, i) => {
-        const statusColor = op.status === 'active' ? 'green' : 'gray';
+        const statusColorFn = op.status === 'active' ? chalk.green : chalk.grey;
         table.push([
           (i + 1).toString(),
           op.type,
           (op.file || op.command || '-').slice(0, 38),
-          chalk[statusColor](op.status),
+          statusColorFn(op.status),
           new Date(op.timestamp).toLocaleString(),
         ]);
       });
