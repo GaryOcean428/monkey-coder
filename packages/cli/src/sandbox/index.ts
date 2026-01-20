@@ -40,12 +40,14 @@ const DEFAULT_OPTIONS: SandboxOptions = {
 export class SandboxExecutor {
   private dockerSandbox: DockerSandbox | null = null;
   private options: SandboxOptions;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(options: Partial<SandboxOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     
     if (this.options.mode === 'docker') {
-      this.initializeDocker();
+      // Start initialization asynchronously
+      this.initializationPromise = this.initializeDocker();
     }
   }
 
@@ -79,6 +81,12 @@ export class SandboxExecutor {
    * Execute command with configured sandbox mode
    */
   async execute(command: string, args: string[] = []): Promise<SandboxResult> {
+    // Wait for Docker initialization if it's in progress
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+      this.initializationPromise = null;
+    }
+
     switch (this.options.mode) {
       case 'docker':
         return this.executeDocker(command, args);
@@ -177,9 +185,12 @@ export class SandboxExecutor {
 
   /**
    * Execute command without sandboxing (DANGEROUS - development only)
+   * Note: Still uses spawn for basic command parsing safety
+   * For truly unsafe execution with shell parsing, use child_process.exec
    */
   private executeUnsafe(command: string, args: string[]): Promise<SandboxResult> {
-    // Direct execution without any sandboxing - use spawn for basic safety
+    // Note: We still use spawn here for basic safety (no shell injection)
+    // True 'unsafe' mode would use exec() with shell: true, but that's too dangerous
     return this.executeSpawn(command, args);
   }
 
@@ -192,15 +203,23 @@ export class SandboxExecutor {
   }
 }
 
-// Singleton with default options
+// Singleton for default usage
 let defaultExecutor: SandboxExecutor | null = null;
 
 /**
  * Get or create a sandbox executor with given options
+ * If options are provided, creates a new executor instance
+ * If no options provided, returns/creates the default singleton
  */
 export function getSandboxExecutor(options?: Partial<SandboxOptions>): SandboxExecutor {
-  if (!defaultExecutor || options) {
-    defaultExecutor = new SandboxExecutor(options);
+  if (options) {
+    // Always create new instance when options provided
+    return new SandboxExecutor(options);
+  }
+  
+  // Return or create default singleton
+  if (!defaultExecutor) {
+    defaultExecutor = new SandboxExecutor();
   }
   return defaultExecutor;
 }
