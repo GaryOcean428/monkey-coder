@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import ora, { Ora } from 'ora';
 import { confirm } from '@inquirer/prompts';
 
-import { getSessionManager, Session } from './session-manager.js';
+import { getSessionManager } from './session-manager.js';
 import { getCheckpointManager } from './checkpoint-manager.js';
 import { TOOL_REGISTRY, ToolResult } from './tools/index.js';
 import { MonkeyCoderAPIClient } from './api-client.js';
@@ -27,10 +27,12 @@ export interface AgentOptions {
   localOnly?: boolean;
   requireApproval?: boolean;
   continueSession?: boolean;
+  sessionId?: string;
   model?: string;
   baseUrl?: string;
   apiKey?: string;
   maxIterations?: number;
+  sandboxMode?: 'none' | 'spawn' | 'docker';
 }
 
 interface AIResponse {
@@ -45,7 +47,7 @@ interface AIResponse {
 export class AgentRunner {
   private sessionMgr = getSessionManager();
   private checkpointMgr = getCheckpointManager();
-  private options: Required<AgentOptions>;
+  private options: Omit<Required<AgentOptions>, 'sessionId'> & { sessionId?: string };
   private currentSessionId: string | null = null;
   private apiClient: MonkeyCoderAPIClient;
   private spinner: Ora | null = null;
@@ -55,10 +57,12 @@ export class AgentRunner {
       localOnly: false,
       requireApproval: true,
       continueSession: false,
+      sessionId: undefined,
       model: 'claude-sonnet-4',
       baseUrl: process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
       apiKey: process.env.MONKEY_CODER_API_KEY || '',
       maxIterations: 20,
+      sandboxMode: 'spawn',
       ...options,
     };
 
@@ -76,12 +80,14 @@ export class AgentRunner {
       // Initialize session
       const session = this.sessionMgr.getOrCreateSession({
         continueSession: this.options.continueSession,
+        sessionId: this.options.sessionId,
         name: `Agent Task: ${task.slice(0, 30)}...`,
       });
       this.currentSessionId = session.id;
 
       console.log(chalk.green('🐒 Monkey Coder Agent'));
       console.log(chalk.gray(`Session: ${session.id.slice(0, 8)}`));
+      console.log(chalk.gray(`Sandbox: ${this.options.sandboxMode}`));
       console.log(chalk.gray(`Task: ${task}`));
       console.log('');
 
@@ -287,8 +293,14 @@ Think step by step and use tools as needed. When the task is complete, provide a
     await this.checkpointMgr.createCheckpoint(`Before ${call.name}`);
 
     try {
+      // Pass sandbox mode to shell_execute tool
+      const toolArgs = call.arguments as any;
+      if (call.name === 'shell_execute' && !toolArgs.sandboxMode) {
+        toolArgs.sandboxMode = this.options.sandboxMode;
+      }
+
       // Execute tool
-      const result = await tool.execute(call.arguments as any);
+      const result = await tool.execute(toolArgs);
 
       if (result.success) {
         console.log(chalk.green(`   ✓ ${result.output.slice(0, 100)}`));

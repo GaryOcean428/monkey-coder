@@ -16,10 +16,13 @@ export function createAgentCommand(config: ConfigManager): Command {
     .option('-l, --local', 'Local-only mode (no backend API)', false)
     .option('--no-approval', 'Skip approval prompts (dangerous)')
     .option('-c, --continue', 'Continue previous session', false)
+    .option('-s, --session <id>', 'Resume specific session by ID')
     .option('-m, --model <model>', 'AI model to use', 'claude-sonnet-4')
     .option('--base-url <url>', 'Backend API base URL')
     .option('--api-key <key>', 'API key for authentication')
     .option('--max-iterations <n>', 'Maximum agent iterations', parseInt, 20)
+    .option('--sandbox <mode>', 'Sandbox mode (none|spawn|docker)', 'spawn')
+    .option('--docker', 'Use Docker sandboxing (shorthand for --sandbox docker)')
     .action(async (options) => {
       try {
         // Get configuration
@@ -33,15 +36,20 @@ export function createAgentCommand(config: ConfigManager): Command {
           process.exit(1);
         }
 
+        // Determine sandbox mode
+        const sandboxMode = options.docker ? 'docker' : (options.sandbox || 'spawn');
+
         // Create agent runner
         const agent = new AgentRunner({
           localOnly: options.local,
           requireApproval: options.approval !== false,
           continueSession: options.continue,
+          sessionId: options.session,
           model: options.model,
           baseUrl,
           apiKey,
           maxIterations: options.maxIterations,
+          sandboxMode,
         });
 
         // Run task or start interactive mode
