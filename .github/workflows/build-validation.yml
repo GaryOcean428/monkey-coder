@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
           
       - name: Enable Corepack
-        run: corepack enable
+        run: corepack enable && corepack prepare yarn@4.9.2 --activate
         
       - name: Setup Python
         uses: actions/setup-python@v5

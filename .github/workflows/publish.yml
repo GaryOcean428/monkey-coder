@@ -19,11 +19,11 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Setup Yarn
-        run: corepack enable
+      - name: Enable Corepack
+        run: corepack enable && corepack prepare yarn@4.9.2 --activate
 
       - name: Install dependencies
-        run: yarn install --mode=update-lockfile
+        run: yarn install --immutable
 
       - name: Build packages
         run: yarn build || echo "Build failed but continuing"

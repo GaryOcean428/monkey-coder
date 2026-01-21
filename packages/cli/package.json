@@ -16,9 +16,9 @@
     "lint": "eslint src --ext .ts,.tsx,.js || echo 'No JS files to lint'",
     "lint:fix": "eslint src --ext .ts,.tsx,.js --fix || echo 'No JS files to lint'",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch --passWithNoTests",
-    "test:coverage": "JEST_JUNIT_OUTPUT_DIR=coverage/junit JEST_JUNIT_OUTPUT_NAME=jest-junit.xml jest --coverage --passWithNoTests --reporters=default --reporters=jest-junit",
+    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest --passWithNoTests",
+    "test:watch": "node --experimental-vm-modules ../../node_modules/.bin/jest --watch --passWithNoTests",
+    "test:coverage": "JEST_JUNIT_OUTPUT_DIR=coverage/junit JEST_JUNIT_OUTPUT_NAME=jest-junit.xml node --experimental-vm-modules ../../node_modules/.bin/jest --coverage --passWithNoTests --reporters=default --reporters=jest-junit",
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
