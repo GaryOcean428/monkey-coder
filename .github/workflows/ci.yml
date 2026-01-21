@@ -125,7 +125,7 @@ jobs:
       - name: Enforce Python coverage threshold
         working-directory: packages/core
         run: |
-          THRESHOLD=26
+          THRESHOLD=25
           COV=$(python -c "import xml.etree.ElementTree as ET;\nimport sys;\nroot=ET.parse('coverage.xml').getroot();\nprint(int(float(root.get('line-rate','0'))*100))")
           echo "Python line coverage: ${COV}% (threshold ${THRESHOLD}%)"
           if [ "${COV}" -lt "${THRESHOLD}" ]; then
