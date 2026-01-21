@@ -22,8 +22,10 @@ jest.mock('../src/session-manager', () => ({
   getSessionManager: jest.fn(() => ({
     createSession: jest.fn(),
     getSession: jest.fn(),
+    getOrCreateSession: jest.fn(() => ({ id: 'test-id', name: 'Test Session' })),
     updateSession: jest.fn(),
     listSessions: jest.fn(),
+    addMessage: jest.fn(),
   })),
   Session: jest.fn(),
 }));
@@ -31,6 +33,7 @@ jest.mock('../src/session-manager', () => ({
 // Mock checkpoint-manager
 jest.mock('../src/checkpoint-manager', () => ({
   getCheckpointManager: jest.fn(() => ({
+    createCheckpoint: jest.fn(),
     saveCheckpoint: jest.fn(),
     loadCheckpoint: jest.fn(),
     listCheckpoints: jest.fn(),
@@ -42,20 +45,39 @@ jest.mock('../src/tools/index', () => ({
   TOOL_REGISTRY: {
     file_read: {
       name: 'file_read',
-      description: 'Read a file',
-      inputSchema: { type: 'object', properties: {} },
+      description: 'Read the contents of a file',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Path to the file to read' },
+        },
+        required: ['path'],
+      },
       execute: jest.fn(),
     },
     file_write: {
       name: 'file_write',
-      description: 'Write a file',
-      inputSchema: { type: 'object', properties: {} },
+      description: 'Write content to a file',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Path to the file to write' },
+          content: { type: 'string', description: 'Content to write' },
+        },
+        required: ['path', 'content'],
+      },
       execute: jest.fn(),
     },
     shell_execute: {
       name: 'shell_execute',
       description: 'Execute a shell command',
-      inputSchema: { type: 'object', properties: {} },
+      inputSchema: {
+        type: 'object',
+        properties: {
+          command: { type: 'string', description: 'Command to execute' },
+        },
+        required: ['command'],
+      },
       execute: jest.fn(),
     },
   },

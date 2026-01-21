@@ -9,7 +9,7 @@ import chalk from 'chalk';
 import ora, { Ora } from 'ora';
 import { confirm } from '@inquirer/prompts';
 
-import { getSessionManager, Session } from './session-manager.js';
+import { getSessionManager } from './session-manager.js';
 import { getCheckpointManager } from './checkpoint-manager.js';
 import { TOOL_REGISTRY, ToolResult } from './tools/index.js';
 import { MonkeyCoderAPIClient } from './api-client.js';
@@ -27,6 +27,7 @@ export interface AgentOptions {
   localOnly?: boolean;
   requireApproval?: boolean;
   continueSession?: boolean;
+  sessionId?: string;
   model?: string;
   baseUrl?: string;
   apiKey?: string;
@@ -46,7 +47,7 @@ interface AIResponse {
 export class AgentRunner {
   private sessionMgr = getSessionManager();
   private checkpointMgr = getCheckpointManager();
-  private options: Required<AgentOptions>;
+  private options: Omit<Required<AgentOptions>, 'sessionId'> & { sessionId?: string };
   private currentSessionId: string | null = null;
   private apiClient: MonkeyCoderAPIClient;
   private spinner: Ora | null = null;
@@ -56,6 +57,7 @@ export class AgentRunner {
       localOnly: false,
       requireApproval: true,
       continueSession: false,
+      sessionId: undefined,
       model: 'claude-sonnet-4',
       baseUrl: process.env.MONKEY_CODER_BASE_URL || 'http://localhost:8000',
       apiKey: process.env.MONKEY_CODER_API_KEY || '',
@@ -78,6 +80,7 @@ export class AgentRunner {
       // Initialize session
       const session = this.sessionMgr.getOrCreateSession({
         continueSession: this.options.continueSession,
+        sessionId: this.options.sessionId,
         name: `Agent Task: ${task.slice(0, 30)}...`,
       });
       this.currentSessionId = session.id;

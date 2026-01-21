@@ -595,9 +595,166 @@ process.on('unhandledRejection', reason => {
   process.exit(1);
 });
 
-// Command: chat - REPLACED with Ink-based version below (see line ~785)
-// The original basic readline-based chat has been replaced with a rich
-// terminal UI using Ink for better user experience
+// Command: chat
+program
+  .command('chat')
+  .description('Start an interactive chat with the AI')
+  .option('-p, --persona <persona>', 'AI persona to use', 'developer')
+  .option('--model <model>', 'AI model to use')
+  .option('--provider <provider>', 'AI provider to use')
+  .option('-t, --temperature <temp>', 'Model temperature (0.0-2.0)', parseFloat)
+  .option('--stream', 'Enable streaming responses')
+  .option('--continue', 'Continue last session')
+  .option('--resume <id>', 'Resume specific session by ID')
+  .option('-s, --session <id>', 'Resume specific session by ID (alias for --resume)')
+  .option('--new-session', 'Force new session even if one exists')
+  .action(async (options: CommandOptions) => {
+    try {
+      const client = createAPIClient(options);
+      
+      // Session management
+      const manager = getSessionManager();
+      let sessionId: string;
+      
+      if (options.newSession) {
+        // Force new session
+        const session = manager.createSession({
+          name: generateSessionName(),
+          workingDirectory: process.cwd(),
+        });
+        sessionId = session.id;
+        console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
+      } else if (options.resume || options.session) {
+        // Resume specific session
+        const resumeId = options.resume || options.session;
+        const sessions = manager.listSessions({ limit: 100 });
+        const session = sessions.find(s => s.id.startsWith(resumeId as string));
+        if (!session) {
+          console.error(chalk.red(`Session not found: ${resumeId}`));
+          console.log(chalk.gray('Run "monkey session list" to see available sessions'));
+          process.exit(1);
+        }
+        manager.setCurrentSessionId(session.id);
+        sessionId = session.id;
+        console.log(chalk.gray(`Resumed session: ${formatSessionId(sessionId)} (${session.name})`));
+      } else if (options.continue) {
+        // Continue last session
+        const currentId = manager.getCurrentSessionId();
+        if (currentId) {
+          const session = manager.getSession(currentId);
+          if (session) {
+            sessionId = session.id;
+            console.log(chalk.gray(`Continuing session: ${formatSessionId(sessionId)} (${session.name})`));
+          } else {
+            // Current session not found, create new
+            const newSession = manager.createSession({
+              name: generateSessionName(),
+              workingDirectory: process.cwd(),
+            });
+            sessionId = newSession.id;
+            console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
+          }
+        } else {
+          // No current session, create new
+          const newSession = manager.createSession({
+            name: generateSessionName(),
+            workingDirectory: process.cwd(),
+          });
+          sessionId = newSession.id;
+          console.log(chalk.gray(`Created new session: ${formatSessionId(sessionId)}`));
+        }
+      } else {
+        // Default: use UUID for backward compatibility
+        sessionId = generateUUID();
+      }
+
+      console.log(chalk.green('🐒 Monkey Coder Chat'));
+      console.log(
+        chalk.gray(
+          '💬 Chat with AI about your codebase. Type your message and press Enter.'
+        )
+      );
+      console.log(chalk.gray('Commands: "exit", "quit" to leave, Ctrl+C anytime'));
+      console.log(chalk.gray(`🎭 Persona: ${options.persona || 'developer'}`));
+      console.log(chalk.gray('🔍 I can analyze files, suggest improvements, and help with coding tasks'));
+      console.log('');
+
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: chalk.blue('You: '),
+      });
+
+      rl.prompt();
+
+      rl.on('line', async line => {
+        const input = line.trim();
+
+        if (!input) {
+          rl.prompt();
+          return;
+        }
+
+        if (input.toLowerCase() === 'exit' || input.toLowerCase() === 'quit') {
+          rl.close();
+          return;
+        }
+
+        try {
+          const spinner = ora('AI is thinking...').start();
+
+          const request = await buildExecuteRequest('custom', input, [], {
+            ...options,
+            persona: options.persona || 'developer',
+            // Let the advanced router analyze and route the request
+          });
+
+          // Use the same session ID for conversation continuity
+          request.context.session_id = sessionId;
+
+          let response;
+          if (options.stream) {
+            response = await client.executeStream(
+              request,
+              (event: StreamEvent) => {
+                if (event.type === 'progress' && event.data) {
+                  spinner.text = `AI is responding: ${event.data.slice(0, 50)}...`;
+                }
+              }
+            );
+          } else {
+            response = await client.execute(request);
+          }
+
+          spinner.stop();
+          console.log('');
+          console.log(chalk.cyan('🤖 Monkey Coder:'));
+          console.log(response.result?.result || 'No response received');
+          console.log('');
+        } catch (error: any) {
+          console.error(chalk.red('Error:'), error.message);
+        }
+
+        console.log('');
+        rl.prompt();
+      }).on('close', () => {
+        console.log('');
+        console.log(chalk.green('Thanks for using Monkey Coder! 🐒'));
+        console.log(chalk.gray('Run "monkey" anytime to start a new chat session.'));
+        process.exit(0);
+      });
+
+      // Handle Ctrl+C gracefully
+      rl.on('SIGINT', () => {
+        console.log('');
+        console.log(chalk.yellow('Chat interrupted. Thanks for using Monkey Coder! 🐒'));
+        process.exit(0);
+      });
+    } catch (error: any) {
+      console.error(formatError(error));
+      process.exit(1);
+    }
+  });
 
 // Add authentication commands
 program.addCommand(createAuthCommand(config));

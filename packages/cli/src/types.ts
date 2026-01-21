@@ -109,6 +109,7 @@ export interface CommandOptions {
   // Session management options
   continue?: boolean;
   resume?: string;
+  session?: string;
   newSession?: boolean;
 }
 
