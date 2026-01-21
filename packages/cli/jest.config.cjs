@@ -3,6 +3,12 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
+  testRunner: 'jest-circus/runner',
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
@@ -16,7 +22,7 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer)/)'
+    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer|listr2)/)'
   ],
   moduleNameMapper: {
     '^chalk$': '<rootDir>/__mocks__/chalk.js',
