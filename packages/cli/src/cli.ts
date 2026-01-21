@@ -42,7 +42,7 @@ import { createSessionCommand } from './commands/session.js';
 import { createChatCommand } from './commands/chat.js';
 import { createInkChatCommand } from './commands/chat-ink.js';
 import { createInkAgentCommand } from './commands/agent-ink.js';
-import { createCheckpointCommand } from './commands/checkpoint.js';
+import { registerCheckpointCommands } from './commands/checkpoint.js';
 import { createAgentCommand } from './commands/agent.js';
 import { printSplashSync } from './splash.js';
 import { getSessionManager } from './session-manager.js';
@@ -781,11 +781,10 @@ program.addCommand(createWorkflowCommand(config));
 
 // Add session management command
 program.addCommand(createSessionCommand());
-// Add checkpoint management command
-program.addCommand(createCheckpointCommand());
-// Add main chat command (uses Ink UI by default, replaces chat-ink)
-program.addCommand(createChatCommand(config));
-// Add agent commands
+// Add checkpoint management command (and top-level undo/redo/history)
+registerCheckpointCommands(program);
+// Add Ink UI commands
+program.addCommand(createInkChatCommand(config));
 program.addCommand(createInkAgentCommand(config));
 program.addCommand(createAgentCommand(config));
 

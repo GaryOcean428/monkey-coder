@@ -7,210 +7,191 @@ import { Command } from 'commander';
 import { getCheckpointManager } from '../checkpoint-manager.js';
 import chalk from 'chalk';
 import Table from 'cli-table3';
-import inquirer from 'inquirer';
+import { confirm } from '@inquirer/prompts';
 
 /**
- * Create the checkpoint command group
+ * Register all checkpoint-related commands (including top-level commands)
  */
-export function createCheckpointCommand(): Command {
+export function registerCheckpointCommands(program: Command): void {
   const checkpoint = new Command('checkpoint')
     .alias('cp')
-    .description('Manage checkpoints for undo/restore');
+    .description('Manage checkpoints');
 
-  // List checkpoints
-  checkpoint
-    .command('list')
-    .description('List all checkpoints')
-    .option('-n, --limit <n>', 'Number to show', '20')
-    .action(async (options) => {
-      try {
-        const manager = getCheckpointManager();
-        const allCheckpoints = await manager.listCheckpoints();
-        const checkpoints = allCheckpoints.slice(0, parseInt(options.limit));
-        
-        if (checkpoints.length === 0) {
-          console.log(chalk.yellow('No checkpoints found.'));
-          return;
-        }
-
-        const table = new Table({
-          head: ['ID', 'Message', 'Time', 'Files'],
-          style: { head: ['cyan'] }
-        });
-
-        for (const cp of checkpoints) {
-          table.push([
-            cp.id.slice(0, 8),
-            cp.message.slice(0, 40),
-            new Date(cp.timestamp).toLocaleString(),
-            cp.files.length.toString()
-          ]);
-        }
-
-        console.log(table.toString());
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
-      }
-    });
-
-  // Create checkpoint
+  // checkpoint create [message]
   checkpoint
     .command('create [message]')
-    .description('Create a checkpoint')
+    .description('Create a new checkpoint')
     .action(async (message) => {
+      const mgr = getCheckpointManager();
+      const msg = message || `Manual checkpoint at ${new Date().toISOString()}`;
+      
       try {
-        const manager = getCheckpointManager();
-        const cp = await manager.createCheckpoint(message || 'Manual checkpoint');
-        
+        const cp = await mgr.createCheckpoint(msg);
         console.log(chalk.green(`✓ Created checkpoint: ${cp.id.slice(0, 8)}`));
+        console.log(`  SHA: ${cp.sha.slice(0, 8)}`);
         console.log(`  Message: ${cp.message}`);
-        console.log(`  Files: ${cp.files.length}`);
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(chalk.red(`Failed to create checkpoint: ${errorMsg}`));
         process.exit(1);
       }
     });
 
-  // Restore to checkpoint
+  // checkpoint list
+  checkpoint
+    .command('list')
+    .description('List recent checkpoints')
+    .option('-n, --limit <count>', 'Number of checkpoints to show', '10')
+    .action(async (options) => {
+      const mgr = getCheckpointManager();
+      const checkpoints = await mgr.listCheckpoints();
+      const limited = checkpoints.slice(0, parseInt(options.limit));
+
+      if (limited.length === 0) {
+        console.log('No checkpoints found.');
+        return;
+      }
+
+      const table = new Table({
+        head: ['ID', 'SHA', 'Message', 'Created', 'Ops'],
+        colWidths: [10, 10, 35, 22, 6],
+      });
+
+      for (const cp of limited) {
+        table.push([
+          cp.id.slice(0, 8),
+          cp.sha.slice(0, 8),
+          cp.message.slice(0, 33),
+          new Date(cp.timestamp).toLocaleString(),
+          cp.operationCount.toString(),
+        ]);
+      }
+
+      console.log(table.toString());
+    });
+
+  // checkpoint restore <id>
   checkpoint
     .command('restore <id>')
-    .description('Restore to a specific checkpoint')
+    .description('Restore to a checkpoint')
     .option('-f, --force', 'Skip confirmation')
     .action(async (id, options) => {
-      try {
-        const manager = getCheckpointManager();
-        
-        // Find by partial ID
-        const checkpoints = await manager.listCheckpoints();
-        const cp = checkpoints.find(c => c.id.startsWith(id));
-        
-        if (!cp) {
-          console.log(chalk.red('Checkpoint not found.'));
-          process.exit(1);
-        }
+      const mgr = getCheckpointManager();
+      const checkpoints = await mgr.listCheckpoints();
+      const match = checkpoints.find(c => c.id.startsWith(id) || c.sha.startsWith(id));
 
-        if (!options.force) {
-          const { confirm } = await inquirer.prompt([{
-            type: 'confirm',
-            name: 'confirm',
-            message: `Restore to checkpoint "${cp.message}"? This will discard current changes.`,
-            default: false
-          }]);
-          
-          if (!confirm) {
-            console.log('Cancelled.');
-            return;
-          }
-        }
-
-        await manager.restoreCheckpoint(cp.id);
-        console.log(chalk.green(`✓ Restored to checkpoint: ${cp.id.slice(0, 8)}`));
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
+      if (!match) {
+        console.error(chalk.red(`Checkpoint not found: ${id}`));
         process.exit(1);
       }
+
+      if (!options.force) {
+        const confirmed = await confirm({
+          message: `Restore to checkpoint "${match.message}"? This will discard uncommitted changes.`,
+          default: false,
+        });
+        if (!confirmed) {
+          console.log('Cancelled.');
+          return;
+        }
+      }
+
+      await mgr.restoreCheckpoint(match.id);
+      console.log(chalk.green(`✓ Restored to checkpoint: ${match.id.slice(0, 8)}`));
     });
 
-  // Undo last operation
+  // checkpoint cleanup
   checkpoint
+    .command('cleanup')
+    .description('Remove old checkpoints')
+    .action(async () => {
+      const mgr = getCheckpointManager();
+      const deleted = await mgr.cleanupOldCheckpoints();
+      console.log(chalk.green(`Cleaned up ${deleted} old checkpoints`));
+    });
+
+  // Add checkpoint command to program
+  program.addCommand(checkpoint);
+
+  // Top-level undo command
+  program
     .command('undo')
     .description('Undo the last file operation')
     .action(async () => {
-      try {
-        const manager = getCheckpointManager();
-        const undone = await manager.undoLastOperation();
-        
-        if (!undone) {
-          console.log(chalk.yellow('Nothing to undo.'));
-          return;
-        }
+      const mgr = getCheckpointManager();
+      const op = await mgr.undoLast();
 
-        console.log(chalk.green(`✓ Undone: ${undone.type} on ${undone.file || 'unknown'}`));
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+      if (!op) {
+        console.log('Nothing to undo.');
+        return;
+      }
+
+      console.log(chalk.green(`✓ Undone: ${op.type}`));
+      if (op.file) {
+        console.log(`  File: ${op.file}`);
       }
     });
 
-  // Show diff from checkpoint
-  checkpoint
-    .command('diff <id>')
-    .description('Show changes since checkpoint')
-    .action(async (id) => {
-      try {
-        const manager = getCheckpointManager();
-        
-        const checkpoints = await manager.listCheckpoints();
-        const cp = checkpoints.find(c => c.id.startsWith(id));
-        
-        if (!cp) {
-          console.log(chalk.red('Checkpoint not found.'));
-          process.exit(1);
-        }
-
-        const diff = await manager.getDiff(cp.id);
-        console.log(chalk.cyan(`Changes since: ${cp.message}`));
-        console.log('');
-        
-        for (const line of diff.split('\n')) {
-          if (line.startsWith('+') || line.includes('(added)')) {
-            console.log(chalk.green(line));
-          } else if (line.startsWith('-') || line.includes('(deleted)')) {
-            console.log(chalk.red(line));
-          } else if (line.startsWith('~') || line.includes('(modified)')) {
-            console.log(chalk.yellow(line));
-          } else {
-            console.log(line);
-          }
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
-      }
-    });
-
-  // Show operations in current checkpoint
-  checkpoint
-    .command('operations')
-    .description('List operations since last checkpoint')
+  // Top-level redo command
+  program
+    .command('redo')
+    .description('Redo the last undone operation')
     .action(async () => {
-      try {
-        const manager = getCheckpointManager();
-        const operations = manager.listOperations();
-        
-        if (operations.length === 0) {
-          console.log(chalk.yellow('No operations recorded.'));
-          return;
-        }
+      const mgr = getCheckpointManager();
+      const op = await mgr.redoLast();
 
-        const table = new Table({
-          head: ['Type', 'File', 'Time', 'Status'],
-          style: { head: ['cyan'] }
-        });
+      if (!op) {
+        console.log('Nothing to redo.');
+        return;
+      }
 
-        for (const op of operations) {
-          const statusColor = op.status === 'active' ? chalk.green : chalk.gray;
-          table.push([
-            op.type,
-            op.file || 'N/A',
-            new Date(op.timestamp).toLocaleTimeString(),
-            statusColor(op.status)
-          ]);
-        }
-
-        console.log(table.toString());
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(chalk.red(`Error: ${message}`));
-        process.exit(1);
+      console.log(chalk.green(`✓ Redone: ${op.type}`));
+      if (op.file) {
+        console.log(`  File: ${op.file}`);
       }
     });
 
-  return checkpoint;
+  // Top-level history command
+  program
+    .command('history')
+    .description('Show recent operations')
+    .option('-n, --limit <count>', 'Number of operations to show', '20')
+    .action(async (options) => {
+      const mgr = getCheckpointManager();
+      const ops = mgr.getRecentOperations(parseInt(options.limit));
+
+      if (ops.length === 0) {
+        console.log('No operations recorded.');
+        return;
+      }
+
+      const table = new Table({
+        head: ['#', 'Type', 'File', 'Status', 'Time'],
+        colWidths: [4, 14, 40, 8, 22],
+      });
+
+      ops.forEach((op, i) => {
+        const statusColorFn = op.status === 'active' ? chalk.green : chalk.grey;
+        table.push([
+          (i + 1).toString(),
+          op.type,
+          (op.file || op.command || '-').slice(0, 38),
+          statusColorFn(op.status),
+          new Date(op.timestamp).toLocaleString(),
+        ]);
+      });
+
+      console.log(table.toString());
+    });
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * @deprecated Use registerCheckpointCommands instead
+ */
+export function createCheckpointCommand(): Command {
+  const program = new Command();
+  registerCheckpointCommands(program);
+  // Return just the checkpoint command
+  return program.commands.find(cmd => cmd.name() === 'checkpoint') || new Command('checkpoint');
 }

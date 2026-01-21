@@ -16,11 +16,11 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles)/)'
+    'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer)/)'
   ],
   moduleNameMapper: {
     '^chalk$': '<rootDir>/__mocks__/chalk.js',
-    '^(\\.{1,2}/.*)\\.js$': '$1'
+    '^@inquirer/prompts$': '<rootDir>/__mocks__/@inquirer/prompts.js'
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   collectCoverageFrom: [
