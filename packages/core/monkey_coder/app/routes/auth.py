@@ -9,7 +9,7 @@ This module provides authentication endpoints:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, status, Depends
@@ -101,15 +101,23 @@ async def login(request: LoginRequest) -> AuthResponse:
                 # Handle any invalid roles gracefully
                 logger.warning(f"Invalid role '{role_str}' for user {user.email}")
 
+        # Validate user has an ID
+        if not user.id:
+            logger.error(f"User {user.email} has no ID - database integrity issue")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User account error"
+            )
+
         # Create JWT user from authenticated user
         jwt_user = JWTUser(
-            user_id=str(user.id) if user.id else "unknown_user",
+            user_id=str(user.id),
             username=user.username,
             email=user.email,
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=True,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
         )
 
         # Create tokens
@@ -201,7 +209,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=False,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
         )
 
         # Create tokens
@@ -302,7 +310,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=True,
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
         )
 
         # Create new tokens

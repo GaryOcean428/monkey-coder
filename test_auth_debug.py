@@ -28,9 +28,10 @@ async def test_auth_flow():
     print("AUTHENTICATION FLOW TEST")
     print("=" * 70)
     
-    # Test credentials (for debugging only)
-    test_email = "braden.lang77@gmail.com"
-    test_password = "I.Am.Dev.1"
+    # Test credentials (replace with actual values for debugging)
+    # For security: Do NOT commit real credentials
+    test_email = "test@example.com"
+    test_password = "TestPassword123"
     
     print(f"\n1. Testing password hashing...")
     password_hash = hash_password(test_password)
