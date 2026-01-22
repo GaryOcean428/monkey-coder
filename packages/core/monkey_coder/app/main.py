@@ -59,6 +59,14 @@ try:
 except Exception as e:
     print(f"Warning: Failed to include MCP router: {e}")
 
+# Include authentication router
+try:
+    from monkey_coder.app.routes.auth import router as auth_router
+    app.include_router(auth_router)
+    print("✓ Authentication router included")
+except Exception as e:
+    print(f"Warning: Failed to include auth router: {e}")
+
 # Request models
 class PasswordResetRequest(BaseModel):
     email: EmailStr
