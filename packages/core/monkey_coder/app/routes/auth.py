@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field, EmailStr
+from jose import jwt, JWTError
 
 from ...security import (
     get_current_user,
@@ -26,6 +27,7 @@ from ...security import (
     get_user_permissions,
 )
 from ...database import get_user_store, User
+from ...config.env_config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -261,9 +263,6 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
         HTTPException: If refresh fails
     """
     try:
-        from jose import jwt, JWTError
-        from ...config.env_config import get_config
-
         config = get_config()
         
         # Decode refresh token

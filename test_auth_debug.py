@@ -64,10 +64,10 @@ async def test_auth_flow():
             print(f"\n4. Creating test user...")
             user_store = get_user_store()
             new_user = await user_store.create_user(
-                username="Braden Lang",
+                username="Test User",
                 email=test_email,
                 password_hash=password_hash,
-                full_name="Braden Lang",
+                full_name="Test User",
                 subscription_plan="developer",
                 is_developer=True,
                 roles=["user", "developer"]
