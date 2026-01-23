@@ -128,11 +128,76 @@ After updating Railway service settings:
 - No `nixpacks.toml` files (except sandbox service if needed)
 - No root `Dockerfile` (except for specific services)
 
+### 4. Sandbox Service (`monkey-coder-sandbox`) - OPTIONAL
+
+**Status**: ⚠️ Optional - Deploy only if needed for cloud-based execution
+
+**Settings → Service Settings:**
+- **Root Directory**: `/services/sandbox`
+- **Railpack Config**: `/services/sandbox/railpack.json` (uses Dockerfile)
+
+**Expected Behavior:**
+- Uses Docker with Python 3.12
+- Runs: `/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf`
+- Health check: `/health`
+
+**When to Deploy:**
+- Need browser automation via BrowserBase for web users
+- Require cloud-based code execution API endpoint
+- Backend needs remote sandbox without local Docker access
+- Building multi-tenant sandbox management platform
+
+**When NOT to Deploy:**
+- CLI-only deployment (CLI has local Docker sandbox)
+- No browser automation requirements
+- Backend doesn't execute untrusted code
+- Cost-sensitive deployment
+
+**Environment Variables Required:**
+```bash
+SANDBOX_TOKEN_SECRET=<secure-random-secret>
+SANDBOX_ALLOW_ORIGINS=https://your-frontend.railway.app
+SANDBOX_ALLOW_ORIGIN_REGEX=^https?://([a-z0-9-]+\.)*railway\.app$
+
+# Optional: For E2B code execution
+E2B_API_KEY=<your-e2b-api-key>
+
+# Optional: For BrowserBase browser automation
+BROWSERBASE_API_KEY=<your-browserbase-api-key>
+BROWSERBASE_PROJECT_ID=<your-browserbase-project-id>
+
+# Resource limits
+SANDBOX_MAX_MEMORY_MB=512
+SANDBOX_MAX_CPU_PERCENT=50.0
+SANDBOX_MODE=1
+```
+
+**Backend Integration (if deployed):**
+Add to backend service environment variables:
+```bash
+SANDBOX_SERVICE_URL=http://${{monkey-coder-sandbox.RAILWAY_PRIVATE_DOMAIN}}
+SANDBOX_TOKEN_SECRET=${{monkey-coder-sandbox.SANDBOX_TOKEN_SECRET}}
+```
+
+---
+
+## Service Deployment Decision Matrix
+
+| Service | Required | Purpose | Cost Impact |
+|---------|----------|---------|-------------|
+| **Frontend** | ✅ Yes | Web UI | Base |
+| **Backend** | ✅ Yes | API orchestration | Base |
+| **ML** | ✅ Yes | Model inference | Base |
+| **Sandbox** | ⚠️ Optional | Cloud execution | +25-50% |
+
+**Recommendation**: Start with 3 core services (frontend, backend, ml). Add sandbox service only if you need browser automation or cloud-based code execution API.
+
 ---
 
 ## Reference Documentation
 
 - **Detailed deployment guide**: `docs/production-deployment-guide.md`
 - **Railway architecture**: `docs/deployment/railway-architecture.md`
+- **Sandbox deployment guide**: `docs/deployment/sandbox-service-deployment-guide.md`
 - **Service configuration**: `docs/deployment/railway-configuration.md`
 - **Optimization tips**: `docs/deployment/railway-optimization.md`
