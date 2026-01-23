@@ -857,9 +857,36 @@ Railway Internal: Creates Docker container automatically
 Production: Deployed containerized application
 ```
 
+### Services Architecture
+
+The platform deploys **3 core services** to Railway:
+
+| Service | Purpose | Required | Config |
+|---------|---------|----------|--------|
+| **Frontend** | Next.js web UI | ✅ Yes | `services/frontend/railpack.json` |
+| **Backend** | FastAPI orchestration | ✅ Yes | `services/backend/railpack.json` |
+| **ML** | Model inference | ✅ Yes | `services/ml/railpack.json` |
+| **Sandbox** | Cloud execution | ⚠️ Optional | `services/sandbox/railpack.json` |
+
+### Sandbox Service: Optional Component
+
+The `services/sandbox/` Dockerfile provides **optional** cloud-based code execution:
+
+**Do NOT deploy if**:
+- Using CLI only (has local Docker sandbox)
+- No browser automation needed
+- Cost-sensitive deployment
+
+**Deploy only if**:
+- Need BrowserBase browser automation for web users
+- Require cloud-based code execution API
+- Backend needs remote sandbox without local Docker
+
+📖 See [`docs/deployment/sandbox-service-deployment-guide.md`](docs/deployment/sandbox-service-deployment-guide.md) for detailed guidance.
+
 ### Production Deployment
 
-The project is configured for single-service deployment on Railway using `railpack.json`:
+The project is configured for Railway deployment using service-specific `railpack.json` files:
 
 ```bash
 # Deploy to Railway
@@ -876,7 +903,7 @@ railway up
 - Health monitoring at `/health` endpoint
 
 **Key Benefits:**
-- ✅ No Dockerfile required - Railway handles containerization
+- ✅ No Dockerfile required for core services - Railway handles containerization
 - ✅ Automatic dependency resolution and virtual environment setup
 - ✅ Built-in health checking and restart policies
 - ✅ Optimized build caching and performance

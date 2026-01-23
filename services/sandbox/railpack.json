@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "version": "1",
+  "metadata": {
+    "name": "monkey-coder-sandbox",
+    "description": "Optional isolated sandbox execution service with E2B and BrowserBase integration"
+  },
+  "build": {
+    "provider": "docker",
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "buildArgs": {
+      "PORT": "$PORT"
+    }
+  },
+  "deploy": {
+    "startCommand": "/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf",
+    "healthCheckPath": "/health",
+    "healthCheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "variables": {
+      "SANDBOX_MODE": "1",
+      "PYTHONUNBUFFERED": "1",
+      "LOG_LEVEL": "info",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "notes": {
+    "optional": "This service is OPTIONAL for most deployments. The CLI has its own local Docker sandbox execution.",
+    "required_when": [
+      "Need browser automation via BrowserBase for web users",
+      "Require cloud-based code execution API",
+      "Backend API needs remote sandbox without local Docker",
+      "Building multi-tenant sandbox management platform"
+    ],
+    "not_required_when": [
+      "CLI-only deployment (uses local Docker)",
+      "No browser automation requirements",
+      "Backend API doesn't execute untrusted code",
+      "Cost-sensitive deployment"
+    ],
+    "required_env_vars": [
+      "SANDBOX_TOKEN_SECRET - Secure random secret for authentication",
+      "SANDBOX_ALLOW_ORIGINS - CORS origins (comma-separated)",
+      "E2B_API_KEY - Optional: For E2B code execution",
+      "BROWSERBASE_API_KEY - Optional: For browser automation",
+      "BROWSERBASE_PROJECT_ID - Optional: BrowserBase project"
+    ],
+    "backend_integration": "If deployed, set SANDBOX_SERVICE_URL=http://${{monkey-coder-sandbox.RAILWAY_PRIVATE_DOMAIN}} in backend service",
+    "documentation": "See docs/deployment/sandbox-service-deployment-guide.md for detailed deployment guidance"
+  }
+}

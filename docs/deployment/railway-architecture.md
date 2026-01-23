@@ -71,8 +71,16 @@ Even though there's no root `Dockerfile`, Railway still uses Docker internally. 
 
 1. **`services/sandbox/Dockerfile`**
    - **Purpose**: Optional containerized sandbox execution service
-   - **Status**: Separate service, not main deployment
-   - **Usage**: E2B/BrowserBase integration for code execution
+   - **Status**: Separate optional service, not main deployment
+   - **Usage**: E2B/BrowserBase integration for code execution and browser automation
+   - **Railway Config**: `services/sandbox/railpack.json` (uses Dockerfile)
+   - **Required**: ⚠️ NO - Optional enhancement for cloud-based execution
+   - **Alternative**: CLI has built-in local Docker sandbox via `dockerode`
+   - **Deploy When**: 
+     - Need browser automation for web users
+     - Require cloud-based code execution API
+     - Backend needs remote sandbox without local Docker
+   - **Deploy Guide**: See `docs/deployment/sandbox-service-deployment-guide.md`
 
 ### Legacy/Development Docker Scripts
 
