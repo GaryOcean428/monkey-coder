@@ -101,7 +101,7 @@ fsspec==2026.1.0
     #   torch
 google-auth==2.47.0
     # via google-genai
-google-genai==1.59.0
+google-genai==1.60.0
     # via monkey-coder-core (pyproject.toml)
 groq==1.0.0
     # via monkey-coder-core (pyproject.toml)
@@ -206,7 +206,7 @@ nvidia-nvtx-cu12==12.8.90
     # via torch
 openai==2.15.0
     # via monkey-coder-core (pyproject.toml)
-packaging==25.0
+packaging==26.0
     # via
     #   accelerate
     #   huggingface-hub
@@ -238,7 +238,7 @@ pyasn1==0.6.2
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
-pycparser==2.23
+pycparser==3.0
     # via cffi
 pydantic==2.12.5
     # via
@@ -287,7 +287,7 @@ requests==2.32.5
     #   resend
     #   stripe
     #   transformers
-resend==2.19.0
+resend==2.21.0
     # via monkey-coder-core (pyproject.toml)
 rich==14.2.0
     # via
@@ -312,7 +312,7 @@ sentence-transformers==2.7.0
     # via monkey-coder-core (pyproject.toml)
 sentry-sdk==2.50.0
     # via monkey-coder-core (pyproject.toml)
-setuptools==80.9.0
+setuptools==80.10.1
     # via
     #   torch
     #   triton
@@ -407,7 +407,7 @@ vine==5.1.0
     #   kombu
 watchfiles==1.1.1
     # via uvicorn
-wcwidth==0.2.14
+wcwidth==0.3.1
     # via prompt-toolkit
 websockets==15.0.1
     # via
