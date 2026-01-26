@@ -139,15 +139,15 @@ const config: Config = {
           items: [
             {
               label: 'Quick Start',
-              to: '/docs/',
+              to: '/docs/guides/quick-start',
             },
             {
-              label: 'Quantum Tasks',
-              to: '/docs/quantum-tasks',
+              label: 'Architecture',
+              to: '/docs/architecture/agent-os-standards',
             },
             {
-              label: 'Migration Guide',
-              to: '/docs/migration-guide',
+              label: 'Deployment',
+              to: '/docs/deployment/DEPLOYMENT',
             },
           ],
         },
