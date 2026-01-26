@@ -316,7 +316,7 @@ X-RateLimit-Reset: 1642157400
 ## Performance & Caching
 
 ### Response Times
-- **Target:** <2 seconds for 95% of requests
+- **Target:** \<2 seconds for 95% of requests
 - **Monitoring:** Available at `/metrics/performance`
 - **Cache:** Intelligent caching for repeated requests
 

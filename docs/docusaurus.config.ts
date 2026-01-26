@@ -14,6 +14,15 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
+  markdown: {
+    format: 'detect',
+    mermaid: true,
+    parseFrontMatter: async (params) => {
+      const result = await params.defaultParseFrontMatter(params);
+      return result;
+    },
+  },
+
   // Set the production url of your site here
   url: 'https://garyocean428.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
@@ -42,6 +51,9 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          exclude: ['**/99-archive/**'],
+          remarkPlugins: [],
+          rehypePlugins: [],
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
@@ -99,7 +111,7 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'mainSidebar',
           position: 'left',
           label: 'Docs',
         },
