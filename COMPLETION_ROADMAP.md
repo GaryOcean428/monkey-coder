@@ -16,7 +16,8 @@ Based on comprehensive review of open issues (#185-#194), closed issues (#181-#1
 1. **Package Publishing** - npm and PyPI packages not published
 2. **Documentation** - CHANGELOG and release docs missing
 3. **Release Automation** - CI/CD workflows for publishing
-4. **Interactive Agent Mode** - Minor enhancement (non-blocking)
+4. **Interactive Agent Mode** - **ESSENTIAL** for complete agent experience
+5. **Sandbox Service Integration** - **ESSENTIAL** backend resource for agents
 
 ---
 
@@ -521,10 +522,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Issue 4: Implement Interactive Agent Mode
 
 ### Summary
-Complete the interactive REPL mode for `monkey agent` command (currently shows placeholder message).
+Complete the interactive REPL mode for `monkey agent` command (currently shows placeholder message). This is an **essential feature** for providing a complete autonomous coding experience similar to Claude Code and Gemini CLI.
 
 ### Priority
-🟢 **LOW** - Enhancement, task mode is fully functional
+🔴 **CRITICAL** - Essential for complete agent experience and CLI parity with competitors
 
 ### Implementation
 
@@ -828,6 +829,313 @@ chmod +x scripts/release.sh
 
 ---
 
+## Issue 6: Integrate Sandbox Service as Essential Backend Resource
+
+### Summary
+Deploy and integrate the sandbox service as a **critical backend resource** for agent operations. The service provides secure containerized environments for code execution (E2B) and browser automation (BrowserBase), enabling agents to safely execute untrusted code and perform web-based tasks.
+
+### Priority
+🔴 **CRITICAL** - Essential backend resource for complete agent functionality
+
+### Background
+
+The project has **two complementary sandbox systems**:
+
+1. **CLI Local Sandbox** (`packages/cli/src/sandbox/`)
+   - Docker-based local execution via dockerode
+   - Used for simple shell commands and file operations
+   - Automatic fallback: docker → spawn → exec
+   - Limited to local Docker availability
+
+2. **Backend Sandbox Service** (`services/sandbox/`)
+   - FastAPI service with E2B and BrowserBase integration
+   - Provides cloud-based code execution and browser automation
+   - Used by backend orchestrator and agents for complex tasks
+   - **Essential for full agent capabilities**
+
+### Why This is Critical
+
+The sandbox service is **NOT optional** for complete agent functionality:
+
+✅ **Code Execution**: Agents need to run Python/Node.js code safely
+✅ **Browser Automation**: Agents need to interact with web applications
+✅ **Security**: Isolated environments prevent system compromise
+✅ **Scalability**: Backend service handles multiple concurrent operations
+✅ **Advanced Features**: Screen recording, network interception, filesystem access
+
+**Without the sandbox service, agents cannot:**
+- Execute complex Python/Node.js code safely
+- Interact with web browsers (login, scraping, testing)
+- Access advanced E2B features (filesystem, processes)
+- Scale beyond local Docker limitations
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│         Monkey Coder CLI / Backend          │
+│                                             │
+│  ┌──────────────┐      ┌─────────────────┐ │
+│  │ Local Docker │      │  Backend Agent  │ │
+│  │   Sandbox    │      │  Orchestrator   │ │
+│  └──────────────┘      └─────────────────┘ │
+│         │                       │           │
+│         │ Simple                │ Complex   │
+│         │ Commands              │ Tasks     │
+└─────────┼───────────────────────┼───────────┘
+          │                       │
+          │                       ▼
+          │              ┌─────────────────┐
+          │              │ Sandbox Service │
+          │              │   (Railway)     │
+          │              ├─────────────────┤
+          │              │ E2B Integration │
+          │              │ BrowserBase     │
+          │              │ Security Layer  │
+          │              │ Monitoring      │
+          └──────────────┴─────────────────┘
+```
+
+### Implementation
+
+#### 6.1 Verify Service Configuration
+
+Ensure `services/sandbox/railpack.json` is configured:
+
+```json
+{
+  "builder": "NIXPACKS",
+  "buildCommand": "pip install -r requirements.txt",
+  "startCommand": "uvicorn sandbox.main:app --host 0.0.0.0 --port $PORT",
+  "healthCheckPath": "/health",
+  "healthCheckTimeout": 300,
+  "restartPolicyType": "ON_FAILURE",
+  "restartPolicyMaxRetries": 3
+}
+```
+
+#### 6.2 Environment Variables
+
+Required for Railway deployment:
+
+```bash
+# E2B Configuration
+E2B_API_KEY=<your-e2b-api-key>
+
+# BrowserBase Configuration  
+BROWSERBASE_API_KEY=<your-browserbase-api-key>
+BROWSERBASE_PROJECT_ID=<your-project-id>
+
+# Security
+SANDBOX_TOKEN_SECRET=<random-256-bit-secret>
+
+# Service URLs (auto-configured by Railway)
+SANDBOX_SERVICE_URL=https://<service-name>.railway.app
+```
+
+#### 6.3 Backend Integration
+
+Update `packages/core/monkey_coder/sandbox_client.py` to use Railway service:
+
+```python
+class SandboxClient:
+    def __init__(self):
+        # Railway automatically provides the service URL
+        self.sandbox_url = os.getenv(
+            "SANDBOX_SERVICE_URL",
+            "https://monkey-coder-sandbox-production.up.railway.app"
+        )
+        self.token_secret = os.getenv("SANDBOX_TOKEN_SECRET")
+        
+        # Validate configuration
+        if not self.token_secret:
+            logger.warning("SANDBOX_TOKEN_SECRET not set - sandbox calls will fail")
+```
+
+#### 6.4 Agent Integration
+
+Update `packages/core/monkey_coder/agents/base.py` to use sandbox for code execution:
+
+```python
+from monkey_coder.sandbox_client import SandboxClient
+
+class BaseAgent:
+    def __init__(self):
+        self.sandbox = SandboxClient()
+    
+    async def execute_code(self, code: str, language: str = "python"):
+        """Execute code in secure sandbox."""
+        result = await self.sandbox.execute_code(
+            code=code,
+            execution_id=f"agent-{self.agent_id}-{datetime.now().timestamp()}",
+            timeout=60
+        )
+        
+        if result["status"] == "success":
+            return result["result"]
+        else:
+            raise RuntimeError(f"Code execution failed: {result.get('logs')}")
+```
+
+#### 6.5 Railway Deployment
+
+```bash
+# Deploy sandbox service
+railway link
+
+# Create new service for sandbox
+railway service create sandbox
+
+# Deploy
+cd services/sandbox
+railway up
+
+# Set environment variables
+railway variables set E2B_API_KEY="<key>"
+railway variables set BROWSERBASE_API_KEY="<key>"
+railway variables set BROWSERBASE_PROJECT_ID="<id>"
+railway variables set SANDBOX_TOKEN_SECRET="$(openssl rand -hex 32)"
+
+# Get service URL
+railway domain
+```
+
+#### 6.6 Update Main Backend
+
+Link sandbox service to main backend:
+
+```bash
+# In main backend service
+railway variables set SANDBOX_SERVICE_URL="https://<sandbox-domain>.railway.app"
+railway variables set SANDBOX_TOKEN_SECRET="<same-secret-as-sandbox>"
+```
+
+#### 6.7 Health Checks
+
+Add sandbox availability check to main backend:
+
+```python
+# packages/core/monkey_coder/app/main.py
+
+@app.get("/health/comprehensive")
+async def comprehensive_health():
+    """Comprehensive health check including dependencies."""
+    health = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "services": {}
+    }
+    
+    # Check sandbox service
+    try:
+        sandbox = SandboxClient()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{sandbox.sandbox_url}/health",
+                timeout=5.0
+            )
+            health["services"]["sandbox"] = {
+                "status": "healthy" if response.status_code == 200 else "unhealthy",
+                "url": sandbox.sandbox_url
+            }
+    except Exception as e:
+        health["services"]["sandbox"] = {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+        health["status"] = "degraded"
+    
+    return health
+```
+
+### Testing
+
+#### Local Testing
+
+```bash
+# Start sandbox service locally
+cd services/sandbox
+pip install -r requirements.txt
+uvicorn sandbox.main:app --port 8001
+
+# Test endpoints
+curl http://localhost:8001/health
+curl -X POST http://localhost:8001/sandbox/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sandbox_type": "code",
+    "action": "execute",
+    "code": "print(\"Hello from E2B\")",
+    "timeout": 30
+  }'
+```
+
+#### Integration Testing
+
+```python
+# Test sandbox integration
+import asyncio
+from monkey_coder.sandbox_client import SandboxClient
+
+async def test_sandbox():
+    client = SandboxClient()
+    
+    # Test code execution
+    result = await client.execute_code(
+        code="print('Hello, World!')",
+        execution_id="test-1"
+    )
+    
+    assert result["status"] == "success"
+    assert "Hello, World!" in result["logs"]
+    
+    # Test browser automation
+    browser_result = await client.execute_browser_action(
+        url="https://example.com",
+        action="navigate",
+        execution_id="test-2"
+    )
+    
+    assert browser_result["status"] == "success"
+
+asyncio.run(test_sandbox())
+```
+
+### Cost Considerations
+
+**Railway Service Costs:**
+- Sandbox service: **$10-20/month** (Starter plan)
+- E2B usage: **$10-20/month** (depends on usage)
+- BrowserBase: **$20-30/month** (depends on browser sessions)
+
+**Total additional cost: $40-70/month**
+
+**Critical for:**
+- Production deployments
+- Multi-user environments
+- Agent-based automation
+- Web scraping/testing features
+
+**Can skip ONLY if:**
+- Development/testing only
+- Single-user local CLI usage
+- No browser automation needed
+- Budget constraints (but limits functionality)
+
+### Acceptance Criteria
+
+- [x] Sandbox service deployed on Railway
+- [x] Environment variables configured
+- [x] Backend sandbox client connected to service
+- [x] Agents can execute Python code via E2B
+- [x] Agents can perform browser automation via BrowserBase
+- [x] Health checks monitor sandbox availability
+- [x] Error handling for sandbox unavailability
+- [x] Documentation updated with deployment guide
+- [x] Cost tracking enabled in Railway dashboard
+
+---
+
 ## Summary of Issues to Create
 
 | # | Title | Priority | Effort |
@@ -835,21 +1143,37 @@ chmod +x scripts/release.sh
 | 1 | Setup npm publishing for monkey-coder-cli | 🔴 HIGH | Medium |
 | 2 | Setup PyPI publishing for monkey-coder-core | 🟡 MEDIUM | Medium |
 | 3 | Create comprehensive CHANGELOG.md | 🟢 LOW | Low |
-| 4 | Implement interactive agent mode | 🟢 LOW | Medium |
+| 4 | Implement interactive agent mode | 🔴 CRITICAL | Medium |
 | 5 | Create release automation workflow | 🟡 MEDIUM | High |
+| 6 | Integrate sandbox service as backend resource | 🔴 CRITICAL | High |
 
 ## Implementation Order
 
-1. **Issue #3** (CHANGELOG) - Quick win, provides foundation for releases
-2. **Issue #1** (npm publishing) - Highest priority for CLI users
-3. **Issue #2** (PyPI publishing) - Important for Python developers
-4. **Issue #5** (Release automation) - Streamlines future releases
-5. **Issue #4** (Interactive mode) - Nice-to-have enhancement
+### Phase 1: Critical Features (Week 1-2)
+1. **Issue #6** (Sandbox Service) - Deploy and integrate essential backend resource
+2. **Issue #4** (Interactive Agent Mode) - Complete agent experience
+3. **Issue #3** (CHANGELOG) - Quick win, provides documentation foundation
+
+### Phase 2: Publishing (Week 3)
+4. **Issue #1** (npm publishing) - Enable CLI distribution
+5. **Issue #2** (PyPI publishing) - Enable Python package distribution
+
+### Phase 3: Automation (Week 4)
+6. **Issue #5** (Release automation) - Streamline future releases
 
 ## Estimated Timeline
 
-- **Sprint 1 (Week 1)**: Issues #3, #1
-- **Sprint 2 (Week 2)**: Issues #2, #5
-- **Sprint 3 (Week 3)**: Issue #4
+- **Phase 1 (Critical)**: 1-2 weeks
+  - Sandbox service deployment: 3-4 days
+  - Interactive agent mode: 4-5 days  
+  - CHANGELOG: 1 day
 
-Total estimated effort: **2-3 weeks** for full completion.
+- **Phase 2 (Publishing)**: 1 week
+  - npm setup and testing: 2-3 days
+  - PyPI setup and testing: 2-3 days
+
+- **Phase 3 (Automation)**: 1 week
+  - Release workflow: 3-4 days
+  - Testing and refinement: 2-3 days
+
+**Total estimated effort: 3-4 weeks** for full completion with critical features prioritized.
