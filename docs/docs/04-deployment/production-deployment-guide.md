@@ -321,7 +321,7 @@ curl -X GET https://your-app.railway.app/api/v1/production/validate
 1. **Response time test:**
 ```bash
 curl -w "@curl-format.txt" -o /dev/null -s https://your-app.railway.app/health
-# Target: <2 seconds
+# Target: \<2 seconds
 ```
 
 2. **Load testing (basic):**
@@ -519,8 +519,8 @@ railway env list > production-env-backup.txt
    - Restore environment variables from backup
 
 2. **RTO/RPO targets:**
-   - Recovery Time Objective: <30 minutes
-   - Recovery Point Objective: <1 hour
+   - Recovery Time Objective: \<30 minutes
+   - Recovery Point Objective: \<1 hour
 
 ---
 
@@ -634,7 +634,7 @@ railway restart
 - Error tracking configured and tested
 
 ✅ **Performance:**
-- Response times <2 seconds for 95% of requests
+- Response times \<2 seconds for 95% of requests
 - Cache hit rate >70%
 - No critical performance issues
 

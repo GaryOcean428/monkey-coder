@@ -1,116 +1,79 @@
----
-slug: /
-sidebar_position: 1
-title: Monkey Coder Documentation
----
+# Documentation Index
 
-# Monkey Coder Documentation
+**Monkey Coder Documentation Structure**
 
-Welcome to the Monkey Coder documentation. Monkey Coder is an advanced AI-powered CLI development toolkit that helps developers solve complex coding challenges using intelligent model routing with quantum computing principles.
+Last Updated: 2026-01-26
 
-## Quick Navigation
+## Overview
 
-<div className="row">
-  <div className="col col--6">
-    <div className="card">
-      <div className="card__header">
-        <h3>🚀 Getting Started</h3>
-      </div>
-      <div className="card__body">
-        <p>New to Monkey Coder? Start here for installation and your first project.</p>
-        <ul>
-          <li><a href="/docs/quick-start">Quick Start Guide</a></li>
-          <li><a href="/docs/installation">Installation</a></li>
-          <li><a href="/docs/first-project">Your First Project</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  
-  <div className="col col--6">
-    <div className="card">
-      <div className="card__header">
-        <h3>📚 Core Concepts</h3>
-      </div>
-      <div className="card__body">
-        <p>Understand the fundamental concepts that power Monkey Coder.</p>
-        <ul>
-          <li><a href="/docs/agents">Agents</a></li>
-          <li><a href="/docs/orchestration">Orchestration</a></li>
-          <li><a href="/docs/quantum-tasks">Quantum Tasks</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+Monkey Coder is an AI-powered code generation and analysis platform based on multi-agent orchestration. This documentation provides comprehensive guides for using, developing, and deploying the platform.
 
-<div className="row margin-top--md">
-  <div className="col col--6">
-    <div className="card">
-      <div className="card__header">
-        <h3>💻 CLI Reference</h3>
-      </div>
-      <div className="card__body">
-        <p>Complete reference for all CLI commands and options.</p>
-        <ul>
-          <li><a href="/docs/cli/commands">All Commands</a></li>
-          <li><a href="/docs/cli/implement">Implement</a></li>
-          <li><a href="/docs/cli/analyze">Analyze</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  
-  <div className="col col--6">
-    <div className="card">
-      <div className="card__header">
-        <h3>🔌 API Reference</h3>
-      </div>
-      <div className="card__body">
-        <p>Detailed API documentation for backend integration.</p>
-        <ul>
-          <li><a href="/docs/api/overview">API Overview</a></li>
-          <li><a href="/docs/api/execute">Execute Endpoint</a></li>
-          <li><a href="/docs/api/streaming">Streaming</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
+## Documentation Structure
 
-## Key Features
+This documentation follows a numbered folder convention for easy navigation and organization:
 
-### 🧠 Intelligent Model Routing
-Dynamic selection of optimal AI models using Q-learning algorithms based on task analysis and historical performance.
+### 00 - Overview
+- [Introduction](./00-overview/index.md) - Platform overview and key concepts
+- Getting started guides
+- Core concepts and terminology
 
-### ⚡ Quantum Task Execution
-Advanced parallel processing for complex development challenges using quantum computing principles.
+### 01 - Guides
+- [Quick Start](./01-guides/quick-start.md) - Get up and running quickly
+- [Migration Guide](./01-guides/migration-guide.md) - Migrating from previous versions
+- [Billing](./01-guides/billing.md) - Usage and billing information
+- User tutorials and how-to guides
 
-### 🎯 Context-Aware Analysis
-Deep understanding of project architecture, coding patterns, and development phase for targeted assistance.
+### 02 - Architecture
+- [Agent OS Standards](./02-architecture/agent-os-standards.md) - Multi-agent system architecture
+- System design and architecture decisions
+- Technical deep-dives
 
-### 🤝 Multi-Agent Orchestration
-Specialized AI agents collaborating on different aspects of development tasks.
+### 03 - API
+- API references
+- Endpoint documentation
+- Integration guides
 
-## Popular Topics
+### 04 - Deployment
+- [Railpack Configuration](./04-deployment/railpack-docs-links.md) - Railway deployment links
+- Production deployment guides
+- Infrastructure setup
 
-- [Migration Guide](/docs/migration-guide) - Migrate from other AI development tools
-- [Multi-Agent Orchestration](/docs/multi-agent) - Learn about agent collaboration
-- [MCP Integration](/docs/mcp-integration) - Model Context Protocol integration
-- [Deployment Guide](/docs/deployment/railway) - Deploy to production
-- [Troubleshooting](/docs/troubleshooting) - Common issues and solutions
+### 05 - Development
+- [Contributing Guide](./05-development/contributing.md) - How to contribute to the project
+- Development environment setup
+- Coding standards and best practices
 
-## Resources
+### 99 - Archive
+- [OpenAI Response Examples](./99-archive/openai-response-examples.md) - Historical examples
+- [Quantum Tasks](./99-archive/quantum-tasks.md) - Archived experimental features
+- Deprecated documentation
+- Historical references
+
+## Quick Links
+
+- **Getting Started**: Start with [Quick Start](./01-guides/quick-start.md)
+- **API Documentation**: See [API guides](./03-api/)
+- **Deployment**: Check [Deployment guides](./04-deployment/)
+- **Contributing**: Read the [Contributing Guide](./05-development/contributing.md)
+
+## Naming Convention
+
+Documentation files follow the pattern:
+- **Guides and references**: `descriptive-name.md`
+- **Dated documents**: `YYYYMMDD-document-name-version-status.md`
+
+## Status Indicators
+
+- 🟢 **Stable** - Production-ready documentation
+- 🟡 **Draft** - Work in progress
+- 🔴 **Deprecated** - Archived or superseded
+
+## Additional Resources
 
 - [GitHub Repository](https://github.com/GaryOcean428/monkey-coder)
-- [PyPI Package](https://pypi.org/project/monkey-coder-core/)
-- [npm Package](https://www.npmjs.com/package/monkey-coder-cli)
-- [Roadmap](/roadmap) - Future development plans
-- [Contributing](/docs/contributing) - Contribute to the project
+- [Issue Tracker](https://github.com/GaryOcean428/monkey-coder/issues)
+- [Contributing Guidelines](./05-development/contributing.md)
 
-## Need Help?
+---
 
-- Check our [FAQ](/docs/faq) for common questions
-- Review the [Troubleshooting Guide](/docs/troubleshooting)
-- Join our [Community](https://github.com/GaryOcean428/monkey-coder/discussions)
-- Report issues on [GitHub](https://github.com/GaryOcean428/monkey-coder/issues)
+*For questions or feedback, please open an issue on GitHub.*
