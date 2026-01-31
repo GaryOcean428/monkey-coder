@@ -2,6 +2,7 @@
  * useSession - Hook for session management integration
  */
 import { useState, useEffect, useCallback } from 'react';
+
 import { SessionManager, Message as SessionMessage } from '../../session-manager.js';
 import { Message } from '../types.js';
 

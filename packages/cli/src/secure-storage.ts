@@ -151,6 +151,7 @@ export async function hasStoredTokens(): Promise<boolean> {
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+
 import { ConfigManager } from './config.js';
 
 const FALLBACK_DIR = path.join(os.homedir(), '.monkey-coder');

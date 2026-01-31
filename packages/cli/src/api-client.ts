@@ -3,10 +3,11 @@
  * Handles REST API calls and Server-Sent Events streaming
  */
 
-import { createParser } from 'eventsource-parser';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+
+import { createParser } from 'eventsource-parser';
 
 import { ExecuteRequest, ExecuteResponse, StreamEvent } from './types.js';
 
