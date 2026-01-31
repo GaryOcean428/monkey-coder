@@ -1,53 +1,62 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigManager } from '../src/config';
 
-// Mock fs-extra module
+// Mock fs-extra module BEFORE importing ConfigManager  
+const mockPathExistsSync = jest.fn() as any;
+const mockPathExists = jest.fn() as any;
+const mockReadFileSync = jest.fn() as any;
+const mockReadFile = jest.fn() as any;
+const mockEnsureDir = jest.fn() as any;
+const mockWriteFile = jest.fn() as any;
+const mockChmod = jest.fn() as any;
+
 jest.mock('fs-extra', () => ({
-  pathExistsSync: jest.fn(),
-  pathExists: jest.fn(),
-  readFileSync: jest.fn(),
-  readFile: jest.fn(),
-  ensureDir: jest.fn(),
-  writeFile: jest.fn(),
-  chmod: jest.fn()
+  pathExistsSync: mockPathExistsSync,
+  pathExists: mockPathExists,
+  readFileSync: mockReadFileSync,
+  readFile: mockReadFile,
+  ensureDir: mockEnsureDir,
+  writeFile: mockWriteFile,
+  chmod: mockChmod
 }));
 
-jest.mock('os');
-
-// Import fs-extra after mocking
-import * as fs from 'fs-extra';
+// Now import ConfigManager
+import { ConfigManager } from '../src/config';
 
 describe('ConfigManager', () => {
-  const mockHomedir = '/home/testuser';
-  const mockConfigDir = path.join(mockHomedir, '.config', 'monkey-coder');
+  // Use real OS values instead of mocking
+  const realHomedir = os.homedir();
+  const mockConfigDir = path.join(realHomedir, '.config', 'monkey-coder');
   const mockConfigPath = path.join(mockConfigDir, 'config.json');
   let configManager: ConfigManager;
+  let originalXdgConfigHome: string | undefined;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (os.homedir as jest.MockedFunction<typeof os.homedir>).mockReturnValue(mockHomedir);
-    (os.hostname as jest.MockedFunction<typeof os.hostname>).mockReturnValue('test-host');
-    (os.userInfo as jest.MockedFunction<typeof os.userInfo>).mockReturnValue({
-      username: 'testuser',
-      uid: 1000,
-      gid: 1000,
-      shell: '/bin/bash',
-      homedir: mockHomedir
-    });
+    
+    // Save and clear XDG_CONFIG_HOME to ensure predictable behavior
+    originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
+    delete process.env.XDG_CONFIG_HOME;
 
-    // Mock fs-extra methods with proper typing
-    (fs.pathExistsSync as jest.MockedFunction<typeof fs.pathExistsSync>).mockReturnValue(false);
-    (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(false);
-    (fs.readFileSync as jest.MockedFunction<typeof fs.readFileSync>).mockReturnValue('{}');
-    (fs.readFile as unknown as jest.MockedFunction<() => Promise<Buffer>>).mockResolvedValue(Buffer.from('{}'));
+    // Setup mock return values
+    mockPathExistsSync.mockReturnValue(false);
+    mockPathExists.mockResolvedValue(false);
+    mockReadFileSync.mockReturnValue('{}' as any);
+    mockReadFile.mockResolvedValue(Buffer.from('{}') as any);
+    (mockEnsureDir as any).mockResolvedValue();
+    (mockWriteFile as any).mockResolvedValue();
+    (mockChmod as any).mockResolvedValue();
 
     // Create new instance for each test
     configManager = new ConfigManager();
   });
 
   afterEach(() => {
+    // Restore environment variables
+    if (originalXdgConfigHome !== undefined) {
+      process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
+    }
     jest.restoreAllMocks();
   });
 
@@ -70,16 +79,16 @@ describe('ConfigManager', () => {
     });
 
     it('loads config on initialization', () => {
-      (fs.pathExistsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
+      mockPathExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify({
         apiKey: 'test-key',
         baseUrl: 'https://api.test.com'
       }));
 
       new ConfigManager();
 
-      expect(fs.pathExistsSync).toHaveBeenCalledWith(mockConfigPath);
-      expect(fs.readFileSync).toHaveBeenCalledWith(mockConfigPath, 'utf-8');
+      expect(mockPathExistsSync).toHaveBeenCalledWith(mockConfigPath);
+      expect(mockReadFileSync).toHaveBeenCalledWith(mockConfigPath, 'utf-8');
     });
   });
 
@@ -188,27 +197,27 @@ describe('ConfigManager', () => {
 
   describe('saveConfig', () => {
     it('creates config directory if it does not exist', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       await configManager.saveConfig();
 
-      expect(fs.ensureDir).toHaveBeenCalledWith(mockConfigDir);
+      expect(mockEnsureDir).toHaveBeenCalledWith(mockConfigDir);
     });
 
     it('writes config to file as JSON', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       configManager.set('baseUrl', 'https://test.api.com');
       configManager.set('defaultModel', 'test-model');
 
       await configManager.saveConfig();
 
-      expect(fs.writeFile).toHaveBeenCalled();
-      const writeCall = (fs.writeFile as unknown as jest.MockedFunction<any>).mock.calls[0];
+      expect(mockWriteFile).toHaveBeenCalled();
+      const writeCall = (mockWriteFile as unknown as jest.MockedFunction<any>).mock.calls[0];
       expect(writeCall?.[0]).toBe(mockConfigPath);
 
       // Check that it's valid JSON
@@ -219,28 +228,28 @@ describe('ConfigManager', () => {
     });
 
     it('sets restrictive permissions on config file', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       await configManager.saveConfig();
 
-      expect(fs.chmod).toHaveBeenCalledWith(mockConfigPath, 0o600);
-      expect(fs.chmod).toHaveBeenCalledWith(mockConfigDir, 0o700);
+      expect(mockChmod).toHaveBeenCalledWith(mockConfigPath, 0o600);
+      expect(mockChmod).toHaveBeenCalledWith(mockConfigDir, 0o700);
     });
 
     it('handles chmod errors gracefully', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Permission denied'));
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Permission denied'));
 
       // Should not throw despite chmod error
       await expect(configManager.saveConfig()).resolves.not.toThrow();
     });
 
     it('throws error when write fails', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Write failed'));
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(new Error('Write failed'));
 
       await expect(configManager.saveConfig()).rejects.toThrow('Failed to save config');
     });
@@ -248,9 +257,9 @@ describe('ConfigManager', () => {
 
   describe('update', () => {
     it('updates multiple config values at once', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       await configManager.update({
         baseUrl: 'https://new.api.com',
@@ -262,25 +271,25 @@ describe('ConfigManager', () => {
       expect(configManager.get('defaultModel')).toBe('new-model');
       expect(configManager.get('defaultTimeout')).toBe(500);
 
-      expect(fs.writeFile).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalled();
     });
 
     it('saves config after updating', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       await configManager.update({ apiKey: 'updated-key' });
 
-      expect(fs.writeFile).toHaveBeenCalledTimes(1);
+      expect(mockWriteFile).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('reset', () => {
     it('resets config to empty and saves', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       configManager.set('apiKey', 'test-key');
       configManager.set('baseUrl', 'https://test.com');
@@ -289,7 +298,7 @@ describe('ConfigManager', () => {
 
       expect(configManager.get('apiKey')).toBeUndefined();
       expect(configManager.get('baseUrl')).toBeUndefined();
-      expect(fs.writeFile).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalled();
     });
   });
 
@@ -315,16 +324,16 @@ describe('ConfigManager', () => {
 
   describe('exists', () => {
     it('returns true when config file exists', async () => {
-      (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(true);
+      (mockPathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(true);
 
       const exists = await configManager.exists();
 
       expect(exists).toBe(true);
-      expect(fs.pathExists).toHaveBeenCalledWith(mockConfigPath);
+      expect(mockPathExists).toHaveBeenCalledWith(mockConfigPath);
     });
 
     it('returns false when config file does not exist', async () => {
-      (fs.pathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(false);
+      (mockPathExists as unknown as jest.MockedFunction<() => Promise<boolean>>).mockResolvedValue(false);
 
       const exists = await configManager.exists();
 
@@ -334,9 +343,9 @@ describe('ConfigManager', () => {
 
   describe('encryption', () => {
     it('encrypts sensitive fields when saving', async () => {
-      (fs.ensureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.writeFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
-      (fs.chmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(undefined);
+      (mockEnsureDir as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockWriteFile as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
+      (mockChmod as unknown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue();
 
       configManager.set('apiKey', 'secret-api-key');
       configManager.set('refreshToken', 'secret-refresh-token');
@@ -344,7 +353,7 @@ describe('ConfigManager', () => {
 
       await configManager.saveConfig();
 
-      const writeCall = (fs.writeFile as unknown as jest.MockedFunction<any>).mock.calls[0];
+      const writeCall = (mockWriteFile as unknown as jest.MockedFunction<any>).mock.calls[0];
       const writtenContent = JSON.parse(writeCall?.[1] as string);
 
       // Sensitive fields should be encrypted
@@ -369,8 +378,8 @@ describe('ConfigManager', () => {
         _salt: 'random-salt'
       };
 
-      (fs.pathExistsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(encryptedConfig));
+      (mockPathExistsSync as jest.Mock).mockReturnValue(true);
+      (mockReadFileSync as jest.Mock).mockReturnValue(JSON.stringify(encryptedConfig));
 
       // Creating a new instance will load and attempt to decrypt
       const newManager = new ConfigManager();
@@ -387,7 +396,7 @@ describe('ConfigManager', () => {
       const testDir = '/home/user/projects/myproject/src';
       const localConfigPath = '/home/user/projects/myproject/.monkey-coder/config.json';
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === localConfigPath;
       });
 
@@ -401,7 +410,7 @@ describe('ConfigManager', () => {
       const testDir = '/home/user/projects/myproject';
       const projectConfigPath = path.join(testDir, 'monkey-coder.json');
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === projectConfigPath;
       });
 
@@ -415,10 +424,10 @@ describe('ConfigManager', () => {
       const testDir = '/home/user/projects/myproject';
       const packageJsonPath = path.join(testDir, 'package.json');
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === packageJsonPath;
       });
-      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockReadFileSync as jest.Mock).mockImplementation((p: unknown) => {
         if (p === packageJsonPath) {
           return JSON.stringify({
             name: 'my-project',
@@ -442,11 +451,11 @@ describe('ConfigManager', () => {
       const localConfigPath = path.join(testDir, '.monkey-coder', 'config.json');
       const projectConfigPath = path.join(testDir, 'monkey-coder.json');
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === mockConfigPath || p === localConfigPath || p === projectConfigPath;
       });
       
-      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockReadFileSync as jest.Mock).mockImplementation((p: unknown) => {
         if (p === mockConfigPath) {
           return JSON.stringify({ baseUrl: 'global-url', defaultModel: 'global-model' });
         }
@@ -474,10 +483,10 @@ describe('ConfigManager', () => {
       const testDir = '/home/user/projects/myproject';
       const projectConfigPath = path.join(testDir, 'monkey-coder.json');
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === projectConfigPath;
       });
-      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockReadFileSync as jest.Mock).mockImplementation((p: unknown) => {
         if (p === projectConfigPath) {
           return JSON.stringify({ apiKey: 'project-api-key', baseUrl: 'project-base-url' });
         }
@@ -498,11 +507,11 @@ describe('ConfigManager', () => {
       const testDir = '/home/user/projects/myproject';
       const localConfigPath = path.join(testDir, '.monkey-coder', 'config.json');
       
-      (fs.pathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockPathExistsSync as jest.Mock).mockImplementation((p: unknown) => {
         return p === mockConfigPath || p === localConfigPath;
       });
       
-      (fs.readFileSync as jest.Mock).mockImplementation((p: unknown) => {
+      (mockReadFileSync as jest.Mock).mockImplementation((p: unknown) => {
         if (p === mockConfigPath) {
           return JSON.stringify({ baseUrl: 'global-url' });
         }

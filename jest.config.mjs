@@ -6,14 +6,6 @@ export default {
     '**/__tests__/**/*.+(ts|tsx|js)',
     '**/*.(test|spec).+(ts|tsx|js)',
   ],
-  transform: {
-    '^.+\\.(ts|tsx)$': [
-      'ts-jest',
-      {
-        tsconfig: 'tsconfig.json',
-      },
-    ],
-  },
   collectCoverageFrom: [
     'src/**/*.+(ts|tsx)',
     '!src/**/*.d.ts',
@@ -28,10 +20,14 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
-      useESM: true
-    }
+  transform: {
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.json',
+        useESM: true,
+      },
+    ],
   },
   transformIgnorePatterns: [
     'node_modules/(?!(ora|chalk|strip-ansi|ansi-regex|cli-cursor|cli-spinners|is-interactive|is-unicode-supported|log-symbols|stdin-discarder|string-width|emoji-regex|strip-final-newline)/)'
