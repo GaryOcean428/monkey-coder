@@ -6,10 +6,12 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
+
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
-import { CommandDefinition } from './registry.js';
 import { getGitHubClient } from '../github-client.js';
+
+import { CommandDefinition } from './registry.js';
 
 /**
  * Create the search command group

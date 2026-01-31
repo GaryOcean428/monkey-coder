@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { Box, Text } from 'ink';
+
 import { Task } from '../types.js';
 
 interface TaskListProps {

@@ -3,11 +3,13 @@
  * Provides CLI interface for persistent conversation sessions
  */
 
+import * as fs from 'fs';
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import inquirer from 'inquirer';
-import * as fs from 'fs';
+
 import { getSessionManager, Session } from '../session-manager.js';
 import { formatError } from '../utils.js';
 

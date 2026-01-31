@@ -4,6 +4,7 @@
  */
 import { Command } from 'commander';
 import chalk from 'chalk';
+
 import { renderApp } from '../ui/index.js';
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';

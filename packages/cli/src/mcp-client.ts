@@ -5,11 +5,12 @@
  * and remote HTTP), discovering tools, and executing them with proper error handling.
  */
 
+import { spawn, ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { spawn, ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
 
 import { loadConfig } from './config/loader.js';
 

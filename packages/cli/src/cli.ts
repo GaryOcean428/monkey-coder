@@ -3,6 +3,9 @@
 // Trigger CI/CD pipeline for npm publishing
 import * as path from 'path';
 import * as readline from 'readline';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -48,9 +51,6 @@ import { printSplashSync } from './splash.js';
 import { getSessionManager } from './session-manager.js';
 
 // Read package version
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

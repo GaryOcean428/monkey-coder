@@ -10,8 +10,9 @@ import Table from 'cli-table3';
 
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
-import { CommandDefinition } from './registry.js';
 import { loadConfig, initConfig, findProjectConfig, getGlobalConfigPath } from '../config/loader.js';
+
+import { CommandDefinition } from './registry.js';
 
 /**
  * Create the config command group

@@ -4,10 +4,11 @@
  */
 
 import { Command } from 'commander';
-import { getCheckpointManager } from '../checkpoint-manager.js';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import { confirm } from '@inquirer/prompts';
+
+import { getCheckpointManager } from '../checkpoint-manager.js';
 
 /**
  * Register all checkpoint-related commands (including top-level commands)

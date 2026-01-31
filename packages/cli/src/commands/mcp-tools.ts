@@ -3,12 +3,13 @@
  * Provides commands for connecting to MCP servers, listing tools, and executing them
  */
 
+import * as path from 'path';
+import * as os from 'os';
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
-import * as path from 'path';
-import * as os from 'os';
 import fs from 'fs-extra';
 
 import { getMCPManager, MCPServerConfig } from '../mcp-client.js';

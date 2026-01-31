@@ -2,6 +2,7 @@
  * Chat command with Ink UI
  */
 import { Command } from 'commander';
+
 import { renderApp } from '../ui/index.js';
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';

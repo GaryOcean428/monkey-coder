@@ -1,15 +1,17 @@
 /**
  * Agent command with Ink UI
  */
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
 import { Command } from 'commander';
 import chalk from 'chalk';
+
 import { renderApp } from '../ui/index.js';
 import { MonkeyCoderAPIClient } from '../api-client.js';
 import { ConfigManager } from '../config.js';
 import { buildExecuteRequest, generateUUID } from '../utils.js';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 
 interface AgentOptions {
   persona?: string;

@@ -3,7 +3,9 @@
  */
 import React from 'react';
 import { Box, Text } from 'ink';
+
 import { Message } from '../types.js';
+
 import { CodeBlock } from './CodeBlock.js';
 import { StreamingText } from './StreamingText.js';
 
