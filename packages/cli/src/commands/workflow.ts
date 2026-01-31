@@ -7,10 +7,12 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import open from 'open';
+
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
-import { CommandDefinition } from './registry.js';
 import { getGitHubClient } from '../github-client.js';
+
+import { CommandDefinition } from './registry.js';
 
 /**
  * Create the workflow command group

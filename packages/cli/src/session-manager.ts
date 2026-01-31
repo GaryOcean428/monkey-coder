@@ -5,12 +5,13 @@
  * context window management with token counting, and checkpoint integration.
  */
 
-import Database, { Database as DatabaseType } from 'better-sqlite3';
-import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { randomUUID } from 'crypto';
+
+import { encoding_for_model, TiktokenModel } from 'tiktoken';
+import Database, { Database as DatabaseType } from 'better-sqlite3';
 
 // Types
 export interface Message {

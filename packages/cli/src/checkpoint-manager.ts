@@ -5,12 +5,13 @@
  * operation journaling for individual file changes.
  */
 
-import * as git from 'isomorphic-git';
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { randomUUID } from 'crypto';
+
+import * as git from 'isomorphic-git';
 
 // Types
 export interface Operation {

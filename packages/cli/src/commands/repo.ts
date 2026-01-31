@@ -6,8 +6,10 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
+
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
+
 import { CommandDefinition } from './registry.js';
 
 /**

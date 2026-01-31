@@ -5,8 +5,10 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+
 import { ConfigManager } from '../config.js';
 import { formatError } from '../utils.js';
+
 import { CommandDefinition } from './registry.js';
 
 /**

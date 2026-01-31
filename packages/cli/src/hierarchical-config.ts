@@ -6,7 +6,9 @@
 import * as path from 'path';
 import * as os from 'os';
 import * as crypto from 'crypto';
+
 import fs from 'fs-extra';
+
 import { ConfigFile } from './types.js';
 
 // Sensitive fields that should be encrypted
