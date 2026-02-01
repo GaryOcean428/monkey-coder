@@ -4,11 +4,6 @@ module.exports = {
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   testRunner: 'jest-circus/runner',
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
@@ -25,7 +20,8 @@ module.exports = {
     'node_modules/(?!(chalk|ansi-styles|supports-color|strip-ansi|ansi-regex|#ansi-styles|@inquirer|listr2)/)'
   ],
   moduleNameMapper: {
-    '^chalk$': '<rootDir>/__mocks__/chalk.js',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^chalk$': '<rootDir>/__mocks__/chalk.cjs',
     '^@inquirer/prompts$': '<rootDir>/__mocks__/@inquirer/prompts.js'
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
