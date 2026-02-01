@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { Input } from './ui/input'
 import { cn } from '@/lib/utils'
 
@@ -45,7 +44,6 @@ export function CommandPalette({ items, placeholder = 'Type a command...', onClo
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
 
   // Filter items based on search
   const filteredItems = items.filter(item => {

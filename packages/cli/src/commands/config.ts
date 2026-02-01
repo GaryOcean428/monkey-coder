@@ -245,7 +245,7 @@ Examples:
   $ monkey config edit --global
     Edit global configuration
 `)
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       try {
         console.log(chalk.blue('🔧 Interactive Configuration Editor\n'));
         

@@ -50,7 +50,7 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
       try {
         const result = await onValidation(value)
         setInternalError(result)
-      } catch (_err) {
+      } catch {
         setInternalError("Validation failed")
       } finally {
         setIsInternalValidating(false)

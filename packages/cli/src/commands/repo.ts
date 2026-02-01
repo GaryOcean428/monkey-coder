@@ -15,7 +15,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the repo command group
  */
-export function createRepoCommand(config: ConfigManager): Command {
+export function createRepoCommand(_config: ConfigManager): Command {
   const repo = new Command('repo')
     .description('Manage repositories')
     .alias('r');
@@ -118,7 +118,7 @@ Examples:
   $ monkey repo fork user/repo --org my-org
     Fork into an organization
 `)
-    .action(async (repository: string, options: any) => {
+    .action(async (repository: string, _options: any) => {
       try {
         console.log(chalk.blue(`🍴 Forking ${repository}...`));
 
@@ -151,7 +151,7 @@ Examples:
   $ monkey repo list --language javascript --limit 10
     List JavaScript repositories (max 10)
 `)
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       try {
         console.log(chalk.blue('📋 Listing repositories...'));
 
@@ -181,7 +181,7 @@ Examples:
   $ monkey repo view user/repo --web
     Open repository in browser
 `)
-    .action(async (repository: string | undefined, options: any) => {
+    .action(async (repository: string | undefined, _options: any) => {
       try {
         const target = repository || 'current repository';
         console.log(chalk.blue(`👀 Viewing ${target}...`));

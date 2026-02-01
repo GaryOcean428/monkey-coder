@@ -17,7 +17,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the release command group
  */
-export function createReleaseCommand(config: ConfigManager): Command {
+export function createReleaseCommand(_config: ConfigManager): Command {
   const release = new Command('release')
     .description('Manage releases');
 

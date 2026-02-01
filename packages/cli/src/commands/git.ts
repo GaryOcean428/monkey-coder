@@ -14,7 +14,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the git command group
  */
-export function createGitCommand(config: ConfigManager): Command {
+export function createGitCommand(_config: ConfigManager): Command {
   const git = new Command('git')
     .description('Git operations with AI assistance')
     .alias('g');
@@ -74,7 +74,7 @@ Examples:
   $ monkey git branch feature-x --delete
     Delete a branch
 `)
-    .action(async (branchName: string | undefined, options: any) => {
+    .action(async (_branchName: string | undefined, _options: any) => {
       try {
         console.log(chalk.blue('🌿 Git branch...'));
         console.log(chalk.yellow('\n⚠️  Git branch operations not yet implemented'));

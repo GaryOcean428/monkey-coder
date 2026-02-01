@@ -16,7 +16,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the search command group
  */
-export function createSearchCommand(config: ConfigManager): Command {
+export function createSearchCommand(_config: ConfigManager): Command {
   const search = new Command('search')
     .description('Search repositories, code, and issues');
 

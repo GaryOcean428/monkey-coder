@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
+import { describe, it, expect, beforeEach } from '@jest/globals'
 import { 
   rateLimit, 
   validateCSRFToken,
@@ -11,7 +11,7 @@ import {
   isValidURL,
   validateRequestBody 
 } from '@/lib/security-middleware'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
 describe('Security Middleware', () => {
   describe('rateLimit', () => {

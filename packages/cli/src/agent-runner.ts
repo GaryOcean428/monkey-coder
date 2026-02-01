@@ -181,7 +181,7 @@ export class AgentRunner {
   /**
    * Call AI API for next action
    */
-  private async callAI(tools: object[]): Promise<AIResponse> {
+  private async callAI(_tools: object[]): Promise<AIResponse> {
     if (!this.currentSessionId) {
       throw new Error('No active session');
     }
