@@ -17,7 +17,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the workflow command group
  */
-export function createWorkflowCommand(config: ConfigManager): Command {
+export function createWorkflowCommand(_config: ConfigManager): Command {
   const workflow = new Command('workflow')
     .description('Manage GitHub Actions workflows')
     .alias('wf');
@@ -317,7 +317,7 @@ Examples:
   $ monkey workflow disable ci.yml
     Disable CI workflow
 `)
-    .action(async (workflow: string, options: any) => {
+    .action(async (workflow: string, _options: any) => {
       try {
         console.log(chalk.red(`⏸️  Disabling workflow: ${workflow}`));
 
@@ -340,7 +340,7 @@ Examples:
   $ monkey workflow enable ci.yml
     Enable CI workflow
 `)
-    .action(async (workflow: string, options: any) => {
+    .action(async (workflow: string, _options: any) => {
       try {
         console.log(chalk.green(`▶️  Enabling workflow: ${workflow}`));
 

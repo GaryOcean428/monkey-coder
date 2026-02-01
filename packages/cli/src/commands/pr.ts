@@ -14,7 +14,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the pr command group
  */
-export function createPRCommand(config: ConfigManager): Command {
+export function createPRCommand(_config: ConfigManager): Command {
   const pr = new Command('pr')
     .description('Manage pull requests');
 
@@ -75,7 +75,7 @@ Examples:
   $ monkey pr list --author username
     List PRs by specific author
 `)
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       try {
         console.log(chalk.blue('📋 Listing pull requests...'));
         console.log(chalk.yellow('\n⚠️  PR listing not yet implemented'));
@@ -103,7 +103,7 @@ Examples:
   $ monkey pr view 123 --comments
     View PR with comments
 `)
-    .action(async (number: string, options: any) => {
+    .action(async (number: string, _options: any) => {
       try {
         console.log(chalk.blue(`👀 Viewing PR #${number}...`));
         console.log(chalk.yellow('\n⚠️  PR viewing not yet implemented'));
@@ -153,7 +153,7 @@ Examples:
   $ monkey pr review 123 --comment "Looks good!"
     Review with comment
 `)
-    .action(async (number: string, options: any) => {
+    .action(async (number: string, _options: any) => {
       try {
         console.log(chalk.blue(`🔍 Reviewing PR #${number}...`));
         console.log(chalk.yellow('\n⚠️  AI-assisted PR review not yet implemented'));

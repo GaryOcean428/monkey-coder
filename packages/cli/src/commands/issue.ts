@@ -14,7 +14,7 @@ import { CommandDefinition } from './registry.js';
 /**
  * Create the issue command group
  */
-export function createIssueCommand(config: ConfigManager): Command {
+export function createIssueCommand(_config: ConfigManager): Command {
   const issue = new Command('issue')
     .description('Manage issues');
 
@@ -75,7 +75,7 @@ Examples:
   $ monkey issue list --label bug --assignee me
     List bugs assigned to me
 `)
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       try {
         console.log(chalk.blue('📋 Listing issues...'));
         console.log(chalk.yellow('\n⚠️  Issue listing not yet implemented'));
@@ -103,7 +103,7 @@ Examples:
   $ monkey issue view 123 --comments
     View issue with comments
 `)
-    .action(async (number: string, options: any) => {
+    .action(async (number: string, _options: any) => {
       try {
         console.log(chalk.blue(`👀 Viewing issue #${number}...`));
         console.log(chalk.yellow('\n⚠️  Issue viewing not yet implemented'));
@@ -127,7 +127,7 @@ Examples:
   $ monkey issue close 123 --comment "Fixed in PR #124"
     Close with comment
 `)
-    .action(async (number: string, options: any) => {
+    .action(async (number: string, _options: any) => {
       try {
         console.log(chalk.blue(`✓ Closing issue #${number}...`));
         console.log(chalk.yellow('\n⚠️  Issue closing not yet implemented'));

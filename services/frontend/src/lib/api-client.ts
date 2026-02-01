@@ -74,7 +74,7 @@ class APIClient {
             errorMessage = `${errorMessage} (Received non-JSON response)`;
           }
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, use the status text
         errorMessage = `${errorMessage} (Failed to parse error response)`;
       }
@@ -90,7 +90,7 @@ class APIClient {
     // Check if response is JSON
     try {
       return JSON.parse(text);
-    } catch (e) {
+    } catch {
       // If it's not JSON, check if it's HTML
       if (text.includes('<!DOCTYPE') || text.includes('<html')) {
         throw new Error(`API returned HTML instead of JSON. Check that the backend service is running and the API URL is correct. (URL: ${url})`);

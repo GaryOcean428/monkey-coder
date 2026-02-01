@@ -63,7 +63,7 @@ export class ConfigManager {
   /**
    * Encrypt sensitive data
    */
-  private encrypt(text: string, salt: string): string {
+  private encrypt(text: string, _salt: string): string {
     if (!this.encryptionKey) {
       throw new Error('Encryption not initialized');
     }

@@ -26,7 +26,6 @@ import {
   TrendingUp, 
   Settings, 
   Code, 
-  Database, 
   Shield, 
   Sparkles,
   Activity,
@@ -108,7 +107,7 @@ const useQuantumWorkflowState = () => {
   // Simulate quantum-inspired parallel state processing
   const processContextualUpdates = useCallback(async (updates: Partial<QuantumWorkflowState>) => {
     // Parallel processing simulation for complex state updates
-    const processingTasks = await Promise.allSettled([
+    await Promise.allSettled([
       // Context analysis
       new Promise(resolve => setTimeout(() => resolve('context-processed'), 100)),
       // Performance metrics
@@ -216,7 +215,7 @@ const useQuantumWorkflowState = () => {
         };
 
         setState(mockData);
-      } catch (err) {
+      } catch {
         setError('Failed to initialize development context');
       } finally {
         setLoading(false);
@@ -376,7 +375,7 @@ const RecommendationEngine: React.FC<{ recommendations: AdaptiveRecommendation[]
 // ============================================================================
 
 export const AdaptiveDevelopmentContextEngine: React.FC = () => {
-  const { state, loading, error, updateContext } = useQuantumWorkflowState();
+  const { state, loading, error } = useQuantumWorkflowState();
 
   const contextMetrics = useMemo(() => [
     { 

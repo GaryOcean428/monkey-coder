@@ -139,7 +139,7 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
           errorMessage = `${errorMessage} (Received non-JSON response)`;
         }
       }
-    } catch (e) {
+    } catch {
       // If parsing fails, use the status text
     }
     
@@ -158,7 +158,7 @@ export async function handleApiResponse<T>(response: Response): Promise<T> {
   
   try {
     return JSON.parse(text);
-  } catch (e) {
+  } catch {
     // If it's not JSON, check if it's HTML
     if (text.includes('<!DOCTYPE') || text.includes('<html')) {
       throw new APIError(
