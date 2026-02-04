@@ -23,7 +23,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       language,
       ignoreIllegals: true 
     });
-  } catch (error) {
+  } catch (_error) {
     // Fallback to plain text if highlighting fails
     highlightedCode = code;
   }

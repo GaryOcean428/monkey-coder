@@ -168,7 +168,7 @@ export function createAuthCommand(config: ConfigManager): Command {
         try {
           const client = new MonkeyCoderAPIClient(config.getBaseUrl(), apiKey);
           await client.logout();
-        } catch (error) {
+        } catch (_error) {
           // Continue with local logout even if server call fails
           console.warn(chalk.yellow('Warning: Could not invalidate server session'));
         }

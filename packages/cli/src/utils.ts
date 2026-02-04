@@ -327,7 +327,7 @@ function loadLimitsConfig(): LimitsConfig {
       const configData = fs.readFileSync(configPath, 'utf-8');
       return JSON.parse(configData) as LimitsConfig;
     }
-  } catch (error) {
+  } catch (_error) {
     // Fall through to defaults
   }
   

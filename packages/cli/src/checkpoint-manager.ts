@@ -183,7 +183,7 @@ export class CheckpointManager {
     const statusMatrix = await git.statusMatrix({ fs, dir: this.workingDir });
     const changedFiles: string[] = [];
     
-    for (const [filepath, headStatus, workdirStatus, stageStatus] of statusMatrix) {
+    for (const [filepath, _headStatus, workdirStatus, stageStatus] of statusMatrix) {
       if (workdirStatus !== stageStatus) {
         changedFiles.push(filepath);
         if (workdirStatus === 0) {
@@ -237,7 +237,7 @@ export class CheckpointManager {
           checkpoints.push(JSON.parse(content));
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Directory might not exist yet
     }
 
@@ -406,7 +406,7 @@ export class CheckpointManager {
     try {
       // Get current HEAD
       const commits = await git.log({ fs, dir: this.workingDir, depth: 1 });
-      const currentSha = commits[0]?.oid || 'HEAD';
+      const _currentSha = commits[0]?.oid || 'HEAD';
 
       // Get the diff between checkpoint and current state
       const statusMatrix = await git.statusMatrix({
