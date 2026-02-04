@@ -12,6 +12,16 @@ const mockWriteFile = jest.fn() as any;
 const mockChmod = jest.fn() as any;
 
 jest.mock('fs-extra', () => ({
+  __esModule: true,
+  default: {
+    pathExistsSync: mockPathExistsSync,
+    pathExists: mockPathExists,
+    readFileSync: mockReadFileSync,
+    readFile: mockReadFile,
+    ensureDir: mockEnsureDir,
+    writeFile: mockWriteFile,
+    chmod: mockChmod
+  },
   pathExistsSync: mockPathExistsSync,
   pathExists: mockPathExists,
   readFileSync: mockReadFileSync,
