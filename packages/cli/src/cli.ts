@@ -42,7 +42,6 @@ import { createSearchCommand } from './commands/search.js';
 import { createReleaseCommand } from './commands/release.js';
 import { createWorkflowCommand } from './commands/workflow.js';
 import { createSessionCommand } from './commands/session.js';
-import { createChatCommand } from './commands/chat.js';
 import { createInkChatCommand } from './commands/chat-ink.js';
 import { createInkAgentCommand } from './commands/agent-ink.js';
 import { registerCheckpointCommands } from './commands/checkpoint.js';

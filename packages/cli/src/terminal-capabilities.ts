@@ -1,5 +1,3 @@
-import { execSync } from 'child_process';
-
 import supportsColor from 'supports-color';
 
 export interface TerminalCapabilities {
@@ -51,7 +49,7 @@ export function detectTerminalCapabilities(): TerminalCapabilities {
   // Check for Sixel support
   try {
     const term = process.env.TERM || '';
-    const termProgram = process.env.TERM_PROGRAM || '';
+    const _termProgram = process.env.TERM_PROGRAM || '';
     
     // Common terminals with Sixel support
     if (term.includes('xterm') || term.includes('mlterm') || term.includes('screen')) {

@@ -2,8 +2,6 @@
  * Type guards and validation helpers for CLI type safety
  */
 
-import { ExecuteRequest } from './types.js';
-
 // Valid task types
 export const VALID_TASK_TYPES = [
   'code_generation',

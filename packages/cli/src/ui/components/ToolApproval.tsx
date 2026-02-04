@@ -39,7 +39,7 @@ export const ToolApproval: React.FC<ToolApprovalProps> = ({
       language: 'json',
       ignoreIllegals: true 
     });
-  } catch (error) {
+  } catch (_error) {
     highlightedArgs = JSON.stringify(args, null, 2);
   }
 

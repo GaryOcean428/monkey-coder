@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { ConfigManager } from './config.js';
-import { EnhancedSplash, printEnhancedSplash, printEnhancedSplashSync } from './enhanced-splash.js';
+import { printEnhancedSplash, printEnhancedSplashSync } from './enhanced-splash.js';
 
 /**
  * Simple fallback splash for when enhanced rendering fails
@@ -63,7 +63,7 @@ export async function printSplashAsync(suppress = false): Promise<void> {
 
   try {
     await printEnhancedSplash(false);
-  } catch (error) {
+  } catch (_error) {
     printFallbackSplash();
   }
 }
