@@ -233,7 +233,7 @@ export function createMCPToolsCommand(): Command {
             try {
               manager.registerServer(serverConfig);
               await manager.connect(serverConfig.name);
-            } catch (error) {
+            } catch (_error) {
               // Continue if connection fails
             }
           }

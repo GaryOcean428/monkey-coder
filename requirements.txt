@@ -16,7 +16,7 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.76.0
+anthropic==0.77.1
     # via monkey-coder-core (pyproject.toml)
 anyio==4.12.1
     # via
@@ -68,8 +68,9 @@ click-plugins==1.1.1.2
     # via celery
 click-repl==0.3.0
     # via celery
-cryptography==46.0.3
+cryptography==46.0.4
     # via
+    #   google-auth
     #   pyjwt
     #   python-jose
 distro==1.9.0
@@ -99,9 +100,9 @@ fsspec==2026.1.0
     # via
     #   huggingface-hub
     #   torch
-google-auth==2.47.0
+google-auth==2.48.0
     # via google-genai
-google-genai==1.60.0
+google-genai==1.61.0
     # via monkey-coder-core (pyproject.toml)
 groq==1.0.0
     # via monkey-coder-core (pyproject.toml)
@@ -124,7 +125,7 @@ httpx==0.28.1
     #   google-genai
     #   groq
     #   openai
-huggingface-hub==0.36.0
+huggingface-hub==0.36.1
     # via
     #   accelerate
     #   sentence-transformers
@@ -138,7 +139,7 @@ idna==3.11
     #   yarl
 jinja2==3.1.6
     # via torch
-jiter==0.12.0
+jiter==0.13.0
     # via
     #   anthropic
     #   openai
@@ -154,13 +155,13 @@ mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
     # via sympy
-multidict==6.7.0
+multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
 networkx==3.6.1
     # via torch
-numpy==2.4.1
+numpy==2.4.2
     # via
     #   accelerate
     #   scikit-learn
@@ -204,7 +205,7 @@ nvidia-nvjitlink-cu12==12.8.93
     #   torch
 nvidia-nvtx-cu12==12.8.90
     # via torch
-openai==2.15.0
+openai==2.16.0
     # via monkey-coder-core (pyproject.toml)
 packaging==26.0
     # via
@@ -227,7 +228,7 @@ propcache==0.4.1
     #   monkey-coder-core (pyproject.toml)
     #   aiohttp
     #   yarl
-psutil==7.2.1
+psutil==7.2.2
     # via
     #   monkey-coder-core (pyproject.toml)
     #   accelerate
@@ -252,7 +253,7 @@ pydantic-core==2.41.5
     # via pydantic
 pygments==2.19.2
     # via rich
-pyjwt==2.10.1
+pyjwt==2.11.0
     # via monkey-coder-core (pyproject.toml)
 pymysql==1.1.2
     # via aiomysql
@@ -266,7 +267,7 @@ python-dotenv==1.2.1
     #   uvicorn
 python-jose==3.5.0
     # via monkey-coder-core (pyproject.toml)
-python-multipart==0.0.21
+python-multipart==0.0.22
     # via monkey-coder-core (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -289,7 +290,7 @@ requests==2.32.5
     #   transformers
 resend==2.21.0
     # via monkey-coder-core (pyproject.toml)
-rich==14.2.0
+rich==14.3.2
     # via
     #   monkey-coder-core (pyproject.toml)
     #   typer
@@ -310,9 +311,9 @@ scipy==1.17.0
     #   sentence-transformers
 sentence-transformers==2.7.0
     # via monkey-coder-core (pyproject.toml)
-sentry-sdk==2.50.0
+sentry-sdk==2.51.0
     # via monkey-coder-core (pyproject.toml)
-setuptools==80.10.1
+setuptools==80.10.2
     # via
     #   torch
     #   triton
@@ -336,7 +337,7 @@ starlette==0.50.0
     # via
     #   fastapi
     #   sse-starlette
-stripe==14.2.0
+stripe==14.3.0
     # via monkey-coder-core (pyproject.toml)
 sympy==1.14.0
     # via torch
@@ -353,7 +354,7 @@ torch==2.8.0
     #   monkey-coder-core (pyproject.toml)
     #   accelerate
     #   sentence-transformers
-tqdm==4.67.1
+tqdm==4.67.3
     # via
     #   huggingface-hub
     #   openai
@@ -407,7 +408,7 @@ vine==5.1.0
     #   kombu
 watchfiles==1.1.1
     # via uvicorn
-wcwidth==0.3.1
+wcwidth==0.5.3
     # via prompt-toolkit
 websockets==15.0.1
     # via
