@@ -23,11 +23,9 @@ export default function LoginPage() {
   const router = useRouter()
   const formStatus = useFormStatus()
 
-    // Initialize Supabase client
-    const supabase = createClient()
-
     // OAuth login handlers
     const handleGoogleLogin = async () => {
+          const supabase = createClient()
           const { error } = await supabase.auth.signInWithOAuth({
                   provider: 'google',
                   options: {
@@ -40,6 +38,7 @@ export default function LoginPage() {
     }
 
     const handleGithubLogin = async () => {
+          const supabase = createClient()
           const { error } = await supabase.auth.signInWithOAuth({
                   provider: 'github',
                   options: {
@@ -178,7 +177,8 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              {/* Google OAuth */}              <Button variant="outline" onClick={handleGoogleLogin}>
+              {/* Google OAuth */}
+              <Button variant="outline" onClick={handleGoogleLogin}>
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -11,23 +11,58 @@ import { createClient } from '@/lib/supabase/client'
  */
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleCallback = async () => {
-      const supabase = createClient()
-      const { searchParams } = new URL(window.location.href)
-      const code = searchParams.get('code')
+      try {
+        const { searchParams } = new URL(window.location.href)
+        const code = searchParams.get('code')
 
-      if (code) {
-        await supabase.auth.exchangeCodeForSession(code)
+        if (!code) {
+          // No code means authentication failed or was cancelled
+          router.push('/login?error=no_code')
+          return
+        }
+
+        const supabase = createClient()
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+          console.error('Auth exchange error:', exchangeError)
+          setError(exchangeError.message)
+          // Redirect to login with error after a brief delay
+          setTimeout(() => {
+            router.push(`/login?error=${encodeURIComponent(exchangeError.message)}`)
+          }, 2000)
+          return
+        }
+
+        // Success! Redirect to dashboard
+        router.push('/dashboard')
+      } catch (err) {
+        console.error('Unexpected error during auth callback:', err)
+        setError('An unexpected error occurred during authentication')
+        setTimeout(() => {
+          router.push('/login?error=unexpected')
+        }, 2000)
       }
-
-      // Redirect to dashboard after successful authentication
-      router.push('/dashboard')
     }
 
     handleCallback()
   }, [router])
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2 text-red-600">Authentication Failed</h1>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-sm text-muted-foreground">Redirecting to login page...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center">
