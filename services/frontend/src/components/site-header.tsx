@@ -2,17 +2,25 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { unifiedNavigation } from '@/config/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -103,14 +111,35 @@ export function SiteHeader() {
         {/* Desktop actions */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
           <ThemeToggle />
-          <Link href="/login">
-            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
-              Log in
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button className="neon-button-cyan">Get started</Button>
-          </Link>
+          {user ? (
+            <>
+              <Link href="/dashboard">
+                <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
+                  <User className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="border-primary/20 hover:bg-destructive/10 hover:border-destructive/40"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Log out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="neon-button-cyan">Get started</Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -176,14 +205,38 @@ export function SiteHeader() {
                 <div className="flex justify-center mb-4">
                   <ThemeToggle />
                 </div>
-                <Link href="/login" className="block">
-                  <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/signup" className="block">
-                  <Button className="w-full neon-button-cyan">Get started</Button>
-                </Link>
+                {user ? (
+                  <>
+                    <Link href="/dashboard" className="block" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
+                        <User className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-primary/20 hover:bg-destructive/10 hover:border-destructive/40"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Log out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="block" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/10 hover:border-primary/40">
+                        Log in
+                      </Button>
+                    </Link>
+                    <Link href="/signup" className="block" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full neon-button-cyan">Get started</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
