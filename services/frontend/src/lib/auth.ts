@@ -112,6 +112,19 @@ export async function refreshToken(): Promise<AuthResponse | null> {
 }
 
 /**
+ * Exchange a Supabase OAuth access token for a backend JWT.
+ * This bridges Supabase OAuth sessions to the backend auth system.
+ */
+export async function exchangeSupabaseToken(accessToken: string): Promise<AuthResponse> {
+  const response = await apiFetch('/api/v1/auth/supabase', {
+    method: 'POST',
+    body: JSON.stringify({ access_token: accessToken }),
+  });
+
+  return handleApiResponse<AuthResponse>(response);
+}
+
+/**
  * Check if user is authenticated
  * This is a client-side check, actual authentication is done via httpOnly cookies
  */

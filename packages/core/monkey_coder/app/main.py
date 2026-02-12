@@ -118,9 +118,10 @@ async def request_password_reset(data: PasswordResetRequest):
     }
     
     # In production, send email with token
+    # NOTE: Token is NOT returned in response for security — must be sent via email
+    print(f"[AUTH] Password reset token generated for {data.email} (token hash: {token_hash[:8]}...)")
     return {
-        "message": "Password reset email sent",
-        "token": token  # Only for testing; don't return in production
+        "message": "If an account exists with that email, a password reset link has been sent."
     }
 
 @app.post("/api/v1/auth/password-reset/confirm")

@@ -7,7 +7,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthUser, login, signup, logout, getUserStatus, refreshToken, clearLegacyTokens } from './auth';
+import { AuthUser, login, signup, logout, getUserStatus, refreshToken, exchangeSupabaseToken, clearLegacyTokens } from './auth';
+import { createClient, isConfigured as isSupabaseConfigured } from './supabase/client';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -37,9 +38,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Clear any legacy tokens during migration
         clearLegacyTokens();
 
+        // First try backend auth status (httpOnly cookies)
         const status = await getUserStatus();
         if (status.authenticated && status.user) {
           setUser(status.user);
+          return;
+        }
+
+        // If backend auth failed and Supabase is configured, check for Supabase session
+        if (isSupabaseConfigured) {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            try {
+              const result = await exchangeSupabaseToken(session.access_token);
+              if (result.user) {
+                setUser(result.user);
+              }
+            } catch (bridgeErr) {
+              console.warn('Supabase session exists but backend exchange failed:', bridgeErr);
+            }
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);

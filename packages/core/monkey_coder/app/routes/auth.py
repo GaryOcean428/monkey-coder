@@ -5,13 +5,17 @@ This module provides authentication endpoints:
 - POST /api/v1/auth/login - User login
 - POST /api/v1/auth/signup - User registration
 - POST /api/v1/auth/refresh - Token refresh
+- POST /api/v1/auth/logout - User logout
+- POST /api/v1/auth/supabase - Exchange Supabase OAuth token for backend JWT
 - GET /api/v1/auth/status - Auth status check
 """
 
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
+import httpx
 from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field, EmailStr
 from jose import jwt, JWTError
@@ -59,6 +63,11 @@ class AuthResponse(BaseModel):
 class RefreshTokenRequest(BaseModel):
     """Refresh token request model."""
     refresh_token: str = Field(..., description="JWT refresh token")
+
+
+class SupabaseTokenRequest(BaseModel):
+    """Supabase token exchange request model."""
+    access_token: str = Field(..., description="Supabase access token from OAuth flow")
 
 
 class UserStatusResponse(BaseModel):
@@ -342,6 +351,160 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token refresh failed"
         )
+
+
+@router.post("/logout")
+async def logout(current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+    """
+    User logout endpoint.
+
+    Args:
+        current_user: Current authenticated user from JWT
+
+    Returns:
+        Logout confirmation
+    """
+    logger.info(f"User {current_user.email} logged out")
+    return {"message": "Successfully logged out"}
+
+
+@router.post("/supabase", response_model=AuthResponse)
+async def exchange_supabase_token(request: SupabaseTokenRequest) -> AuthResponse:
+    """
+    Exchange a Supabase OAuth access token for a backend JWT.
+
+    This bridges the Supabase OAuth flow to the backend auth system:
+    1. Verifies the Supabase token by calling the Supabase REST API
+    2. Extracts user info (email, name) from the Supabase response
+    3. Finds or creates a user in the backend store
+    4. Returns backend JWT tokens
+
+    Args:
+        request: Contains the Supabase access token
+
+    Returns:
+        Backend JWT tokens and user information
+
+    Raises:
+        HTTPException: If token verification or user creation fails
+    """
+    supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    if not supabase_url:
+        logger.error("SUPABASE_URL not configured on backend")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OAuth service not configured"
+        )
+
+    # Verify the Supabase token by calling Supabase's user endpoint
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {request.access_token}",
+                    "apikey": os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", ""),
+                },
+                timeout=10.0,
+            )
+    except httpx.RequestError as e:
+        logger.error(f"Failed to contact Supabase: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to verify OAuth token"
+        )
+
+    if resp.status_code != 200:
+        logger.warning(f"Supabase token verification failed: {resp.status_code} {resp.text[:200]}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired OAuth token"
+        )
+
+    supabase_user = resp.json()
+    email = supabase_user.get("email", "").lower()
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OAuth account has no email address"
+        )
+
+    # Extract name from Supabase user metadata
+    user_meta = supabase_user.get("user_metadata", {})
+    name = (
+        user_meta.get("full_name")
+        or user_meta.get("name")
+        or user_meta.get("preferred_username")
+        or email.split("@")[0]
+    )
+    provider = supabase_user.get("app_metadata", {}).get("provider", "oauth")
+
+    # Find or create user in backend store
+    user_store = get_user_store()
+    user = await User.get_by_email(email)
+
+    if not user:
+        # Create a new user for this OAuth account (no password needed)
+        import secrets
+        oauth_password_hash = hash_password(secrets.token_urlsafe(32))
+        user = await user_store.create_user(
+            username=name,
+            email=email,
+            password_hash=oauth_password_hash,
+            full_name=name,
+            subscription_plan="hobby",
+            is_developer=False,
+            roles=["user"],
+        )
+        logger.info(f"Created new user from {provider} OAuth: {email}")
+    else:
+        logger.info(f"Existing user authenticated via {provider} OAuth: {email}")
+
+    # Convert database user roles to UserRole enums
+    user_roles = []
+    for role_str in user.roles:
+        try:
+            user_roles.append(UserRole(role_str))
+        except ValueError:
+            logger.warning(f"Invalid role '{role_str}' for user {user.email}")
+
+    if not user.id:
+        logger.error(f"OAuth user {email} has no ID")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="User account error"
+        )
+
+    # Create JWT user and tokens
+    jwt_user = JWTUser(
+        user_id=str(user.id),
+        username=user.username,
+        email=user.email,
+        roles=user_roles,
+        permissions=get_user_permissions(user_roles),
+        mfa_verified=True,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+    )
+
+    access_token = create_access_token(jwt_user)
+    refresh_token = create_refresh_token(jwt_user.user_id)
+
+    credits = 10000 if user.is_developer else 100
+    subscription_tier = "developer" if user.is_developer else user.subscription_plan
+
+    return AuthResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user={
+            "id": jwt_user.user_id,
+            "email": jwt_user.email,
+            "name": jwt_user.username,
+            "credits": credits,
+            "subscription_tier": subscription_tier,
+            "is_developer": user.is_developer,
+            "roles": [role.value for role in user_roles],
+        },
+    )
 
 
 @router.get("/status", response_model=UserStatusResponse)

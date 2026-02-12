@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { exchangeSupabaseToken } from '@/lib/auth'
 
 /**
  * Auth callback page for Supabase OAuth
@@ -31,11 +32,21 @@ export default function AuthCallbackPage() {
         if (exchangeError) {
           console.error('Auth exchange error:', exchangeError)
           setError(exchangeError.message)
-          // Redirect to login with error after a brief delay
           setTimeout(() => {
             router.push(`/login?error=${encodeURIComponent(exchangeError.message)}`)
           }, 2000)
           return
+        }
+
+        // Bridge Supabase session to backend JWT
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          try {
+            await exchangeSupabaseToken(session.access_token)
+          } catch (bridgeErr) {
+            // Log but don't block — user has a valid Supabase session
+            console.warn('Backend token exchange failed, continuing with Supabase session:', bridgeErr)
+          }
         }
 
         // Success! Redirect to dashboard
