@@ -53,7 +53,54 @@ python scripts/mcp-railway-deployment-manager.py --fix
 ./scripts/railway-deployment-integration.sh
 ```
 
-### 4. MCP Railway Tool (`packages/core/monkey_coder/mcp/railway_deployment_tool.py`)
+### 4. Railway Environment Configuration for AetherOS (`configure-railway-aetheros.sh`)
+**Purpose**: Configure Railway environment variables for monkey-coder services in AetherOS project
+
+**Features:**
+- 🔐 Automatic generation of secure SANDBOX_TOKEN_SECRET
+- ⚙️ Configure sandbox, backend, and frontend services
+- 🔄 Railway reference variable usage for service discovery
+- 🚨 Dry-run mode for preview before applying
+- ✅ Interactive confirmation and validation
+
+**Usage:**
+```bash
+# Preview changes without applying
+./scripts/configure-railway-aetheros.sh --dry-run
+
+# Apply configuration
+railway login
+railway link 9n
+./scripts/configure-railway-aetheros.sh
+```
+
+**Documentation:** See `docs/deployment/railway-aetheros-config.md` for detailed configuration guide
+
+### 5. Railway API Configuration Script (`configure-railway-api.py`)
+**Purpose**: Programmatic Railway environment variable configuration via GraphQL API
+
+**Features:**
+- 🔌 Railway GraphQL API integration
+- 🤖 CI/CD friendly automation
+- 🔐 Secure token generation
+- 📊 Service discovery and validation
+- 🧪 Dry-run mode for testing
+
+**Usage:**
+```bash
+# Get API token from https://railway.app/account/tokens
+export RAILWAY_API_TOKEN=your_token_here
+
+# Preview changes
+python scripts/configure-railway-api.py --dry-run
+
+# Apply configuration
+python scripts/configure-railway-api.py
+```
+
+**Documentation:** See `RAILWAY_CONFIG_SUMMARY.md` for quick reference
+
+### 6. MCP Railway Tool (`packages/core/monkey_coder/mcp/railway_deployment_tool.py`)
 **Purpose**: MCP framework integration for Railway deployment management
 
 **Features:**
@@ -106,6 +153,42 @@ The tools integrate with the MCP (Model Context Protocol) framework providing:
 
 ## Quick Start
 
+### For New AetherOS Project Setup
+
+1. **Configure Railway environment variables:**
+   ```bash
+   # Method 1: Using Railway CLI
+   railway login
+   railway link 9n
+   ./scripts/configure-railway-aetheros.sh
+   
+   # Method 2: Using Railway API
+   export RAILWAY_API_TOKEN=your_token
+   python scripts/configure-railway-api.py
+   ```
+
+2. **Run comprehensive validation:**
+   ```bash
+   ./scripts/railway-deployment-integration.sh
+   ```
+
+3. **Fix specific issues:**
+   ```bash
+   python scripts/mcp-railway-deployment-manager.py --fix
+   ```
+
+4. **Apply auto-fixes:**
+   ```bash
+   ./scripts/railway-auto-fix.sh
+   ```
+
+5. **Check deployment readiness:**
+   ```bash
+   ./check-railway-readiness.sh
+   ```
+
+### For General Railway Deployments
+
 1. **Run comprehensive validation:**
    ```bash
    ./scripts/railway-deployment-integration.sh
@@ -144,9 +227,11 @@ The tools integrate with the MCP (Model Context Protocol) framework providing:
 ## Output Files
 
 - `RAILWAY_DEPLOYMENT_SUMMARY.md` - Comprehensive deployment summary
+- `RAILWAY_CONFIG_SUMMARY.md` - Railway environment configuration summary for AetherOS
 - `railway_deployment_YYYYMMDD_HHMMSS.log` - Detailed execution log  
 - `check-railway-readiness.sh` - Quick readiness check script
 - `railway-deployment-fix.sh` - Auto-generated fix script (if issues found)
+- `docs/deployment/railway-aetheros-config.md` - Detailed AetherOS configuration documentation
 
 ## Best Practices
 
