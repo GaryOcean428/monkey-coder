@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 
 // Mock data - replace with actual API calls
 const mockApiKeys = [
@@ -108,23 +109,16 @@ const mockProjects = [
 
 export default function DashboardPage() {
   const router = useRouter()
+  const { user, loading } = useAuth()
   const [showKey, setShowKey] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    // Check authentication - redirect if not logged in
-    const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      // Fetch user data
-      setUser({ name: 'John Doe', email: 'john@example.com', plan: 'Pro' })
+    // Redirect to login if not authenticated
+    if (!loading && !user) {
+      router.push('/login')
     }
-    checkAuth()
-  }, [router])
+  }, [user, loading, router])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -161,7 +155,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -175,7 +169,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, {user.name}! Manage your API keys, monitor usage, and track projects.
+          Welcome back, {user?.name || user?.email}! Manage your API keys, monitor usage, and track projects.
         </p>
       </div>
 
@@ -228,7 +222,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">${mockUsageData.total.cost.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {user.plan} Plan
+              {user?.subscription_tier || 'Free'} Plan
             </p>
           </CardContent>
         </Card>
@@ -618,7 +612,7 @@ export default function DashboardPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <h4 className="font-medium">Current Plan: {user.plan}</h4>
+                    <h4 className="font-medium">Current Plan: {user?.subscription_tier || 'Free'}</h4>
                     <p className="text-sm text-muted-foreground">$79/month • Renews on Feb 7, 2025</p>
                   </div>
                   <Link href="/pricing">
@@ -685,7 +679,7 @@ export default function DashboardPage() {
                     <input
                       type="text"
                       className="w-full mt-1 px-3 py-2 border rounded-md"
-                      defaultValue={user.name}
+                      defaultValue={user?.name || ''}
                     />
                   </div>
                   <div>
@@ -693,7 +687,7 @@ export default function DashboardPage() {
                     <input
                       type="email"
                       className="w-full mt-1 px-3 py-2 border rounded-md"
-                      defaultValue={user.email}
+                      defaultValue={user?.email || ''}
                     />
                   </div>
                 </div>
