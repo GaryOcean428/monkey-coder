@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Install Python sandbox dependencies
-COPY services/sandbox/requirements.txt ./
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install E2B CLI and SDK
@@ -43,7 +43,7 @@ RUN pip install browserbase playwright
 RUN playwright install chromium
 
 # Copy sandbox service code
-COPY services/sandbox/ ./
+COPY . ./
 RUN chown -R sandbox:sandbox /sandbox
 
 # Create secure volume mount points with proper permissions
@@ -57,7 +57,7 @@ RUN mkdir -p /sandbox/volumes/workspace \
 RUN mkdir -p /etc/netns/sandbox
 
 # Copy supervisor configuration for process management
-COPY services/sandbox/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN cp /sandbox/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Switch to sandbox user
 USER sandbox
