@@ -32,10 +32,10 @@ const modelCosts = {
     output: 0.00920, // $0.008 × 1.15
     display: 'GPT-4.1'
   },
-  'claude-3-5-sonnet': {
+  'claude-sonnet-4-5': {
     input: 0.00345, // $0.003 × 1.15
     output: 0.01725, // $0.015 × 1.15
-    display: 'Claude 3.5 Sonnet'
+    display: 'Claude Sonnet 4.5'
   },
   'gemini-2.5-flash': {
     input: 0.00009, // $0.000075 × 1.15
@@ -225,7 +225,7 @@ export function PricingSection() {
                   </optgroup>
                   <optgroup label="Balanced Tier">
                     <option value="gpt-4.1">GPT-4.1</option>
-                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
                     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                     <option value="o4-mini">O4 Mini (Reasoning)</option>
                   </optgroup>
@@ -396,8 +396,8 @@ export function PricingSection() {
                 <tr>
                   <td className="px-6 py-4 text-sm">Claude 3.5 Sonnet</td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">Complex reasoning, analysis</td>
-                  <td className="px-6 py-4 text-sm">${modelCosts['claude-3-5-sonnet'].input.toFixed(5)}</td>
-                  <td className="px-6 py-4 text-sm">${modelCosts['claude-3-5-sonnet'].output.toFixed(5)}</td>
+                  <td className="px-6 py-4 text-sm">${modelCosts['claude-sonnet-4-5'].input.toFixed(5)}</td>
+                  <td className="px-6 py-4 text-sm">${modelCosts['claude-sonnet-4-5'].output.toFixed(5)}</td>
                 </tr>
                 <tr className="bg-secondary/20">
                   <td colSpan={4} className="px-6 py-2 text-sm font-semibold">Premium Tier</td>

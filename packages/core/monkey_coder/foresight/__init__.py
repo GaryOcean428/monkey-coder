@@ -77,7 +77,7 @@ CLAUDE_45_FORESIGHT_CONFIG = {
             "immediate_decision_support"
         ]
     },
-    "claude-opus-4-1-20250805": {
+    "claude-opus-4-6": {
         "context_window": 200000,
         "output_tokens": 32000,
         "foresight_capabilities": {
@@ -95,7 +95,7 @@ CLAUDE_45_FORESIGHT_CONFIG = {
             "strategic_planning"
         ]
     },
-    "claude-sonnet-4-20250514": {
+    "claude-sonnet-4-5": {
         "context_window": 200000,
         "output_tokens": 32000,
         "foresight_capabilities": {
@@ -136,9 +136,9 @@ def select_optimal_claude_model_for_foresight(
         return "claude-4.5-haiku-20250930"
 
     if complexity_level > 0.9 or foresight_type == ForesightType.IMAGINATIVE:
-        return "claude-opus-4-1-20250805"
+        return "claude-opus-4-6"
 
     if foresight_type in [ForesightType.LOGICAL, ForesightType.CAUSAL]:
         return "claude-4.5-sonnet-20250930"
 
-    return "claude-sonnet-4-20250514"  # Balanced default
+    return "claude-sonnet-4-5"  # Balanced default

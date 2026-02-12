@@ -49,24 +49,18 @@ const FALLBACK_MODEL_REGISTRY = {
     'o3-pro',
     'o3',
     'o3-mini',
-    'o1',
-    'o1-mini',
   ],
   anthropic: [
-    'claude-sonnet-4-5-20250929',
-    'claude-opus-4-1-20250805',
-    'claude-opus-4-20250514',
-    'claude-sonnet-4-20250514',
-    'claude-3-7-sonnet-20250219',
+    'claude-sonnet-4-5',
+    'claude-opus-4-6',
+    'claude-haiku-4-5',
   ],
   google: [
     'gemini-2.5-pro',
     'gemini-2.5-flash',
     'gemini-2.5-flash-lite',
-    'gemini-2.0-flash',
   ],
   grok: [
-    'grok-4-latest',
     'grok-4',
     'grok-3',
     'grok-3-mini',
@@ -121,9 +115,9 @@ export async function getModelsStats(): Promise<ModelsStats> {
     // Get latest/flagship models from each provider
     const latestModels = [
       'gpt-5', // OpenAI flagship
-      'claude-sonnet-4-5-20250929', // Anthropic flagship
+      'claude-sonnet-4-5', // Anthropic flagship
       'gemini-2.5-pro', // Google flagship
-      'grok-4-latest', // xAI flagship
+      'grok-4', // xAI flagship
       'llama-3.3-70b-versatile', // Groq popular model
     ];
 
@@ -152,7 +146,7 @@ export async function getModelsStats(): Promise<ModelsStats> {
         Groq: FALLBACK_MODEL_REGISTRY.groq.length,
       },
       modelsByProvider: FALLBACK_MODEL_REGISTRY,
-      latestModels: ['gpt-5', 'claude-sonnet-4-5-20250929', 'gemini-2.5-pro', 'grok-4-latest', 'llama-3.3-70b-versatile'],
+      latestModels: ['gpt-5', 'claude-sonnet-4-5', 'gemini-2.5-pro', 'grok-4', 'llama-3.3-70b-versatile'],
     };
   }
 }

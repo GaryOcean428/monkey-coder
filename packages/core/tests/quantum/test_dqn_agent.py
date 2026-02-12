@@ -250,7 +250,7 @@ class TestDQNRoutingAgent(unittest.TestCase):
     
     def test_calculate_reward_performance_bonuses(self):
         """Test that performance bonuses are applied correctly."""
-        action = RoutingAction(ProviderType.ANTHROPIC, "claude-3-7-sonnet-20250219", "performance")
+        action = RoutingAction(ProviderType.ANTHROPIC, "claude-sonnet-4-5", "performance")
         routing_result = {"success": True}
         execution_metrics = {
             "response_time": 0.5,   # Fast response (should get bonus)

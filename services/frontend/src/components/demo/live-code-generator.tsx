@@ -66,9 +66,8 @@ const codeExamples: CodeExample[] = [
 
 const aiModels = [
   { id: 'gpt-4.1', name: 'GPT-4.1', speed: 'Fast', quality: 'High' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', speed: 'Medium', quality: 'Excellent' },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', speed: 'Very Fast', quality: 'Good' },
-  { id: 'claude-opus-4-1', name: 'Claude Opus 4.1', speed: 'Slow', quality: 'Superior' }
+  { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', speed: 'Medium', quality: 'Excellent' },
+  { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', speed: 'Slow', quality: 'Superior' }
 ]
 
 // Simulated code generation response

@@ -156,7 +156,7 @@ const useQuantumWorkflowState = () => {
               costEfficiency: 82
             },
             {
-              modelId: 'claude-opus-4-20250514',
+              modelId: 'claude-opus-4-6',
               provider: 'Anthropic',
               averageResponseTime: 1800,
               successRate: 97,
@@ -201,7 +201,7 @@ const useQuantumWorkflowState = () => {
             }
           ],
           userPreferences: {
-            preferredModels: ['claude-opus-4-20250514', 'gpt-4.1'],
+            preferredModels: ['claude-opus-4-6', 'gpt-4.1'],
             interfaceTheme: 'adaptive',
             notificationLevel: 'smart',
             automationLevel: 'high'

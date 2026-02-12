@@ -402,129 +402,145 @@ class ValidationError(Exception):
 # Full documentation at https://ai1docs.abacusai.app/
 # Add to top of MODEL_REGISTRY section
 DEFAULT_MODELS = {
-    ProviderType.ANTHROPIC: "claude-4.5-sonnet-20250930",  # Latest Claude 4.5 model
-    # Defaults for other providers
-    ProviderType.OPENAI: "gpt-5",  # Latest GPT-5 model
+    ProviderType.OPENAI: "gpt-5.2",
+    ProviderType.ANTHROPIC: "claude-opus-4-6",
     ProviderType.GOOGLE: "gemini-2.5-pro",
-    ProviderType.GROK: "grok-4-latest",
+    ProviderType.GROK: "grok-4",
     ProviderType.GROQ: "llama-3.3-70b-versatile",
 }
 
 MODEL_REGISTRY = {
     ProviderType.OPENAI: [
-        # GPT-5 Family (Latest generation - best for coding and agentic tasks)
+        # GPT-5.x Series (Latest)
+        "gpt-5.2",
+        "gpt-5.2-codex",
+        "gpt-5.2-pro",
+        "gpt-5.3-codex",
+        "gpt-5.1",
         "gpt-5",
         "gpt-5-mini",
         "gpt-5-nano",
-        # GPT-4.1 Family (Previous flagship models)
+        # GPT-4.1 Series (Production — verified live on OpenAI docs)
         "gpt-4.1",
         "gpt-4.1-mini",
-        "gpt-4.1-vision",
+        "gpt-4.1-nano",
         # Reasoning models
-        "o4-mini",
         "o3-pro",
         "o3",
         "o3-mini",
-        "o1",
-        "o1-mini",
-        # Legacy (deprecated - DO NOT USE)
-        # "gpt-4-turbo",  # Use gpt-4.1 instead
-        # "gpt-4",  # Use gpt-4.1 instead
-        # "gpt-3.5-turbo",  # Use gpt-4.1-mini instead
+        "o4-mini",
+        "o3-deep-research",
+        "o4-mini-deep-research",
+        # Open-weight models (Apache 2.0)
+        "gpt-oss-120b",
+        "gpt-oss-20b",
     ],
     ProviderType.ANTHROPIC: [
-        # Claude 4.5 Family (Latest and most capable)
-        "claude-4.5-sonnet-20250930",
-        "claude-4.5-haiku-20250930",
-        # Claude 4.1 Family
-        "claude-opus-4-1-20250805",
-        # Claude 4 Family
-        "claude-sonnet-4-20250514",
+        # Claude 4.6 (Latest)
+        "claude-opus-4-6",
+        # Claude 4.5 Family
+        "claude-opus-4-5",
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5",
+        # Dated aliases (resolve to the above)
+        "claude-opus-4-5-20251101",
+        "claude-sonnet-4-5-20250929",
+        "claude-haiku-4-5-20251001",
     ],
     ProviderType.GOOGLE: [
-        # Gemini 2.5 Family
+        # Gemini 3 (Preview)
+        "gemini-3-pro-preview",
+        "gemini-3-flash-preview",
+        "gemini-3-pro-image-preview",
+        # Gemini 2.5 (Production)
         "gemini-2.5-pro",
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
-        # Gemini 2.0 Family
-        "gemini-2.0-flash",
     ],
     ProviderType.GROK: [
-        # xAI Grok models
-        "grok-4-latest",
+        # Grok 4.1 (Latest)
+        "grok-4.1-fast-reasoning",
+        "grok-4.1-fast-non-reasoning",
+        # Grok 4
         "grok-4",
+        # Grok 3
         "grok-3",
         "grok-3-mini",
-        "grok-3-mini-fast",
-        "grok-3-fast",
         # Specialized code model
         "grok-code-fast-1",
     ],
     ProviderType.GROQ: [
-        # Llama models (excluding R1)
+        # Production models
+        "groq/compound",
         "llama-3.3-70b-versatile",
         "llama-3.1-8b-instant",
-        "meta-llama/llama-4-maverick-17b-128e-instruct",
-        "meta-llama/llama-4-scout-17b-16e-instruct",
-        # Kimi model
-        "moonshotai/kimi-k2-instruct",
-        # Qwen model
-        "qwen/qwen3-32b",
+        "gpt-oss-120b",
+        "gpt-oss-20b",
     ],
 }
 
 # Cross-provider model mapping
-# Some models are available through multiple providers
 CROSS_PROVIDER_MODELS = {
-    # Currently all models are accessed through their primary providers
-    # Groq hosts models from other vendors but we track them under Groq
+    "gpt-oss-120b": [ProviderType.OPENAI, ProviderType.GROQ],
+    "gpt-oss-20b": [ProviderType.OPENAI, ProviderType.GROQ],
 }
 
 # Model aliases for backward compatibility
-# Maps old names to new approved names
+# Maps old/legacy names to current canonical names
 MODEL_ALIASES = {
-    # OpenAI aliases
+    # OpenAI legacy → current
     "gpt-4-turbo": "gpt-4.1",
     "gpt-4": "gpt-4.1",
-    "gpt-3.5-turbo": "gpt-4.1-mini",
-    "gpt-4o": "gpt-4.1",  # Legacy compatibility
-    "gpt-4o-mini": "gpt-4.1-mini",  # Legacy compatibility
+    "gpt-3.5-turbo": "gpt-4.1-nano",
+    "gpt-4o": "gpt-4.1",
+    "gpt-4o-mini": "gpt-4.1-mini",
+    "gpt-4.1-vision": "gpt-4.1",
+    "chatgpt-4.1": "gpt-4.1",
+    "o1-mini": "o4-mini",
+    "o1-preview": "o3",
+    "o1": "o3",
     # Google prefixed IDs to canonical names
     "models/gemini-2.5-flash": "gemini-2.5-flash",
     "models/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-    "models/gemini-2.0-flash": "gemini-2.0-flash",
-    # Some environments may still refer to these previews; normalize if encountered
+    "models/gemini-2.5-pro": "gemini-2.5-pro",
+    "models/gemini-2.0-flash": "gemini-2.5-flash",
     "models/gemini-live-2.5-flash-preview": "gemini-2.5-flash",
-    "models/gemini-2.0-flash-live-001": "gemini-2.0-flash",
-    # Anthropic aliases
-    "claude-3-opus-20240229": "claude-opus-4-1-20250805",  # Old Opus -> new Opus 4.1
-    "claude-3-sonnet-20240229": "claude-sonnet-4-20250514",  # Old Sonnet -> new Sonnet 4
-    "claude-3-5-sonnet-20241022": "claude-4.5-sonnet-20250930",  # 3.5 Sonnet -> 4.5 Sonnet
-    "claude-3-5-sonnet-20240620": "claude-4.5-sonnet-20250930",  # 3.5 Sonnet -> 4.5 Sonnet
-    "claude-3-5-haiku-20241022": "claude-4.5-haiku-20250930",  # 3.5 Haiku -> 4.5 Haiku
-    "claude-sonnet-4-5-20250929": "claude-4.5-sonnet-20250930",  # Old 4.5 -> new 4.5
-    "claude-3-7-sonnet-20250219": "claude-4.5-sonnet-20250930",  # 3.7 -> 4.5
-    "claude-2.1": "claude-4.5-haiku-20250930",  # Claude 2 -> 4.5 Haiku
-    "claude-3-5-sonnet-latest": "claude-4.5-sonnet-20250930",  # Latest alias
-    "claude-opus-4-1": "claude-opus-4-1-20250805",  # Unversioned alias
-    "claude-opus-4.1": "claude-opus-4-1-20250805",  # Alternate format
-    "claude-4.5-sonnet": "claude-4.5-sonnet-20250930",  # Unversioned alias
-    "claude-4.5-haiku": "claude-4.5-haiku-20250930",  # Unversioned alias
-    # Google aliases
+    "models/gemini-2.0-flash-live-001": "gemini-2.5-flash",
+    "gemini-2.0-flash": "gemini-2.5-flash",
     "gemini-pro": "gemini-2.5-flash",
     "gemini-1.5-pro": "gemini-2.5-pro",
     "gemini-pro-vision": "gemini-2.5-pro",
+    # Anthropic legacy → current
+    "claude-3-opus-20240229": "claude-opus-4-6",
+    "claude-3-sonnet-20240229": "claude-sonnet-4-5",
+    "claude-3-5-sonnet-20241022": "claude-sonnet-4-5",
+    "claude-3-5-sonnet-20240620": "claude-sonnet-4-5",
+    "claude-3-5-haiku-20241022": "claude-haiku-4-5",
+    "claude-3-7-sonnet-20250219": "claude-sonnet-4-5",
+    "claude-3-5-sonnet-latest": "claude-sonnet-4-5",
+    "claude-2.1": "claude-haiku-4-5",
+    "claude-opus-4-20250514": "claude-opus-4-6",
+    "claude-sonnet-4-20250514": "claude-sonnet-4-5",
+    "claude-opus-4-1-20250805": "claude-opus-4-6",
+    "claude-4.5-sonnet-20250930": "claude-sonnet-4-5",
+    "claude-4.5-haiku-20250930": "claude-haiku-4-5",
+    "claude-sonnet-4-5-20250929": "claude-sonnet-4-5",
+    "claude-4.5-sonnet": "claude-sonnet-4-5",
+    "claude-4.5-haiku": "claude-haiku-4-5",
+    "claude-opus-4-1": "claude-opus-4-6",
+    "claude-opus-4.1": "claude-opus-4-6",
+    # xAI legacy → current
+    "grok-4-latest": "grok-4",
+    "grok-3-fast": "grok-3",
+    "grok-3-mini-fast": "grok-3-mini",
+    "grok-2": "grok-3",
 }
 
-# New resolve_model function
 def resolve_model(model_name: str, provider: ProviderType) -> str:
-    """Resolve model name with aliases and latest handling."""
+    """Resolve model name through aliases to canonical name."""
     if model_name in MODEL_ALIASES:
         return MODEL_ALIASES[model_name]
-    # Latest handling example
-    if model_name == "claude-4-latest":
-        return "claude-opus-4-20250514"  # Or dynamic based on registry
-    return model_name  # Fallback
+    return model_name
 
 
 def get_available_models(

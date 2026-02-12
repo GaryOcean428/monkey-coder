@@ -29,7 +29,7 @@ export function ModelStatsSection() {
             Groq: 6,
           },
           modelsByProvider: {},
-          latestModels: ['gpt-5', 'claude-opus-4-1-20250805', 'gemini-2.5-pro'],
+          latestModels: ['gpt-5', 'claude-opus-4-6', 'gemini-2.5-pro'],
         });
       } finally {
         setLoading(false);

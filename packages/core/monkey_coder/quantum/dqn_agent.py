@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 from monkey_coder.models import ProviderType
+from monkey_coder.manifest import PROVIDER_DEFAULTS
 from .prediction_constants import (
     PREDICTION_BUFFER_SIZE,
     PREDICTION_SEED,
@@ -79,6 +80,38 @@ class RoutingState:
         return np.array(vector, dtype=np.float32)
 
 
+_PROVIDER_TYPE_MAP = {
+    "openai": ProviderType.OPENAI,
+    "anthropic": ProviderType.ANTHROPIC,
+    "google": ProviderType.GOOGLE,
+    "groq": ProviderType.GROQ,
+    "xai": ProviderType.GROK,
+}
+
+_STRATEGY_CYCLE = ["performance", "balanced", "cost_efficient", "task_optimized"]
+
+
+def _build_action_space() -> list:
+    """Build the DQN action space dynamically from the canonical manifest.
+
+    Returns a list of ``(ProviderType, model_id, strategy)`` tuples.
+    Each provider contributes its manifest models, each paired with a
+    rotating strategy label so the agent has diverse actions.
+    """
+    from monkey_coder.manifest import get_model_ids_for_provider  # noqa: F811
+
+    actions: list[tuple] = []
+    for provider_name in PROVIDER_DEFAULTS:
+        ptype = _PROVIDER_TYPE_MAP.get(provider_name)
+        if ptype is None:
+            continue
+        model_ids = get_model_ids_for_provider(provider_name)
+        for i, mid in enumerate(model_ids):
+            strategy = _STRATEGY_CYCLE[i % len(_STRATEGY_CYCLE)]
+            actions.append((ptype, mid, strategy))
+    return actions
+
+
 @dataclass
 class RoutingAction:
     """Represents a routing action (provider + model selection)."""
@@ -91,25 +124,7 @@ class RoutingAction:
     def from_action_index(cls, action_index: int) -> "RoutingAction":
         """Convert action index to routing action."""
         # Define action space (simplified for initial implementation)
-        actions = [
-            # OpenAI actions
-            (ProviderType.OPENAI, "chatgpt-4.1", "performance"),
-            (ProviderType.OPENAI, "o4-mini", "cost_efficient"),
-            (ProviderType.OPENAI, "o1-mini", "task_optimized"),
-            # Anthropic actions
-            (ProviderType.ANTHROPIC, "claude-opus-4-1-20250805", "performance"),
-            (ProviderType.ANTHROPIC, "claude-4.5-sonnet-20250930", "balanced"),
-            (ProviderType.ANTHROPIC, "claude-4.5-haiku-20250930", "cost_efficient"),
-            # Google actions
-            (ProviderType.GOOGLE, "gemini-2.5-pro", "performance"),
-            (ProviderType.GOOGLE, "gemini-2.5-flash", "balanced"),
-            (ProviderType.GOOGLE, "gemini-2.5-flash-lite", "cost_efficient"),
-            # Groq actions
-            (ProviderType.GROQ, "llama-3.1-70b-versatile", "task_optimized"),
-            (ProviderType.GROQ, "llama-3.2-11b-text-preview", "balanced"),
-            # Grok actions
-            (ProviderType.GROK, "grok-4-latest", "performance"),
-        ]
+        actions = _build_action_space()
         
         if action_index >= len(actions):
             # Default fallback action
@@ -120,22 +135,8 @@ class RoutingAction:
     
     def to_action_index(self) -> int:
         """Convert routing action to action index."""
-        # This is the reverse mapping - simplified for initial implementation
-        action_map = {
-            (ProviderType.OPENAI, "chatgpt-4.1", "performance"): 0,
-            (ProviderType.OPENAI, "o4-mini", "cost_efficient"): 1,
-            (ProviderType.OPENAI, "o1-mini", "task_optimized"): 2,
-            (ProviderType.ANTHROPIC, "claude-opus-4-1-20250805", "performance"): 3,
-            (ProviderType.ANTHROPIC, "claude-4.5-sonnet-20250930", "balanced"): 4,
-            (ProviderType.ANTHROPIC, "claude-4.5-haiku-20250930", "cost_efficient"): 5,
-            (ProviderType.GOOGLE, "gemini-2.5-pro", "performance"): 6,
-            (ProviderType.GOOGLE, "gemini-2.5-flash", "balanced"): 7,
-            (ProviderType.GOOGLE, "gemini-2.5-flash-lite", "cost_efficient"): 8,
-            (ProviderType.GROQ, "llama-3.1-70b-versatile", "task_optimized"): 9,
-            (ProviderType.GROQ, "llama-3.2-11b-text-preview", "balanced"): 10,
-            (ProviderType.GROK, "grok-4-latest", "performance"): 11,
-        }
-        
+        actions = _build_action_space()
+        action_map = {a: i for i, a in enumerate(actions)}
         return action_map.get((self.provider, self.model, self.strategy), 0)
 
 

@@ -111,13 +111,13 @@ class SmartModelRouter:
             ],
             ModelTier.B: [
                 ("openai", "gpt-4.1"),
-                ("anthropic", "claude-sonnet-4-20250514"),
+                ("anthropic", "claude-sonnet-4-5"),
                 ("google", "gemini-2.5-pro")
             ],
             ModelTier.C: [
-                ("openai", "o1"),
-                ("anthropic", "claude-opus-4-1-20250805"),
-                ("anthropic", "claude-4.5-sonnet-20250930")
+                ("openai", "o3"),
+                ("anthropic", "claude-opus-4-6"),
+                ("anthropic", "claude-sonnet-4-5")
             ]
         }
         

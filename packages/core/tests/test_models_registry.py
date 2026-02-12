@@ -23,8 +23,8 @@ def test_openai_models_presence():
 def test_anthropic_models_presence():
     """Anthropic registry should include Claude 4.5 Sonnet and Opus 4.1."""
     models = get_available_models(ProviderType.ANTHROPIC)[ProviderType.ANTHROPIC.value]
-    assert "claude-4.5-sonnet-20250930" in models
-    assert "claude-opus-4-1-20250805" in models
+    assert "claude-sonnet-4-5" in models
+    assert "claude-opus-4-6" in models
 
 
 def test_google_models_presence():
@@ -33,7 +33,6 @@ def test_google_models_presence():
     assert "gemini-2.5-pro" in models
     assert "gemini-2.5-flash" in models
     assert "gemini-2.5-flash-lite" in models
-    assert "gemini-2.0-flash" in models
 
 
 def test_grok_models_presence():
@@ -48,7 +47,7 @@ def test_google_aliases_normalize():
     # Ensure legacy prefixed IDs normalize to canonical names
     assert MODEL_ALIASES.get("models/gemini-2.5-flash") == "gemini-2.5-flash"
     assert MODEL_ALIASES.get("models/gemini-2.5-flash-lite") == "gemini-2.5-flash-lite"
-    assert MODEL_ALIASES.get("models/gemini-2.0-flash") == "gemini-2.0-flash"
+    assert MODEL_ALIASES.get("models/gemini-2.0-flash") == "gemini-2.5-flash"
 
     # And resolve_model maps them
     assert resolve_model("models/gemini-2.5-flash", ProviderType.GOOGLE) == "gemini-2.5-flash"
@@ -56,4 +55,4 @@ def test_google_aliases_normalize():
         resolve_model("models/gemini-2.5-flash-lite", ProviderType.GOOGLE)
         == "gemini-2.5-flash-lite"
     )
-    assert resolve_model("models/gemini-2.0-flash", ProviderType.GOOGLE) == "gemini-2.0-flash"
+    assert resolve_model("models/gemini-2.0-flash", ProviderType.GOOGLE) == "gemini-2.5-flash"

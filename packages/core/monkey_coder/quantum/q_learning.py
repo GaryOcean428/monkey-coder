@@ -171,10 +171,10 @@ class QLearningRouter:
         # Define provider-model combinations
         provider_models = {
             'openai': ['gpt-4.1', 'gpt-4.1-mini'],
-            'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+            'anthropic': ['claude-sonnet-4-5', 'claude-haiku-4-5'],
             'google': ['gemini-2.5-pro', 'gemini-2.5-flash'],
             'groq': ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile'],
-            'xai': ['grok-4-latest', 'grok-3']
+            'xai': ['grok-4', 'grok-3']
         }
         
         strategies = ['sequential', 'parallel', 'quantum', 'hybrid']
@@ -258,7 +258,7 @@ class QLearningRouter:
             strategy = 'quantum' if state.complexity > 0.8 else 'hybrid'
         elif state.complexity > 0.4:
             provider = 'anthropic'
-            model = 'claude-3-5-sonnet-20241022'
+            model = 'claude-sonnet-4-5'
             strategy = 'sequential'
         else:
             provider = 'groq'

@@ -159,10 +159,10 @@ class AgentExecutor:
                 "default": "gpt-4.1"
             },
             "anthropic": {
-                "developer": "claude-3-5-sonnet-20241022",
-                "reviewer": "claude-3-5-sonnet-20241022",
-                "documenter": "claude-3-5-sonnet-20241022",
-                "default": "claude-3-5-sonnet-20241022"
+                "developer": "claude-sonnet-4-5",
+                "reviewer": "claude-sonnet-4-5",
+                "documenter": "claude-sonnet-4-5",
+                "default": "claude-sonnet-4-5"
             },
             "groq": {
                 "default": "llama-3.3-70b-versatile"

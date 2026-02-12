@@ -10,10 +10,10 @@ This service is for **LOCAL model inference** only. It handles ML workloads that
 
 **Use these for code generation, chat, and analysis:**
 - **OpenAI**: gpt-5, gpt-4.1, o3, o3-mini, gpt-4.1-mini
-- **Anthropic**: claude-opus-4-1-20250805, claude-sonnet-4-20250514
+- **Anthropic**: claude-opus-4-6, claude-sonnet-4-5
 - **Google**: gemini-2.5-pro, gemini-2.5-flash
 - **Groq**: llama-3.3-70b-versatile, qwen/qwen3-32b
-- **xAI**: grok-4-latest, grok-code-fast-1 (optimized for code)
+- **xAI**: grok-4, grok-code-fast-1 (optimized for code)
 
 ### What This ML Service IS For
 

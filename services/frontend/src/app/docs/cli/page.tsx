@@ -314,7 +314,7 @@ export default function CLIDocsPage() {
               <ConfigOption name="apiKey" type="string" description="Your API key for authentication" />
               <ConfigOption name="baseUrl" type="string" default="https://monkey-coder.up.railway.app" description="Base URL for the API" />
               <ConfigOption name="defaultPersona" type="string" default="developer" description="Default AI persona" />
-              <ConfigOption name="defaultModel" type="string" default="claude-opus-4-1-20250805" description="Default AI model" />
+              <ConfigOption name="defaultModel" type="string" default="claude-opus-4-6" description="Default AI model" />
               <ConfigOption name="defaultProvider" type="string" default="anthropic" description="Default AI provider" />
               <ConfigOption name="defaultTemperature" type="number" default="0.1" description="Default model temperature" />
               <ConfigOption name="defaultTimeout" type="number" default="300" description="Default request timeout (seconds)" />

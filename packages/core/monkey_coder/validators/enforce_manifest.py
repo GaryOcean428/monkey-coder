@@ -265,10 +265,10 @@ if __name__ == "__main__":
     # Test some model validations
     test_cases = [
         ("gpt-4-turbo", "openai"),  # Deprecated
-        ("gpt-4.1", "openai"),  # Valid
+        ("gpt-5.2", "openai"),  # Valid
         ("mock-model", "openai"),  # Mock
         ("claude-3-opus-20240229", "anthropic"),  # Deprecated
-        ("claude-opus-4-20250514", "anthropic"),  # Valid
+        ("claude-opus-4-6", "anthropic"),  # Valid
     ]
     
     print("\nTest Model Validations:")

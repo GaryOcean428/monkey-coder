@@ -48,8 +48,11 @@ class ModelManifestValidator:
         # OpenAI deprecated
         "gpt-4-turbo", "gpt-4-turbo-preview", "gpt-4-0125-preview",
         "gpt-4-1106-preview", "gpt-4-vision-preview",
-        "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106",
+        "gpt-3.5-turbo-0125", "gpt-3.5-turbo-1106", "gpt-3.5-turbo",
         "text-davinci-003", "text-davinci-002",
+        "gpt-4o", "gpt-4o-mini", "gpt-4",
+        "o1", "o1-mini", "o1-preview",
+        "codex-mini-latest",
 
         # Anthropic deprecated
         "claude-2.1", "claude-2.0", "claude-instant-1.2",
@@ -57,15 +60,20 @@ class ModelManifestValidator:
         "claude-3-haiku-20240307",
         "claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620",
         "claude-3-5-haiku-20241022", "claude-3-7-sonnet-20250219",
-        "claude-sonnet-4-5-20250929",  # Old 4.5 model replaced by 20250930
+        "claude-opus-4-20250514", "claude-sonnet-4-20250514",
+        "claude-opus-4-1-20250805",
 
         # Google deprecated
         "gemini-1.0-pro", "gemini-1.5-pro-001",
         "gemini-pro", "gemini-pro-vision",
+        "gemini-2.0-flash", "gemini-2.0-flash-lite",
         "palm-2", "bard",
 
+        # xAI deprecated
+        "grok-4-latest", "grok-3-fast", "grok-3-mini-fast", "grok-2",
+
         # Common AI hallucinations
-        "gpt-5-turbo", "claude-4", "gemini-3",
+        "gpt-5-turbo", "claude-4",
         "gpt-4.5", "gemini-1.75"
     }
 
@@ -254,25 +262,27 @@ class ModelManifestValidator:
         """
         # Provider-specific suggestions
         if provider == "openai":
-            if "gpt-4" in invalid_model:
-                if "o1" in invalid_model:
-                    return "o1"  # Latest reasoning model
+            if "o1" in invalid_model or "o3" in invalid_model or "o4" in invalid_model:
+                return "o3"  # Latest reasoning model
+            elif "gpt-4" in invalid_model:
                 return "gpt-4.1"  # Latest GPT-4
             elif "gpt-3.5" in invalid_model or "turbo" in invalid_model:
-                return "gpt-4.1-mini"  # Fast, affordable
-            return "gpt-4.1"  # Default to latest
+                return "gpt-4.1-nano"  # Fast, affordable
+            return "gpt-5.2"  # Default to latest
 
         elif provider == "anthropic":
             if "opus" in invalid_model:
-                return "claude-opus-4-1-20250805"  # Latest Opus
+                return "claude-opus-4-6"  # Latest Opus
             elif "sonnet" in invalid_model:
-                return "claude-4.5-sonnet-20250930"  # Latest 4.5 Sonnet
+                return "claude-sonnet-4-5"  # Latest Sonnet
             elif "haiku" in invalid_model:
-                return "claude-4.5-haiku-20250930"  # Latest 4.5 Haiku
-            return "claude-4.5-sonnet-20250930"  # Default to latest 4.5 Sonnet
+                return "claude-haiku-4-5"  # Latest Haiku
+            return "claude-sonnet-4-5"  # Default
 
         elif provider == "google":
-            if "flash" in invalid_model:
+            if "flash-lite" in invalid_model:
+                return "gemini-2.5-flash-lite"
+            elif "flash" in invalid_model:
                 return "gemini-2.5-flash"
             elif "pro" in invalid_model:
                 return "gemini-2.5-pro"
@@ -281,12 +291,10 @@ class ModelManifestValidator:
         elif provider == "groq":
             if "llama" in invalid_model:
                 return "llama-3.3-70b-versatile"
-            elif "qwen" in invalid_model:
-                return "qwen/qwen3-32b"
             return "llama-3.3-70b-versatile"  # Default
 
         elif provider == "xai":
-            return "grok-4-latest"  # Latest Grok
+            return "grok-4"  # Latest Grok
 
         # Fallback: return first valid model
         return sorted(valid_models)[0] if valid_models else "unknown"
@@ -417,13 +425,13 @@ if __name__ == "__main__":
     # Test cases
     test_cases = [
         ("gpt-4-turbo", "openai"),  # Deprecated
-        ("gpt-4.1", "openai"),  # Valid
+        ("gpt-5.2", "openai"),  # Valid
         ("claude-3-opus-20240229", "anthropic"),  # Deprecated
-        ("claude-opus-4-1-20250805", "anthropic"),  # Valid
+        ("claude-opus-4-6", "anthropic"),  # Valid
         ("gemini-pro", "google"),  # Deprecated
         ("gemini-2.5-flash", "google"),  # Valid
-        ("gpt-5", "openai"),  # Might be valid in manifest
-        ("llama-2-70b", "groq"),  # Deprecated
+        ("grok-4", "xai"),  # Valid
+        ("llama-3.3-70b-versatile", "groq"),  # Valid
     ]
 
     print("MODEL VALIDATION TEST RESULTS")

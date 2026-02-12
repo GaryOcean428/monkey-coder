@@ -51,7 +51,7 @@ def expected_models():
         "cost_effective": ["gpt-4.1-mini", "claude-3.5-haiku"],
         "high_capability": ["gpt-4.1", "claude-4-opus", "claude-4-sonnet"],
         "reasoning_focused": ["gpt-4.1", "claude-4-opus", "claude-4-sonnet"],
-        "fast_response": ["gpt-4.1-mini", "claude-3.5-haiku", "gemini-2.0-flash"],
+        "fast_response": ["gpt-4.1-mini", "claude-haiku-4-5", "gemini-2.5-flash"],
     }
 
 

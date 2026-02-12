@@ -337,7 +337,7 @@ class QuantumRoutingManager:
         elif state.context_type in ["python", "javascript"]:
             return {
                 "provider": ProviderType.ANTHROPIC,
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-5",
                 "confidence": 0.85,
                 "metadata": {"reason": "code_specialized"},
             }
@@ -394,7 +394,7 @@ class QuantumRoutingManager:
         else:
             return {
                 "provider": ProviderType.ANTHROPIC,
-                "model": "claude-sonnet-4-20250514",
+                "model": "claude-sonnet-4-5",
                 "confidence": 0.8,
                 "metadata": {"reason": "balanced_standard"},
             }
@@ -430,9 +430,9 @@ class QuantumRoutingManager:
         models = {
             ProviderType.OPENAI: ["gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"],
             ProviderType.ANTHROPIC: [
-                "claude-opus-4-20250514",
-                "claude-sonnet-4-20250514",
-                "claude-3-5-haiku-20241022",
+                "claude-opus-4-6",
+                "claude-sonnet-4-5",
+                "claude-haiku-4-5",
             ],
         }
 
@@ -586,9 +586,9 @@ class QuantumRoutingManager:
             0: (ProviderType.OPENAI, "gpt-4.1"),
             1: (ProviderType.OPENAI, "gpt-4.1-mini"),
             2: (ProviderType.OPENAI, "gpt-4.1-nano"),
-            3: (ProviderType.ANTHROPIC, "claude-opus-4-20250514"),
-            4: (ProviderType.ANTHROPIC, "claude-sonnet-4-20250514"),
-            5: (ProviderType.ANTHROPIC, "claude-3-5-haiku-20241022"),
+            3: (ProviderType.ANTHROPIC, "claude-opus-4-6"),
+            4: (ProviderType.ANTHROPIC, "claude-sonnet-4-5"),
+            5: (ProviderType.ANTHROPIC, "claude-haiku-4-5"),
         }
 
         return action_map.get(action, (ProviderType.OPENAI, "gpt-4.1-mini"))

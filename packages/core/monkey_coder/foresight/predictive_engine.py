@@ -242,13 +242,13 @@ class PredictiveForesightEngine:
         # Claude 4.5 model preferences for foresight
         self.claude_model_preferences = {
             ForesightType.LOGICAL: "claude-4.5-sonnet-20250930",
-            ForesightType.IMAGINATIVE: "claude-opus-4-1-20250805",
-            ForesightType.PROBABILISTIC: "claude-sonnet-4-20250514",
+            ForesightType.IMAGINATIVE: "claude-opus-4-6",
+            ForesightType.PROBABILISTIC: "claude-sonnet-4-5",
             ForesightType.TEMPORAL: "claude-4.5-sonnet-20250930",
             ForesightType.CAUSAL: "claude-4.5-sonnet-20250930",
-            ForesightType.EMERGENT: "claude-opus-4-1-20250805",
-            ForesightType.MULTI_MODAL: "claude-4.5-sonnet-20250930",
-            ForesightType.ECOSYSTEM: "claude-opus-4-1-20250805"
+            ForesightType.EMERGENT: "claude-opus-4-6",
+            ForesightType.MULTI_MODAL: "claude-sonnet-4-5",
+            ForesightType.ECOSYSTEM: "claude-opus-4-6"
         }
 
     async def generate_foresight(

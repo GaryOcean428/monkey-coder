@@ -71,16 +71,16 @@ The implementation must use the latest AI models as specified in `packages/core/
 - **Fallback Models:** `gpt-5-mini`, `gpt-4.1`, `gpt-4.1-mini`
 
 **Anthropic (Secondary Provider)**
-- **Default Model:** `claude-sonnet-4-20250514` (Per user specification)
-- **Most Capable:** `claude-opus-4-1-20250805` (Latest and most powerful)
-- **Fallback Models:** `claude-opus-4-20250514`, `claude-3-7-sonnet-20250219`
+- **Default Model:** `claude-sonnet-4-5` (Per user specification)
+- **Most Capable:** `claude-opus-4-6` (Latest and most powerful)
+- **Fallback Models:** `claude-opus-4-5`, `claude-haiku-4-5`
 
 **Google (Tertiary Provider)**
 - **Default Model:** `gemini-2.5-pro`
-- **Fast Models:** `models/gemini-2.5-flash`, `models/gemini-2.0-flash`
+- **Fast Models:** `gemini-2.5-flash`, `gemini-2.5-flash-lite`
 
 **xAI/Grok (Experimental)**
-- **Default Model:** `grok-4-latest`
+- **Default Model:** `grok-4`
 - **Alternatives:** `grok-3`, `grok-3-mini`, `grok-3-fast`
 
 All implementations must reference these exact model names and include proper fallback logic as defined in the model registry.
@@ -107,7 +107,7 @@ SUCCESSFUL IMPLEMENTATION (2025-08-14):
 
 Tasks:
   - [x] ✅ Implement ACTUAL OpenAI API calls (WORKING - gpt-4-turbo)
-  - [x] ✅ Implement ACTUAL Anthropic API calls (WORKING - claude-3-5-sonnet)
+  - [x] ✅ Implement ACTUAL Anthropic API calls (WORKING - claude-sonnet-4-5)
   - [x] ✅ Implement ACTUAL Google Gemini API calls (WORKING - gemini-2.5-pro)
   - [x] ✅ Implement ACTUAL Groq API calls (WORKING - llama models)
   - [x] ✅ Implement ACTUAL xAI/Grok API calls (WORKING - grok models)
@@ -124,16 +124,16 @@ Latest Model Specifications to Implement:
     - Search: gpt-4o-search-preview
 
   Anthropic:
-    - Default: claude-sonnet-4-20250514 (per user specification)
-    - Latest: claude-opus-4-1-20250805 (most capable)
-    - Alternatives: claude-opus-4-20250514, claude-3-7-sonnet-20250219
+    - Default: claude-sonnet-4-5 (per user specification)
+    - Latest: claude-opus-4-6 (most capable)
+    - Alternatives: claude-opus-4-5, claude-haiku-4-5
 
   Google:
     - Default: gemini-2.5-pro
-    - Alternatives: models/gemini-2.5-flash, models/gemini-2.0-flash
+    - Alternatives: gemini-2.5-flash, gemini-2.5-flash-lite
 
   xAI/Grok:
-    - Default: grok-4-latest
+    - Default: grok-4
     - Alternatives: grok-3, grok-3-mini, grok-3-fast
 
 Files to Modify:
@@ -684,8 +684,8 @@ def validate_model(self, model: str) -> str:
 # Implement real integration using latest Claude models:
 
 async def generate(self, prompt: str, **kwargs):
-    # Use default claude-sonnet-4-20250514 per user specification
-    model = kwargs.get("model", "claude-sonnet-4-20250514")
+    # Use default claude-sonnet-4-5 per user specification
+    model = kwargs.get("model", "claude-sonnet-4-5")
 
     response = await self.client.messages.create(
         model=model,
@@ -784,7 +784,7 @@ def is_safe_path(path: Path) -> bool:
 ## 📈 Success Metrics
 
 ### Phase 1 Completion Criteria
-- [ ] Can generate real code using gpt-5 and claude-sonnet-4-20250514
+- [ ] Can generate real code using gpt-5 and claude-sonnet-4-5
 - [ ] CLI can authenticate and maintain sessions
 - [ ] Can read and write project files safely
 - [ ] Streaming responses work end-to-end with all providers

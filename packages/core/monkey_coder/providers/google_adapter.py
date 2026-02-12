@@ -71,30 +71,65 @@ class GoogleProvider(BaseProvider):
     Gemini 1.5 Flash, and other Gemini variants.
     """
 
-    # Official Google model names validated against API documentation
+    # Official Google model names validated against API documentation (Feb 2026)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        # === Gemini 3 (Preview) ===
+        "gemini-3-pro-preview": {
+            "name": "gemini-3-pro-preview",
+            "type": "chat",
+            "context_length": 1000000,
+            "input_cost": 2.00,
+            "output_cost": 12.00,
+            "description": "Best for multimodal understanding, most powerful agentic model",
+            "capabilities": [
+                "text", "vision", "audio", "video", "pdf",
+                "function_calling", "structured_outputs", "caching",
+                "code_execution", "search_grounding", "thinking",
+            ],
+            "version": "3-pro-preview",
+            "release_date": datetime(2025, 12, 1),
+        },
+        "gemini-3-flash-preview": {
+            "name": "gemini-3-flash-preview",
+            "type": "chat",
+            "context_length": 1000000,
+            "input_cost": 0.50,
+            "output_cost": 3.00,
+            "description": "Most balanced model for speed, scale, and frontier intelligence",
+            "capabilities": [
+                "text", "vision", "audio", "video",
+                "function_calling", "structured_outputs", "caching",
+                "code_execution", "search_grounding", "thinking",
+            ],
+            "version": "3-flash-preview",
+            "release_date": datetime(2025, 12, 1),
+        },
+        "gemini-3-pro-image-preview": {
+            "name": "gemini-3-pro-image-preview",
+            "type": "multimodal",
+            "context_length": 65000,
+            "input_cost": 2.00,
+            "output_cost": 4.00,
+            "description": "Specialized for native image generation and editing",
+            "capabilities": [
+                "text", "vision", "image_generation", "image_editing",
+            ],
+            "version": "3-pro-image-preview",
+            "release_date": datetime(2025, 12, 1),
+        },
+        # === Gemini 2.5 (Production) ===
         "gemini-2.5-pro": {
             "name": "gemini-2.5-pro",
             "type": "chat",
-            "context_length": 1048576,  # 1M tokens
-            "input_cost": 1.25,  # per 1M tokens
-            "output_cost": 5.00,  # per 1M tokens
-            "description": "Gemini 2.5 Pro - State-of-the-art model for complex reasoning in code, math, and STEM",
+            "context_length": 1000000,
+            "input_cost": 1.25,
+            "output_cost": 5.00,
+            "description": "Advanced thinking model for complex reasoning in code, math, and STEM",
             "capabilities": [
-                "text",
-                "vision",
-                "audio",
-                "video",
-                "pdf",
-                "function_calling",
-                "structured_outputs",
-                "caching",
-                "code_execution",
-                "search_grounding",
-                "image_generation",
-                "audio_generation",
-                "live_api",
-                "thinking",
+                "text", "vision", "audio", "video", "pdf",
+                "function_calling", "structured_outputs", "caching",
+                "code_execution", "search_grounding",
+                "image_generation", "audio_generation", "live_api", "thinking",
             ],
             "version": "2.5-pro",
             "release_date": datetime(2025, 6, 1),
@@ -102,24 +137,15 @@ class GoogleProvider(BaseProvider):
         "gemini-2.5-flash": {
             "name": "gemini-2.5-flash",
             "type": "chat",
-            "context_length": 1048576,  # 1M tokens
-            "input_cost": 0.075,
-            "output_cost": 0.30,
-            "description": "Gemini 2.5 Flash - Best price-performance model for large-scale, low-latency tasks",
+            "context_length": 1000000,
+            "input_cost": 0.30,
+            "output_cost": 1.20,
+            "description": "Best price-performance for large-scale, low-latency, and agentic tasks",
             "capabilities": [
-                "text",
-                "vision",
-                "audio",
-                "video",
-                "function_calling",
-                "structured_outputs",
-                "caching",
-                "code_execution",
-                "search_grounding",
-                "image_generation",
-                "audio_generation",
-                "thinking",
-                "batch_mode",
+                "text", "vision", "audio", "video",
+                "function_calling", "structured_outputs", "caching",
+                "code_execution", "search_grounding",
+                "image_generation", "audio_generation", "thinking", "batch_mode",
             ],
             "version": "2.5-flash",
             "release_date": datetime(2025, 6, 1),
@@ -127,54 +153,30 @@ class GoogleProvider(BaseProvider):
         "gemini-2.5-flash-lite": {
             "name": "gemini-2.5-flash-lite",
             "type": "chat",
-            "context_length": 1048576,  # 1M tokens
-            "input_cost": 0.0375,
-            "output_cost": 0.15,
-            "description": "Gemini 2.5 Flash-Lite - Cost-efficient and high-throughput version of Gemini 2.5 Flash",
+            "context_length": 1000000,
+            "input_cost": 0.018,
+            "output_cost": 0.075,
+            "description": "Fastest flash model optimized for cost-efficiency and high throughput",
             "capabilities": [
-                "text",
-                "vision",
-                "audio",
-                "video",
-                "pdf",
-                "function_calling",
-                "structured_outputs",
-                "caching",
-                "code_execution",
-                "url_context",
-                "search_grounding",
-                "image_generation",
-                "audio_generation",
-                "live_api",
+                "text", "vision", "audio", "video", "pdf",
+                "function_calling", "structured_outputs", "caching",
+                "code_execution", "search_grounding",
             ],
             "version": "2.5-flash-lite",
             "release_date": datetime(2025, 7, 1),
         },
-        "gemini-2.0-flash": {
-            "name": "gemini-2.0-flash",
-            "type": "chat",
-            "context_length": 1048576,  # 1M tokens
-            "input_cost": 0.075,
-            "output_cost": 0.30,
-            "description": "Gemini 2.0 Flash - Next-gen features with superior speed, native tool use",
-            "capabilities": [
-                "text",
-                "vision",
-                "audio",
-                "video",
-                "function_calling",
-                "structured_outputs",
-                "caching",
-                "tuning",
-                "code_execution",
-                "search",
-                "image_generation",
-                "audio_generation",
-                "live_api",
-            ],
-            "version": "2.0-flash",
-            "release_date": datetime(2025, 2, 1),
-        },
+    }
+
+    # Model aliases — legacy names resolve to current canonical names
+    MODEL_ALIASES: Dict[str, str] = {
+        "gemini-2.0-flash": "gemini-2.5-flash",
+        "gemini-pro": "gemini-2.5-flash",
+        "gemini-1.5-pro": "gemini-2.5-pro",
+        "gemini-pro-vision": "gemini-2.5-pro",
+        "models/gemini-2.5-flash": "gemini-2.5-flash",
+        "models/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
+        "models/gemini-2.5-pro": "gemini-2.5-pro",
+        "models/gemini-2.0-flash": "gemini-2.5-flash",
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -555,28 +557,13 @@ class GoogleProvider(BaseProvider):
             )
 
     def _get_actual_model(self, model: str) -> str:
-        """Return actual model names - Gemini 2.5 is available as of August 2025."""
-    # According to MODEL_MANIFEST.md, all Gemini 2.x models are real and available
-        # No mapping needed - use them directly
-        model_mapping = {
-            # All these models exist and should be used directly
-            "gemini-2.5-pro": "gemini-2.5-pro",
-            "gemini-2.5-flash": "gemini-2.5-flash",
-            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-            "gemini-2.0-flash": "gemini-2.0-flash",
+        """Resolve any alias / deprecated name to the canonical model ID."""
+        from monkey_coder.manifest import resolve_model
 
-            # Legacy models that might need mapping
-            "gemini-1.5-pro": "gemini-2.5-pro",  # Upgrade to newer version
-            "gemini-1.5-flash": "gemini-2.5-flash",  # Upgrade to newer version
-            "gemini-pro": "gemini-2.5-flash",  # Upgrade to newer version
-        }
+        actual = resolve_model(model)
 
-        # Return mapped model or original if not in mapping
-        actual = model_mapping.get(model, model)
-
-        # Log if we're using a different model
         if actual != model:
-            logger.info(f"Model {model} mapped to {actual}")
+            logger.info("Model %s resolved to canonical %s", model, actual)
 
         return actual
 

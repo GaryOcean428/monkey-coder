@@ -40,9 +40,91 @@ class OpenAIProvider(BaseProvider):
     - GPT-4o Series: Optimized multimodal models
     """
 
-    # Official OpenAI model names validated against API documentation (July 2025)
+    # Official OpenAI model names validated against API documentation (Feb 2026)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
-        # === GPT-5 Series - Latest Flagship Models ===
+        # === GPT-5.x Series - Latest Flagship Models ===
+        "gpt-5.2": {
+            "name": "gpt-5.2",
+            "api_name": "gpt-5.2",
+            "type": "chat",
+            "context_length": 400000,
+            "max_output_tokens": 128000,
+            "input_cost": 1.75,
+            "output_cost": 14.00,
+            "description": "Best model for coding and agentic tasks across industries",
+            "capabilities": [
+                "advanced_reasoning", "multimodal", "function_calling", "tool_use",
+                "structured_outputs", "streaming", "code_generation", "vision_understanding",
+                "prompt_caching", "reasoning_tokens"
+            ],
+            "version": "5.2",
+            "release_date": datetime(2025, 12, 1),
+        },
+        "gpt-5.2-codex": {
+            "name": "gpt-5.2-codex",
+            "api_name": "gpt-5.2-codex",
+            "type": "chat",
+            "context_length": 400000,
+            "max_output_tokens": 128000,
+            "input_cost": 1.75,
+            "output_cost": 14.00,
+            "description": "Agentic coding specialist with context compaction",
+            "capabilities": [
+                "advanced_reasoning", "code_generation", "function_calling", "tool_use",
+                "structured_outputs", "streaming", "context_compaction"
+            ],
+            "version": "5.2-codex",
+            "release_date": datetime(2025, 12, 1),
+        },
+        "gpt-5.2-pro": {
+            "name": "gpt-5.2-pro",
+            "api_name": "gpt-5.2-pro",
+            "type": "reasoning",
+            "context_length": 400000,
+            "max_output_tokens": 128000,
+            "input_cost": 21.00,
+            "output_cost": 168.00,
+            "description": "Smarter and more precise responses with extended compute",
+            "capabilities": [
+                "advanced_reasoning", "multimodal", "function_calling", "tool_use",
+                "structured_outputs", "streaming", "extended_thinking"
+            ],
+            "version": "5.2-pro",
+            "release_date": datetime(2025, 12, 1),
+        },
+        "gpt-5.3-codex": {
+            "name": "gpt-5.3-codex",
+            "api_name": "gpt-5.3-codex",
+            "type": "chat",
+            "context_length": 400000,
+            "max_output_tokens": 128000,
+            "input_cost": 2.00,
+            "output_cost": 14.00,
+            "description": "Latest Codex model, 25% faster than GPT-5.2-Codex",
+            "capabilities": [
+                "advanced_reasoning", "code_generation", "function_calling", "tool_use",
+                "structured_outputs", "streaming", "context_compaction"
+            ],
+            "version": "5.3-codex",
+            "release_date": datetime(2026, 1, 15),
+        },
+        "gpt-5.1": {
+            "name": "gpt-5.1",
+            "api_name": "gpt-5.1",
+            "type": "chat",
+            "context_length": 400000,
+            "max_output_tokens": 128000,
+            "input_cost": 1.25,
+            "output_cost": 10.00,
+            "description": "Flagship GPT with 400K context and advanced reasoning",
+            "capabilities": [
+                "advanced_reasoning", "multimodal", "function_calling", "tool_use",
+                "structured_outputs", "streaming", "code_generation", "vision_understanding",
+                "prompt_caching"
+            ],
+            "version": "5.1",
+            "release_date": datetime(2025, 10, 1),
+        },
         "gpt-5": {
             "name": "gpt-5",
             "api_name": "gpt-5",
@@ -210,52 +292,74 @@ class OpenAIProvider(BaseProvider):
             "release_date": datetime(2025, 1, 15),
             "reasoning_time_limit": 20,  # seconds for reasoning
         },
-        # === o1 Series - Original Reasoning Models ===
-        "o1": {
-            "name": "o1",
-            "api_name": "o1",
+        # === Deep Research Models ===
+        "o3-deep-research": {
+            "name": "o3-deep-research",
+            "api_name": "o3-deep-research",
             "type": "reasoning",
-            "context_length": 200000,  # 200K tokens
-            "max_output_tokens": 32768,  # 32K tokens
+            "context_length": 200000,
+            "max_output_tokens": 100000,
             "input_cost": 15.00,
             "output_cost": 60.00,
-            "description": "Advanced reasoning model with extended thinking for complex problems",
+            "description": "Most powerful deep research model for comprehensive analysis",
             "capabilities": [
-                "text",
                 "reasoning",
-                "step_by_step_thinking",
-                "mathematical_reasoning",
-                "code_reasoning",
-                "scientific_analysis",
-                "logical_deduction",
+                "deep_research",
+                "web_search",
+                "tools",
+                "file_search",
             ],
-            "version": "1",
-            "release_date": datetime(2024, 9, 12),
-            "reasoning_time_limit": 60,  # seconds for reasoning
+            "version": "3-deep-research",
+            "release_date": datetime(2025, 6, 1),
         },
-        "o1-mini": {
-            "name": "o1-mini",
-            "api_name": "o1-mini",
+        "o4-mini-deep-research": {
+            "name": "o4-mini-deep-research",
+            "api_name": "o4-mini-deep-research",
             "type": "reasoning",
-            "context_length": 128000,  # 128K tokens
-            "max_output_tokens": 16384,  # 16K tokens
+            "context_length": 200000,
+            "max_output_tokens": 100000,
             "input_cost": 3.00,
             "output_cost": 12.00,
-            "description": "Faster and more affordable reasoning model for coding and STEM",
+            "description": "Faster, more affordable deep research model",
             "capabilities": [
-                "text",
                 "reasoning",
-                "coding",
-                "mathematical_reasoning",
-                "stem_problem_solving",
-                "logical_thinking",
+                "deep_research",
+                "web_search",
+                "tools",
             ],
-            "version": "1-mini",
-            "release_date": datetime(2024, 9, 12),
-            "reasoning_time_limit": 30,  # seconds for reasoning
+            "version": "4-mini-deep-research",
+            "release_date": datetime(2025, 6, 1),
         },
 
-        # === GPT-4.1 Family - Latest Flagship Models ===
+        # === Open-Weight Models (Apache 2.0) ===
+        "gpt-oss-120b": {
+            "name": "gpt-oss-120b",
+            "api_name": "gpt-oss-120b",
+            "type": "chat",
+            "context_length": 131072,
+            "max_output_tokens": 32768,
+            "input_cost": 0.0,
+            "output_cost": 0.0,
+            "description": "Most powerful open-weight model (Apache 2.0)",
+            "capabilities": ["text", "function_calling", "structured_outputs", "streaming"],
+            "version": "oss-120b",
+            "release_date": datetime(2025, 9, 1),
+        },
+        "gpt-oss-20b": {
+            "name": "gpt-oss-20b",
+            "api_name": "gpt-oss-20b",
+            "type": "chat",
+            "context_length": 131072,
+            "max_output_tokens": 32768,
+            "input_cost": 0.0,
+            "output_cost": 0.0,
+            "description": "Medium-sized open-weight model for low latency (Apache 2.0)",
+            "capabilities": ["text", "function_calling", "structured_outputs", "streaming"],
+            "version": "oss-20b",
+            "release_date": datetime(2025, 9, 1),
+        },
+
+        # === GPT-4.1 Family - Production Models ===
         "gpt-4.1": {
             "name": "gpt-4.1",
             "api_name": "gpt-4.1",
@@ -300,28 +404,6 @@ class OpenAIProvider(BaseProvider):
             "version": "4.1-mini",
             "release_date": datetime(2025, 1, 1),
         },
-        "gpt-4.1-vision": {
-            "name": "gpt-4.1-vision",
-            "api_name": "gpt-4.1-vision",
-            "type": "multimodal",
-            "context_length": 1048576,  # 1M tokens
-            "max_output_tokens": 16384,  # 16K tokens
-            "input_cost": 3.00,
-            "output_cost": 12.00,
-            "description": "GPT-4.1 optimized for vision and multimodal understanding",
-            "capabilities": [
-                "text",
-                "vision",
-                "image_analysis",
-                "multimodal",
-                "function_calling",
-                "streaming",
-                "structured_outputs",
-                "visual_reasoning",
-            ],
-            "version": "4.1-vision",
-            "release_date": datetime(2025, 1, 15),
-        },
         "gpt-4.1-nano": {
             "name": "gpt-4.1-nano",
             "api_name": "gpt-4.1-nano",
@@ -346,34 +428,38 @@ class OpenAIProvider(BaseProvider):
 
     # Model aliases for convenience
     MODEL_ALIASES: Dict[str, str] = {
-        # GPT-5 model shortcuts (preferred models)
+        # GPT-5.x shortcuts
+        "gpt-latest": "gpt-5.2",
+        "gpt-flagship": "gpt-5.2",
         "gpt5": "gpt-5",
-        "gpt-latest": "gpt-5",
-        "gpt-flagship": "gpt-5",
-        "gpt-5-fast": "gpt-5-mini-2025-08-07",
-        "gpt5-mini": "gpt-5-mini-2025-08-07",
-        "gpt-5-mini": "gpt-5-mini-2025-08-07",
-        "gpt-5-nano": "gpt-5-nano-2025-08-07",
-        "gpt5-nano": "gpt-5-nano-2025-08-07",
+        "gpt-5-fast": "gpt-5-mini",
+        "gpt5-mini": "gpt-5-mini",
+        "gpt5-nano": "gpt-5-nano",
         # Reasoning model shortcuts
         "reasoning": "o3",
         "reasoning-pro": "o3-pro",
         "reasoning-mini": "o3-mini",
         "reasoning-fast": "o4-mini",
-        # GPT shortcuts - still available but not preferred
+        # GPT-4.1 shortcuts
         "gpt-fast": "gpt-4.1-nano",
-        "gpt-vision": "gpt-4.1-vision",
-        # Legacy shortcuts - map to newer models
+        "gpt-4.1-vision": "gpt-4.1",
+        "chatgpt-4.1": "gpt-4.1",
+        # Legacy shortcuts — map to current models
         "gpt-4": "gpt-4.1",
         "gpt-4-mini": "gpt-4.1-mini",
         "gpt-4o": "gpt-4.1",
         "gpt-4o-mini": "gpt-4.1-mini",
+        "gpt-4-turbo": "gpt-4.1",
+        "gpt-3.5-turbo": "gpt-4.1-nano",
+        "o1": "o3",
+        "o1-mini": "o4-mini",
+        "o1-preview": "o3",
     }
 
     # Model categories for recommendations
     MODEL_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "reasoning": {
-            "models": ["o3-pro", "o3", "o1", "o4-mini", "o3-mini", "o1-mini", "gpt-5"],
+            "models": ["o3-pro", "o3", "o4-mini", "o3-mini", "gpt-5.2-pro"],
             "description": "Advanced reasoning and problem-solving capabilities",
             "best_for": [
                 "complex_analysis",
@@ -383,12 +469,12 @@ class OpenAIProvider(BaseProvider):
             ],
         },
         "conversational": {
-            "models": ["gpt-5", "gpt-4.1", "gpt-4.1-vision"],
+            "models": ["gpt-5.2", "gpt-5", "gpt-4.1"],
             "description": "Natural conversation and general-purpose tasks",
             "best_for": ["chat", "writing", "general_assistance", "content_creation"],
         },
         "efficient": {
-            "models": ["gpt-5-nano-2025-08-07", "gpt-5-mini-2025-08-07", "gpt-4.1-nano", "gpt-4.1-mini", "o4-mini", "o3-mini"],
+            "models": ["gpt-5-nano", "gpt-5-mini", "gpt-4.1-nano", "gpt-4.1-mini", "o4-mini", "o3-mini"],
             "description": "Cost-effective models for high-volume applications",
             "best_for": [
                 "automation",
@@ -397,8 +483,18 @@ class OpenAIProvider(BaseProvider):
                 "cost_optimization",
             ],
         },
+        "coding": {
+            "models": ["gpt-5.2-codex", "gpt-5.3-codex", "gpt-5.2"],
+            "description": "Specialized for code generation and agentic coding",
+            "best_for": [
+                "code_generation",
+                "code_review",
+                "refactoring",
+                "agentic_coding",
+            ],
+        },
         "multimodal": {
-            "models": ["gpt-5", "gpt-4.1-vision", "gpt-4.1"],
+            "models": ["gpt-5.2", "gpt-5", "gpt-4.1"],
             "description": "Text and vision capabilities for multimodal tasks",
             "best_for": [
                 "image_analysis",
@@ -414,7 +510,7 @@ class OpenAIProvider(BaseProvider):
         self.base_url = kwargs.get("base_url")
         self.organization = kwargs.get("organization")
         self.project = kwargs.get("project")
-        self.default_model = kwargs.get("default_model", "gpt-5")  # GPT-5 is the preferred default
+        self.default_model = kwargs.get("default_model", "gpt-5.2")
         self.reasoning_patience = kwargs.get(
             "reasoning_patience", True
         )  # Wait for reasoning models
@@ -814,7 +910,7 @@ class OpenAIProvider(BaseProvider):
 
             # Add reasoning-specific parameters for o1 models
             is_reasoning = self.is_reasoning_model(resolved_model)
-            if is_reasoning and actual_model in ["o1", "o1-mini"]:
+            if is_reasoning and actual_model in ["o3", "o4-mini", "o3-pro", "o3-mini"]:
                 # o1 models have different parameter requirements
                 params.pop("temperature", None)
                 params.pop("top_p", None)
@@ -886,34 +982,13 @@ class OpenAIProvider(BaseProvider):
             )
 
     def _get_actual_model(self, resolved_model: str) -> str:
-        """Return actual model names - GPT-5 is available as of August 2025."""
-        # According to MODEL_MANIFEST.md, these models are actually available:
-        # - GPT-5 family (gpt-5, gpt-5-mini-2025-08-07, gpt-5-nano-2025-08-07)
-        # - GPT-4.1 family (gpt-4.1, gpt-4.1-mini, gpt-4.1-vision, gpt-4.1-nano)
-        # - o1/o3/o4 series for reasoning
+        """Resolve any alias / deprecated name to the canonical model ID."""
+        from monkey_coder.manifest import resolve_model
 
-        # Map any date-specific versions to base names
-        model_mapping = {
-            # GPT-5 date-specific to base names
-            "gpt-5-mini-2025-08-07": "gpt-5-mini",
-            "gpt-5-nano-2025-08-07": "gpt-5-nano",
+        actual = resolve_model(resolved_model)
 
-            # Legacy GPT-4 models to GPT-4.1
-            "gpt-4": "gpt-4.1",
-            "gpt-4-turbo": "gpt-4.1",
-            "gpt-4o": "gpt-4.1",
-            "gpt-4o-mini": "gpt-4.1-mini",
-            "gpt-4-turbo-preview": "gpt-4.1",
-            "gpt-4-0125-preview": "gpt-4.1-mini",
-            "gpt-4-vision-preview": "gpt-4.1-vision",
-        }
-
-        # Return mapped model or original if not in mapping
-        actual = model_mapping.get(resolved_model, resolved_model)
-
-        # Log if we're using a different model
         if actual != resolved_model:
-            logger.info(f"Model {resolved_model} mapped to {actual}")
+            logger.info("Model %s resolved to canonical %s", resolved_model, actual)
 
         return actual
 

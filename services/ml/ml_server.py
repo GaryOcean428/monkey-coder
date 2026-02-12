@@ -8,7 +8,7 @@ use the providers in MODEL_MANIFEST.md:
 - Anthropic (claude-opus-4-1, claude-sonnet-4)
 - Google (gemini-2.5-pro, gemini-2.5-flash)
 - Groq (llama-3.3-70b, qwen3-32b)
-- xAI (grok-4-latest, grok-code-fast-1)
+- xAI (grok-4, grok-code-fast-1)
 """
 import os
 from fastapi import FastAPI, HTTPException

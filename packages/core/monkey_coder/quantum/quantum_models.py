@@ -9,7 +9,10 @@ and routing-specific data structures.
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from enum import Enum
+
 import numpy as np
+
+from monkey_coder.manifest import get_models, get_models_for_provider
 
 
 class ModelCapability(Enum):
@@ -90,329 +93,65 @@ class ProviderConfig:
             raise ValueError("Rate limit RPD must be positive")
 
 
-# Pre-defined model configurations
-QUANTUM_MODEL_REGISTRY = {
-    # OpenAI Models
-    "gpt-4.1": ModelConfig(
-        model_id="gpt-4.1",
-        provider="openai",
-        cost_per_1k_tokens=0.03,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.ARCHITECTURE
-        ],
-        context_window=128000,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-    "gpt-4.1-mini": ModelConfig(
-        model_id="gpt-4.1-mini",
-        provider="openai",
-        cost_per_1k_tokens=0.015,
-        max_tokens=16384,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.SPEED,
-            ModelCapability.TESTING
-        ],
-        context_window=128000,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-    "o1": ModelConfig(
-        model_id="o1",
-        provider="openai",
-        cost_per_1k_tokens=0.015,
-        max_tokens=32768,
-        capabilities=[
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.LOGIC,
-            ModelCapability.PROBLEM_SOLVING,
-            ModelCapability.ACCURACY
-        ],
-        context_window=128000,
-        supports_streaming=False,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 1.0)
-    ),
-    "o1-mini": ModelConfig(
-        model_id="o1-mini",
-        provider="openai",
-        cost_per_1k_tokens=0.003,
-        max_tokens=65536,
-        capabilities=[
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.LOGIC,
-            ModelCapability.SPEED,
-            ModelCapability.ACCURACY
-        ],
-        context_window=128000,
-        supports_streaming=False,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 1.0)
-    ),
-    "o3": ModelConfig(
-        model_id="o3",
-        provider="openai",
-        cost_per_1k_tokens=0.03,
-        max_tokens=32768,
-        capabilities=[
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.LOGIC,
-            ModelCapability.PROBLEM_SOLVING,
-            ModelCapability.ACCURACY,
-            ModelCapability.CODE
-        ],
-        context_window=128000,
-        supports_streaming=False,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 1.0)
-    ),
-    "o3-pro": ModelConfig(
-        model_id="o3-pro",
-        provider="openai",
-        cost_per_1k_tokens=0.06,
-        max_tokens=32768,
-        capabilities=[
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.LOGIC,
-            ModelCapability.PROBLEM_SOLVING,
-            ModelCapability.ACCURACY,
-            ModelCapability.CODE,
-            ModelCapability.ARCHITECTURE
-        ],
-        context_window=128000,
-        supports_streaming=False,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 1.0)
-    ),
-
-    # Anthropic Models
-    "claude-opus-4-20250514": ModelConfig(
-        model_id="claude-opus-4-20250514",
-        provider="anthropic",
-        cost_per_1k_tokens=0.015,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.ARCHITECTURE,
-            ModelCapability.DEBUGGING,
-            ModelCapability.OPTIMIZATION
-        ],
-        context_window=200000,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 1.0)
-    ),
-    "claude-sonnet-4-20250514": ModelConfig(
-        model_id="claude-sonnet-4-20250514",
-        provider="anthropic",
-        cost_per_1k_tokens=0.003,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.SPEED,
-            ModelCapability.ACCURACY
-        ],
-        context_window=200000,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 1.0)
-    ),
-    "claude-3-7-sonnet-20250219": ModelConfig(
-        model_id="claude-3-7-sonnet-20250219",
-        provider="anthropic",
-        cost_per_1k_tokens=0.003,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.SPEED
-        ],
-        context_window=200000,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 1.0)
-    ),
-
-    # Google Models
-    "gemini-2.5-pro": ModelConfig(
-        model_id="gemini-2.5-pro",
-        provider="google",
-        cost_per_1k_tokens=0.0125,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.ARCHITECTURE,
-            ModelCapability.PROBLEM_SOLVING
-        ],
-        context_window=2097152,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-    "models/gemini-2.5-flash": ModelConfig(
-        model_id="models/gemini-2.5-flash",
-        provider="google",
-        cost_per_1k_tokens=0.000075,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.SPEED,
-            ModelCapability.TESTING
-        ],
-        context_window=1048576,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-    "models/gemini-2.0-flash": ModelConfig(
-        model_id="models/gemini-2.0-flash",
-        provider="google",
-        cost_per_1k_tokens=0.0001,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.SPEED,
-            ModelCapability.TESTING
-        ],
-        context_window=1048576,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-
-    # Groq Models
-    "llama-3.3-70b-versatile": ModelConfig(
-        model_id="llama-3.3-70b-versatile",
-        provider="groq",
-        cost_per_1k_tokens=0.00059,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.SPEED,
-            ModelCapability.TESTING
-        ],
-        context_window=131072,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 2.0)
-    ),
-    "llama-3.1-8b-instant": ModelConfig(
-        model_id="llama-3.1-8b-instant",
-        provider="groq",
-        cost_per_1k_tokens=0.00005,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.SPEED
-        ],
-        context_window=131072,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=False,
-        temperature_range=(0.0, 2.0)
-    ),
-
-    # xAI Models
-    "grok-4-latest": ModelConfig(
-        model_id="grok-4-latest",
-        provider="xAI",
-        cost_per_1k_tokens=0.005,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING,
-            ModelCapability.DOCUMENTATION,
-            ModelCapability.REASONING
-        ],
-        context_window=131072,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    ),
-    "grok-3": ModelConfig(
-        model_id="grok-3",
-        provider="xAI",
-        cost_per_1k_tokens=0.003,
-        max_tokens=8192,
-        capabilities=[
-            ModelCapability.CODE,
-            ModelCapability.REASONING,
-            ModelCapability.ANALYSIS,
-            ModelCapability.WRITING,
-            ModelCapability.TESTING
-        ],
-        context_window=131072,
-        supports_streaming=True,
-        supports_json=True,
-        supports_functions=True,
-        temperature_range=(0.0, 2.0)
-    )
+# ---------------------------------------------------------------------------
+# Capability mapping: manifest capability strings → ModelCapability enum
+# ---------------------------------------------------------------------------
+_CAP_MAP = {
+    "code": ModelCapability.CODE,
+    "reasoning": ModelCapability.REASONING,
+    "vision": ModelCapability.ANALYSIS,
+    "tools": ModelCapability.TESTING,
+    "function_calling": ModelCapability.TESTING,
+    "structured_outputs": ModelCapability.ACCURACY,
+    "extended_thinking": ModelCapability.LOGIC,
+    "adaptive_thinking": ModelCapability.PROBLEM_SOLVING,
+    "deep_research": ModelCapability.ARCHITECTURE,
+    "computer_use": ModelCapability.DEBUGGING,
+    "prompt_caching": ModelCapability.OPTIMIZATION,
+    "context_caching": ModelCapability.OPTIMIZATION,
+    "audio": ModelCapability.CREATIVITY,
+    "image_generation": ModelCapability.CREATIVITY,
+    "live_api": ModelCapability.SPEED,
+    "agentic": ModelCapability.ARCHITECTURE,
 }
+
+
+def _manifest_to_model_config(m: dict) -> ModelConfig:
+    """Convert a raw manifest model dict into a quantum ModelConfig."""
+    caps_raw = m.get("capabilities", [])
+    caps = list(dict.fromkeys(  # deduplicate, preserve order
+        _CAP_MAP.get(c, ModelCapability.REASONING) for c in caps_raw
+    ))
+    if not caps:
+        caps = [ModelCapability.REASONING]
+
+    return ModelConfig(
+        model_id=m["id"],
+        provider=m.get("provider", "unknown"),
+        cost_per_1k_tokens=float(m.get("cost_input", 0)) / 1000.0,
+        max_tokens=int(m.get("output_limit", 8192)),
+        capabilities=caps,
+        context_window=int(m.get("context_limit", 128000)),
+        supports_streaming=bool(m.get("supports_streaming", True)),
+        supports_json=True,
+        supports_functions=bool(m.get("supports_tools", False)),
+        temperature_range=(0.0, 2.0),
+    )
+
+
+def _build_quantum_model_registry() -> Dict[str, ModelConfig]:
+    """Build QUANTUM_MODEL_REGISTRY dynamically from the canonical manifest."""
+    registry: Dict[str, ModelConfig] = {}
+    for mid, mdata in get_models().items():
+        try:
+            registry[mid] = _manifest_to_model_config(mdata)
+        except (KeyError, ValueError):
+            continue  # skip malformed entries
+    return registry
+
+
+# Auto-built at import time from model_manifest.json
+QUANTUM_MODEL_REGISTRY: Dict[str, ModelConfig] = _build_quantum_model_registry()
 
 # Provider configurations
 QUANTUM_PROVIDER_REGISTRY = {

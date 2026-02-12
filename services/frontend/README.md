@@ -174,7 +174,7 @@ import { apiClient } from '@/lib/api/client';
 const result = await apiClient.generate({
   prompt: 'Create a React component',
   language: 'typescript',
-  model: 'claude-sonnet-4-20250514'
+  model: 'claude-sonnet-4-5'
 });
 
 // Stream responses

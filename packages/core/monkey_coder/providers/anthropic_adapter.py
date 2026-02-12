@@ -45,128 +45,84 @@ class AnthropicProvider(BaseProvider):
     Claude Opus 4.1, Claude 4 Opus/Sonnet, Claude 3.7 Sonnet, and Claude 3.5 variants.
     """
 
-    # Official Anthropic model names validated against API documentation (3.5+ only)
+    # Official Anthropic model names validated against API documentation (Feb 2026)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
+        "claude-opus-4-6": {
+            "name": "claude-opus-4-6",
+            "type": "chat",
+            "context_length": 200000,
+            "input_cost": 5.00,  # per 1M tokens
+            "output_cost": 25.00,  # per 1M tokens
+            "description": "Most intelligent model with adaptive thinking, 128K output, 1M context beta",
+            "capabilities": ["text", "vision", "function_calling", "extended_thinking", "computer_use", "adaptive_thinking"],
+            "version": "4.6-opus",
+            "release_date": datetime(2026, 1, 15),
+            "max_output": 128000,
+            "training_cutoff": "Jan 2025",
+        },
         "claude-opus-4-5": {
             "name": "claude-opus-4-5",
             "type": "chat",
             "context_length": 200000,
             "input_cost": 5.00,  # per 1M tokens
             "output_cost": 25.00,  # per 1M tokens
-            "description": "Claude Opus 4.5 - 80.9% SWE-bench with effort control (low, medium, high)",
+            "description": "Premium model combining maximum intelligence with practical performance",
             "capabilities": ["text", "vision", "function_calling", "extended_thinking", "effort_control", "computer_use"],
             "version": "4.5-opus",
             "release_date": datetime(2025, 11, 1),
             "max_output": 16000,
             "training_cutoff": "Jan 2025",
-            "supports_effort": True,  # Unique to Opus 4.5
+            "supports_effort": True,
         },
-        "claude-opus-4-1-20250805": {
-            "name": "claude-opus-4-1-20250805",
+        "claude-sonnet-4-5": {
+            "name": "claude-sonnet-4-5",
             "type": "chat",
             "context_length": 200000,
-            "input_cost": 15.00,  # per 1M tokens
-            "output_cost": 75.00,  # per 1M tokens
-            "description": "Claude Opus 4.1 - Latest and most capable model with advanced reasoning",
+            "input_cost": 3.00,  # per 1M tokens
+            "output_cost": 15.00,  # per 1M tokens
+            "description": "Smart model for complex agents and coding with computer use",
             "capabilities": ["text", "vision", "function_calling", "extended_thinking", "computer_use"],
-            "version": "4.1-opus",
-            "release_date": datetime(2025, 8, 5),
-            "max_output": 32000,
+            "version": "4.5-sonnet",
+            "release_date": datetime(2025, 9, 29),
+            "max_output": 64000,
             "training_cutoff": "Jan 2025",
         },
-        "claude-opus-4-20250514": {
-            "name": "claude-opus-4-20250514",
+        "claude-haiku-4-5": {
+            "name": "claude-haiku-4-5",
             "type": "chat",
             "context_length": 200000,
-            "input_cost": 15.00,  # per 1M tokens
-            "output_cost": 75.00,  # per 1M tokens
-            "description": "Claude 4 Opus - Our most capable and intelligent model yet",
-            "capabilities": ["text", "vision", "function_calling", "extended_thinking"],
-            "version": "4-opus",
-            "release_date": datetime(2025, 5, 14),
-            "max_output": 32000,
-            "training_cutoff": "Mar 2025",
-        },
-        "claude-sonnet-4-20250514": {
-            "name": "claude-sonnet-4-20250514",
-            "type": "chat",
-            "context_length": 200000,
-            "input_cost": 3.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "Claude 4 Sonnet - High-performance model with exceptional reasoning capabilities",
-            "capabilities": ["text", "vision", "function_calling", "extended_thinking"],
-            "version": "4-sonnet",
-            "release_date": datetime(2025, 5, 14),
-            "max_output": 64000,
-            "training_cutoff": "Mar 2025",
-        },
-        "claude-3-7-sonnet-20250219": {
-            "name": "claude-3-7-sonnet-20250219",
-            "type": "chat",
-            "context_length": 200000,
-            "input_cost": 3.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "Claude 3.7 Sonnet - High-performance model with early extended thinking",
-            "capabilities": ["text", "vision", "function_calling", "extended_thinking"],
-            "version": "3.7-sonnet",
-            "release_date": datetime(2025, 2, 19),
-            "max_output": 64000,
-            "training_cutoff": "Nov 2024",
-        },
-        "claude-3-5-sonnet-20241022": {
-            "name": "claude-3-5-sonnet-20241022",
-            "type": "chat",
-            "context_length": 200000,
-            "input_cost": 3.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "Claude 3.5 Sonnet v2 - Upgraded version with enhanced capabilities",
+            "input_cost": 1.00,  # per 1M tokens
+            "output_cost": 5.00,  # per 1M tokens
+            "description": "Fastest model with near-frontier intelligence",
             "capabilities": ["text", "vision", "function_calling"],
-            "version": "3.5-sonnet-v2",
-            "release_date": datetime(2024, 10, 22),
+            "version": "4.5-haiku",
+            "release_date": datetime(2025, 10, 1),
             "max_output": 8192,
-            "training_cutoff": "Apr 2024",
-        },
-        "claude-3-5-sonnet-20240620": {
-            "name": "claude-3-5-sonnet-20240620",
-            "type": "chat",
-            "context_length": 200000,
-            "input_cost": 3.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "Claude 3.5 Sonnet - Original version with high intelligence",
-            "capabilities": ["text", "vision", "function_calling"],
-            "version": "3.5-sonnet",
-            "release_date": datetime(2024, 6, 20),
-            "max_output": 8192,
-            "training_cutoff": "Apr 2024",
-        },
-        "claude-3-5-haiku-20241022": {
-            "name": "claude-3-5-haiku-20241022",
-            "type": "chat",
-            "context_length": 200000,
-            "input_cost": 0.80,  # per 1M tokens
-            "output_cost": 4.00,  # per 1M tokens
-            "description": "Claude 3.5 Haiku - Intelligence at blazing speeds",
-            "capabilities": ["text", "vision"],
-            "version": "3.5-haiku",
-            "release_date": datetime(2024, 10, 22),
-            "max_output": 8192,
-            "training_cutoff": "Jul 2024",
+            "training_cutoff": "Jul 2025",
         },
     }
 
-    # Model aliases for convenience (pointing to latest versions)
+    # Model aliases — legacy names resolve to current canonical names
     MODEL_ALIASES: Dict[str, str] = {
-        "claude-opus-4.5": "claude-opus-4-5",
-        "claude-opus-4-5-latest": "claude-opus-4-5",
-        "opus-4.5": "claude-opus-4-5",
-        "claude-opus-4-1": "claude-opus-4-1-20250805",
-        "claude-opus-4.1": "claude-opus-4-1-20250805",
-        "claude-opus-latest": "claude-opus-4-5",  # Updated to point to 4.5
-        "claude-opus-4-0": "claude-opus-4-20250514",
-        "claude-sonnet-4-0": "claude-sonnet-4-20250514",
-        "claude-3-7-sonnet-latest": "claude-3-7-sonnet-20250219",
-        "claude-3-5-sonnet-latest": "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-latest": "claude-3-5-haiku-20241022",
+        "claude-opus-4-5-20251101": "claude-opus-4-5",
+        "claude-sonnet-4-5-20250929": "claude-sonnet-4-5",
+        "claude-haiku-4-5-20251001": "claude-haiku-4-5",
+        "claude-opus-latest": "claude-opus-4-6",
+        "claude-opus-4-1-20250805": "claude-opus-4-6",
+        "claude-opus-4-20250514": "claude-opus-4-6",
+        "claude-sonnet-4-20250514": "claude-sonnet-4-5",
+        "claude-3-7-sonnet-20250219": "claude-sonnet-4-5",
+        "claude-3-7-sonnet-latest": "claude-sonnet-4-5",
+        "claude-3-5-sonnet-20241022": "claude-sonnet-4-5",
+        "claude-3-5-sonnet-20240620": "claude-sonnet-4-5",
+        "claude-3-5-sonnet-latest": "claude-sonnet-4-5",
+        "claude-3-5-haiku-20241022": "claude-haiku-4-5",
+        "claude-3-5-haiku-latest": "claude-haiku-4-5",
+        "claude-3-opus-20240229": "claude-opus-4-6",
+        "claude-3-sonnet-20240229": "claude-sonnet-4-5",
+        "claude-2.1": "claude-haiku-4-5",
+        "claude-4.5-sonnet-20250930": "claude-sonnet-4-5",
+        "claude-4.5-haiku-20250930": "claude-haiku-4-5",
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -473,26 +429,13 @@ class AnthropicProvider(BaseProvider):
             )
 
     def _get_actual_model(self, resolved_model: str) -> str:
-        """Return the actual model to use - all these models exist as of August 2025."""
-    # According to MODEL_MANIFEST.md, all these Claude models are real and available
-        # No mapping needed - use them directly
-        model_mapping = {
-            # All these models exist and should be used directly
-            "claude-opus-4-1-20250805": "claude-opus-4-1-20250805",
-            "claude-opus-4-20250514": "claude-opus-4-20250514",
-            "claude-sonnet-4-20250514": "claude-sonnet-4-20250514",
-            "claude-3-7-sonnet-20250219": "claude-3-7-sonnet-20250219",
-            "claude-3-5-sonnet-20241022": "claude-3-5-sonnet-20241022",
-            "claude-3-5-sonnet-20240620": "claude-3-5-sonnet-20240620",
-            "claude-3-5-haiku-20241022": "claude-3-5-haiku-20241022",
-        }
+        """Resolve any alias / deprecated name to the canonical model ID."""
+        from monkey_coder.manifest import resolve_model
 
-        # Return mapped model or original if not in mapping
-        actual = model_mapping.get(resolved_model, resolved_model)
+        actual = resolve_model(resolved_model)
 
-        # Log if we're using a different model
         if actual != resolved_model:
-            logger.info(f"Model {resolved_model} mapped to available model {actual}")
+            logger.info("Model %s resolved to canonical %s", resolved_model, actual)
 
         return actual
 

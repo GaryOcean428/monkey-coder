@@ -34,40 +34,55 @@ class GrokProvider(BaseProvider):
     Provides access to xAI's Grok models including Grok-3 and Grok-4 variants.
     """
 
-    # Official xAI Grok model names (August 2025)
+    # Official xAI Grok model names validated against docs (Feb 2026)
     VALIDATED_MODELS: Dict[str, Dict[str, Any]] = {
-        "grok-4-latest": {
-            "name": "grok-4-latest",
-            "type": "chat",
-            "context_length": 131072,
-            "input_cost": 5.00,  # per 1M tokens
-            "output_cost": 15.00,  # per 1M tokens
-            "description": "xAI's most advanced reasoning model with state-of-the-art capabilities",
-            "capabilities": ["text", "function_calling", "reasoning", "analysis"],
-            "version": "4-latest",
-            "release_date": datetime(2025, 7, 1),
-            "max_output": 8192,
+        # === Grok 4.1 (Latest) ===
+        "grok-4.1-fast-reasoning": {
+            "name": "grok-4.1-fast-reasoning",
+            "type": "reasoning",
+            "context_length": 2000000,
+            "input_cost": 2.00,
+            "output_cost": 10.00,
+            "description": "Fast reasoning with 2M context window",
+            "capabilities": ["text", "function_calling", "reasoning", "analysis", "vision"],
+            "version": "4.1-fast-reasoning",
+            "release_date": datetime(2025, 12, 1),
+            "max_output": 16384,
         },
+        "grok-4.1-fast-non-reasoning": {
+            "name": "grok-4.1-fast-non-reasoning",
+            "type": "chat",
+            "context_length": 1000000,
+            "input_cost": 0.50,
+            "output_cost": 2.00,
+            "description": "Instant response for standard tasks (1M context)",
+            "capabilities": ["text", "function_calling", "analysis"],
+            "version": "4.1-fast-non-reasoning",
+            "release_date": datetime(2025, 12, 1),
+            "max_output": 16384,
+        },
+        # === Grok 4 (Production) ===
         "grok-4": {
             "name": "grok-4",
-            "type": "chat",
+            "type": "reasoning",
             "context_length": 131072,
-            "input_cost": 5.00,
-            "output_cost": 15.00,
-            "description": "Advanced reasoning and conversation model",
+            "input_cost": 10.00,
+            "output_cost": 20.00,
+            "description": "Reasoning model (no non-reasoning mode)",
             "capabilities": ["text", "function_calling", "reasoning", "analysis"],
             "version": "4",
             "release_date": datetime(2025, 6, 1),
             "max_output": 8192,
         },
+        # === Grok 3 (Production) ===
         "grok-3": {
             "name": "grok-3",
             "type": "chat",
             "context_length": 131072,
-            "input_cost": 2.00,
-            "output_cost": 6.00,
-            "description": "Strong reasoning capabilities for general use",
-            "capabilities": ["text", "function_calling", "reasoning"],
+            "input_cost": 5.00,
+            "output_cost": 15.00,
+            "description": "Flagship model with vision and multimodal capabilities",
+            "capabilities": ["text", "function_calling", "reasoning", "vision"],
             "version": "3",
             "release_date": datetime(2025, 3, 1),
             "max_output": 8192,
@@ -75,47 +90,40 @@ class GrokProvider(BaseProvider):
         "grok-3-mini": {
             "name": "grok-3-mini",
             "type": "chat",
-            "context_length": 65536,
+            "context_length": 131072,
             "input_cost": 0.50,
             "output_cost": 1.50,
-            "description": "Efficient model for everyday tasks",
+            "description": "Smaller, faster version of Grok 3",
             "capabilities": ["text", "function_calling"],
             "version": "3-mini",
             "release_date": datetime(2025, 3, 1),
             "max_output": 4096,
         },
-        "grok-3-mini-fast": {
-            "name": "grok-3-mini-fast",
+        # === Specialized ===
+        "grok-code-fast-1": {
+            "name": "grok-code-fast-1",
             "type": "chat",
-            "context_length": 32768,
-            "input_cost": 0.25,
-            "output_cost": 0.75,
-            "description": "Ultra-fast responses for simple tasks",
-            "capabilities": ["text"],
-            "version": "3-mini-fast",
-            "release_date": datetime(2025, 3, 1),
-            "max_output": 2048,
-        },
-        "grok-3-fast": {
-            "name": "grok-3-fast",
-            "type": "chat",
-            "context_length": 65536,
-            "input_cost": 1.00,
-            "output_cost": 3.00,
-            "description": "Balance of speed and capability",
-            "capabilities": ["text", "function_calling"],
-            "version": "3-fast",
-            "release_date": datetime(2025, 3, 1),
-            "max_output": 4096,
+            "context_length": 256000,
+            "input_cost": 0.20,
+            "output_cost": 1.50,
+            "description": "314B MoE reasoning model optimized for agentic coding",
+            "capabilities": ["text", "function_calling", "code_generation", "reasoning"],
+            "version": "code-fast-1",
+            "release_date": datetime(2025, 6, 1),
+            "max_output": 65536,
         },
     }
-    
-    # Model aliases for convenience
+
+    # Model aliases — legacy names resolve to current canonical names
     MODEL_ALIASES: Dict[str, str] = {
-        "grok-latest": "grok-4-latest",
-        "grok": "grok-4-latest",
+        "grok-latest": "grok-4",
+        "grok": "grok-4",
+        "grok-4-latest": "grok-4",
         "grok-4.0": "grok-4",
         "grok-3.0": "grok-3",
+        "grok-3-fast": "grok-3",
+        "grok-3-mini-fast": "grok-3-mini",
+        "grok-2": "grok-3",
     }
 
     def __init__(self, api_key: str, **kwargs):
@@ -396,20 +404,14 @@ class GrokProvider(BaseProvider):
             )
     
     def _get_actual_model(self, resolved_model: str) -> str:
-        """Map future/unavailable models to actual available models."""
-        # For now, all models should be available
-        # But we can map if needed in the future
-        model_mapping = {
-            # Future mappings can go here
-        }
-        
-        # Return mapped model or original if not in mapping
-        actual = model_mapping.get(resolved_model, resolved_model)
-        
-        # Log if we're using a different model
+        """Resolve any alias / deprecated name to the canonical model ID."""
+        from monkey_coder.manifest import resolve_model
+
+        actual = resolve_model(resolved_model)
+
         if actual != resolved_model:
-            logger.info(f"Model {resolved_model} mapped to available model {actual}")
-        
+            logger.info("Model %s resolved to canonical %s", resolved_model, actual)
+
         return actual
     
     async def stream_completion(

@@ -247,7 +247,7 @@ async def list_models(api_key: str = Depends(validate_api_key)):
         "models": [
             {"id": "gpt-4.1", "provider": "openai", "description": "GPT-4.1 flagship model"},
             {"id": "gpt-4.1-mini", "provider": "openai", "description": "GPT-4.1 Mini model"},
-            {"id": "claude-sonnet-4-20250514", "provider": "anthropic", "description": "Claude Sonnet 4"},
+            {"id": "claude-sonnet-4-5", "provider": "anthropic", "description": "Claude Sonnet 4"},
             {"id": "qwen/qwen3-32b", "provider": "groq", "description": "Qwen 3 32B via Groq"}
         ]
     }

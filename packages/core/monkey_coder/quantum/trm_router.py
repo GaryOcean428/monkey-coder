@@ -295,7 +295,7 @@ class TRMRouter(QuantumAdvancedRouter):
             (_, model), score = max(provider_models.items(), key=lambda x: x[1])
         else:
             # Fallback
-            model = "gpt-4.1-mini" if provider == ProviderType.OPENAI else "claude-3-5-sonnet-latest"
+            model = "gpt-4.1-mini" if provider == ProviderType.OPENAI else "claude-sonnet-4-5"
             score = 0.8
         
         # Calculate final confidence from TRM

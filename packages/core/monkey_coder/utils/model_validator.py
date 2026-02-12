@@ -30,17 +30,20 @@ class ModelValidator:
         "gpt-4o-mini",  # Use gpt-4.1-mini instead
         "gpt-4",  # Use gpt-4.1 instead
         "gpt-4-turbo",  # Use gpt-4.1 instead
-        "claude-3-opus",  # Old naming - use claude-opus-4-1-20250805 instead
-        "claude-3-sonnet",  # Old naming - use claude-3-7-sonnet-20250219 instead
+        "gpt-3.5-turbo",  # Use gpt-4.1-nano instead
+        "o1",  # Use o3 instead
+        "o1-mini",  # Use o4-mini instead
+        "claude-3-opus",  # Use claude-opus-4-6 instead
+        "claude-3-sonnet",  # Use claude-sonnet-4-5 instead
     }
     
     # Approved flagship models
     FLAGSHIP_MODELS = {
-        "gpt-4.1",  # OpenAI flagship
-        "claude-opus-4-1-20250805",  # Anthropic flagship (latest)
-        "claude-3-5-sonnet-20241022",  # Anthropic best available 3.5+
+        "gpt-5.2",  # OpenAI flagship
+        "claude-opus-4-6",  # Anthropic flagship (latest)
         "gemini-2.5-pro",  # Google flagship
-        "grok-4-latest",  # xAI flagship
+        "grok-4",  # xAI flagship
+        "llama-3.3-70b-versatile",  # Groq flagship
     }
     
     # Model replacement mapping
@@ -52,22 +55,36 @@ class ModelValidator:
         "gpt-4": "gpt-4.1",
         "gpt-4-turbo": "gpt-4.1",
         "gpt-4-32k": "gpt-4.1",
+        "gpt-3.5-turbo": "gpt-4.1-nano",
+        "o1": "o3",
+        "o1-mini": "o4-mini",
+        "o1-preview": "o3",
         
-        # Anthropic replacements - Map old names to new models
-        "claude-3-opus": "claude-opus-4-1-20250805",  # Use latest Opus 4.1
-        "claude-3-sonnet": "claude-3-7-sonnet-20250219",  # Use Claude 3.7
-        "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
-        "claude-3-haiku": "claude-3-5-haiku-20241022",
+        # Anthropic replacements — map old names to canonical names
+        "claude-3-opus": "claude-opus-4-6",
+        "claude-3-opus-20240229": "claude-opus-4-6",
+        "claude-opus-4-1-20250805": "claude-opus-4-6",
+        "claude-opus-4-20250514": "claude-opus-4-6",
+        "claude-3-sonnet": "claude-sonnet-4-5",
+        "claude-3-7-sonnet-20250219": "claude-sonnet-4-5",
+        "claude-3-5-sonnet-20241022": "claude-sonnet-4-5",
+        "claude-3.5-sonnet": "claude-sonnet-4-5",
+        "claude-3-haiku": "claude-haiku-4-5",
+        "claude-3-5-haiku-20241022": "claude-haiku-4-5",
         
         # Google replacements
         "gemini-1.5-pro": "gemini-2.5-pro",
-        "gemini-1.5-flash": "models/gemini-2.5-flash",
-        "gemini-pro": "gemini-2.5-pro",
+        "gemini-1.5-flash": "gemini-2.5-flash",
+        "gemini-pro": "gemini-2.5-flash",
         "gemini-pro-vision": "gemini-2.5-pro",
+        "gemini-2.0-flash": "gemini-2.5-flash",
         
         # Grok replacements
         "grok-2": "grok-3",
         "grok-1": "grok-3-mini",
+        "grok-4-latest": "grok-4",
+        "grok-3-fast": "grok-3",
+        "grok-3-mini-fast": "grok-3-mini",
     }
     
     @classmethod

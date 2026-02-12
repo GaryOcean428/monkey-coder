@@ -66,306 +66,282 @@ class ModelPricing(BaseModel):
 # Prices are per 1 token (not per 1K tokens) for easier calculation
 # Models must match exactly with MODEL_REGISTRY in models.py
 MODEL_PRICING_DATA: Dict[str, ModelPricing] = {
-    # OpenAI Models (GPT-4.1 Family - Flagship models)
-    "gpt-4.1": ModelPricing(
-        model_id="gpt-4.1",
+    # OpenAI — GPT-5.x Series (Latest)
+    "gpt-5.2": ModelPricing(
+        model_id="gpt-5.2",
         provider="openai",
-        input_cost_per_token=0.0000025,   # $2.50 per 1M input tokens
+        input_cost_per_token=0.00000175,  # $1.75 per 1M input tokens
+        output_cost_per_token=0.000014,   # $14.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5.2-codex": ModelPricing(
+        model_id="gpt-5.2-codex",
+        provider="openai",
+        input_cost_per_token=0.00000175,  # $1.75 per 1M input tokens
+        output_cost_per_token=0.000014,   # $14.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5.2-pro": ModelPricing(
+        model_id="gpt-5.2-pro",
+        provider="openai",
+        input_cost_per_token=0.000021,    # $21.00 per 1M input tokens
+        output_cost_per_token=0.000168,   # $168.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5.3-codex": ModelPricing(
+        model_id="gpt-5.3-codex",
+        provider="openai",
+        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
+        output_cost_per_token=0.000014,   # $14.00 per 1M output tokens
+        context_length=400000
+    ),
+    "gpt-5.1": ModelPricing(
+        model_id="gpt-5.1",
+        provider="openai",
+        input_cost_per_token=0.00000125,  # $1.25 per 1M input tokens
         output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
-        context_length=128000
+        context_length=400000
     ),
-    "gpt-4.1-mini": ModelPricing(
-        model_id="gpt-4.1-mini",
-        provider="openai",
-        input_cost_per_token=0.00000015,  # $0.15 per 1M input tokens
-        output_cost_per_token=0.0000006,  # $0.60 per 1M output tokens
-        context_length=128000
-    ),
-    "gpt-4.1-nano": ModelPricing(
-        model_id="gpt-4.1-nano",
-        provider="openai",
-        input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
-        output_cost_per_token=0.0000004,  # $0.40 per 1M output tokens
-        context_length=1047576
-    ),
-    # GPT-5 Family (latest) per MODEL_MANIFEST.md
     "gpt-5": ModelPricing(
         model_id="gpt-5",
         provider="openai",
         input_cost_per_token=0.0000025,   # $2.50 per 1M input tokens
         output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
-        context_length=400000
+        context_length=200000
     ),
     "gpt-5-mini": ModelPricing(
         model_id="gpt-5-mini",
         provider="openai",
-        input_cost_per_token=0.00000025,  # $0.25 per 1M input tokens
-        output_cost_per_token=0.000001,   # $1.00 per 1M output tokens
-        context_length=400000
+        input_cost_per_token=0.00000015,  # $0.15 per 1M input tokens
+        output_cost_per_token=0.0000006,  # $0.60 per 1M output tokens
+        context_length=200000
     ),
     "gpt-5-nano": ModelPricing(
         model_id="gpt-5-nano",
         provider="openai",
-        input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
-        output_cost_per_token=0.0000004,  # $0.40 per 1M output tokens
-        context_length=400000
+        input_cost_per_token=0.00000005,  # $0.05 per 1M input tokens
+        output_cost_per_token=0.0000002,  # $0.20 per 1M output tokens
+        context_length=200000
     ),
-    # Reasoning models
-    "o1": ModelPricing(
-        model_id="o1",
+    # OpenAI — GPT-4.1 Series (Production)
+    "gpt-4.1": ModelPricing(
+        model_id="gpt-4.1",
+        provider="openai",
+        input_cost_per_token=0.0000025,   # $2.50 per 1M input tokens
+        output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
+        context_length=200000
+    ),
+    "gpt-4.1-mini": ModelPricing(
+        model_id="gpt-4.1-mini",
+        provider="openai",
+        input_cost_per_token=0.00000012,  # $0.12 per 1M input tokens
+        output_cost_per_token=0.00000048, # $0.48 per 1M output tokens
+        context_length=1000000
+    ),
+    "gpt-4.1-nano": ModelPricing(
+        model_id="gpt-4.1-nano",
+        provider="openai",
+        input_cost_per_token=0.00000005,  # $0.05 per 1M input tokens
+        output_cost_per_token=0.0000002,  # $0.20 per 1M output tokens
+        context_length=1000000
+    ),
+    # OpenAI — Reasoning models
+    "o3-pro": ModelPricing(
+        model_id="o3-pro",
         provider="openai",
         input_cost_per_token=0.000015,    # $15.00 per 1M input tokens
         output_cost_per_token=0.00006,    # $60.00 per 1M output tokens
-        context_length=128000
-    ),
-    "o1-mini": ModelPricing(
-        model_id="o1-mini",
-        provider="openai",
-        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
-        output_cost_per_token=0.000012,   # $12.00 per 1M output tokens
-        context_length=128000
+        context_length=200000
     ),
     "o3": ModelPricing(
         model_id="o3",
         provider="openai",
-        input_cost_per_token=0.00002,     # $20.00 per 1M input tokens
-        output_cost_per_token=0.00008,    # $80.00 per 1M output tokens
-        context_length=128000
+        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
+        output_cost_per_token=0.000008,   # $8.00 per 1M output tokens
+        context_length=200000
     ),
-    "o3-pro": ModelPricing(
-        model_id="o3-pro",
+    "o3-mini": ModelPricing(
+        model_id="o3-mini",
         provider="openai",
-        input_cost_per_token=0.00004,     # $40.00 per 1M input tokens
-        output_cost_per_token=0.00016,    # $160.00 per 1M output tokens
-        context_length=128000
+        input_cost_per_token=0.0000006,   # $0.60 per 1M input tokens
+        output_cost_per_token=0.0000024,  # $2.40 per 1M output tokens
+        context_length=200000
     ),
     "o4-mini": ModelPricing(
         model_id="o4-mini",
         provider="openai",
-        input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
-        output_cost_per_token=0.00002,    # $20.00 per 1M output tokens
-        context_length=128000
+        input_cost_per_token=0.0000011,   # $1.10 per 1M input tokens
+        output_cost_per_token=0.0000044,  # $4.40 per 1M output tokens
+        context_length=200000
     ),
     "o3-deep-research": ModelPricing(
         model_id="o3-deep-research",
         provider="openai",
-        input_cost_per_token=0.00003,     # $30.00 per 1M input tokens
-        output_cost_per_token=0.00012,    # $120.00 per 1M output tokens
-        context_length=128000
+        input_cost_per_token=0.000015,    # $15.00 per 1M input tokens
+        output_cost_per_token=0.00006,    # $60.00 per 1M output tokens
+        context_length=200000
     ),
     "o4-mini-deep-research": ModelPricing(
         model_id="o4-mini-deep-research",
         provider="openai",
-        input_cost_per_token=0.00001,     # $10.00 per 1M input tokens
-        output_cost_per_token=0.00004,    # $40.00 per 1M output tokens
-        context_length=128000
+        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
+        output_cost_per_token=0.000012,   # $12.00 per 1M output tokens
+        context_length=200000
     ),
-    # Search models (not in manifest - commented out)
-    # "gpt-4o-search-preview": ModelPricing(
-    #     model_id="gpt-4o-search-preview",
-    #     provider="openai",
-    #     input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
-    #     output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
-    #     context_length=128000
-    # ),
-    # "gpt-4o-mini-search-preview": ModelPricing(
-    #     model_id="gpt-4o-mini-search-preview",
-    #     provider="openai",
-    #     input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
-    #     output_cost_per_token=0.000002,   # $2.00 per 1M output tokens
-    #     context_length=128000
-    # ),
-    # Specialized
-    "codex-mini-latest": ModelPricing(
-        model_id="codex-mini-latest",
+    # OpenAI — Open-weight models
+    "gpt-oss-120b": ModelPricing(
+        model_id="gpt-oss-120b",
         provider="openai",
-        input_cost_per_token=0.000001,    # $1.00 per 1M input tokens
-        output_cost_per_token=0.000004,   # $4.00 per 1M output tokens
-        context_length=32768
+        input_cost_per_token=0.0,         # Free (Apache 2.0)
+        output_cost_per_token=0.0,
+        context_length=131072
+    ),
+    "gpt-oss-20b": ModelPricing(
+        model_id="gpt-oss-20b",
+        provider="openai",
+        input_cost_per_token=0.0,         # Free (Apache 2.0)
+        output_cost_per_token=0.0,
+        context_length=131072
     ),
 
     # Anthropic Claude Models
-    "claude-opus-4-20250514": ModelPricing(
-        model_id="claude-opus-4-20250514",
+    "claude-opus-4-6": ModelPricing(
+        model_id="claude-opus-4-6",
         provider="anthropic",
-        input_cost_per_token=0.000015,    # $15.00 per 1M input tokens
-        output_cost_per_token=0.000075,   # $75.00 per 1M output tokens
+        input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
+        output_cost_per_token=0.000025,   # $25.00 per 1M output tokens
         context_length=200000
     ),
-    "claude-sonnet-4-20250514": ModelPricing(
-        model_id="claude-sonnet-4-20250514",
+    "claude-opus-4-5": ModelPricing(
+        model_id="claude-opus-4-5",
+        provider="anthropic",
+        input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
+        output_cost_per_token=0.000025,   # $25.00 per 1M output tokens
+        context_length=200000
+    ),
+    "claude-sonnet-4-5": ModelPricing(
+        model_id="claude-sonnet-4-5",
         provider="anthropic",
         input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
         output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
         context_length=200000
     ),
-    "claude-3-7-sonnet-20250219": ModelPricing(
-        model_id="claude-3-7-sonnet-20250219",
+    "claude-haiku-4-5": ModelPricing(
+        model_id="claude-haiku-4-5",
         provider="anthropic",
-        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
-        output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
-        context_length=200000
-    ),
-    "claude-3-5-sonnet-20241022": ModelPricing(
-        model_id="claude-3-5-sonnet-20241022",
-        provider="anthropic",
-        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
-        output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
-        context_length=200000
-    ),
-    "claude-3-5-haiku-20241022": ModelPricing(
-        model_id="claude-3-5-haiku-20241022",
-        provider="anthropic",
-        input_cost_per_token=0.0000008,   # $0.80 per 1M input tokens
-        output_cost_per_token=0.000004,   # $4.00 per 1M output tokens
+        input_cost_per_token=0.000001,    # $1.00 per 1M input tokens
+        output_cost_per_token=0.000005,   # $5.00 per 1M output tokens
         context_length=200000
     ),
 
-    # Google Models
+    # Google Gemini Models
+    "gemini-3-pro-preview": ModelPricing(
+        model_id="gemini-3-pro-preview",
+        provider="google",
+        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
+        output_cost_per_token=0.000012,   # $12.00 per 1M output tokens
+        context_length=1000000
+    ),
+    "gemini-3-flash-preview": ModelPricing(
+        model_id="gemini-3-flash-preview",
+        provider="google",
+        input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
+        output_cost_per_token=0.000003,   # $3.00 per 1M output tokens
+        context_length=1000000
+    ),
+    "gemini-3-pro-image-preview": ModelPricing(
+        model_id="gemini-3-pro-image-preview",
+        provider="google",
+        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
+        output_cost_per_token=0.000004,   # $4.00 per 1M output tokens
+        context_length=65000
+    ),
     "gemini-2.5-pro": ModelPricing(
         model_id="gemini-2.5-pro",
         provider="google",
         input_cost_per_token=0.00000125,  # $1.25 per 1M input tokens
         output_cost_per_token=0.000005,   # $5.00 per 1M output tokens
-        context_length=2097152
+        context_length=1000000
     ),
-    "models/gemini-2.5-flash": ModelPricing(
-        model_id="models/gemini-2.5-flash",
+    "gemini-2.5-flash": ModelPricing(
+        model_id="gemini-2.5-flash",
         provider="google",
-        input_cost_per_token=0.000000075, # $0.075 per 1M input tokens
-        output_cost_per_token=0.0000003,  # $0.30 per 1M output tokens
-        context_length=1048576
+        input_cost_per_token=0.0000003,   # $0.30 per 1M input tokens
+        output_cost_per_token=0.0000012,  # $1.20 per 1M output tokens
+        context_length=1000000
     ),
-    "models/gemini-2.5-flash-lite": ModelPricing(
-        model_id="models/gemini-2.5-flash-lite",
+    "gemini-2.5-flash-lite": ModelPricing(
+        model_id="gemini-2.5-flash-lite",
         provider="google",
-        input_cost_per_token=0.00000005,  # $0.05 per 1M input tokens
-        output_cost_per_token=0.0000002,  # $0.20 per 1M output tokens
-        context_length=1048576
-    ),
-    "models/gemini-2.0-flash": ModelPricing(
-        model_id="models/gemini-2.0-flash",
-        provider="google",
-        input_cost_per_token=0.000000075, # $0.075 per 1M input tokens
-        output_cost_per_token=0.0000003,  # $0.30 per 1M output tokens
-        context_length=1048576
-    ),
-    "models/gemini-2.0-flash-lite": ModelPricing(
-        model_id="models/gemini-2.0-flash-lite",
-        provider="google",
-        input_cost_per_token=0.00000005,  # $0.05 per 1M input tokens
-        output_cost_per_token=0.0000002,  # $0.20 per 1M output tokens
-        context_length=1048576
-    ),
-    "models/gemini-live-2.5-flash-preview": ModelPricing(
-        model_id="models/gemini-live-2.5-flash-preview",
-        provider="google",
-        input_cost_per_token=0.000000075, # $0.075 per 1M input tokens
-        output_cost_per_token=0.0000003,  # $0.30 per 1M output tokens
-        context_length=1048576
-    ),
-    "models/gemini-2.0-flash-live-001": ModelPricing(
-        model_id="models/gemini-2.0-flash-live-001",
-        provider="google",
-        input_cost_per_token=0.000000075, # $0.075 per 1M input tokens
-        output_cost_per_token=0.0000003,  # $0.30 per 1M output tokens
-        context_length=1048576
+        input_cost_per_token=0.000000018, # $0.018 per 1M input tokens
+        output_cost_per_token=0.000000075, # $0.075 per 1M output tokens
+        context_length=1000000
     ),
 
-    # Grok Models (xAI)
-    "grok-4-latest": ModelPricing(
-        model_id="grok-4-latest",
+    # xAI Grok Models
+    "grok-4.1-fast-reasoning": ModelPricing(
+        model_id="grok-4.1-fast-reasoning",
+        provider="grok",
+        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
+        output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
+        context_length=2000000
+    ),
+    "grok-4.1-fast-non-reasoning": ModelPricing(
+        model_id="grok-4.1-fast-non-reasoning",
+        provider="grok",
+        input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
+        output_cost_per_token=0.000002,   # $2.00 per 1M output tokens
+        context_length=1000000
+    ),
+    "grok-4": ModelPricing(
+        model_id="grok-4",
+        provider="grok",
+        input_cost_per_token=0.00001,     # $10.00 per 1M input tokens
+        output_cost_per_token=0.00002,    # $20.00 per 1M output tokens
+        context_length=131072
+    ),
+    "grok-3": ModelPricing(
+        model_id="grok-3",
         provider="grok",
         input_cost_per_token=0.000005,    # $5.00 per 1M input tokens
         output_cost_per_token=0.000015,   # $15.00 per 1M output tokens
         context_length=131072
     ),
-
-    "grok-3": ModelPricing(
-        model_id="grok-3",
-        provider="grok",
-        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
-        output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
-        context_length=131072
-    ),
     "grok-3-mini": ModelPricing(
         model_id="grok-3-mini",
         provider="grok",
-        input_cost_per_token=0.000001,    # $1.00 per 1M input tokens
-        output_cost_per_token=0.000005,   # $5.00 per 1M output tokens
+        input_cost_per_token=0.0000005,   # $0.50 per 1M input tokens
+        output_cost_per_token=0.0000015,  # $1.50 per 1M output tokens
         context_length=131072
     ),
-    "grok-3-mini-fast": ModelPricing(
-        model_id="grok-3-mini-fast",
+    "grok-code-fast-1": ModelPricing(
+        model_id="grok-code-fast-1",
         provider="grok",
-        input_cost_per_token=0.0000008,   # $0.80 per 1M input tokens
-        output_cost_per_token=0.000004,   # $4.00 per 1M output tokens
-        context_length=131072
-    ),
-    "grok-3-fast": ModelPricing(
-        model_id="grok-3-fast",
-        provider="grok",
-        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
-        output_cost_per_token=0.000008,   # $8.00 per 1M output tokens
-        context_length=131072
+        input_cost_per_token=0.0000002,   # $0.20 per 1M input tokens
+        output_cost_per_token=0.0000015,  # $1.50 per 1M output tokens
+        context_length=256000
     ),
 
     # Groq Models (hardware-accelerated inference)
+    "groq/compound": ModelPricing(
+        model_id="groq/compound",
+        provider="groq",
+        input_cost_per_token=0.00000027,  # $0.27 per 1M input tokens
+        output_cost_per_token=0.0000011,  # $1.10 per 1M output tokens
+        context_length=131072
+    ),
     "llama-3.3-70b-versatile": ModelPricing(
         model_id="llama-3.3-70b-versatile",
         provider="groq",
         input_cost_per_token=0.00000059,  # $0.59 per 1M input tokens
         output_cost_per_token=0.00000079, # $0.79 per 1M output tokens
-        context_length=32768
+        context_length=131072
     ),
     "llama-3.1-8b-instant": ModelPricing(
         model_id="llama-3.1-8b-instant",
         provider="groq",
         input_cost_per_token=0.00000005,  # $0.05 per 1M input tokens
         output_cost_per_token=0.00000008, # $0.08 per 1M output tokens
-        context_length=32768
-    ),
-    "meta-llama/llama-4-maverick-17b-128e-instruct": ModelPricing(
-        model_id="meta-llama/llama-4-maverick-17b-128e-instruct",
-        provider="groq",
-        input_cost_per_token=0.000001,    # $1.00 per 1M input tokens
-        output_cost_per_token=0.000003,   # $3.00 per 1M output tokens
-        context_length=32768
-    ),
-    "meta-llama/llama-4-scout-17b-16e-instruct": ModelPricing(
-        model_id="meta-llama/llama-4-scout-17b-16e-instruct",
-        provider="groq",
-        input_cost_per_token=0.0000008,   # $0.80 per 1M input tokens
-        output_cost_per_token=0.000002,   # $2.00 per 1M output tokens
-        context_length=32768
-    ),
-    "moonshotai/kimi-k2-instruct": ModelPricing(
-        model_id="moonshotai/kimi-k2-instruct",
-        provider="groq",
-        input_cost_per_token=0.000002,    # $2.00 per 1M input tokens
-        output_cost_per_token=0.000006,   # $6.00 per 1M output tokens
-        context_length=32768
-    ),
-    "qwen/qwen3-32b": ModelPricing(
-        model_id="qwen/qwen3-32b",
-        provider="groq",
-        input_cost_per_token=0.000003,    # $3.00 per 1M input tokens
-        output_cost_per_token=0.00001,    # $10.00 per 1M output tokens
-        context_length=32768
-    ),
-    # Groq GPT-OSS Models
-    "openai/gpt-oss-120b": ModelPricing(
-        model_id="openai/gpt-oss-120b",
-        provider="groq",
-        input_cost_per_token=0.00000015,  # $0.15 per 1M input tokens
-        output_cost_per_token=0.00000075, # $0.75 per 1M output tokens
-        context_length=131072
-    ),
-    "openai/gpt-oss-20b": ModelPricing(
-        model_id="openai/gpt-oss-20b",
-        provider="groq",
-        input_cost_per_token=0.0000001,   # $0.10 per 1M input tokens
-        output_cost_per_token=0.0000005,  # $0.50 per 1M output tokens
         context_length=131072
     ),
 }

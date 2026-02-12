@@ -682,7 +682,7 @@ class AdvancedRouter:
             specializations=["multimodal", "long_context", "stable"]
         )
 
-        capabilities[(ProviderType.GOOGLE, "gemini-2.0-flash")] = ModelCapabilities(
+        capabilities[(ProviderType.GOOGLE, "gemini-2.5-flash")] = ModelCapabilities(
             code_generation=0.85, reasoning=0.87, context_window=1000000,
             latency_ms=1000, cost_per_token=0.0008, reliability=0.85,
             specializations=["multimodal", "fast", "efficient"]

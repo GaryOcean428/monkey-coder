@@ -13,7 +13,7 @@ export const STRIPE_CONFIG = {
       description: 'Basic subscription plan for Monkey Coder - Perfect for individual developers and small projects',
       features: [
         '100 API calls per month',
-        'Models: GPT-5-nano, Claude-3.5-haiku, Gemini-2.0-flash-lite',
+        'Models: GPT-5-nano, Claude Haiku 4.5, Gemini 2.5 Flash Lite',
         'Community support',
         'Standard response time',
         'Overage: $0.25 per additional call'
@@ -24,8 +24,8 @@ export const STRIPE_CONFIG = {
       },
       models: [
         'gpt-5-nano',
-        'claude-3-5-haiku-20241022',
-        'models/gemini-2.0-flash-lite'
+        'claude-haiku-4-5',
+        'gemini-2.5-flash-lite'
       ]
     },
     pro: {
@@ -47,7 +47,7 @@ export const STRIPE_CONFIG = {
       models: [
         'gpt-5-mini',
         'gpt-4.1',
-        'claude-sonnet-4-20250514',
+        'claude-sonnet-4-5',
         'gemini-2.5-pro',
         'llama-3.3-70b-versatile',
         'llama-3.1-8b-instant'
@@ -77,10 +77,9 @@ export const STRIPE_CONFIG = {
         'o3',
         'o3-pro',
         'gpt-4.1',
-        'claude-opus-4-1-20250805',
-        'claude-opus-4-20250514',
-        'claude-sonnet-4-20250514',
-        'grok-4-latest',
+        'claude-opus-4-6',
+        'claude-sonnet-4-5',
+        'grok-4',
         'gemini-2.5-pro',
         'llama-3.3-70b-versatile',
         'moonshotai/kimi-k2-instruct'
