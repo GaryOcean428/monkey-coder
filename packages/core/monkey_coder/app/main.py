@@ -67,6 +67,14 @@ try:
 except Exception as e:
     print(f"Warning: Failed to include auth router: {e}")
 
+# Include sandbox router
+try:
+    from monkey_coder.app.routes.sandbox import router as sandbox_router
+    app.include_router(sandbox_router)
+    print("✓ Sandbox router included")
+except Exception as e:
+    print(f"Warning: Failed to include sandbox router: {e}")
+
 # Request models
 class PasswordResetRequest(BaseModel):
     email: EmailStr
