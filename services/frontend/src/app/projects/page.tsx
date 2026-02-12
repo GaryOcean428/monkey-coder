@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus, FolderOpen, Calendar, GitBranch, ExternalLink } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 interface Project {
   id: string
@@ -18,51 +19,54 @@ interface Project {
 
 export default function ProjectsPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('authToken')
-    if (!token) {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
       router.push('/login')
       return
     }
 
-    // Mock projects data (in production, fetch from API)
-    setTimeout(() => {
-      setProjects([
-        {
-          id: '1',
-          name: 'E-commerce API',
-          description: 'RESTful API for online store with payment integration',
-          language: 'Python',
-          created: '2024-01-15',
-          lastModified: '2024-01-25',
-          status: 'active'
-        },
-        {
-          id: '2',
-          name: 'React Dashboard',
-          description: 'Admin dashboard with analytics and user management',
-          language: 'TypeScript',
-          created: '2024-01-10',
-          lastModified: '2024-01-20',
-          status: 'completed'
-        },
-        {
-          id: '3',
-          name: 'Mobile App Backend',
-          description: 'GraphQL API for iOS and Android mobile application',
-          language: 'Node.js',
-          created: '2024-01-05',
-          lastModified: '2024-01-18',
-          status: 'active'
-        }
-      ])
-      setLoading(false)
-    }, 1000)
-  }, [router])
+    // Only fetch projects if authenticated
+    if (!authLoading && user) {
+      // Mock projects data (in production, fetch from API)
+      setTimeout(() => {
+        setProjects([
+          {
+            id: '1',
+            name: 'E-commerce API',
+            description: 'RESTful API for online store with payment integration',
+            language: 'Python',
+            created: '2024-01-15',
+            lastModified: '2024-01-25',
+            status: 'active'
+          },
+          {
+            id: '2',
+            name: 'React Dashboard',
+            description: 'Admin dashboard with analytics and user management',
+            language: 'TypeScript',
+            created: '2024-01-10',
+            lastModified: '2024-01-20',
+            status: 'completed'
+          },
+          {
+            id: '3',
+            name: 'Mobile App Backend',
+            description: 'GraphQL API for iOS and Android mobile application',
+            language: 'Node.js',
+            created: '2024-01-05',
+            lastModified: '2024-01-18',
+            status: 'active'
+          }
+        ])
+        setLoading(false)
+      }, 1000)
+    }
+  }, [user, authLoading, router])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,7 +81,7 @@ export default function ProjectsPage() {
     }
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
