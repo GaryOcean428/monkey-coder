@@ -396,14 +396,25 @@ async def exchange_supabase_token(request: SupabaseTokenRequest) -> AuthResponse
             detail="OAuth service not configured"
         )
 
-    # Verify the Supabase token by calling Supabase's user endpoint
+    # Resolve API key — supports new secret key (sb_secret_xxx) and legacy service_role/anon
+    apikey = (
+        os.getenv("SUPABASE_SECRET_KEY")
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+        or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
+    )
+
+    # Verify the Supabase token by calling Supabase's /auth/v1/user endpoint.
+    # Per Supabase docs (2025): for HS256/legacy JWT secret projects, server-side
+    # verification via the Auth API is the recommended approach over local JWT
+    # decoding with the shared secret. This avoids shared-secret exposure risks.
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
                 f"{supabase_url}/auth/v1/user",
                 headers={
                     "Authorization": f"Bearer {request.access_token}",
-                    "apikey": os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", ""),
+                    "apikey": apikey,
                 },
                 timeout=10.0,
             )
