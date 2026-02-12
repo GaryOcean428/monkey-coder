@@ -12,28 +12,74 @@ This module provides authentication endpoints:
 
 import logging
 import os
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+import secrets
+from datetime import datetime, timedelta
+from typing import Any
 
 import httpx
-from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import BaseModel, Field, EmailStr
-from jose import jwt, JWTError
+import jwt as pyjwt
+from fastapi import APIRouter, Depends, HTTPException, status
+from jose import JWTError, jwt
+from jwt import PyJWKClient
+from pydantic import BaseModel, EmailStr, Field
 
+from ...config.env_config import get_config
+from ...database import User, get_user_store
 from ...security import (
-    get_current_user,
-    create_access_token,
-    create_refresh_token,
-    hash_password,
-    verify_password,
     JWTUser,
     UserRole,
+    create_access_token,
+    create_refresh_token,
+    get_current_user,
     get_user_permissions,
+    hash_password,
 )
-from ...database import get_user_store, User
-from ...config.env_config import get_config
 
 logger = logging.getLogger(__name__)
+
+# JWKS client cache — reused across requests for performance.
+# Supabase exposes /.well-known/jwks.json for projects using asymmetric signing keys.
+_jwks_clients: dict[str, PyJWKClient] = {}
+
+
+def _get_jwks_client(supabase_url: str) -> PyJWKClient:
+    """Get or create a cached PyJWKClient for the given Supabase project."""
+    if supabase_url not in _jwks_clients:
+        jwks_url = f"{supabase_url}/auth/v1/.well-known/jwks.json"
+        _jwks_clients[supabase_url] = PyJWKClient(jwks_url, cache_keys=True)
+    return _jwks_clients[supabase_url]
+
+
+async def _verify_supabase_token_jwks(
+    access_token: str, supabase_url: str
+) -> dict[str, Any] | None:
+    """
+    Verify a Supabase JWT using the project's JWKS endpoint (asymmetric keys).
+
+    Returns decoded payload on success, None if JWKS is unavailable or
+    the token uses HS256 (legacy shared secret).
+    """
+    try:
+        client = _get_jwks_client(supabase_url)
+        signing_key = client.get_signing_key_from_jwt(access_token)
+        payload = pyjwt.decode(
+            access_token,
+            signing_key.key,
+            algorithms=["RS256", "ES256", "EdDSA"],
+            audience="authenticated",
+            options={"verify_exp": True},
+        )
+        return payload
+    except (pyjwt.exceptions.PyJWKClientError, pyjwt.exceptions.DecodeError) as exc:
+        # JWKS unavailable or token not signed with asymmetric key — fall back
+        logger.debug(f"JWKS verification unavailable, falling back to REST API: {exc}")
+        return None
+    except pyjwt.exceptions.ExpiredSignatureError:
+        logger.warning("Supabase JWT has expired (JWKS verification)")
+        return None
+    except Exception as exc:
+        logger.debug(f"JWKS verification failed: {exc}")
+        return None
 
 # Create router
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
@@ -57,7 +103,7 @@ class AuthResponse(BaseModel):
     """Authentication response model."""
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(..., description="JWT refresh token")
-    user: Dict[str, Any] = Field(..., description="User information")
+    user: dict[str, Any] = Field(..., description="User information")
 
 
 class RefreshTokenRequest(BaseModel):
@@ -73,8 +119,8 @@ class SupabaseTokenRequest(BaseModel):
 class UserStatusResponse(BaseModel):
     """User status response model."""
     authenticated: bool = Field(..., description="User authentication status")
-    user: Optional[Dict[str, Any]] = Field(None, description="User information if authenticated")
-    session_expires: Optional[str] = Field(None, description="Session expiration timestamp")
+    user: dict[str, Any] | None = Field(None, description="User information if authenticated")
+    session_expires: str | None = Field(None, description="Session expiration timestamp")
 
 
 # Authentication Endpoints
@@ -128,7 +174,7 @@ async def login(request: LoginRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=True,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expires_at=datetime.now(datetime.UTC) + timedelta(hours=24)
         )
 
         # Create tokens
@@ -158,11 +204,11 @@ async def login(request: LoginRequest) -> AuthResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Login failed for {request.email}: {str(e)}", exc_info=True)
+        logger.error(f"Login failed for {request.email}: {e!s}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
-        )
+        ) from None
 
 
 @router.post("/signup", response_model=AuthResponse)
@@ -220,7 +266,7 @@ async def signup(request: SignupRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=False,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expires_at=datetime.now(datetime.UTC) + timedelta(hours=24)
         )
 
         # Create tokens
@@ -250,11 +296,11 @@ async def signup(request: SignupRequest) -> AuthResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Signup failed for {request.email}: {str(e)}", exc_info=True)
+        logger.error(f"Signup failed for {request.email}: {e!s}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Signup failed. Please try again."
-        )
+        ) from None
 
 
 @router.post("/refresh", response_model=AuthResponse)
@@ -273,7 +319,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
     """
     try:
         config = get_config()
-        
+
         # Decode refresh token
         try:
             payload = jwt.decode(
@@ -281,11 +327,11 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
                 config.jwt_secret_key,
                 algorithms=["HS256"]
             )
-        except JWTError as e:
+        except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
-            )
+            ) from None
 
         user_id = payload.get("user_id")
         if not user_id:
@@ -318,7 +364,7 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
             roles=user_roles,
             permissions=get_user_permissions(user_roles),
             mfa_verified=True,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+            expires_at=datetime.now(datetime.UTC) + timedelta(hours=24)
         )
 
         # Create new tokens
@@ -346,15 +392,15 @@ async def refresh_token(request: RefreshTokenRequest) -> AuthResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Token refresh failed: {str(e)}", exc_info=True)
+        logger.error(f"Token refresh failed: {e!s}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token refresh failed"
-        )
+        ) from None
 
 
 @router.post("/logout")
-async def logout(current_user: JWTUser = Depends(get_current_user)) -> Dict[str, str]:
+async def logout(current_user: JWTUser = Depends(get_current_user)) -> dict[str, str]:
     """
     User logout endpoint.
 
@@ -396,43 +442,81 @@ async def exchange_supabase_token(request: SupabaseTokenRequest) -> AuthResponse
             detail="OAuth service not configured"
         )
 
-    # Resolve API key — supports new secret key (sb_secret_xxx) and legacy service_role/anon
-    apikey = (
-        os.getenv("SUPABASE_SECRET_KEY")
-        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
-        or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
-    )
+    # --- Strategy: try JWKS first (fast, no network call to Auth server for
+    # asymmetric-key projects), then fall back to REST API verification. ---
 
-    # Verify the Supabase token by calling Supabase's /auth/v1/user endpoint.
-    # Per Supabase docs (2025): for HS256/legacy JWT secret projects, server-side
-    # verification via the Auth API is the recommended approach over local JWT
-    # decoding with the shared secret. This avoids shared-secret exposure risks.
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                f"{supabase_url}/auth/v1/user",
-                headers={
-                    "Authorization": f"Bearer {request.access_token}",
-                    "apikey": apikey,
-                },
-                timeout=10.0,
+    supabase_user: dict[str, Any] | None = None
+
+    # 1) JWKS verification (asymmetric signing keys — RS256/ES256/EdDSA)
+    jwks_payload = await _verify_supabase_token_jwks(request.access_token, supabase_url)
+    if jwks_payload is not None:
+        logger.info("Supabase token verified via JWKS")
+        # JWKS gives us the JWT claims directly; fetch full user from REST
+        # to get user_metadata and app_metadata which are not in the JWT.
+        apikey = (
+            os.getenv("SUPABASE_SECRET_KEY")
+            or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
+        )
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{supabase_url}/auth/v1/user",
+                    headers={
+                        "Authorization": f"Bearer {request.access_token}",
+                        "apikey": apikey,
+                    },
+                    timeout=10.0,
+                )
+            if resp.status_code == 200:
+                supabase_user = resp.json()
+        except httpx.RequestError:
+            pass  # Token is already verified via JWKS; user metadata is optional
+
+        # If we couldn't get full metadata, construct minimal user from JWT claims
+        if supabase_user is None:
+            supabase_user = {
+                "email": jwks_payload.get("email", ""),
+                "user_metadata": jwks_payload.get("user_metadata", {}),
+                "app_metadata": jwks_payload.get("app_metadata", {}),
+            }
+
+    # 2) REST API fallback (HS256/legacy JWT secret projects)
+    if supabase_user is None:
+        apikey = (
+            os.getenv("SUPABASE_SECRET_KEY")
+            or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+            or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
+        )
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{supabase_url}/auth/v1/user",
+                    headers={
+                        "Authorization": f"Bearer {request.access_token}",
+                        "apikey": apikey,
+                    },
+                    timeout=10.0,
+                )
+        except httpx.RequestError as e:
+            logger.error(f"Failed to contact Supabase: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Failed to verify OAuth token"
+            ) from e
+
+        if resp.status_code != 200:
+            logger.warning(
+                f"Supabase token verification failed: {resp.status_code} "
+                f"{resp.text[:200]}"
             )
-    except httpx.RequestError as e:
-        logger.error(f"Failed to contact Supabase: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to verify OAuth token"
-        )
-
-    if resp.status_code != 200:
-        logger.warning(f"Supabase token verification failed: {resp.status_code} {resp.text[:200]}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired OAuth token"
-        )
-
-    supabase_user = resp.json()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired OAuth token"
+            )
+        supabase_user = resp.json()
     email = supabase_user.get("email", "").lower()
     if not email:
         raise HTTPException(
@@ -456,7 +540,6 @@ async def exchange_supabase_token(request: SupabaseTokenRequest) -> AuthResponse
 
     if not user:
         # Create a new user for this OAuth account (no password needed)
-        import secrets
         oauth_password_hash = hash_password(secrets.token_urlsafe(32))
         user = await user_store.create_user(
             username=name,
@@ -494,7 +577,7 @@ async def exchange_supabase_token(request: SupabaseTokenRequest) -> AuthResponse
         roles=user_roles,
         permissions=get_user_permissions(user_roles),
         mfa_verified=True,
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+        expires_at=datetime.now(datetime.UTC) + timedelta(hours=24)
     )
 
     access_token = create_access_token(jwt_user)

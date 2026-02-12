@@ -31,8 +31,7 @@
       ]
     },
     "types": [
-      "jest",
-      "@testing-library/jest-dom"
+      "node"
     ],
     "target": "ES2017"
   },

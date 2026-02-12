@@ -14,16 +14,16 @@ import hashlib
 import os
 import secrets
 import time
-from typing import Dict, Optional, Any
 from datetime import datetime, timedelta
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 
 # In-memory password reset token storage (use Redis in production)
-_PASSWORD_RESET_TOKENS: Dict[str, Dict[str, Any]] = {}
+_PASSWORD_RESET_TOKENS: dict[str, dict[str, Any]] = {}
 
 def _hash_reset_token(token: str) -> str:
     """Hash a reset token for secure storage."""
@@ -85,7 +85,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "service": "monkey-coder-api"
     }
-    
+
     # Check MCP server status
     try:
         from monkey_coder.mcp.server import mcp
@@ -99,7 +99,7 @@ async def health_check():
             "status": "unavailable",
             "error": str(e)
         }
-    
+
     return health_data
 
 # Password reset endpoints
@@ -109,14 +109,14 @@ async def request_password_reset(data: PasswordResetRequest):
     # Generate secure token
     token = secrets.token_urlsafe(32)
     token_hash = _hash_reset_token(token)
-    
+
     # Store token (expires in 1 hour)
     _PASSWORD_RESET_TOKENS[token_hash] = {
         "email": data.email,
         "expires_at": (datetime.utcnow() + timedelta(hours=1)).timestamp(),
         "used": False
     }
-    
+
     # In production, send email with token
     # NOTE: Token is NOT returned in response for security — must be sent via email
     print(f"[AUTH] Password reset token generated for {data.email} (token hash: {token_hash[:8]}...)")
@@ -128,25 +128,25 @@ async def request_password_reset(data: PasswordResetRequest):
 async def confirm_password_reset(data: PasswordResetConfirm):
     """Confirm password reset with token."""
     token_hash = _hash_reset_token(data.token)
-    
+
     # Check if token exists and is valid
     if token_hash not in _PASSWORD_RESET_TOKENS:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
-    
+
     token_data = _PASSWORD_RESET_TOKENS[token_hash]
-    
+
     # Check if token has expired
     if token_data["expires_at"] < time.time():
         del _PASSWORD_RESET_TOKENS[token_hash]
         raise HTTPException(status_code=400, detail="Token has expired")
-    
+
     # Check if token was already used
     if token_data["used"]:
         raise HTTPException(status_code=400, detail="Token has already been used")
-    
+
     # Mark token as used
     token_data["used"] = True
-    
+
     # In production, update user password in database
     return {
         "message": "Password reset successful",
