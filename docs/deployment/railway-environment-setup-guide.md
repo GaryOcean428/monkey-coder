@@ -1,16 +1,15 @@
-# Railway Environment Variables Configuration for AetherOS Project
+# Railway Environment Variables Configuration Guide
 
-**Project ID:** 9n  
-**Repository:** GaryOcean428/monkey-coder (branch: main)  
-**Date:** 2026-02-12
+**Repository:** GaryOcean428/monkey-coder  
+**Last Updated:** 2026-02-13
 
 ## Overview
 
-This document specifies the exact Railway environment variables that must be configured for the monkey-coder services in the AetherOS project. Follow Railway best practices for internal networking and secrets management.
+This document provides a comprehensive guide for configuring Railway environment variables for the monkey-coder services. Follow Railway best practices for internal networking and secrets management.
 
-## Services in AetherOS Project
+## Services Overview
 
-The following services are prefixed with `monkey-coder-*`:
+The monkey-coder platform consists of the following Railway services:
 
 1. **monkey-coder-sandbox** - Secure code execution and browser automation service
 2. **monkey-coder-backend** (or **monkey-coder-core**) - Core API service
@@ -225,7 +224,7 @@ NEXT_PUBLIC_JWT_SECRET=xxx     # SECURITY BREACH!
 ### Option 1: Railway Dashboard (Recommended)
 
 1. Navigate to Railway Dashboard: https://railway.app/
-2. Select the **AetherOS** project (ID: 9n)
+2. Select the **your project** project (ID: 9n)
 3. For each service listed above:
    - Click on the service name
    - Go to **Variables** tab
@@ -239,8 +238,8 @@ NEXT_PUBLIC_JWT_SECRET=xxx     # SECURITY BREACH!
 # Login to Railway
 railway login
 
-# Link to AetherOS project
-railway link 9n
+# Link to Railway project
+railway link <your-project-id>
 
 # Set variables for sandbox service
 railway variables set \

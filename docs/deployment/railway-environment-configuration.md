@@ -1,18 +1,16 @@
 # Railway Environment Variables Configuration Summary
 
-**Project:** AetherOS (ID: 9n)  
 **Repository:** GaryOcean428/monkey-coder  
-**Branch:** main  
-**Date:** 2026-02-12  
-**Status:** ✅ Configuration Ready for Application
+**Last Updated:** 2026-02-13  
+**Status:** ✅ Configuration Guide
 
 ---
 
 ## Executive Summary
 
-This document summarizes the Railway environment variable configuration for the monkey-coder services in the AetherOS project. The configuration follows Railway best practices for internal networking, secrets management, and service discovery.
+This document summarizes the Railway environment variable configuration for the monkey-coder services. The configuration follows Railway best practices for internal networking, secrets management, and service discovery.
 
-## Services Configured
+## Services Overview
 
 ### 1. **monkey-coder-sandbox**
 - **Purpose:** Secure containerized environment for code execution and browser automation
@@ -98,7 +96,7 @@ Three methods are provided to apply these configurations:
 ### Method 1: Railway Dashboard (Recommended for Manual Setup)
 
 1. Navigate to https://railway.app/
-2. Select AetherOS project (ID: 9n)
+2. Select AetherOS project (ID: <your-project-id>)
 3. For each service, go to Variables tab
 4. Add variables as specified above
 5. Click Deploy to apply changes
@@ -121,10 +119,8 @@ railway login
 railway link 9n
 
 # Run configuration script
-./scripts/configure-railway-aetheros.sh
 
 # Or dry-run first
-./scripts/configure-railway-aetheros.sh --dry-run
 ```
 
 **Features:**
@@ -149,10 +145,8 @@ export RAILWAY_API_TOKEN=your_token_here
 pip install requests
 
 # Run configuration script
-python scripts/configure-railway-api.py
 
 # Or dry-run first
-python scripts/configure-railway-api.py --dry-run
 ```
 
 **Features:**
@@ -379,12 +373,10 @@ print(result)
    - Step-by-step instructions
    - Troubleshooting guide
 
-2. **`scripts/configure-railway-aetheros.sh`**
    - Bash script for Railway CLI configuration
    - Automated setup with dry-run mode
    - Color-coded output
 
-3. **`scripts/configure-railway-api.py`**
    - Python script for Railway API configuration
    - GraphQL-based automation
    - CI/CD friendly

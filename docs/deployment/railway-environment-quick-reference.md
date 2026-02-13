@@ -1,17 +1,16 @@
-# Railway AetherOS Configuration Quick Reference
+# Railway Environment Configuration Quick Reference
 
-**Project ID:** 9n | **Repo:** GaryOcean428/monkey-coder | **Branch:** main
+**Repository:** GaryOcean428/monkey-coder
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Login and link
+# 1. Login and link to your Railway project
 railway login
-railway link 9n
+railway link <your-project-id>
 
-# 2. Configure (choose one method)
-./scripts/configure-railway-aetheros.sh          # CLI method
-python scripts/configure-railway-api.py          # API method
+# 2. Configure environment variables manually or via Railway Dashboard
+# See detailed guide: docs/deployment/railway-environment-setup-guide.md
 
 # 3. Verify
 railway variables --service monkey-coder-sandbox
@@ -123,7 +122,7 @@ railway variables --service monkey-coder-backend | grep CORS_ORIGINS
 ## 📚 Documentation Links
 
 - **Comprehensive Guide:** `docs/deployment/railway-aetheros-config.md`
-- **Executive Summary:** `RAILWAY_CONFIG_SUMMARY.md`
+- **Executive Summary:** `docs/deployment/railway-environment-configuration.md`
 - **Scripts README:** `scripts/README_RAILWAY_TOOLS.md`
 - **Environment Template:** `.env.railway.example`
 
