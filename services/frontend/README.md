@@ -195,7 +195,7 @@ The web app is configured for Railway deployment:
 2. Start command: `yarn start`
 3. Health check: `/api/health`
 
-See the [Railway Deployment Guide](../../docs/deployment/RAILWAY_DEPLOYMENT.md) for details.
+See the [Railway Deployment Guide](../../docs/deployment/railway-deployment.md) for details.
 
 ### Vercel
 

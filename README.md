@@ -1034,10 +1034,11 @@ git commit -m "Update deployment requirements"
 #### Service Configuration Documentation
 
 See comprehensive guides:
-- **[RAILWAY_SERVICE_CONFIGURATION.md](./docs/deployment/RAILWAY_SERVICE_CONFIGURATION.md)** - Complete configuration guide
-- **[RAILWAY_SERVICE_SETTINGS.md](./docs/deployment/RAILWAY_SERVICE_SETTINGS.md)** - Quick reference
-- **[RAILWAY_DEPLOYMENT.md](./docs/deployment/RAILWAY_DEPLOYMENT.md)** - Deployment guide
-- **[RAILWAY_PRODUCTION_CHECKLIST.md](./docs/deployment/RAILWAY_PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+- **[Railway Service Configuration](./docs/deployment/railway-service-configuration.md)** - Complete configuration guide
+- **[Railway Service Settings](./docs/deployment/railway-service-settings.md)** - Quick reference
+- **[Railway Deployment](./docs/deployment/railway-deployment.md)** - Deployment guide
+- **[Railway Production Checklist](./docs/deployment/railway-production-checklist.md)** - Pre-deployment checklist
+- **[Railway Environment Setup](./docs/deployment/railway-environment-setup-guide.md)** - Environment variable configuration
 
 **Service IDs (AetherOS Project):**
 - `monkey-coder` (Frontend): `ccc58ca2-1f4b-4086-beb6-2321ac7dab40`
