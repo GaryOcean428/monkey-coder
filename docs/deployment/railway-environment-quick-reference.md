@@ -121,7 +121,7 @@ railway variables --service monkey-coder-backend | grep CORS_ORIGINS
 
 ## 📚 Documentation Links
 
-- **Comprehensive Guide:** `docs/deployment/railway-aetheros-config.md`
+- **Comprehensive Guide:** `docs/deployment/railway-environment-setup-guide.md`
 - **Executive Summary:** `docs/deployment/railway-environment-configuration.md`
 - **Scripts README:** `scripts/README_RAILWAY_TOOLS.md`
 - **Environment Template:** `.env.railway.example`
