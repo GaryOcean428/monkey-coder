@@ -368,7 +368,7 @@ print(result)
 
 ### New Files
 
-1. **`docs/deployment/railway-aetheros-config.md`**
+1. **`docs/deployment/railway-environment-setup-guide.md`**
    - Comprehensive configuration documentation
    - Step-by-step instructions
    - Troubleshooting guide
@@ -381,7 +381,7 @@ print(result)
    - GraphQL-based automation
    - CI/CD friendly
 
-4. **`RAILWAY_CONFIG_SUMMARY.md`** (this file)
+4. **`docs/deployment/railway-environment-configuration.md`** (this file)
    - Executive summary
    - Quick reference
    - Verification checklist
